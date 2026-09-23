@@ -24,7 +24,7 @@ import {
   providedIn: 'root'
 })
 export class ApiService {
-  private readonly baseUrl = 'http://localhost:5250';
+  private readonly baseUrl = 'https://meezaan.runasp.net';
   constructor(private http: HttpClient) {}
 
   // ── Indices ────────────────────────────────────────────────────────
