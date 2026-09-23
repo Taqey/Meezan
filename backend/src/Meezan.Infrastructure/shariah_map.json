@@ -1,0 +1,1142 @@
+{
+  "AALR": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": null,
+    "status": "compliant"
+  },
+  "ABUK": {
+    "note": "استثمارات ربوية",
+    "pct": null,
+    "status": "non_compliant"
+  },
+  "ACAMD": {
+    "note": "استثمارات ربوية",
+    "pct": null,
+    "status": "non_compliant"
+  },
+  "ACAP": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 17.5,
+    "status": "compliant"
+  },
+  "ACFR": {
+    "note": null,
+    "pct": null,
+    "status": "pending"
+  },
+  "ACGC": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 12.13,
+    "status": "compliant"
+  },
+  "ACTF": {
+    "note": "دخل محظور",
+    "pct": null,
+    "status": "non_compliant"
+  },
+  "ADCI": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 0.659,
+    "status": "compliant"
+  },
+  "ADIB": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 28.4,
+    "status": "compliant"
+  },
+  "ADPC": {
+    "note": "قروض",
+    "pct": null,
+    "status": "non_compliant"
+  },
+  "ADRI": {
+    "note": "دخل محظور",
+    "pct": null,
+    "status": "non_compliant"
+  },
+  "AFDI": {
+    "note": null,
+    "pct": null,
+    "status": "pending"
+  },
+  "AFMC": {
+    "note": "دخل محظور",
+    "pct": null,
+    "status": "non_compliant"
+  },
+  "AIDC": {
+    "note": "شرعي مختلط B",
+    "pct": 0.33,
+    "status": "compliant"
+  },
+  "AIFI": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 1.16,
+    "status": "compliant"
+  },
+  "AIHC": {
+    "note": "قروض",
+    "pct": null,
+    "status": "non_compliant"
+  },
+  "AJWA": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 0.87,
+    "status": "compliant"
+  },
+  "ALCN": {
+    "note": "دخل محظور + استثمارات ربوية",
+    "pct": null,
+    "status": "non_compliant"
+  },
+  "ALUM": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 0,
+    "status": "compliant"
+  },
+  "AMER": {
+    "note": null,
+    "pct": 1.31,
+    "status": "blocked"
+  },
+  "AMES": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 1,
+    "status": "compliant"
+  },
+  "AMIA": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 3.71,
+    "status": "compliant"
+  },
+  "AMII": {
+    "note": "شرعي مختلط C",
+    "pct": 0.9,
+    "status": "compliant"
+  },
+  "AMOC": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 0.83,
+    "status": "compliant"
+  },
+  "AMPI": {
+    "note": null,
+    "pct": null,
+    "status": "blocked"
+  },
+  "ANCC": {
+    "note": null,
+    "pct": null,
+    "status": "pending"
+  },
+  "ANFI": {
+    "note": "دخل محظور",
+    "pct": null,
+    "status": "non_compliant"
+  },
+  "APSW": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 0.013,
+    "status": "compliant"
+  },
+  "ARAB": {
+    "note": "دخل محظور",
+    "pct": null,
+    "status": "non_compliant"
+  },
+  "ARCC": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 1.78,
+    "status": "compliant"
+  },
+  "AREH": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 0.05,
+    "status": "compliant"
+  },
+  "ARVA": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 0.31,
+    "status": "compliant"
+  },
+  "ASCM": {
+    "note": null,
+    "pct": null,
+    "status": "non_compliant"
+  },
+  "ASPI": {
+    "note": "دخل محظور + قروض + نشاط",
+    "pct": null,
+    "status": "non_compliant"
+  },
+  "ATLC": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 3.17,
+    "status": "compliant"
+  },
+  "ATQA": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 1.742,
+    "status": "compliant"
+  },
+  "AXPH": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 0.58,
+    "status": "compliant"
+  },
+  "BIGP": {
+    "note": "نقي",
+    "pct": 0.0,
+    "status": "compliant"
+  },
+  "BIOC": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 0.9,
+    "status": "compliant"
+  },
+  "BONY": {
+    "note": "شرعي مختلط A",
+    "pct": 3.0,
+    "status": "compliant"
+  },
+  "BTFH": {
+    "note": "نشاط",
+    "pct": null,
+    "status": "non_compliant"
+  },
+  "CAED": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 0,
+    "status": "compliant"
+  },
+  "CCAP": {
+    "note": null,
+    "pct": null,
+    "status": "pending"
+  },
+  "CCRS": {
+    "note": "دخل محظور",
+    "pct": null,
+    "status": "non_compliant"
+  },
+  "CEFM": {
+    "note": "شبه نقي",
+    "pct": 3.8,
+    "status": "compliant"
+  },
+  "CERA": {
+    "note": "شرعي مختلط C",
+    "pct": 0.11,
+    "status": "compliant"
+  },
+  "CFGH": {
+    "note": null,
+    "pct": null,
+    "status": "non_compliant"
+  },
+  "CIRA": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 4.22,
+    "status": "compliant"
+  },
+  "CLHO": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 0.64,
+    "status": "compliant"
+  },
+  "COMI": {
+    "note": "نشاط",
+    "pct": null,
+    "status": "non_compliant"
+  },
+  "COPR": {
+    "note": "دخل محظور",
+    "pct": null,
+    "status": "non_compliant"
+  },
+  "COSG": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 0.068,
+    "status": "compliant"
+  },
+  "CPCI": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 0.925,
+    "status": "compliant"
+  },
+  "CRST": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 0.06,
+    "status": "compliant"
+  },
+  "CSAG": {
+    "note": "دخل محظور + استثمارات ربوية",
+    "pct": null,
+    "status": "non_compliant"
+  },
+  "DAPH": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 15.7,
+    "status": "compliant"
+  },
+  "DCCC": {
+    "note": null,
+    "pct": null,
+    "status": "pending"
+  },
+  "DCRC": {
+    "note": "شبه نقي",
+    "pct": 0.72,
+    "status": "compliant"
+  },
+  "DEIN": {
+    "note": null,
+    "pct": null,
+    "status": "pending"
+  },
+  "DGTZ": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": null,
+    "status": "compliant"
+  },
+  "DOMT": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 0.23,
+    "status": "compliant"
+  },
+  "DSCW": {
+    "note": "قروض",
+    "pct": null,
+    "status": "non_compliant"
+  },
+  "DTPP": {
+    "note": "قروض",
+    "pct": null,
+    "status": "non_compliant"
+  },
+  "EALR": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 0.85,
+    "status": "compliant"
+  },
+  "EASB": {
+    "note": null,
+    "pct": null,
+    "status": "pending"
+  },
+  "EAST": {
+    "note": "نشاط",
+    "pct": null,
+    "status": "non_compliant"
+  },
+  "EBSC": {
+    "note": null,
+    "pct": null,
+    "status": "pending"
+  },
+  "ECAP": {
+    "note": null,
+    "pct": null,
+    "status": "blocked"
+  },
+  "EDFM": {
+    "note": "استثمارات ربوية",
+    "pct": null,
+    "status": "non_compliant"
+  },
+  "EEII": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 0.152,
+    "status": "compliant"
+  },
+  "EFAC": {
+    "note": null,
+    "pct": null,
+    "status": "pending"
+  },
+  "EFIC": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 0.4,
+    "status": "compliant"
+  },
+  "EFID": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 2.7,
+    "status": "compliant"
+  },
+  "EFIH": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 2.8,
+    "status": "compliant"
+  },
+  "EGAL": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 0.73,
+    "status": "compliant"
+  },
+  "EGAS": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 0.77,
+    "status": "compliant"
+  },
+  "EGCH": {
+    "note": "دخل محظور + قروض",
+    "pct": null,
+    "status": "non_compliant"
+  },
+  "EGSA": {
+    "note": null,
+    "pct": null,
+    "status": "pending"
+  },
+  "EGTS": {
+    "note": "دخل محظور",
+    "pct": null,
+    "status": "non_compliant"
+  },
+  "EHDR": {
+    "note": "شرعي مختلط C",
+    "pct": 0.77,
+    "status": "compliant"
+  },
+  "ELEC": {
+    "note": "قروض",
+    "pct": null,
+    "status": "non_compliant"
+  },
+  "ELKA": {
+    "note": "شرعي مختلط C",
+    "pct": 4.75,
+    "status": "compliant"
+  },
+  "ELNA": {
+    "note": "شبه نقي",
+    "pct": 0.0,
+    "status": "compliant"
+  },
+  "ELSH": {
+    "note": "دخل محظور",
+    "pct": null,
+    "status": "non_compliant"
+  },
+  "ELWA": {
+    "note": "شبه نقي",
+    "pct": 2.12,
+    "status": "compliant"
+  },
+  "EMFD": {
+    "note": "دخل محظور",
+    "pct": null,
+    "status": "non_compliant"
+  },
+  "ENGC": {
+    "note": null,
+    "pct": 0.26,
+    "status": "blocked"
+  },
+  "EOSB": {
+    "note": null,
+    "pct": null,
+    "status": "pending"
+  },
+  "EPCO": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 2.06,
+    "status": "compliant"
+  },
+  "EPPK": {
+    "note": "شرعي مختلط C",
+    "pct": 0.0,
+    "status": "compliant"
+  },
+  "ETEL": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 0.7,
+    "status": "compliant"
+  },
+  "ETRS": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 1.1,
+    "status": "compliant"
+  },
+  "FAIT": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 58.6,
+    "status": "compliant"
+  },
+  "FCMD": {
+    "note": "شبه نقي",
+    "pct": 1.31,
+    "status": "compliant"
+  },
+  "FERC": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 1.026,
+    "status": "compliant"
+  },
+  "FIRE": {
+    "note": "نقي",
+    "pct": 0.0,
+    "status": "compliant"
+  },
+  "FNAR": {
+    "note": "نقي",
+    "pct": 0.0,
+    "status": "compliant"
+  },
+  "FTNS": {
+    "note": "شرعي مختلط A",
+    "pct": 0.0,
+    "status": "compliant"
+  },
+  "FWRY": {
+    "note": "نشاط",
+    "pct": 33.0,
+    "status": "non_compliant"
+  },
+  "GBCO": {
+    "note": null,
+    "pct": null,
+    "status": "pending"
+  },
+  "GDWA": {
+    "note": null,
+    "pct": null,
+    "status": "non_compliant"
+  },
+  "GEOS": {
+    "note": null,
+    "pct": null,
+    "status": "pending"
+  },
+  "GGCC": {
+    "note": "شرعي مختلط B",
+    "pct": 0.27,
+    "status": "compliant"
+  },
+  "GGRN": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 0.003,
+    "status": "compliant"
+  },
+  "GIHD": {
+    "note": "دخل محظور + استثمارات ربوية",
+    "pct": null,
+    "status": "non_compliant"
+  },
+  "GMCI": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 0,
+    "status": "compliant"
+  },
+  "GOUR": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": null,
+    "status": "compliant"
+  },
+  "GPIM": {
+    "note": "دخل محظور",
+    "pct": null,
+    "status": "non_compliant"
+  },
+  "GSSC": {
+    "note": "دخل محظور",
+    "pct": null,
+    "status": "non_compliant"
+  },
+  "GTEX": {
+    "note": "شرعي مختلط C",
+    "pct": 0.42,
+    "status": "compliant"
+  },
+  "GTWL": {
+    "note": "شرعي مختلط C",
+    "pct": 0.11,
+    "status": "compliant"
+  },
+  "HBCO": {
+    "note": "شرعي مختلط C",
+    "pct": 0.0,
+    "status": "compliant"
+  },
+  "HELI": {
+    "note": "دخل محظور",
+    "pct": null,
+    "status": "non_compliant"
+  },
+  "HRHO": {
+    "note": "استثمارات ربوية + نشاط (المجموعة المالية هيرميس)",
+    "pct": null,
+    "status": "non_compliant"
+  },
+  "IBCT": {
+    "note": "قروض",
+    "pct": null,
+    "status": "non_compliant"
+  },
+  "ICFC": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 1,
+    "status": "compliant"
+  },
+  "ICID": {
+    "note": "دخل محظور",
+    "pct": null,
+    "status": "non_compliant"
+  },
+  "IDRE": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 55.7,
+    "status": "compliant"
+  },
+  "IEEC": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 2.79,
+    "status": "compliant"
+  },
+  "IFAP": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 3.92,
+    "status": "compliant"
+  },
+  "INEG": {
+    "note": "شبه نقي",
+    "pct": 0.52,
+    "status": "compliant"
+  },
+  "INFI": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 1.74,
+    "status": "compliant"
+  },
+  "IRON": {
+    "note": "دخل محظور",
+    "pct": null,
+    "status": "non_compliant"
+  },
+  "ISMA": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 0,
+    "status": "compliant"
+  },
+  "ISMQ": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 8.2,
+    "status": "compliant"
+  },
+  "ISPH": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 0.024,
+    "status": "compliant"
+  },
+  "JUFO": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 0.36,
+    "status": "compliant"
+  },
+  "KABO": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 7.2,
+    "status": "compliant"
+  },
+  "KNGC": {
+    "note": null,
+    "pct": null,
+    "status": "pending"
+  },
+  "KORA": {
+    "note": "شرعي مختلط C",
+    "pct": 0.31,
+    "status": "compliant"
+  },
+  "KORRA": {
+    "note": "شرعي مختلط C",
+    "pct": 0.27,
+    "status": "compliant"
+  },
+  "KRDI": {
+    "note": "شرعي مختلط B",
+    "pct": 0.06,
+    "status": "compliant"
+  },
+  "KWIN": {
+    "note": null,
+    "pct": null,
+    "status": "pending"
+  },
+  "KZPC": {
+    "note": null,
+    "pct": null,
+    "status": "non_compliant"
+  },
+  "LCSW": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 0.061,
+    "status": "compliant"
+  },
+  "LUTS": {
+    "note": "قروض",
+    "pct": null,
+    "status": "non_compliant"
+  },
+  "MAAL": {
+    "note": "شرعي مختلط C",
+    "pct": 1.17,
+    "status": "compliant"
+  },
+  "MASR": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 7.4,
+    "status": "compliant"
+  },
+  "MBEG": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 0.11,
+    "status": "compliant"
+  },
+  "MBSC": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 2.5,
+    "status": "compliant"
+  },
+  "MCQE": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 0.87,
+    "status": "compliant"
+  },
+  "MCRO": {
+    "note": "شبه نقي",
+    "pct": 4.18,
+    "status": "compliant"
+  },
+  "MEGM": {
+    "note": "قروض",
+    "pct": null,
+    "status": "non_compliant"
+  },
+  "MENA": {
+    "note": null,
+    "pct": null,
+    "status": "pending"
+  },
+  "MEPA": {
+    "note": "دخل محظور",
+    "pct": null,
+    "status": "non_compliant"
+  },
+  "MFPC": {
+    "note": "دخل محظور",
+    "pct": null,
+    "status": "non_compliant"
+  },
+  "MFSC": {
+    "note": null,
+    "pct": null,
+    "status": "pending"
+  },
+  "MICH": {
+    "note": "دخل محظور",
+    "pct": null,
+    "status": "non_compliant"
+  },
+  "MILS": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 1.701,
+    "status": "compliant"
+  },
+  "MIPH": {
+    "note": "قروض",
+    "pct": null,
+    "status": "non_compliant"
+  },
+  "MISR": {
+    "note": "نقي",
+    "pct": 0,
+    "status": "compliant"
+  },
+  "MOED": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 0,
+    "status": "compliant"
+  },
+  "MOIL": {
+    "note": null,
+    "pct": null,
+    "status": "pending"
+  },
+  "MOIN": {
+    "note": null,
+    "pct": null,
+    "status": "pending"
+  },
+  "MOSC": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 0.09,
+    "status": "compliant"
+  },
+  "MPCI": {
+    "note": "شرعي مختلط C",
+    "pct": 4.87,
+    "status": "compliant"
+  },
+  "MPCO": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 2.4,
+    "status": "compliant"
+  },
+  "MPRC": {
+    "note": null,
+    "pct": null,
+    "status": "pending"
+  },
+  "MTIE": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 0.51,
+    "status": "compliant"
+  },
+  "NAPR": {
+    "note": "قروض",
+    "pct": null,
+    "status": "non_compliant"
+  },
+  "NARE": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": null,
+    "status": "compliant"
+  },
+  "NCCW": {
+    "note": "دخل محظور",
+    "pct": null,
+    "status": "non_compliant"
+  },
+  "NDRL": {
+    "note": "شبه نقي",
+    "pct": 0.0,
+    "status": "compliant"
+  },
+  "NEDA": {
+    "note": "نقي",
+    "pct": 0.0,
+    "status": "compliant"
+  },
+  "NHPS": {
+    "note": null,
+    "pct": null,
+    "status": "pending"
+  },
+  "NINH": {
+    "note": "دخل محظور + استثمارات ربوية",
+    "pct": null,
+    "status": "non_compliant"
+  },
+  "NIPH": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 0.432,
+    "status": "compliant"
+  },
+  "NMIN": {
+    "note": null,
+    "pct": null,
+    "status": "pending"
+  },
+  "OBRI": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 1.68,
+    "status": "compliant"
+  },
+  "OCDI": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 4.99,
+    "status": "compliant"
+  },
+  "OCPH": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 0.12,
+    "status": "compliant"
+  },
+  "ODIN": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": null,
+    "status": "compliant"
+  },
+  "OFH": {
+    "note": null,
+    "pct": null,
+    "status": "pending"
+  },
+  "OIH": {
+    "note": null,
+    "pct": null,
+    "status": "blocked"
+  },
+  "OLFI": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 0.362,
+    "status": "compliant"
+  },
+  "ORAS": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 0.68,
+    "status": "compliant"
+  },
+  "ORHD": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 15.13,
+    "status": "compliant"
+  },
+  "ORWE": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 2.92,
+    "status": "compliant"
+  },
+  "PHAR": {
+    "note": "قروض",
+    "pct": null,
+    "status": "non_compliant"
+  },
+  "PHDC": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 4.03,
+    "status": "compliant"
+  },
+  "PHGC": {
+    "note": "شبه نقي",
+    "pct": 0.0,
+    "status": "compliant"
+  },
+  "POCO": {
+    "note": null,
+    "pct": null,
+    "status": "pending"
+  },
+  "POUL": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 4.11,
+    "status": "compliant"
+  },
+  "PRCL": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 0.11,
+    "status": "compliant"
+  },
+  "PRDC": {
+    "note": null,
+    "pct": 4.3,
+    "status": "compliant"
+  },
+  "PRMH": {
+    "note": "دخل محظور + نشاط",
+    "pct": null,
+    "status": "non_compliant"
+  },
+  "RACC": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 2,
+    "status": "compliant"
+  },
+  "RAKT": {
+    "note": "دخل محظور",
+    "pct": null,
+    "status": "non_compliant"
+  },
+  "RAYA": {
+    "note": "قروض",
+    "pct": null,
+    "status": "non_compliant"
+  },
+  "RKAZ": {
+    "note": "دخل محظور",
+    "pct": null,
+    "status": "non_compliant"
+  },
+  "RMDA": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 0.6,
+    "status": "compliant"
+  },
+  "ROTO": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": null,
+    "status": "compliant"
+  },
+  "RREI": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 0.011,
+    "status": "compliant"
+  },
+  "RUBX": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 0.05,
+    "status": "compliant"
+  },
+  "SAUD": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 32.95,
+    "status": "compliant"
+  },
+  "SCEM": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 1.84,
+    "status": "compliant"
+  },
+  "SCFM": {
+    "note": "دخل محظور + استثمارات ربوية",
+    "pct": null,
+    "status": "non_compliant"
+  },
+  "SCTS": {
+    "note": "دخل محظور + استثمارات ربوية",
+    "pct": null,
+    "status": "non_compliant"
+  },
+  "SEIG": {
+    "note": null,
+    "pct": null,
+    "status": "pending"
+  },
+  "SIEG": {
+    "note": null,
+    "pct": null,
+    "status": "pending"
+  },
+  "SIMO": {
+    "note": null,
+    "pct": null,
+    "status": "pending"
+  },
+  "SIPC": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 0,
+    "status": "compliant"
+  },
+  "SKPC": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 3,
+    "status": "compliant"
+  },
+  "SMFR": {
+    "note": "شبه نقي",
+    "pct": 1.95,
+    "status": "compliant"
+  },
+  "SNFC": {
+    "note": "دخل محظور",
+    "pct": null,
+    "status": "non_compliant"
+  },
+  "SPIN": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": null,
+    "status": "compliant"
+  },
+  "SPMD": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 3.71,
+    "status": "compliant"
+  },
+  "SUCE": {
+    "note": "شرعي مختلط C",
+    "pct": 0.25,
+    "status": "compliant"
+  },
+  "SUGR": {
+    "note": "قروض",
+    "pct": null,
+    "status": "non_compliant"
+  },
+  "SVCE": {
+    "note": "شرعي مختلط C",
+    "pct": 0.75,
+    "status": "compliant"
+  },
+  "SWDY": {
+    "note": "شرعي مختلط C",
+    "pct": 0.86,
+    "status": "compliant"
+  },
+  "TALM": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 3.8,
+    "status": "compliant"
+  },
+  "TANM": {
+    "note": "دخل محظور",
+    "pct": null,
+    "status": "non_compliant"
+  },
+  "TAQA": {
+    "note": "دخل محظور + قروض",
+    "pct": null,
+    "status": "non_compliant"
+  },
+  "TMGH": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 18.47,
+    "status": "compliant"
+  },
+  "UBEE": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": null,
+    "status": "compliant"
+  },
+  "UEFM": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 3.23,
+    "status": "compliant"
+  },
+  "UEGC": {
+    "note": "قروض",
+    "pct": null,
+    "status": "non_compliant"
+  },
+  "UNIP": {
+    "note": "قروض",
+    "pct": null,
+    "status": "non_compliant"
+  },
+  "UNIT": {
+    "note": "دخل محظور + استثمارات ربوية",
+    "pct": null,
+    "status": "non_compliant"
+  },
+  "UPMS": {
+    "note": "نقي",
+    "pct": 0.0,
+    "status": "compliant"
+  },
+  "UTOP": {
+    "note": "دخل محظور",
+    "pct": null,
+    "status": "non_compliant"
+  },
+  "VALU": {
+    "note": "قروض + نشاط",
+    "pct": null,
+    "status": "non_compliant"
+  },
+  "VERT": {
+    "note": "شبه نقي",
+    "pct": 0.0,
+    "status": "compliant"
+  },
+  "VLMRA": {
+    "note": "قروض",
+    "pct": null,
+    "status": "non_compliant"
+  },
+  "WKOL": {
+    "note": null,
+    "pct": null,
+    "status": "pending"
+  },
+  "ZEOT": {
+    "note": "متوافق - تقرير فيصل",
+    "pct": 0.1,
+    "status": "compliant"
+  },
+  "ZMID": {
+    "note": "شرعي مختلط A",
+    "pct": 4.08,
+    "status": "compliant"
+  }
+}

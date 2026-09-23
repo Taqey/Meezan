@@ -1,0 +1,105 @@
+# =========================================
+# .NET / ASP.NET Core
+# =========================================
+
+**/bin/
+**/obj/
+
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# .NET generated files
+*.dll
+*.pdb
+*.cache
+
+# Test results
+TestResults/
+*.trx
+
+
+# =========================================
+# Visual Studio Code
+# =========================================
+
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json
+
+
+# =========================================
+# Angular / Node.js
+# =========================================
+
+**/node_modules/
+**/dist/
+**/.angular/
+.nx/
+.turbo/
+
+# Angular cache
+.angular/cache/
+
+
+# =========================================
+# Logs
+# =========================================
+
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+
+# =========================================
+# Environment / Secrets
+# =========================================
+
+.env
+.env.*
+!.env.example
+
+# ASP.NET Development settings
+**/appsettings.Development.json
+
+
+# =========================================
+# OS files
+# =========================================
+
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+
+# =========================================
+# Temporary files
+# =========================================
+
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+
+# =========================================
+# Coverage
+# =========================================
+
+coverage/
+.nyc_output/
+
+
+# =========================================
+# Package manager
+# =========================================
+
+# Keep lock files - DO NOT ignore these
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml

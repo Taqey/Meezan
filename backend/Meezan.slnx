@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Meezan.Application/Meezan.Application.csproj" />
+    <Project Path="src/Meezan.Domain/Meezan.Domain.csproj" />
+    <Project Path="src/Meezan.Infrastructure/Meezan.Infrastructure.csproj" />
+    <Project Path="src/Meezan.WebApi/Meezan.WebApi.csproj" />
+  </Folder>
+</Solution>
