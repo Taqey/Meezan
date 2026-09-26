@@ -7,7 +7,12 @@ public class StockFairValue
     public int Id { get; set; }
     public int StockId { get; set; }
     public decimal? FairValue { get; set; }
-    public PriceComparison PriceComparison { get; set; } = PriceComparison.Fair;
+
+    /// <summary>
+    /// Unavailable (not Fair) is the safe default: a fair-value row whose comparison was
+    /// never computed must never claim a Cheap/Expensive/Fair verdict.
+    /// </summary>
+    public PriceComparison PriceComparison { get; set; } = PriceComparison.Unavailable;
     public decimal? FairValueDiff { get; set; }
     public decimal? FairValueDiffPct { get; set; }
     public int MethodsUsedCount { get; set; }

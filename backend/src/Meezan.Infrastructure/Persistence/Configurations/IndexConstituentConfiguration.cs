@@ -12,6 +12,7 @@ public class IndexConstituentConfiguration : IEntityTypeConfiguration<IndexConst
 
         builder.HasKey(e => e.Id);
 
+        // Nullable → NULL allowed for weight-less source files.
         builder.Property(e => e.Weight)
             .HasPrecision(18, 8);
 

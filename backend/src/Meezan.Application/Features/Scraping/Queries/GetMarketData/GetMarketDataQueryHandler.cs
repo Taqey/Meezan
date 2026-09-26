@@ -1,5 +1,6 @@
 using MediatR;
 using Meezan.Application.Common.Interfaces;
+using Meezan.Domain.Enums;
 
 namespace Meezan.Application.Features.Scraping.Queries.GetMarketData;
 
@@ -25,15 +26,80 @@ public class GetMarketDataQueryHandler : IRequestHandler<GetMarketDataQuery, Mar
         if (stock is null) return null;
 
         var md = stock.MarketData ?? await _mdRepo.GetByStockIdAsync(stock.Id, cancellationToken);
-        if (md is null) return null;
 
+        // ── Fix 3: "Board exists only" stocks ────────────────────────────────────
+        // Stocks imported via the Shariah source (stocks_merged.json) that are not
+        // yet scrapable on Mubasher have no market data. Instead of returning null
+        // (which maps to a 404 on the client), we return a minimal DTO carrying only
+        // the stock's identity and Shariah data. The market-data fields are all null.
+        // The frontend detects this via HasMarketData = false and renders a simplified
+        // panel instead of the full trading detail page.
+        if (md is null)
+        {
+            // Only worth returning a partial result if there is Shariah data to show.
+            if (stock.ShariahCompliance is null && stock.ShariahSourceOpinions.Count == 0)
+                return null;
+
+            DetectShariahBoard(stock, out var hasBoard1, out var boardNote1);
+
+            // Board-governed: the 7-source opinion panel is replaced by the unified note.
+            var partialOpinions = hasBoard1
+                ? new List<Meezan.Application.Features.Shariah.DTOs.ShariahSourceOpinionDto>()
+                : stock.ShariahSourceOpinions
+                .Select(o => new Meezan.Application.Features.Shariah.DTOs.ShariahSourceOpinionDto
+                {
+                    Id = o.Id,
+                    StockId = o.StockId,
+                    SourceKey = o.SourceKey,
+                    Status = o.Status,
+                    Percentage = o.Percentage,
+                    Note = o.Note,
+                    PdfUrl = o.PdfUrl,
+                    SourceLastUpdated = o.SourceLastUpdated,
+                    FetchedAt = o.FetchedAt,
+                    ExtraData = o.ExtraData
+                })
+                .ToList();
+
+            return new MarketDataDto(
+                Ticker: stock.Ticker,
+                NameAr: stock.NameAr,
+                NameEn: stock.NameEn,
+                SectorNameAr: stock.Sector?.NameAr,
+                SectorNameEn: stock.Sector?.NameEn,
+                Indices: stock.IndexConstituents
+                    .Where(ic => ic.Index != null)
+                    .Select(ic => new IndexInStockDto(ic.Index!.Code, ic.Index.NameAr, ic.Index.NameEn, ic.Weight))
+                    .ToList(),
+                ShariahStatus: stock.ShariahCompliance?.Status.ToString(),
+                // Board-governed: purification is the board's own internal responsibility.
+                ShariahPct: hasBoard1 ? null : stock.ShariahCompliance?.Pct,
+                ShariahOpinions: partialOpinions,
+                HasMarketData: false,
+                // All market-data fields are null
+                NominalValue: null, MarketValue: null, BookValue: null, PbRatio: null,
+                Eps: null, PeRatio: null, Currency: null, High: null, Low: null, Open: null,
+                ClosingPrice: null, SourceLastUpdateText: null, FetchedAt: null,
+                FairValue: null, PriceComparison: null, FairValueDiff: null,
+                FairValueDiffPct: null, MethodsUsedCount: null, MethodsExcludedCount: null,
+                ValuationConfidence: null, FairValueMethods: null,
+                // Fix 4: NonCompliant and board-governed stocks show no detailed metrics.
+                ShariahMetrics: hasBoard1 || stock.ShariahCompliance?.Status == ShariahStatus.NonCompliant
+                    ? null
+                    : BuildMetricsDto(stock.ShariahMetrics),
+                HasShariahBoard: hasBoard1,
+                ShariahBoardNote: boardNote1
+            );
+        }
+
+        // ── Normal path: stock has market data ───────────────────────────────────
         var fv = stock.FairValue ?? await _fvRepo.GetByStockIdAsync(stock.Id, cancellationToken);
 
         List<FairValueMethodDto>? methodDtos = null;
         if (fv?.Methods is { Count: > 0 })
         {
             methodDtos = fv.Methods
-                .Select(m => new FairValueMethodDto(m.MethodName, m.EstimatedValue ?? 0, m.IsOutlier))
+                .Select(m => new FairValueMethodDto(m.MethodName, m.EstimatedValue, m.IsOutlier))
                 .ToList();
         }
 
@@ -47,7 +113,11 @@ public class GetMarketDataQueryHandler : IRequestHandler<GetMarketDataQuery, Mar
             ))
             .ToList();
 
-        var opinions = stock.ShariahSourceOpinions
+        DetectShariahBoard(stock, out var hasBoard, out var boardNote);
+
+        var opinions = hasBoard
+            ? new List<Meezan.Application.Features.Shariah.DTOs.ShariahSourceOpinionDto>()
+            : stock.ShariahSourceOpinions
             .Select(o => new Meezan.Application.Features.Shariah.DTOs.ShariahSourceOpinionDto
             {
                 Id = o.Id,
@@ -63,30 +133,14 @@ public class GetMarketDataQueryHandler : IRequestHandler<GetMarketDataQuery, Mar
             })
             .ToList();
 
-        var metricsDto = stock.ShariahMetrics is { } sm
-            ? new Meezan.Application.Features.Shariah.DTOs.StockShariahMetricsDto
-            {
-                Id = sm.Id,
-                StockId = sm.StockId,
-                Zakat = sm.Zakat,
-                SpHaramEarningPercentage = sm.SpHaramEarningPercentage,
-                AaoifiHaramEarningPerShare = sm.AaoifiHaramEarningPerShare,
-                HaramEarningsPercentage = sm.HaramEarningsPercentage,
-                LoansPercentage = sm.LoansPercentage,
-                FairValueValuation = sm.FairValueValuation,
-                BookValue = sm.BookValue,
-                Profit = sm.Profit,
-                Dividend = sm.Dividend,
-                DividendType = sm.DividendType,
-                CoreActivityCompliant = sm.CoreActivityCompliant,
-                CashLiquidityCompliant = sm.CashLiquidityCompliant,
-                HaramInvestmentsCompliant = sm.HaramInvestmentsCompliant,
-                CategoryEn = sm.CategoryEn,
-                CategoryAr = sm.CategoryAr,
-                SourceUpdatedAt = sm.SourceUpdatedAt,
-                FetchedAt = sm.FetchedAt
-            }
-            : null;
+        // ── Fix 4: Suppress ShariahMetrics for NonCompliant stocks ──────────────
+        // For a stock already confirmed non-compliant, showing "0 جم/سهم" or "0%"
+        // for every purification/haram-earnings metric is misleading noise.
+        // Only include the full metrics panel for Compliant and Pending stocks being
+        // actively evaluated against the standards. Board-governed stocks never show it:
+        // purification is the board's own internal responsibility.
+        var isNonCompliant = stock.ShariahCompliance?.Status == ShariahStatus.NonCompliant;
+        var metricsDto = isNonCompliant || hasBoard ? null : BuildMetricsDto(stock.ShariahMetrics);
 
         return new MarketDataDto(
             Ticker: stock.Ticker,
@@ -96,8 +150,9 @@ public class GetMarketDataQueryHandler : IRequestHandler<GetMarketDataQuery, Mar
             SectorNameEn: stock.Sector?.NameEn,
             Indices: indices,
             ShariahStatus: stock.ShariahCompliance?.Status.ToString(),
-            ShariahPct: stock.ShariahCompliance?.Pct,
+            ShariahPct: hasBoard ? null : stock.ShariahCompliance?.Pct,
             ShariahOpinions: opinions,
+            HasMarketData: true,
             NominalValue: md.NominalValue,
             MarketValue: md.MarketValue,
             BookValue: md.BookValue,
@@ -119,7 +174,54 @@ public class GetMarketDataQueryHandler : IRequestHandler<GetMarketDataQuery, Mar
             MethodsExcludedCount: fv?.MethodsExcludedCount,
             ValuationConfidence: fv?.Confidence.ToString(),
             FairValueMethods: methodDtos,
-            ShariahMetrics: metricsDto
+            ShariahMetrics: metricsDto,
+            HasShariahBoard: hasBoard,
+            ShariahBoardNote: boardNote
         );
+    }
+
+    /// <summary>
+    /// Stocks supervised by their own Shariah board/committee are handled as a single case,
+    /// whether the source calls it a plain "لجنة شرعية" or an accredited
+    /// "هيئة رقابة شرعية داخلية معتمدة". Detection lives in
+    /// <see cref="Common.ShariahBoardDetector"/>; the flag itself is persisted on
+    /// ShariahCompliance.HasShariahBoard (populated from seed/source data).
+    /// </summary>
+    private static void DetectShariahBoard(
+        Domain.Entities.Stock stock,
+        out bool hasBoard,
+        out string? boardNote)
+    {
+        hasBoard = Common.ShariahBoardDetector.IsBoardGoverned(
+            stock.ShariahCompliance, stock.ShariahSourceOpinions);
+        boardNote = Common.ShariahBoardDetector.NoteFor(hasBoard);
+    }
+
+    private static Meezan.Application.Features.Shariah.DTOs.StockShariahMetricsDto? BuildMetricsDto(
+        Meezan.Domain.Entities.StockShariahMetrics? sm)
+    {
+        if (sm is null) return null;
+        return new Meezan.Application.Features.Shariah.DTOs.StockShariahMetricsDto
+        {
+            Id = sm.Id,
+            StockId = sm.StockId,
+            Zakat = sm.Zakat,
+            SpHaramEarningPercentage = sm.SpHaramEarningPercentage,
+            AaoifiHaramEarningPerShare = sm.AaoifiHaramEarningPerShare,
+            HaramEarningsPercentage = sm.HaramEarningsPercentage,
+            LoansPercentage = sm.LoansPercentage,
+            FairValueValuation = sm.FairValueValuation,
+            BookValue = sm.BookValue,
+            Profit = sm.Profit,
+            Dividend = sm.Dividend,
+            DividendType = sm.DividendType,
+            CoreActivityCompliant = sm.CoreActivityCompliant,
+            CashLiquidityCompliant = sm.CashLiquidityCompliant,
+            HaramInvestmentsCompliant = sm.HaramInvestmentsCompliant,
+            CategoryEn = sm.CategoryEn,
+            CategoryAr = sm.CategoryAr,
+            SourceUpdatedAt = sm.SourceUpdatedAt,
+            FetchedAt = sm.FetchedAt
+        };
     }
 }

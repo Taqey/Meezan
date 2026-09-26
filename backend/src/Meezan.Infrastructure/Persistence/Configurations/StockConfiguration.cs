@@ -38,6 +38,17 @@ public class StockConfiguration : IEntityTypeConfiguration<Stock>
             // The Stock entity's C# initializer (DataStatus = StockDataStatus.Active) ensures
             // new inserts always send the correct value explicitly.
 
+        // IsActive: same pattern — no HasDefaultValue() to avoid ValueGeneratedOnAdd().
+        // DB-level DEFAULT (1) is applied in the migration SQL.
+        // The C# initialiser (IsActive = true) ensures correct value is sent on INSERT.
+        builder.Property(e => e.IsActive)
+            .IsRequired();
+
+        builder.Property(e => e.DeactivatedAt);
+
+        builder.Property(e => e.DeactivationReason)
+            .HasMaxLength(500);
+
         builder.Property(e => e.CreatedAt)
             .IsRequired();
 

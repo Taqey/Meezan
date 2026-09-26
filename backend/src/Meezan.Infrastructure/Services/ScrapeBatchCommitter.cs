@@ -94,6 +94,97 @@ public class ScrapeBatchCommitter : IScrapeBatchCommitter
         });
     }
 
+    public async Task CommitSelectedLiveAsync(IReadOnlyList<StockScrapedSnapshot> batch, CancellationToken ct = default)
+    {
+        if (batch == null || batch.Count == 0)
+        {
+            _logger.LogWarning("ScrapeBatchCommitter: Selected batch is empty. Skipping commit.");
+            return;
+        }
+
+        var stockIds = batch.Select(s => s.StockId).Distinct().ToList();
+        _logger.LogInformation("Beginning selective live commit for {Count} stock(s)...", stockIds.Count);
+
+        var strategy = _context.Database.CreateExecutionStrategy();
+        await strategy.ExecuteAsync(async () =>
+        {
+            await using var tx = await _context.Database.BeginTransactionAsync(ct);
+            try
+            {
+                // NOTE: NO ChangeTracker.Clear() here — unlike the full-run commits, this
+                // scoped commit runs inside the same request as the handler's tracked
+                // Stock/ScrapeRunLog entities. Clearing would detach them and their
+                // navigations, and the handler's later SaveChanges then fails with
+                // "Unexpected entry.EntityState: Detached". Scoped deletes use
+                // ExecuteDelete (bypass the tracker), and every upsert here resolves the
+                // DB row through a query, so tracked entities are never in conflict.
+
+                // Scoped deletes — ONLY the selected stocks' rows, never the whole table.
+                // (Two-step for methods: ExecuteDelete cannot join via navigation.)
+                var existingFvIds = await _context.StockFairValues
+                    .Where(f => stockIds.Contains(f.StockId))
+                    .Select(f => f.Id)
+                    .ToListAsync(ct);
+                if (existingFvIds.Count > 0)
+                {
+                    await _context.StockFairValueMethods
+                        .Where(m => existingFvIds.Contains(m.StockFairValueId))
+                        .ExecuteDeleteAsync(ct);
+                }
+                await _context.StockFairValues
+                    .Where(f => stockIds.Contains(f.StockId))
+                    .ExecuteDeleteAsync(ct);
+                await _context.StockSupportResistance
+                    .Where(s => stockIds.Contains(s.StockId))
+                    .ExecuteDeleteAsync(ct);
+
+                var fairValueList = new List<StockFairValue>();
+                var supportResistanceList = new List<StockSupportResistance>();
+
+                foreach (var snapshot in batch)
+                {
+                    if (snapshot.MarketData is not null)
+                    {
+                        await UpsertLiveMarketDataAsync(snapshot.MarketData, ct);
+                    }
+
+                    if (snapshot.FairValue is not null)
+                    {
+                        if (snapshot.FairValueMethods is { Count: > 0 })
+                        {
+                            snapshot.FairValue.Methods = snapshot.FairValueMethods;
+                        }
+                        fairValueList.Add(snapshot.FairValue);
+                    }
+
+                    if (snapshot.SupportResistance is not null)
+                    {
+                        supportResistanceList.Add(snapshot.SupportResistance);
+                    }
+                }
+
+                if (fairValueList.Count > 0)
+                    await _context.StockFairValues.AddRangeAsync(fairValueList, ct);
+
+                if (supportResistanceList.Count > 0)
+                    await _context.StockSupportResistance.AddRangeAsync(supportResistanceList, ct);
+
+                await _context.SaveChangesAsync(ct);
+                await tx.CommitAsync(ct);
+
+                _logger.LogInformation(
+                    "Selective live commit succeeded for {Count} stock(s).",
+                    stockIds.Count);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Transaction failed during selective live commit. Rolling back changes.");
+                await tx.RollbackAsync(ct);
+                throw;
+            }
+        });
+    }
+
     public async Task CommitSlowAsync(IReadOnlyList<StockScrapedSnapshot> batch, CancellationToken ct = default)
     {
         if (batch == null || batch.Count == 0)

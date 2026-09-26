@@ -23,6 +23,10 @@ public class ShariahComplianceConfiguration : IEntityTypeConfiguration<ShariahCo
         builder.Property(e => e.Note)
             .HasMaxLength(1000);
 
+        builder.Property(e => e.HasShariahBoard)
+            .IsRequired()
+            .HasDefaultValue(false);
+
         builder.Property(e => e.LastCheckedAt)
             .IsRequired();
 

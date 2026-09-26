@@ -1,0 +1,215 @@
+<html dir="rtl"><head><?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"><meta http-equiv="Content-Type" content="text/html; charset=utf-8"></head><body>
+<form method="post" action="currentindexconstituntes.aspx?type=5&amp;nav=4" id="aspnetForm">
+<div>
+<input type="hidden" name="__VIEWSTATE" id="
+__VIEWSTATE" value="" />
+</div>
+<div>
+	<table cellspacing="1" cellpadding="8" border="0" id="ctl00_C_CIC_GridView1" style="background-color:#DDDDDD;border-width:0px;border-style:Solid;width:100%;">
+		<tr class="headview">
+			<th align="right" scope="col">كود الترقيم الدولى</th><th align="right" scope="col">كود رويترز</th><th align="right" scope="col">اسم الشركة</th>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS675S1C011</td><td align="right">AMER.CA</td><td align="right">(مجموعة عامر القابضة (عامر جروب</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS676N1C015</td><td align="right">ATLC.CA</td><td align="right">A.T.LEASEالتوفيق للتأجير التمويلي -أية.تي.ليس</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS512O1C012</td><td align="right">ISPH.CA</td><td align="right">ابن سينا فارما</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS38191C010</td><td align="right">ABUK.CA</td><td align="right">ابوقير للاسمدة والصناعات الكيماوية</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS21351C019</td><td align="right">AIHC.CA</td><td align="right">ارابيا انفستمنتس هولدنج</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS65R01C015</td><td align="right">AIDC.CA</td><td align="right">ارابيا للاستثمار والتنمية</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS691L1C018</td><td align="right">ASPI.CA</td><td align="right">اسباير كابيتال القابضة للاستثمارات المالية</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS3C401C014</td><td align="right">SCEM.CA</td><td align="right">اسمنت سيناء</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS10001C013</td><td align="right">ASCM.CA</td><td align="right">اسيك للتعدين    -  اسكوم</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS071L1C018</td><td align="right">AIFI.CA</td><td align="right">اطلس للاستثمار والصناعات الغذائية</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS673Y1C015</td><td align="right">EMFD.CA</td><td align="right">إعمار مصر للتنمية</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS7D5P1C019</td><td align="right">ACTF.CA</td><td align="right">اكت فاينانشال للاستشارات</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS42111C012</td><td align="right">ALCN.CA</td><td align="right">الاسكندرية لتداول الحاويات والبضائع</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS380P1C010</td><td align="right">AMOC.CA</td><td align="right">الاسكندرية للزيوت المعدنية</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS214Q1C011</td><td align="right">IDRE.CA</td><td align="right">الاسماعيلية الجديدة للتطوير والتنمية العمرانية-شركة منقسمة</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS02021C011</td><td align="right">ISMA.CA</td><td align="right">الاسماعيلية مصر للدواجن</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS60121C018</td><td align="right">COMI.CA</td><td align="right">البنك التجاري الدولي -مصر (سى اى بى )</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS60241C014</td><td align="right">EXPA.CA</td><td align="right">البنك المصري لتنمية الصادرات</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS65081C019</td><td align="right">DAPH.CA</td><td align="right">التعمير والاستشارات الهندسية</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS102S1C014</td><td align="right">ISMQ.CA</td><td align="right">الحديد والصلب للمناجم والمحاجر</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS520D1C015</td><td align="right">ICFC.CA</td><td align="right">الدولية للأسمدة والكيماويات</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS38251C012</td><td align="right">ZEOT.CA</td><td align="right">الزيوت المستخلصة ومنتجاتها</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS65851C015</td><td align="right">OCDI.CA</td><td align="right">السادس من اكتوبر للتنميه والاستثمار- سوديك</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS3G0Z1C014</td><td align="right">SWDY.CA</td><td align="right">السويدى اليكتريك</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS37091C013</td><td align="right">EAST.CA</td><td align="right">الشرقية - ايسترن كومباني</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS65091C018</td><td align="right">ELSH.CA</td><td align="right">الشمس للاسكان والتعمير</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS21531C016</td><td align="right">UEGC.CA</td><td align="right">الصعيد العامة للمقاولات والاستثمار العقاري SCCD</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS38201C017</td><td align="right">EGCH.CA</td><td align="right">الصناعات الكيماوية المصرية - كيما</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS3F021C017</td><td align="right">ENGC.CA</td><td align="right">الصناعات الهندسية المعمارية للانشاء والتعمير - ايكون</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS381B1C015</td><td align="right">RMDA.CA</td><td align="right">العاشر من رمضان للصناعات الدوائية والمستحضرات تشخيصية-راميدا</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS3C111C019</td><td align="right">PRCL.CA</td><td align="right">العامة لمنتجات الخزف والصيني</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS3C4L1C015</td><td align="right">MEPA.CA</td><td align="right">العبوات الطبية</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS65551C011</td><td align="right">OBRI.CA</td><td align="right">العبور للاستثمار العقارى</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS3C0O1C016</td><td align="right">ARCC.CA</td><td align="right">العربية للاسمنت</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS65071C010</td><td align="right">ELKA.CA</td><td align="right">القاهرة للاسكان والتعمير</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS02051C018</td><td align="right">POUL.CA</td><td align="right">القاهرة للدواجن</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS30581C010</td><td align="right">COSG.CA</td><td align="right">القاهرة للزيوت والصابون</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS73541C012</td><td align="right">CCAP.CA</td><td align="right">القلعة للاستثمارات المالية</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS44031C010</td><td align="right">CSAG.CA</td><td align="right">القناة للتوكيلات الملاحية</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS3G231C011</td><td align="right">ELEC.CA</td><td align="right">الكابلات الكهربائية المصرية</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS22171C010</td><td align="right">IEEC.CA</td><td align="right">المشروعات الصناعية والهندسية</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS38081C013</td><td align="right">PHAR.CA</td><td align="right">المصرية الدولية للصناعات الدوائية - ايبيكو</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS42051C010</td><td align="right">ETRS.CA</td><td align="right">المصرية لخدمات النقل والتجارة ايجيترانس نوسكو</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS48031C016</td><td align="right">ETEL.CA</td><td align="right">المصرية للاتصالات</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS70431C019</td><td align="right">EGTS.CA</td><td align="right">المصرية للمنتجعات السياحية</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS729F1C012</td><td align="right">MOED.CA</td><td align="right">المصرية لنظم التعليم الحديثة</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS78021C010</td><td align="right">MPRC.CA</td><td align="right">المصريه لمدينة الانتاج الاعلامى</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS65341C017</td><td align="right">EHDR.CA</td><td align="right">المصريين للاسكان والتنمية والتعمير</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS694A1C018</td><td align="right">ARAB.CA</td><td align="right">المطورون العرب القابضة</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS67221C019</td><td align="right">AMIA.CA</td><td align="right">الملتقي العربي للاستثمارات</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS02091C014</td><td align="right">MPCO.CA</td><td align="right">المنصورة للدواجن</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS33041C012</td><td align="right">ORWE.CA</td><td align="right">النساجون الشرقيون للسجاد</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS33061C010</td><td align="right">KABO.CA</td><td align="right">النصر للملابس والمنسوجات - كابو</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS38331C012</td><td align="right">NIPH.CA</td><td align="right">النيل للادوية والصناعات الكيماوية - النيل</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS75011C014</td><td align="right">MTIE.CA</td><td align="right">ام.ام جروب للصناعة والتجارة العالمية</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS696S1C016</td><td align="right">OFH.CA</td><td align="right">او بي المالية القابضة</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS95001C011</td><td align="right">ORAS.CA</td><td align="right">اوراسكوم كونستراكشون بي ال سي</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS693V1C014</td><td align="right">OIH.CA</td><td align="right">اوراسكوم للاستثمار القابضه</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS70321C012</td><td align="right">ORHD.CA</td><td align="right">اوراسكوم للتنمية مصر</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS743O1C013</td><td align="right">EFIH.CA</td><td align="right">اي فاينانس للاستثمارات المالية والرقمية</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS305I1C011</td><td align="right">EFID.CA</td><td align="right">ايديتا للصناعات الغذائية</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS655L1C012</td><td align="right">PHDC.CA</td><td align="right">بالم هيلز للتعمير</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS21FW1C015</td><td align="right">PRDC.CA</td><td align="right">بايونيرز بروبرتيز للتنمية العمرانية بي ار اي جروب</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS691G1C015</td><td align="right">BTFH.CA</td><td align="right">بلتون القابضة</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS60301C016</td><td align="right">HDBK.CA</td><td align="right">بنك التعمير والاسكان</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS60041C018</td><td align="right">CIEB.CA</td><td align="right">بنك كريدي اجريكول مصر</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS656M1C010</td><td align="right">BONY.CA</td><td align="right">بنيان للتنمية والتجارة</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS3JM11C012</td><td align="right">GDWA.CA</td><td align="right">جدوى للتنمية الصناعية</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS3C351C011</td><td align="right">SVCE.CA</td><td align="right">جنوب الوادى للاسمنت</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS30901C010</td><td align="right">JUFO.CA</td><td align="right">جهينة للصناعات الغذائية</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS540S1C014</td><td align="right">GOUR.CA</td><td align="right">جورميه ايجيبت دوت كوم للاغذية</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS213S1C010</td><td align="right">GPIM.CA</td><td align="right">جى بى اى للنمو العمرانى</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS673T1C012</td><td align="right">GBCO.CA</td><td align="right">جى بى كوربوريشن</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS33321C018</td><td align="right">DSCW.CA</td><td align="right">دايس للملابس الجاهزة</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS690C1C010</td><td align="right">RAYA.CA</td><td align="right">راية القابضة للأستثمارات المالية</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS21171C011</td><td align="right">ZMID.CA</td><td align="right">زهراء المعادي للاستثمار والتعمير</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS382M1C011</td><td align="right">SIPC.CA</td><td align="right">سبأ الدولية للأدوية والصناعات الكيماوية</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS380S1C017</td><td align="right">SKPC.CA</td><td align="right">سيدى كرير للبتروكيماويات - سيدبك</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS70571C012</td><td align="right">SDTI.CA</td><td align="right">شارم دريمز للاستثمار السياحى</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS23111C015</td><td align="right">NCCW.CA</td><td align="right">شركة النصر للأعمال المدنية</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS729J1C018</td><td align="right">CLHO.CA</td><td align="right">شركة مستشفي كليوباترا</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS490S1C014</td><td align="right">TAQA.CA</td><td align="right">طاقة عربية</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS69082C013</td><td align="right">VLMR.CA</td><td align="right">فالمور القابضة للاستثمار</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS69081C023</td><td align="right">VLMRA.CA</td><td align="right">فالمور القابضة للاستثماربالجنية</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS745L1C014</td><td align="right">FWRY.CA</td><td align="right">فوري لتكنولوجيا البنوك والمدفوعات الالكترونية</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS738I1C018</td><td align="right">CNFN.CA</td><td align="right">كونتكت المالية القابضة</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS3C161C014</td><td align="right">LCSW.CA</td><td align="right">ليسيكو مصر</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS7D971C011</td><td align="right">MCRO.CA</td><td align="right">ماكرو جروب للمستحضرات الطبية-ماكرو كابيتال</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS69101C011</td><td align="right">HRHO.CA</td><td align="right">مجموعة اي اف جي القابضة</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS691S1C011</td><td align="right">TMGH.CA</td><td align="right">مجموعة طلعت مصطفى القابضة</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS65571C019</td><td align="right">MASR.CA</td><td align="right">مدينة مصر للاسكان والتعمير</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS65591C017</td><td align="right">HELI.CA</td><td align="right">مصر الجديدة للاسكان والتعمير</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS3D0C1C018</td><td align="right">ATQA.CA</td><td align="right">مصر الوطنية للصلب - عتاقة</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS3C371C019</td><td align="right">MBSC.CA</td><td align="right">مصر بنى سويف للاسمنت</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS39061C014</td><td align="right">MFPC.CA</td><td align="right">مصر لإنتاج الأسمدة - موبكو</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS3C391C017</td><td align="right">MCQE.CA</td><td align="right">مصر للاسمنت - قنا</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS3E181C010</td><td align="right">EGAL.CA</td><td align="right">مصر للالومنيوم</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS60111C019</td><td align="right">ADIB.CA</td><td align="right">مصرف أبو ظبي الأسلامي- مصر</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS38351C010</td><td align="right">MPCI.CA</td><td align="right">ممفيس للادوية والصناعات الكيماوية</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS505Z1C018</td><td align="right">VALU.CA</td><td align="right">يو للتمويل الاستهلاكى</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS38161C013</td><td align="right">UNIP.CA</td><td align="right">يونيفرسال لصناعة مواد التعبئة و التغليف و الورق - يونيباك</td>
+		</tr>
+	</table>
+</div></form></body></html>

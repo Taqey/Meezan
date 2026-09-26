@@ -1,4 +1,4 @@
-using System.Text.Encodings.Web;
+﻿using System.Text.Encodings.Web;
 using System.Text.Unicode;
 using Meezan.Application;
 using Meezan.Infrastructure;
@@ -26,13 +26,13 @@ builder.Services.AddCors(options =>
     {
         policy.WithOrigins(
                     "http://localhost:3000", "https://localhost:3000",
-                    "http://localhost:4200", "https://localhost:4200")
+                    "http://localhost:4200", "https://localhost:4200",
+                    "https://meezan-beta-six.vercel.app")   // 👈 ضيف ده
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
     });
 });
-
 // Add Swagger / OpenAPI
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>

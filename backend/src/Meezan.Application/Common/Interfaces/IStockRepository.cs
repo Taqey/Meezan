@@ -31,12 +31,37 @@ public interface IStockRepository
     Task UpdateAsync(Stock stock, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Permanently deletes a stock and ALL child records
-    /// (MarketData, FairValues, FairValueMethods, SupportResistance, IndexConstituents,
-    ///  ShariahCompliance, ShariahMetrics, ShariahSourceOpinions) in a single transaction.
-    /// This is a hard delete — there is no recovery.
+    /// Soft-deactivates a stock by setting IsActive = false.
+    /// The row and ALL child data remain in the database; normal read queries
+    /// filter to IsActive = true so the stock simply stops appearing in results.
+    /// Use the review/reactivate endpoints to undo this if needed.
     /// </summary>
-    Task DeletePermanentlyAsync(int stockId, CancellationToken cancellationToken = default);
+    Task DeactivateAsync(int stockId, string reason, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Restores a previously deactivated stock (IsActive = true).
+    /// </summary>
+    Task ReactivateAsync(int stockId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Returns all stocks where IsActive = false, for operator review.
+    /// </summary>
+    Task<List<Stock>> GetDeactivatedStocksAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Loads the requested tickers WITH MarketData, bypassing the IsActive filter.
+    /// Used by the operator-driven selective refresh so deactivated or
+    /// flagged stocks can be explicitly re-scraped on demand.
+    /// </summary>
+    Task<List<Stock>> GetByTickersIncludingInactiveAsync(
+        IEnumerable<string> tickers, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Restores DataStatus = Active for explicitly refreshed stocks.
+    /// Single SQL statement — no change tracking of caller-held entities.
+    /// </summary>
+    Task SetActiveDataStatusAsync(
+        IEnumerable<int> stockIds, CancellationToken cancellationToken = default);
 
     /// <summary>Flushes all pending EF changes to the database.</summary>
     Task SaveChangesAsync(CancellationToken cancellationToken = default);

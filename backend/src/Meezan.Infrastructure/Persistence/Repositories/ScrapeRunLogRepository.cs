@@ -28,8 +28,15 @@ public class ScrapeRunLogRepository : IScrapeRunLogRepository
 
     public async Task<ScrapeRunLog?> GetLatestAsync(CancellationToken ct = default)
     {
+        // Prefer the latest FINISHED run: an in-progress run still holds zeros
+        // (TotalStocks/Succeeded/Failed are only written on finalisation), so
+        // returning it would report "إجمالي الأسهم: 0" while a run is in flight.
+        // Fall back to the latest row overall only when no finished run exists.
         return await _context.ScrapeRunLogs
             .OrderByDescending(l => l.StartedAt)
-            .FirstOrDefaultAsync(ct);
+            .FirstOrDefaultAsync(l => l.FinishedAt != null, ct)
+            ?? await _context.ScrapeRunLogs
+                .OrderByDescending(l => l.StartedAt)
+                .FirstOrDefaultAsync(ct);
     }
 }

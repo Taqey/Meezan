@@ -169,52 +169,53 @@ public class AdminMarketDataController : ControllerBase
             );
 
             var fvResult = FairValueCalculator.Compute(estimates, marketData.ClosingPrice);
-            if (fvResult.FairValue.HasValue)
+
+            // Persist Unavailable results too (FairValue null) — a skipped row used to read
+            // back as a fabricated "قريبة من العادلة" verdict. calculatedFairValue stays null
+            // so the response never reports a number that was not computed.
+            calculatedFairValue = fvResult.FairValue;
+
+            var existingFv = await _context.StockFairValues
+                .Include(fv => fv.Methods)
+                .FirstOrDefaultAsync(fv => fv.StockId == stock.Id, cancellationToken);
+
+            if (existingFv is null)
             {
-                calculatedFairValue = fvResult.FairValue;
-
-                var existingFv = await _context.StockFairValues
-                    .Include(fv => fv.Methods)
-                    .FirstOrDefaultAsync(fv => fv.StockId == stock.Id, cancellationToken);
-
-                if (existingFv is null)
+                existingFv = new StockFairValue
                 {
-                    existingFv = new StockFairValue
-                    {
-                        StockId = stock.Id,
-                        FairValue = fvResult.FairValue,
-                        PriceComparison = fvResult.Comparison,
-                        FairValueDiff = fvResult.DiffAbs,
-                        FairValueDiffPct = fvResult.DiffPct,
-                        MethodsUsedCount = fvResult.MethodsUsedCount,
-                        MethodsExcludedCount = fvResult.MethodsExcludedCount,
-                        Confidence = fvResult.Confidence,
-                        ComputedAt = now
-                    };
-                    await _context.StockFairValues.AddAsync(existingFv, cancellationToken);
-                }
-                else
-                {
-                    existingFv.FairValue = fvResult.FairValue;
-                    existingFv.PriceComparison = fvResult.Comparison;
-                    existingFv.FairValueDiff = fvResult.DiffAbs;
-                    existingFv.FairValueDiffPct = fvResult.DiffPct;
-                    existingFv.MethodsUsedCount = fvResult.MethodsUsedCount;
-                    existingFv.MethodsExcludedCount = fvResult.MethodsExcludedCount;
-                    existingFv.Confidence = fvResult.Confidence;
-                    existingFv.ComputedAt = now;
-
-                    _context.StockFairValueMethods.RemoveRange(existingFv.Methods);
-                }
-
-                existingFv.Methods = fvResult.Methods.Select(m => new StockFairValueMethod
-                {
-                    StockFairValueId = existingFv.Id,
-                    MethodName = m.Name,
-                    EstimatedValue = m.Value,
-                    IsOutlier = m.IsOutlier
-                }).ToList();
+                    StockId = stock.Id,
+                    FairValue = fvResult.FairValue,
+                    PriceComparison = fvResult.Comparison,
+                    FairValueDiff = fvResult.DiffAbs,
+                    FairValueDiffPct = fvResult.DiffPct,
+                    MethodsUsedCount = fvResult.MethodsUsedCount,
+                    MethodsExcludedCount = fvResult.MethodsExcludedCount,
+                    Confidence = fvResult.Confidence,
+                    ComputedAt = now
+                };
+                await _context.StockFairValues.AddAsync(existingFv, cancellationToken);
             }
+            else
+            {
+                existingFv.FairValue = fvResult.FairValue;
+                existingFv.PriceComparison = fvResult.Comparison;
+                existingFv.FairValueDiff = fvResult.DiffAbs;
+                existingFv.FairValueDiffPct = fvResult.DiffPct;
+                existingFv.MethodsUsedCount = fvResult.MethodsUsedCount;
+                existingFv.MethodsExcludedCount = fvResult.MethodsExcludedCount;
+                existingFv.Confidence = fvResult.Confidence;
+                existingFv.ComputedAt = now;
+
+                _context.StockFairValueMethods.RemoveRange(existingFv.Methods);
+            }
+
+            existingFv.Methods = fvResult.Methods.Select(m => new StockFairValueMethod
+            {
+                StockFairValueId = existingFv.Id,
+                MethodName = m.Name,
+                EstimatedValue = m.Value,
+                IsOutlier = m.IsOutlier
+            }).ToList();
         }
 
         await _context.SaveChangesAsync(cancellationToken);

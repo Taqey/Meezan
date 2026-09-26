@@ -1,0 +1,75 @@
+<html dir="rtl"><head><?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"><meta http-equiv="Content-Type" content="text/html; charset=utf-8"></head><body>
+<form method="post" action="currentindexconstituntes.aspx?type=1&amp;nav=1" id="aspnetForm">
+<div>
+<input type="hidden" name="__VIEWSTATE" id="
+__VIEWSTATE" value="" />
+</div>
+<div>
+	<table cellspacing="1" cellpadding="8" border="0" id="ctl00_C_CIC_GridView1" style="background-color:#DDDDDD;border-width:0px;border-style:Solid;width:100%;">
+		<tr class="headview">
+			<th align="right" scope="col">كود الترقيم الدولى</th><th align="right" scope="col">كود رويترز</th><th align="right" scope="col">اسم الشركة</th><th scope="col">الوزن النسبى (%)</th>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS512O1C012</td><td align="right">ISPH.CA</td><td align="right">ابن سينا فارما</td><td>0.97</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS38191C010</td><td align="right">ABUK.CA</td><td align="right">ابوقير للاسمدة والصناعات الكيماوية</td><td>3.20</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS673Y1C015</td><td align="right">EMFD.CA</td><td align="right">إعمار مصر للتنمية</td><td>0.81</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS42111C012</td><td align="right">ALCN.CA</td><td align="right">الاسكندرية لتداول الحاويات والبضائع</td><td>1.33</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS380P1C010</td><td align="right">AMOC.CA</td><td align="right">الاسكندرية للزيوت المعدنية</td><td>1.24</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS60121C018</td><td align="right">COMI.CA</td><td align="right">البنك التجاري الدولي -مصر (سى اى بى )</td><td>29.28</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS37091C013</td><td align="right">EAST.CA</td><td align="right">الشرقية - ايسترن كومباني</td><td>5.33</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS381B1C015</td><td align="right">RMDA.CA</td><td align="right">العاشر من رمضان للصناعات الدوائية والمستحضرات تشخيصية-راميدا</td><td>0.73</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS73541C012</td><td align="right">CCAP.CA</td><td align="right">القلعة للاستثمارات المالية</td><td>2.18</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS48031C016</td><td align="right">ETEL.CA</td><td align="right">المصرية للاتصالات</td><td>7.48</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS95001C011</td><td align="right">ORAS.CA</td><td align="right">اوراسكوم كونستراكشون بي ال سي</td><td>2.52</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS70321C012</td><td align="right">ORHD.CA</td><td align="right">اوراسكوم للتنمية مصر</td><td>1.32</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS743O1C013</td><td align="right">EFIH.CA</td><td align="right">اي فاينانس للاستثمارات المالية والرقمية</td><td>4.60</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS305I1C011</td><td align="right">EFID.CA</td><td align="right">ايديتا للصناعات الغذائية</td><td>2</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS655L1C012</td><td align="right">PHDC.CA</td><td align="right">بالم هيلز للتعمير</td><td>1.44</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS691G1C015</td><td align="right">BTFH.CA</td><td align="right">بلتون القابضة</td><td>1.34</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS30901C010</td><td align="right">JUFO.CA</td><td align="right">جهينة للصناعات الغذائية</td><td>0.94</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS673T1C012</td><td align="right">GBCO.CA</td><td align="right">جى بى كوربوريشن</td><td>1.35</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS690C1C010</td><td align="right">RAYA.CA</td><td align="right">راية القابضة للأستثمارات المالية</td><td>0.72</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS380S1C017</td><td align="right">SKPC.CA</td><td align="right">سيدى كرير للبتروكيماويات - سيدبك</td><td>1.08</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS729J1C018</td><td align="right">CLHO.CA</td><td align="right">شركة مستشفي كليوباترا</td><td>0.99</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS69082C013</td><td align="right">VLMR.CA</td><td align="right">فالمور القابضة للاستثمار</td><td>1.54</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS69081C023</td><td align="right">VLMRA.CA</td><td align="right">فالمور القابضة للاستثماربالجنية</td><td>0.59</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS745L1C014</td><td align="right">FWRY.CA</td><td align="right">فوري لتكنولوجيا البنوك والمدفوعات الالكترونية</td><td>5.44</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS69101C011</td><td align="right">HRHO.CA</td><td align="right">مجموعة اي اف جي القابضة</td><td>2.83</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS691S1C011</td><td align="right">TMGH.CA</td><td align="right">مجموعة طلعت مصطفى القابضة</td><td>10.28</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS65591C017</td><td align="right">HELI.CA</td><td align="right">مصر الجديدة للاسكان والتعمير</td><td>1.02</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS39061C014</td><td align="right">MFPC.CA</td><td align="right">مصر لإنتاج الأسمدة - موبكو</td><td>2.20</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS3C391C017</td><td align="right">MCQE.CA</td><td align="right">مصر للاسمنت - قنا</td><td>1.05</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS3E181C010</td><td align="right">EGAL.CA</td><td align="right">مصر للالومنيوم</td><td>1.33</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS60111C019</td><td align="right">ADIB.CA</td><td align="right">مصرف أبو ظبي الأسلامي- مصر</td><td>2.89</td>
+		</tr>
+	</table>
+</div></form></body></html>

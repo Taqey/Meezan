@@ -19,6 +19,7 @@ public class StockRepository : IStockRepository
     {
         return await _context.Stocks
             .Include(s => s.Sector)
+            .Where(s => s.IsActive)
             .FirstOrDefaultAsync(s => s.Ticker.ToUpper() == ticker.Trim().ToUpper(), cancellationToken);
     }
 
@@ -31,6 +32,7 @@ public class StockRepository : IStockRepository
     {
         return await _context.Stocks
             .Include(s => s.Sector)
+            .Where(s => s.IsActive)
             .ToListAsync(cancellationToken);
     }
 
@@ -38,6 +40,7 @@ public class StockRepository : IStockRepository
     {
         return await _context.Stocks
             .AsNoTracking()
+            .Where(s => s.IsActive)
             .Include(s => s.Sector)
             .Include(s => s.MarketData)
             .Include(s => s.FairValue)
@@ -51,6 +54,7 @@ public class StockRepository : IStockRepository
     {
         var upper = ticker.Trim().ToUpper();
         return await _context.Stocks
+            .Where(s => s.IsActive)
             .Include(s => s.Sector)
             .Include(s => s.IndexConstituents)
                 .ThenInclude(ic => ic.Index)
@@ -68,7 +72,7 @@ public class StockRepository : IStockRepository
         StockListFilter f, CancellationToken cancellationToken = default)
     {
         // Start from Stocks — all joins are LEFT (via EF optional navigation)
-        var query = _context.Stocks.AsNoTracking();
+        var query = _context.Stocks.AsNoTracking().Where(st => st.IsActive);
 
         // ── Filters ───────────────────────────────────────────────────────────
 
@@ -108,12 +112,15 @@ public class StockRepository : IStockRepository
                 st.ShariahCompliance != null && st.ShariahCompliance.Status == shStatus);
         }
 
-        if (!string.IsNullOrWhiteSpace(f.PriceComparison) &&
-            Enum.TryParse<PriceComparison>(f.PriceComparison, ignoreCase: true, out var pc))
-        {
-            query = query.Where(st =>
-                st.FairValue != null && st.FairValue.PriceComparison == pc);
-        }
+            if (!string.IsNullOrWhiteSpace(f.PriceComparison) &&
+                Enum.TryParse<PriceComparison>(f.PriceComparison, ignoreCase: true, out var pc))
+            {
+                // "Unavailable" also covers stocks with no fair-value row at all: to the
+                // user both mean "no computable fair value".
+                query = pc == PriceComparison.Unavailable
+                    ? query.Where(st => st.FairValue == null || st.FairValue.PriceComparison == pc)
+                    : query.Where(st => st.FairValue != null && st.FairValue.PriceComparison == pc);
+            }
 
         if (f.MinCompliantSources.HasValue && f.MinCompliantSources.Value > 0)
         {
@@ -184,6 +191,27 @@ public class StockRepository : IStockRepository
         return (items, totalCount);
     }
 
+    public async Task<List<Stock>> GetByTickersIncludingInactiveAsync(
+        IEnumerable<string> tickers, CancellationToken cancellationToken = default)
+    {
+        var upper = tickers
+            .Where(t => !string.IsNullOrWhiteSpace(t))
+            .Select(t => t.Trim().ToUpper())
+            .Distinct()
+            .ToList();
+
+        if (upper.Count == 0) return new List<Stock>();
+
+        // NOTE: deliberately NO IsActive filter — the operator refresh must be able
+        // to target deactivated/flagged stocks. Tracking query (no AsNoTracking) so
+        // the caller can persist DataStatus restorations on success.
+        return await _context.Stocks
+            .Include(s => s.Sector)
+            .Include(s => s.MarketData)
+            .Where(s => upper.Contains(s.Ticker.ToUpper()))
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<Sector?> GetOrCreateSectorAsync(string? nameAr, string? nameEn, CancellationToken cancellationToken = default)
     {
         var cleanAr = nameAr?.Trim();
@@ -230,65 +258,60 @@ public class StockRepository : IStockRepository
         await _context.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task DeletePermanentlyAsync(int stockId, CancellationToken cancellationToken = default)
+    /// <summary>
+    /// Marks the given stocks Active again after a successful operator-driven
+    /// re-scrape. Uses ExecuteUpdate (single SQL, no change tracking) so the
+    /// entity graph held by the caller is never marked Modified.
+    /// </summary>
+    public async Task SetActiveDataStatusAsync(
+        IEnumerable<int> stockIds, CancellationToken cancellationToken = default)
     {
-        // Use a transaction so partial failure leaves the DB untouched.
-        var strategy = _context.Database.CreateExecutionStrategy();
-        await strategy.ExecuteAsync(async () =>
-        {
-            await using var tx = await _context.Database.BeginTransactionAsync(cancellationToken);
-            try
-            {
-                // Delete in FK order (children before parents).
-                // ExecuteDeleteAsync bypasses the change tracker — safe here because we
-                // have no tracked entities for this stock at call time.
+        var ids = stockIds.Distinct().ToList();
+        if (ids.Count == 0) return;
 
-                await _context.ShariahSourceOpinions
-                    .Where(x => x.StockId == stockId)
-                    .ExecuteDeleteAsync(cancellationToken);
+        await _context.Stocks
+            .Where(s => ids.Contains(s.Id))
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(s => s.DataStatus, StockDataStatus.Active)
+                .SetProperty(s => s.UpdatedAt, DateTime.UtcNow),
+            cancellationToken);
+    }
 
-                await _context.ShariahCompliances
-                    .Where(x => x.StockId == stockId)
-                    .ExecuteDeleteAsync(cancellationToken);
+    public async Task DeactivateAsync(int stockId, string reason, CancellationToken cancellationToken = default)
+    {
+        // Soft-deactivation — the row and all child data stay in the DB.
+        // IsActive = false hides the stock from all normal read queries.
+        await _context.Stocks
+            .Where(s => s.Id == stockId)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(s => s.IsActive, false)
+                .SetProperty(s => s.DeactivatedAt, DateTime.UtcNow)
+                .SetProperty(s => s.DeactivationReason, reason)
+                .SetProperty(s => s.UpdatedAt, DateTime.UtcNow),
+            cancellationToken);
+    }
 
-                await _context.StockShariahMetrics
-                    .Where(x => x.StockId == stockId)
-                    .ExecuteDeleteAsync(cancellationToken);
+    public async Task ReactivateAsync(int stockId, CancellationToken cancellationToken = default)
+    {
+        await _context.Stocks
+            .Where(s => s.Id == stockId)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(s => s.IsActive, true)
+                .SetProperty(s => s.DeactivatedAt, (DateTime?)null)
+                .SetProperty(s => s.DeactivationReason, (string?)null)
+                .SetProperty(s => s.UpdatedAt, DateTime.UtcNow),
+            cancellationToken);
+    }
 
-                await _context.IndexConstituents
-                    .Where(x => x.StockId == stockId)
-                    .ExecuteDeleteAsync(cancellationToken);
-
-                // StockFairValueMethods → StockFairValues (cascade-delete via FK,
-                // but explicit here to be safe with the ExecuteDeleteAsync path).
-                await _context.StockFairValueMethods
-                    .Where(m => m.StockFairValue!.StockId == stockId)
-                    .ExecuteDeleteAsync(cancellationToken);
-
-                await _context.StockFairValues
-                    .Where(x => x.StockId == stockId)
-                    .ExecuteDeleteAsync(cancellationToken);
-
-                await _context.StockSupportResistance
-                    .Where(x => x.StockId == stockId)
-                    .ExecuteDeleteAsync(cancellationToken);
-
-                await _context.StockMarketData
-                    .Where(x => x.StockId == stockId)
-                    .ExecuteDeleteAsync(cancellationToken);
-
-                await _context.Stocks
-                    .Where(s => s.Id == stockId)
-                    .ExecuteDeleteAsync(cancellationToken);
-
-                await tx.CommitAsync(cancellationToken);
-            }
-            catch
-            {
-                await tx.RollbackAsync(cancellationToken);
-                throw;
-            }
-        });
+    public async Task<List<Stock>> GetDeactivatedStocksAsync(CancellationToken cancellationToken = default)
+    {
+        return await _context.Stocks
+            .AsNoTracking()
+            .Where(s => !s.IsActive)
+            .Include(s => s.MarketData)
+            .Include(s => s.Sector)
+            .OrderByDescending(s => s.DeactivatedAt)
+            .ToListAsync(cancellationToken);
     }
 
 

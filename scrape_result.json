@@ -1,0 +1,8 @@
+﻿{
+    "success":  false,
+    "totalStocks":  262,
+    "succeeded":  251,
+    "failed":  11,
+    "duration":  "00:04:20.4309116",
+    "errorSummary":  "Stale Mubasher date staged as-is for 251 stock(s) (review via removal-candidates checklist, no auto-action taken): VLMRA (آخر تحديث: 24 سبتمبر 01:29 م بتوقيت السوق), VLMR (آخر تحديث: 24 سبتمبر 01:13 م بتوقيت السوق), RAYA (آخر تحديث: 24 سبتمبر 01:29 م بتوقيت السوق), HRHO (آخر تحديث: 24 سبتمبر 01:29 م بتوقيت السوق), BTFH (آخر تحديث: 24 سبتمبر 01:29 م بتوقيت السوق), CCAP (آخر تحديث: 24 سبتمبر 01:29 م بتوقيت السوق), HELI (آخر تحديث: 24 سبتمبر 01:29 م بتوقيت السوق), PHDC (آخر تحديث: 24 سبتمبر 01:29 م بتوقيت السوق), EMFD (آخر تحديث: 24 سبتمبر 01:27 م بتوقيت السوق), TMGH (آخر تحديث: 24 سبتمبر 01:29 م بتوقيت السوق), ORHD (آخر تحديث: 24 سبتمبر 01:29 م بتوقيت السوق), ALCN (آخر تحديث: 24 سبتمبر 01:26 م بتوقيت السوق), ADIB (آخر تحديث: 24 سبتمبر 01:29 م بتوقيت السوق), COMI (آخر تحديث: 24 سبتمبر 01:29 م بتوقيت السوق), SKPC (آخر تحديث: 24 سبتمبر 01:29 م بتوقيت السوق), ABUK (آخر تحديث: 24 سبتمبر 01:29 م بتوقيت السوق), MFPC (آخر تحديث: 24 سبتمبر 01:25 م بتوقيت السوق), EGAL (آخر تحديث: 24 سبتمبر 01:29 م بتوقيت السوق), MCQE (آخر تحديث: 24 سبتمبر 01:28 م بتوقيت السوق), ORAS (آخر تحديث: 24 سبتمبر 01:29 م بتوقيت السوق)…; GOUR: 404 Not Found on Mubasher; EFG: 404 Not Found on Mubasher; AIH: 404 Not Found on Mubasher; EIUD: 404 Not Found on Mubasher; REAC: 404 Not Found on Mubasher; ICMI: 404 Not Found on Mubasher; LBCT: 404 Not Found on Mubasher; MBEN: 404 Not Found on Mubasher; ANFI: 404 Not Found on Mubasher; KORRA: 404 Not Found on Mubasher; AMII: 404 Not Found on Mubasher"
+}

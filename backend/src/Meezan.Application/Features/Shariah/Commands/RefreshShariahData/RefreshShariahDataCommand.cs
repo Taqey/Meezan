@@ -184,6 +184,8 @@ public class RefreshShariahDataCommandHandler : IRequestHandler<RefreshShariahDa
             // 4. Update ShariahCompliance:
             // "only backfill Pct from sp_haram_earning_percentage when the stock's Status is Compliant AND Pct is currently null.
             // Never overwrite an already-set Pct. Everything else on ShariahCompliance is untouched by this job."
+            // Exception: HasShariahBoard is recomputed on every run so a stock that gains (or
+            // loses) a board/committee verdict in the source is displayed accordingly.
             var compliance = await _complianceRepository.GetByStockIdAsync(stock.Id, cancellationToken);
             if (compliance == null)
             {
@@ -191,19 +193,34 @@ public class RefreshShariahDataCommandHandler : IRequestHandler<RefreshShariahDa
             }
             else
             {
+                bool dirty = false;
+
+                bool hasBoardNow = Common.ShariahBoardDetector.IsBoardNote(compliance.Note)
+                    || opinionsDict.Values.Any(o => Common.ShariahBoardDetector.IsBoardNote(o.Note));
+                if (compliance.HasShariahBoard != hasBoardNow)
+                {
+                    compliance.HasShariahBoard = hasBoardNow;
+                    dirty = true;
+                }
+
                 if (compliance.Status == ShariahStatus.Compliant && compliance.Pct == null)
                 {
                     if (item.SpHaramEarningPercentage.HasValue)
                     {
                         compliance.Pct = item.SpHaramEarningPercentage.Value;
-                        compliance.UpdatedAt = now;
-                        _complianceRepository.Update(compliance);
+                        dirty = true;
                         pctUpdatedCount++;
                     }
                     else
                     {
                         skippedNoValueCount++;
                     }
+                }
+
+                if (dirty)
+                {
+                    compliance.UpdatedAt = now;
+                    _complianceRepository.Update(compliance);
                 }
             }
 
@@ -246,7 +263,7 @@ public class RefreshShariahDataCommandHandler : IRequestHandler<RefreshShariahDa
             existing.Status = dto.Status;
             existing.Percentage = dto.Percentage;
             existing.Note = dto.Note;
-            existing.PdfUrl = dto.PdfUrl;
+            existing.PdfUrl = Common.ShariahPdfUrlNormalizer.Normalize(dto.PdfUrl);
             existing.SourceLastUpdated = dto.LastUpdated;
             existing.FetchedAt = fetchedAt;
             if (!string.IsNullOrEmpty(dto.ExtraDataJson))
@@ -264,7 +281,7 @@ public class RefreshShariahDataCommandHandler : IRequestHandler<RefreshShariahDa
                 Status = dto.Status,
                 Percentage = dto.Percentage,
                 Note = dto.Note,
-                PdfUrl = dto.PdfUrl,
+                PdfUrl = Common.ShariahPdfUrlNormalizer.Normalize(dto.PdfUrl),
                 SourceLastUpdated = dto.LastUpdated,
                 FetchedAt = fetchedAt,
                 ExtraData = dto.ExtraDataJson

@@ -90,12 +90,15 @@ public class IndexRepository : IIndexRepository
                 ic.Stock!.ShariahCompliance != null && ic.Stock.ShariahCompliance.Status == shStatus);
         }
 
-        if (!string.IsNullOrWhiteSpace(f.PriceComparison) &&
-            Enum.TryParse<Meezan.Domain.Enums.PriceComparison>(f.PriceComparison, ignoreCase: true, out var pc))
-        {
-            query = query.Where(ic =>
-                ic.Stock!.FairValue != null && ic.Stock.FairValue.PriceComparison == pc);
-        }
+            if (!string.IsNullOrWhiteSpace(f.PriceComparison) &&
+                Enum.TryParse<Meezan.Domain.Enums.PriceComparison>(f.PriceComparison, ignoreCase: true, out var pc))
+            {
+                // "Unavailable" also covers stocks with no fair-value row at all: to the
+                // user both mean "no computable fair value".
+                query = pc == Meezan.Domain.Enums.PriceComparison.Unavailable
+                    ? query.Where(ic => ic.Stock!.FairValue == null || ic.Stock!.FairValue.PriceComparison == pc)
+                    : query.Where(ic => ic.Stock!.FairValue != null && ic.Stock!.FairValue.PriceComparison == pc);
+            }
 
         // ── Total count (before pagination, after filtering) ──────────────────
         var totalCount = await query.CountAsync(cancellationToken);
@@ -144,6 +147,7 @@ public class IndexRepository : IIndexRepository
                 FairValueDiffPct = ic.Stock.FairValue != null ? ic.Stock.FairValue.FairValueDiffPct : null,
                 ic.Weight,
                 SectorNameAr = ic.Stock.Sector != null ? ic.Stock.Sector.NameAr : null,
+                HasShariahBoard = ic.Stock.ShariahCompliance != null && ic.Stock.ShariahCompliance.HasShariahBoard,
                 IndexCodesList = ic.Stock.IndexConstituents
                     .Where(c => c.Index != null)
                     .Select(c => c.Index!.Code)
@@ -190,7 +194,8 @@ public class IndexRepository : IIndexRepository
             p.FairValueDiffPct,
             p.Weight,
             p.Currency,
-            p.SectorNameAr
+            p.SectorNameAr,
+            p.HasShariahBoard
         )).ToList();
 
         return (items, totalCount);

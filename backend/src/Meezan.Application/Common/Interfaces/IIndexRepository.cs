@@ -36,9 +36,11 @@ public record ConstituentProjection(
     decimal? FairValue,
     string? PriceComparison,
     decimal? FairValueDiffPct,
-    decimal Weight,
+    decimal? Weight,
     string? Currency,
-    string? SectorNameAr = null
+    string? SectorNameAr = null,
+    /// <summary>True when the stock is overseen by a Shariah board/committee.</summary>
+    bool HasShariahBoard = false
 );
 
 public record ConstituentListFilter(

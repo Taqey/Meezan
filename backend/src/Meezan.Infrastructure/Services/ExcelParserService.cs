@@ -108,7 +108,7 @@ public class ExcelParserService : IExcelParserService
             var sectorAr = colSectorAr > 0 ? row.Cell(colSectorAr).GetString().Trim() : null;
             var sectorEn = colSectorEn > 0 ? row.Cell(colSectorEn).GetString().Trim() : null;
 
-            decimal weight = 0;
+            decimal? weight = null;
             if (colWeight > 0)
             {
                 var cell = row.Cell(colWeight);
@@ -200,7 +200,8 @@ public class ExcelParserService : IExcelParserService
             var sectorEn = GetCell(colSectorEn);
             var weightStr = GetCell(colWeight);
 
-            decimal weight = ParseDecimal(weightStr);
+            // Null (not 0) when the file has no weight column at all.
+            decimal? weight = colWeight >= 0 ? ParseDecimal(weightStr) : null;
             var ticker = ComputeTicker(reuters, symbolCode);
 
             results.Add(new ParsedConstituentDto

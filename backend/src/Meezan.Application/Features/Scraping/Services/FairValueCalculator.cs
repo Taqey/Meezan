@@ -139,8 +139,10 @@ public static class FairValueCalculator
         List<(string Name, decimal Value)> estimates,
         decimal? currentPrice)
     {
+        // Unavailable: zero valuation methods were applicable (no EPS, no BookValue,
+        // no usable sector peer data) — nothing to average, so no verdict exists.
         if (estimates.Count == 0)
-            return FairValueResult.Empty();
+            return FairValueResult.Unavailable();
 
         // 1. If only one estimate exists, IQR is undefined — skip outlier detection.
         List<(string Name, decimal Value)> included;
@@ -183,32 +185,46 @@ public static class FairValueCalculator
             }
         }
 
+        var methodResults = estimates.Select(e => new FairValueMethodResult(
+            e.Name,
+            e.Value,
+            IsOutlier: excluded.Any(ex => ex.Name == e.Name)
+        )).ToList();
+
+        // Defensive: nothing survived (would require the all-outliers fallback itself to
+        // fail) — report Unavailable rather than an empty average.
+        if (included.Count == 0)
+            return FairValueResult.Unavailable(0, excluded.Count, methodResults);
+
         var fairValue = (decimal)included.Select(e => (double)e.Value).Average();
+
+        // Unavailable: the stock's own current price is missing/zero/invalid, so no
+        // Cheap/Expensive/Fair verdict can be produced. Counts stay real, the fair value
+        // is dropped rather than presented as a standalone number.
+        if (!currentPrice.HasValue || currentPrice.Value <= 0)
+        {
+            return FairValueResult.Unavailable(included.Count, excluded.Count, methodResults);
+        }
 
         // 3. Price comparison
         var comparison = PriceComparison.Fair;
-        decimal? diffAbs = null;
-        decimal? diffPct = null;
 
-        if (currentPrice.HasValue && currentPrice.Value > 0 && fairValue > 0)
-        {
-            // Diff = ClosingPrice - FairValue (matching scraper.py compute_fair_value_diff)
-            // Negative -> current price is below fair value (cheap)
-            // Positive -> current price is above fair value (expensive)
-            diffAbs = currentPrice.Value - fairValue;
-            diffPct = (diffAbs / currentPrice.Value) * 100m;
+        // Diff = ClosingPrice - FairValue (matching scraper.py compute_fair_value_diff)
+        // Negative -> current price is below fair value (cheap)
+        // Positive -> current price is above fair value (expensive)
+        var diffAbs = currentPrice.Value - fairValue;
+        var diffPct = (diffAbs / currentPrice.Value) * 100m;
 
-            // Comparison logic matching scraper.py compute_price_comparison:
-            // FairValue > ClosingPrice * 1.05 -> Cheap ("أصغر")
-            // FairValue < ClosingPrice * 0.95 -> Expensive ("أكبر")
-            // Otherwise -> Fair ("تقريبًا قدها")
-            if (fairValue > currentPrice.Value * 1.05m)
-                comparison = PriceComparison.Cheap;
-            else if (fairValue < currentPrice.Value * 0.95m)
-                comparison = PriceComparison.Expensive;
-            else
-                comparison = PriceComparison.Fair;
-        }
+        // Comparison logic matching scraper.py compute_price_comparison:
+        // FairValue > ClosingPrice * 1.05 -> Cheap ("أصغر")
+        // FairValue < ClosingPrice * 0.95 -> Expensive ("أكبر")
+        // Otherwise -> Fair ("تقريبًا قدها")
+        if (fairValue > currentPrice.Value * 1.05m)
+            comparison = PriceComparison.Cheap;
+        else if (fairValue < currentPrice.Value * 0.95m)
+            comparison = PriceComparison.Expensive;
+        else
+            comparison = PriceComparison.Fair;
 
         // 4. Confidence: based on number of non-outlier methods used
         var confidence = included.Count switch
@@ -218,12 +234,6 @@ public static class FairValueCalculator
             1    => ValuationConfidence.Low,
             _    => ValuationConfidence.None
         };
-
-        var methodResults = estimates.Select(e => new FairValueMethodResult(
-            e.Name,
-            e.Value,
-            IsOutlier: excluded.Any(ex => ex.Name == e.Name)
-        )).ToList();
 
         return new FairValueResult(
             FairValue: fairValue,
@@ -353,15 +363,25 @@ public static class FairValueCalculator
         List<FairValueMethodResult> Methods
     )
     {
-        public static FairValueResult Empty() => new(
+        /// <summary>
+        /// No trustworthy fair value exists. Never returns a Cheap/Expensive/Fair verdict:
+        /// FairValue / DiffAbs / DiffPct are null, Confidence is None, and counts reflect
+        /// whatever was actually attempted (0 when no method was applicable).
+        /// </summary>
+        public static FairValueResult Unavailable(
+            int methodsUsed = 0,
+            int methodsExcluded = 0,
+            List<FairValueMethodResult>? methods = null) => new(
             FairValue: null,
-            Comparison: PriceComparison.Fair,
+            Comparison: PriceComparison.Unavailable,
             DiffAbs: null,
             DiffPct: null,
-            MethodsUsedCount: 0,
-            MethodsExcludedCount: 0,
+            MethodsUsedCount: methodsUsed,
+            MethodsExcludedCount: methodsExcluded,
             Confidence: ValuationConfidence.None,
-            Methods: []
+            Methods: methods ?? []
         );
+
+        public static FairValueResult Empty() => Unavailable();
     }
 }

@@ -39,9 +39,16 @@ public record ConstituentItemDto(
     decimal? FairValue,
     string? PriceComparison,
     decimal? FairValueDiffPct,
-    decimal Weight,
+    decimal? Weight,
     string? Currency,
-    string? SectorNameAr = null
+    string? SectorNameAr = null,
+    /// <summary>
+    /// True when the stock is overseen by a Shariah board/committee — a plain
+    /// "لجنة شرعية" and an accredited "هيئة رقابة شرعية داخلية معتمدة" are the same
+    /// case. For these rows ShariahOpinions is empty and only ShariahBoardNote is surfaced.
+    /// </summary>
+    bool HasShariahBoard = false,
+    string? ShariahBoardNote = null
 );
 
 public class GetIndexConstituentsQueryHandler : IRequestHandler<GetIndexConstituentsQuery, IndexConstituentsPagedResultDto?>
@@ -75,24 +82,37 @@ public class GetIndexConstituentsQueryHandler : IRequestHandler<GetIndexConstitu
         var (projections, totalCount) = await _indexRepo.QueryConstituentsPagedAsync(
             request.IndexCode, filter, cancellationToken);
 
-        var items = projections.Select(p => new ConstituentItemDto(
-            Ticker: p.Ticker,
-            NameAr: p.NameAr,
-            NameEn: p.NameEn,
-            Indices: string.IsNullOrEmpty(p.IndexCodes)
-                ? new List<string>()
-                : p.IndexCodes.Split('|', StringSplitOptions.RemoveEmptyEntries).ToList(),
-            ShariahStatus: p.ShariahStatus,
-            ShariahOpinions: p.ShariahOpinions,
-            ClosingPrice: p.ClosingPrice,
-            ChangePct: p.ChangePct,
-            FairValue: p.FairValue,
-            PriceComparison: p.PriceComparison,
-            FairValueDiffPct: p.FairValueDiffPct,
-            Weight: p.Weight,
-            Currency: p.Currency,
-            SectorNameAr: p.SectorNameAr
-        )).ToList();
+        var items = projections.Select(p =>
+        {
+            // Board-governed stocks (plain "لجنة شرعية" or accredited
+            // "هيئة رقابة شرعية داخلية معتمدة") are one and the same case: the external
+            // opinion panel is dropped and only the unified board note is surfaced.
+            bool hasBoard = Common.ShariahBoardDetector.IsBoardGoverned(
+                p.HasShariahBoard, p.ShariahOpinions.Select(o => o.Note));
+
+            return new ConstituentItemDto(
+                Ticker: p.Ticker,
+                NameAr: p.NameAr,
+                NameEn: p.NameEn,
+                Indices: string.IsNullOrEmpty(p.IndexCodes)
+                    ? new List<string>()
+                    : p.IndexCodes.Split('|', StringSplitOptions.RemoveEmptyEntries).ToList(),
+                ShariahStatus: p.ShariahStatus,
+                ShariahOpinions: hasBoard
+                    ? new List<Meezan.Application.Features.Shariah.DTOs.ShariahSourceOpinionDto>()
+                    : p.ShariahOpinions,
+                ClosingPrice: p.ClosingPrice,
+                ChangePct: p.ChangePct,
+                FairValue: p.FairValue,
+                PriceComparison: p.PriceComparison,
+                FairValueDiffPct: p.FairValueDiffPct,
+                Weight: p.Weight,
+                Currency: p.Currency,
+                SectorNameAr: p.SectorNameAr,
+                HasShariahBoard: hasBoard,
+                ShariahBoardNote: Common.ShariahBoardDetector.NoteFor(hasBoard)
+            );
+        }).ToList();
 
         int totalPages = totalCount == 0 ? 0 : (int)Math.Ceiling((double)totalCount / pageSize);
 

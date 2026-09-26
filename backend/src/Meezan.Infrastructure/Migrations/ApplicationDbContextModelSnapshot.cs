@@ -143,7 +143,7 @@ namespace Meezan.Infrastructure.Migrations
                     b.Property<int>("StockId")
                         .HasColumnType("int");
 
-                    b.Property<decimal>("Weight")
+                    b.Property<decimal?>("Weight")
                         .HasPrecision(18, 8)
                         .HasColumnType("decimal(18,8)");
 
@@ -227,6 +227,11 @@ namespace Meezan.Infrastructure.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("HasShariahBoard")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<DateTime>("LastCheckedAt")
                         .HasColumnType("datetime2");
@@ -355,6 +360,16 @@ namespace Meezan.Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(30)
                         .HasColumnType("nvarchar(30)");
+
+                    b.Property<DateTime?>("DeactivatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DeactivationReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
 
                     b.Property<string>("NameAr")
                         .HasMaxLength(250)

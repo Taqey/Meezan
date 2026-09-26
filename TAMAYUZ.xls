@@ -1,0 +1,21 @@
+<html dir="rtl"><head><?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"><meta http-equiv="Content-Type" content="text/html; charset=utf-8"></head><body>
+<form method="post" action="currentindexconstituntes.aspx?type=17&amp;nav=17" id="aspnetForm">
+<div>
+<input type="hidden" name="__VIEWSTATE" id="
+__VIEWSTATE" value="" />
+</div>
+<div>
+	<table cellspacing="1" cellpadding="8" border="0" id="ctl00_C_CIC_GridView1" style="background-color:#DDDDDD;border-width:0px;border-style:Solid;width:100%;">
+		<tr class="headview">
+			<th align="right" scope="col">كود الترقيم الدولى</th><th align="right" scope="col">كود رويترز</th><th align="right" scope="col">اسم الشركة</th>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS65AN1C018</td><td align="right">ADRI.CA</td><td align="right">اراب للتنمية والاستثمار العقاري</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS3E3B1C014</td><td align="right">INEG.CA</td><td align="right">المجموعة المتكاملة للأعمال الهندسية</td>
+		</tr><tr class="RowStyle">
+			<td align="right">EGS550K1C019</td><td align="right">IBCT.CA</td><td align="right">انترناشيونال بزنيس كوربوريشن للتجارة والتوكيلات التجارية</td>
+		</tr><tr class="AlternatingRowStyle">
+			<td align="right">EGS23OD1C015</td><td align="right">HBCO.CA</td><td align="right">هيبكو للاستثمارات التجارية والتنمية العقارية</td>
+		</tr>
+	</table>
+</div></form></body></html>

@@ -60,6 +60,10 @@ public class SeedShariahMapCommandHandler : IRequestHandler<SeedShariahMapComman
             // 2. Parse status
             var status = ParseStatus(item.Status);
 
+            // Board governance indicated by the seed note (plain "لجنة شرعية" and accredited
+            // "هيئة رقابة شرعية داخلية معتمدة" are the same case).
+            bool hasBoard = Common.ShariahBoardDetector.IsBoardNote(item.Note);
+
             // 3. Upsert ShariahCompliance
             var compliance = await _complianceRepository.GetByStockIdAsync(stock.Id, cancellationToken);
             if (compliance == null)
@@ -70,6 +74,7 @@ public class SeedShariahMapCommandHandler : IRequestHandler<SeedShariahMapComman
                     Status = status,
                     Pct = item.Pct,
                     Note = item.Note,
+                    HasShariahBoard = hasBoard,
                     LastCheckedAt = now,
                     UpdatedAt = now
                 };
@@ -81,6 +86,7 @@ public class SeedShariahMapCommandHandler : IRequestHandler<SeedShariahMapComman
                 compliance.Status = status;
                 compliance.Pct = item.Pct;
                 compliance.Note = item.Note;
+                compliance.HasShariahBoard = hasBoard;
                 compliance.LastCheckedAt = now;
                 compliance.UpdatedAt = now;
                 _complianceRepository.Update(compliance);
