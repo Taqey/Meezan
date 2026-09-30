@@ -1,0 +1,48 @@
+{
+  "_notes": {
+    "purpose": "Manual import of Faisal (FaisalBank) and Ostoul boards' Shariah compliance opinions, replacing the old scraper-sourced data for these two SourceKeys only.",
+    "resolution_rule": "For each stock in this file: status as given (compliant/non_compliant). Stocks NOT listed here for a given source = that source has 'no opinion' (null) for that stock — do NOT default to compliant or non-compliant.",
+    "has_shariah_board_stocks": "Stocks with 'has_shariah_board': true are companies with their own dedicated Shariah supervisory board and no separate opinion data. Per existing system convention (HasShariahBoard), only genuinely board-governed companies without opinions (such as UBEE) are placed here. Companies evaluated in the source report (such as ADIB, FAIT, SAUD, ATLC, AMIA) are included in the compliant list to receive proper Shariah opinion tracking.",
+    "faisal_source_merge": "Faisal report has 3 lists: EGX33-index constituents, the broader AAOIFI-compliant list, and companies with their own Shariah board. All compliant stocks are merged into a single 'compliant' set for SourceKey=FaisalBank; only UBEE genuinely remains under has_shariah_board.",
+    "report_dates": {
+      "faisal": "2026-02-11",
+      "ostoul": "2026-08-04"
+    }
+  },
+  "FaisalBank": {
+    "report_date": "2026-02-11",
+    "compliant": [
+      "FAIT", "SAUD", "ADIB", "EGAL", "ATQA", "SKPC", "RMDA", "ISPH", "TMGH", "MASR",
+      "OCDI", "PHDC", "ORHD", "EGAS", "RACC", "ETEL", "EFIH", "JUFO", "MPCO", "OLFI",
+      "EFID", "AMOC", "MTIE", "IFAP", "ICFC", "ETRS", "CIRA", "ORAS", "ACGC", "ORWE",
+      "ARCC", "LCSW", "MCQE",
+      "ISMQ", "FERC", "EFIC", "ALUM", "NIPH", "CPCI", "AMES", "SIPC", "CLHO", "BIOC",
+      "AXPH", "OCPH", "ADCI", "SPMD", "EEII", "MBEG", "IDRE", "ACAP", "NARE", "AIFI",
+      "RREI", "DAPH", "OBRI", "AREH", "ROTO", "DGTZ", "INFI", "EPCO", "MILS", "UEFM",
+      "COSG", "MOSC", "GGRN", "ISMA", "POUL", "ZEOT", "AJWA", "DOMT", "GMCI", "GOUR",
+      "MOED", "CAED", "TALM", "ODIN", "CRST", "AALR", "IEEC", "EALR", "APSW", "SPIN",
+      "KABO", "RUBX", "SCEM", "MBSC", "PRCL", "ARVA", "AMIA", "ATLC"
+    ],
+    "non_compliant": [],
+    "has_shariah_board": ["UBEE"]
+  },
+  "Ostoul": {
+    "report_date": "2026-08-04",
+    "compliant": [
+      "JUFO", "ETEL", "RACC", "COSG", "MPCO", "LUTS", "ISMA", "AJWA", "ZEOT", "MTIE",
+      "IFAP", "ICFC", "ETRS", "CIRA", "TALM", "MOED", "SWDY", "KRDI", "ISPH", "CLHO",
+      "RMDA", "BIOC", "MCRO", "SPMD", "ADPC", "CRST", "IEEC", "ORAS", "ORWE", "KABO",
+      "SPIN", "EKHOA", "EGAS", "AMOC", "ARCC", "LCSW", "SVCE", "CERA", "PRCL", "MBSC",
+      "MFPC", "ATQA", "EGAL", "SKPC", "SIPC", "NIPH",
+      "ADIB", "FAIT", "SAUD", "ATLC", "AMIA"
+    ],
+    "non_compliant": [
+      "EFIH", "FWRY", "SUGR", "POUL", "OLFI", "EFID", "ELEC", "PHAR", "CSAG", "ALCN",
+      "ENGC", "MEPA", "NCCW", "DSCW", "ACGC", "CCAP", "RAYA", "SDTI", "EGTS", "SCTS",
+      "MOIL", "MCQE", "SCEM", "TAQA", "ABUK", "ASCM", "KZPC", "EGCH", "ECAP", "MICH",
+      "ISMQ", "EFIC", "UNIP", "MPCI"
+    ],
+    "has_shariah_board": [],
+    "note": "Ostoul's report lists ADIB/FAIT/SAUD/ATLC/AMIA as compliant, now included in the compliant list to receive proper Shariah opinions."
+  }
+}

@@ -170,6 +170,10 @@ public class RefreshShariahDataCommandHandler : IRequestHandler<RefreshShariahDa
             }
 
             // 3. Upsert ShariahSourceOpinions (overwrite/replace for each source key)
+            // FaisalBank and Osoul are deliberately NOT written here: since the manual
+            // import (ImportFaisalOsoulOpinionsCommand) their published PDF reports are the
+            // only source of truth, so this scraper must never touch those two SourceKeys.
+            // Their "no opinion" state comes from having no row, exactly like every board.
             var existingOpinions = await _opinionRepository.GetByStockIdAsync(stock.Id, cancellationToken);
             var opinionsDict = existingOpinions.ToDictionary(o => o.SourceKey);
 
@@ -177,15 +181,15 @@ public class RefreshShariahDataCommandHandler : IRequestHandler<RefreshShariahDa
             UpdateOrAddOpinion(opinionsDict, stock.Id, ShariahSourceKey.Musaffa, item.Musaffa, now);
             UpdateOrAddOpinion(opinionsDict, stock.Id, ShariahSourceKey.Kashif, item.Kashif, now);
             UpdateOrAddOpinion(opinionsDict, stock.Id, ShariahSourceKey.HalalInvest, item.HalalInvest, now);
-            UpdateOrAddOpinion(opinionsDict, stock.Id, ShariahSourceKey.FaisalBank, item.FaisalBank, now);
-            UpdateOrAddOpinion(opinionsDict, stock.Id, ShariahSourceKey.Osoul, item.Osoul, now);
             UpdateOrAddOpinion(opinionsDict, stock.Id, ShariahSourceKey.Thndr, item.Thndr, now);
 
             // 4. Update ShariahCompliance:
             // "only backfill Pct from sp_haram_earning_percentage when the stock's Status is Compliant AND Pct is currently null.
             // Never overwrite an already-set Pct. Everything else on ShariahCompliance is untouched by this job."
-            // Exception: HasShariahBoard is recomputed on every run so a stock that gains (or
+            // Exception 1: HasShariahBoard is recomputed on every run so a stock that gains (or
             // loses) a board/committee verdict in the source is displayed accordingly.
+            // Exception 2: Status is corrected to NonCompliant when the stock's OWN core-activity
+            // flag says غير متوافق (see below) — the verdict is per-stock, never sector-derived.
             var compliance = await _complianceRepository.GetByStockIdAsync(stock.Id, cancellationToken);
             if (compliance == null)
             {
@@ -201,6 +205,31 @@ public class RefreshShariahDataCommandHandler : IRequestHandler<RefreshShariahDa
                 {
                     compliance.HasShariahBoard = hasBoardNow;
                     dirty = true;
+                }
+
+                // Per-stock activity gate: when THIS stock's own نشاط الشركة is غير متوافق
+                // its stored verdict must read غير متوافق too, otherwise a stale "Compliant"
+                // row would make the list show متوافق while the detail page (which reads the
+                // activity field) shows غير متوافق. The value comes from this stock's own
+                // metrics row only — never from its sector, never from another stock.
+                if (item.CoreActivityCompliant == false && compliance.Status != ShariahStatus.NonCompliant)
+                {
+                    compliance.Status = ShariahStatus.NonCompliant;
+                    dirty = true;
+                }
+                else if (item.CoreActivityCompliant != false)
+                {
+                    // Positive board opinion wins: any board (including the ones just written
+                    // above) explicitly recording "compliant" means the stored row must also
+                    // say Compliant — so any reader that bypasses EffectiveStatus gets the
+                    // right answer too.
+                    bool anyBoardCompliant = opinionsDict.Values
+                        .Any(o => o.Status != null && o.Status.ToUpper() == "COMPLIANT");
+                    if (anyBoardCompliant && compliance.Status != ShariahStatus.Compliant)
+                    {
+                        compliance.Status = ShariahStatus.Compliant;
+                        dirty = true;
+                    }
                 }
 
                 if (compliance.Status == ShariahStatus.Compliant && compliance.Pct == null)

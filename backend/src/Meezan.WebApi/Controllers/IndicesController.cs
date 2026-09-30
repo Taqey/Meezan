@@ -40,11 +40,18 @@ public class IndicesController : ControllerBase
         [FromQuery] string? sortDir,
         [FromQuery] string? search,
         [FromQuery] string? shariahStatus,
+        [FromQuery] string[]? shariahStatuses,
         [FromQuery] string? priceComparison,
+        [FromQuery] int? minCompliantSources,
+        [FromQuery] decimal? minPeRatio,
+        [FromQuery] decimal? maxPeRatio,
+        [FromQuery] decimal? minPbRatio,
+        [FromQuery] decimal? maxPbRatio,
         CancellationToken cancellationToken)
     {
         var query = new Meezan.Application.Features.Indices.Queries.GetIndexConstituents.GetIndexConstituentsQuery(
-            indexCode, page, pageSize, sortBy, sortDir, search, shariahStatus, priceComparison);
+            indexCode, page, pageSize, sortBy, sortDir, search, shariahStatus, shariahStatuses, priceComparison,
+            minCompliantSources, minPeRatio, maxPeRatio, minPbRatio, maxPbRatio);
         var result = await _mediator.Send(query, cancellationToken);
         return result == null ? NotFound() : Ok(result);
     }

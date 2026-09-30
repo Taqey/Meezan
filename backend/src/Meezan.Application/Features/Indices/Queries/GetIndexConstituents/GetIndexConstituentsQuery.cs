@@ -12,7 +12,13 @@ public record GetIndexConstituentsQuery(
     string? SortDir,
     string? Search,
     string? ShariahStatus,
-    string? PriceComparison
+    string[]? ShariahStatuses = null,
+    string? PriceComparison = null,
+    int? MinCompliantSources = null,
+    decimal? MinPeRatio = null,
+    decimal? MaxPeRatio = null,
+    decimal? MinPbRatio = null,
+    decimal? MaxPbRatio = null
 ) : IRequest<IndexConstituentsPagedResultDto?>;
 
 public record IndexConstituentsPagedResultDto(
@@ -76,7 +82,13 @@ public class GetIndexConstituentsQueryHandler : IRequestHandler<GetIndexConstitu
             SortDir: request.SortDir,
             Search: request.Search,
             ShariahStatus: request.ShariahStatus,
-            PriceComparison: request.PriceComparison
+            ShariahStatuses: request.ShariahStatuses,
+            PriceComparison: request.PriceComparison,
+            MinCompliantSources: request.MinCompliantSources,
+            MinPeRatio: request.MinPeRatio,
+            MaxPeRatio: request.MaxPeRatio,
+            MinPbRatio: request.MinPbRatio,
+            MaxPbRatio: request.MaxPbRatio
         );
 
         var (projections, totalCount) = await _indexRepo.QueryConstituentsPagedAsync(

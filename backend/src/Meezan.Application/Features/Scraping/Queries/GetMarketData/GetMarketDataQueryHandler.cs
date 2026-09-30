@@ -27,6 +27,24 @@ public class GetMarketDataQueryHandler : IRequestHandler<GetMarketDataQuery, Mar
 
         var md = stock.MarketData ?? await _mdRepo.GetByStockIdAsync(stock.Id, cancellationToken);
 
+        // ── Activity hard gate (first screening) ─────────────────────────────────
+        // "نشاط الشركة غير متوافق" disqualifies the stock on its own: it is not a
+        // multi-factor judgement, so no board opinions, no purification % and no
+        // AAOIFI/S&P ratios are assembled or returned for it — the UI shows a single
+        // activity verdict instead. Nothing about how the flag itself is derived is
+        // touched here.
+        var activityCompliant = stock.ShariahMetrics?.CoreActivityCompliant;
+        var activityNonCompliant = activityCompliant == false;
+        var activityClassification = stock.ShariahMetrics?.CategoryAr ?? stock.ShariahMetrics?.CategoryEn;
+
+        // ── Single source of truth for the displayed verdict ─────────────────────
+        // This stock's own نشاط الشركة result wins over the stored ratio/board status,
+        // so list, index-constituent and detail views always report the same value for
+        // the same stock. The verdict is never derived from, or copied from, any other
+        // stock — least of all from the sector/industry this stock belongs to.
+        var effectiveStatus = Common.ShariahStatusResolver.EffectiveStatus(
+            stock.ShariahCompliance, stock.ShariahMetrics, stock.ShariahSourceOpinions);
+
         // ── Fix 3: "Board exists only" stocks ────────────────────────────────────
         // Stocks imported via the Shariah source (stocks_merged.json) that are not
         // yet scrapable on Mubasher have no market data. Instead of returning null
@@ -42,8 +60,9 @@ public class GetMarketDataQueryHandler : IRequestHandler<GetMarketDataQuery, Mar
 
             DetectShariahBoard(stock, out var hasBoard1, out var boardNote1);
 
-            // Board-governed: the 7-source opinion panel is replaced by the unified note.
-            var partialOpinions = hasBoard1
+            // Board-governed or activity-non-compliant: the 7-source opinion panel is
+            // never assembled (activity gate wins over the board panel).
+            var partialOpinions = hasBoard1 || activityNonCompliant
                 ? new List<Meezan.Application.Features.Shariah.DTOs.ShariahSourceOpinionDto>()
                 : stock.ShariahSourceOpinions
                 .Select(o => new Meezan.Application.Features.Shariah.DTOs.ShariahSourceOpinionDto
@@ -71,9 +90,10 @@ public class GetMarketDataQueryHandler : IRequestHandler<GetMarketDataQuery, Mar
                     .Where(ic => ic.Index != null)
                     .Select(ic => new IndexInStockDto(ic.Index!.Code, ic.Index.NameAr, ic.Index.NameEn, ic.Weight))
                     .ToList(),
-                ShariahStatus: stock.ShariahCompliance?.Status.ToString(),
+                ShariahStatus: effectiveStatus?.ToString(),
                 // Board-governed: purification is the board's own internal responsibility.
-                ShariahPct: hasBoard1 ? null : stock.ShariahCompliance?.Pct,
+                // Activity-non-compliant: no ratio at all belongs on the page.
+                ShariahPct: hasBoard1 || activityNonCompliant ? null : stock.ShariahCompliance?.Pct,
                 ShariahOpinions: partialOpinions,
                 HasMarketData: false,
                 // All market-data fields are null
@@ -84,11 +104,14 @@ public class GetMarketDataQueryHandler : IRequestHandler<GetMarketDataQuery, Mar
                 FairValueDiffPct: null, MethodsUsedCount: null, MethodsExcludedCount: null,
                 ValuationConfidence: null, FairValueMethods: null,
                 // Fix 4: NonCompliant and board-governed stocks show no detailed metrics.
-                ShariahMetrics: hasBoard1 || stock.ShariahCompliance?.Status == ShariahStatus.NonCompliant
+                // Activity-non-compliant stocks never do either (activity hard gate).
+                ShariahMetrics: hasBoard1 || activityNonCompliant || effectiveStatus == ShariahStatus.NonCompliant
                     ? null
                     : BuildMetricsDto(stock.ShariahMetrics),
                 HasShariahBoard: hasBoard1,
-                ShariahBoardNote: boardNote1
+                ShariahBoardNote: boardNote1,
+                ActivityCompliant: activityCompliant,
+                ActivityClassification: activityClassification
             );
         }
 
@@ -115,7 +138,9 @@ public class GetMarketDataQueryHandler : IRequestHandler<GetMarketDataQuery, Mar
 
         DetectShariahBoard(stock, out var hasBoard, out var boardNote);
 
-        var opinions = hasBoard
+        // Activity hard gate wins over the board panel too: a prohibited activity is a
+        // standalone disqualification, so no external opinion is surfaced for the stock.
+        var opinions = hasBoard || activityNonCompliant
             ? new List<Meezan.Application.Features.Shariah.DTOs.ShariahSourceOpinionDto>()
             : stock.ShariahSourceOpinions
             .Select(o => new Meezan.Application.Features.Shariah.DTOs.ShariahSourceOpinionDto
@@ -139,8 +164,10 @@ public class GetMarketDataQueryHandler : IRequestHandler<GetMarketDataQuery, Mar
         // Only include the full metrics panel for Compliant and Pending stocks being
         // actively evaluated against the standards. Board-governed stocks never show it:
         // purification is the board's own internal responsibility.
-        var isNonCompliant = stock.ShariahCompliance?.Status == ShariahStatus.NonCompliant;
-        var metricsDto = isNonCompliant || hasBoard ? null : BuildMetricsDto(stock.ShariahMetrics);
+        var isNonCompliant = effectiveStatus == ShariahStatus.NonCompliant;
+        var metricsDto = isNonCompliant || hasBoard || activityNonCompliant
+            ? null
+            : BuildMetricsDto(stock.ShariahMetrics);
 
         return new MarketDataDto(
             Ticker: stock.Ticker,
@@ -149,8 +176,10 @@ public class GetMarketDataQueryHandler : IRequestHandler<GetMarketDataQuery, Mar
             SectorNameAr: stock.Sector?.NameAr,
             SectorNameEn: stock.Sector?.NameEn,
             Indices: indices,
-            ShariahStatus: stock.ShariahCompliance?.Status.ToString(),
-            ShariahPct: hasBoard ? null : stock.ShariahCompliance?.Pct,
+            ShariahStatus: effectiveStatus?.ToString(),
+            // Board-governed: purification is the board's own internal responsibility.
+            // Activity-non-compliant: no ratio at all belongs on the page.
+            ShariahPct: hasBoard || activityNonCompliant ? null : stock.ShariahCompliance?.Pct,
             ShariahOpinions: opinions,
             HasMarketData: true,
             NominalValue: md.NominalValue,
@@ -176,7 +205,9 @@ public class GetMarketDataQueryHandler : IRequestHandler<GetMarketDataQuery, Mar
             FairValueMethods: methodDtos,
             ShariahMetrics: metricsDto,
             HasShariahBoard: hasBoard,
-            ShariahBoardNote: boardNote
+            ShariahBoardNote: boardNote,
+            ActivityCompliant: activityCompliant,
+            ActivityClassification: activityClassification
         );
     }
 

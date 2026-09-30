@@ -88,7 +88,9 @@ public record StockListProjection(
     string? PriceComparison,
     decimal? FairValueDiffPct,
     string? Currency,        // null means EGP (جنيه مصري)
-    string? SectorNameAr = null
+    string? SectorNameAr = null,
+    decimal? PeRatio = null,
+    decimal? PbRatio = null
 );
 
 /// <summary>All optional filter/sort/page params for the stocks list query.</summary>
@@ -99,8 +101,14 @@ public record StockListFilter(
     string? SortDir,
     string? Search,
     string? IndexCode,
+    string[]? IndexCodes,
     int? SectorId,
     string? ShariahStatus,
+    string[]? ShariahStatuses,
     string? PriceComparison,
-    int? MinCompliantSources
+    int? MinCompliantSources,
+    decimal? MinPeRatio = null,
+    decimal? MaxPeRatio = null,
+    decimal? MinPbRatio = null,
+    decimal? MaxPbRatio = null
 );

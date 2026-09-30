@@ -50,5 +50,11 @@ public record ConstituentListFilter(
     string? SortDir,
     string? Search,
     string? ShariahStatus,
-    string? PriceComparison
+    string[]? ShariahStatuses = null,
+    string? PriceComparison = null,
+    int? MinCompliantSources = null,
+    decimal? MinPeRatio = null,
+    decimal? MaxPeRatio = null,
+    decimal? MinPbRatio = null,
+    decimal? MaxPbRatio = null
 );

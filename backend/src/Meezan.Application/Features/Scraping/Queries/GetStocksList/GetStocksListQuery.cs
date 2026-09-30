@@ -16,11 +16,17 @@ public record GetStocksListQuery(
     string? SortDir,
     // Filters (all combinable, AND logic)
     string? Search,          // partial match on Ticker, NameAr, NameEn
-    string? IndexCode,       // only constituents of this index (e.g. "EGX30")
+    string? IndexCode,       // single index code (legacy/single)
+    string[]? IndexCodes,    // multiple index codes (OR logic among selected)
     int? SectorId,
-    string? ShariahStatus,   // "Compliant" | "NonCompliant" | "Pending" | "Blocked"
+    string? ShariahStatus,   // single shariah status (legacy/single)
+    string[]? ShariahStatuses, // multiple shariah statuses (OR logic among selected)
     string? PriceComparison, // "Cheap" | "Fair" | "Expensive"
-    int? MinCompliantSources // 1 to 7: minimum number of ShariahSourceOpinions with Compliant status
+    int? MinCompliantSources, // 1 to 7: minimum number of ShariahSourceOpinions with Compliant status
+    decimal? MinPeRatio,
+    decimal? MaxPeRatio,
+    decimal? MinPbRatio,
+    decimal? MaxPbRatio
 ) : IRequest<PagedResult<StockListItemDto>>;
 
 /// <summary>
@@ -42,5 +48,7 @@ public record StockListItemDto(
     string? PriceComparison,
     decimal? FairValueDiffPct,
     string? Currency,
-    string? SectorNameAr = null
+    string? SectorNameAr = null,
+    decimal? PeRatio = null,
+    decimal? PbRatio = null
 );

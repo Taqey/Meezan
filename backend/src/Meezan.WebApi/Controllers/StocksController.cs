@@ -29,14 +29,22 @@ public class StocksController : ControllerBase
         [FromQuery] string? sortDir,
         [FromQuery] string? search,
         [FromQuery] string? indexCode,
+        [FromQuery] string[]? indexCodes,
         [FromQuery] int? sectorId,
         [FromQuery] string? shariahStatus,
+        [FromQuery] string[]? shariahStatuses,
         [FromQuery] string? priceComparison,
         [FromQuery] int? minCompliantSources,
+        [FromQuery] decimal? minPeRatio,
+        [FromQuery] decimal? maxPeRatio,
+        [FromQuery] decimal? minPbRatio,
+        [FromQuery] decimal? maxPbRatio,
         CancellationToken cancellationToken)
     {
         var query = new GetStocksListQuery(
-            page, pageSize, sortBy, sortDir, search, indexCode, sectorId, shariahStatus, priceComparison, minCompliantSources);
+            page, pageSize, sortBy, sortDir, search, indexCode, indexCodes, sectorId,
+            shariahStatus, shariahStatuses, priceComparison, minCompliantSources,
+            minPeRatio, maxPeRatio, minPbRatio, maxPbRatio);
         var result = await _sender.Send(query, cancellationToken);
         return Ok(result);
     }

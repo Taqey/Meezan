@@ -83,22 +83,69 @@ public class IndexRepository : IIndexRepository
                 (ic.Stock.NameEn != null && ic.Stock.NameEn.ToUpper().Contains(s)));
         }
 
-        if (!string.IsNullOrWhiteSpace(f.ShariahStatus) &&
-            Enum.TryParse<Meezan.Domain.Enums.ShariahStatus>(f.ShariahStatus, ignoreCase: true, out var shStatus))
+        // Shariah status filter: support both single ShariahStatus and multiple ShariahStatuses (OR logic)
+        var selectedShariahStatuses = new List<Meezan.Domain.Enums.ShariahStatus>();
+        if (f.ShariahStatuses != null && f.ShariahStatuses.Length > 0)
         {
-            query = query.Where(ic =>
-                ic.Stock!.ShariahCompliance != null && ic.Stock.ShariahCompliance.Status == shStatus);
+            foreach (var raw in f.ShariahStatuses.SelectMany(s => s.Split(',', StringSplitOptions.RemoveEmptyEntries)))
+            {
+                if (Enum.TryParse<Meezan.Domain.Enums.ShariahStatus>(raw.Trim(), ignoreCase: true, out var parsed) && !selectedShariahStatuses.Contains(parsed))
+                    selectedShariahStatuses.Add(parsed);
+            }
+        }
+        if (!string.IsNullOrWhiteSpace(f.ShariahStatus) &&
+            Enum.TryParse<Meezan.Domain.Enums.ShariahStatus>(f.ShariahStatus.Trim(), ignoreCase: true, out var singleStatus) &&
+            !selectedShariahStatuses.Contains(singleStatus))
+        {
+            selectedShariahStatuses.Add(singleStatus);
         }
 
-            if (!string.IsNullOrWhiteSpace(f.PriceComparison) &&
-                Enum.TryParse<Meezan.Domain.Enums.PriceComparison>(f.PriceComparison, ignoreCase: true, out var pc))
-            {
-                // "Unavailable" also covers stocks with no fair-value row at all: to the
-                // user both mean "no computable fair value".
-                query = pc == Meezan.Domain.Enums.PriceComparison.Unavailable
-                    ? query.Where(ic => ic.Stock!.FairValue == null || ic.Stock!.FairValue.PriceComparison == pc)
-                    : query.Where(ic => ic.Stock!.FairValue != null && ic.Stock!.FairValue.PriceComparison == pc);
-            }
+        if (selectedShariahStatuses.Count > 0)
+        {
+            // Effective status = (1) activity gate → (2) any board "compliant" → (3) stored verdict.
+            // This mirrors Common.ShariahStatusResolver.EffectiveStatus and the SELECT projection
+            // below exactly — the filter bucket must always match what the row displays.
+            query = query.Where(ic =>
+                selectedShariahStatuses.Contains(
+                    (ic.Stock!.ShariahMetrics != null && ic.Stock.ShariahMetrics.CoreActivityCompliant == false
+                        ? Meezan.Domain.Enums.ShariahStatus.NonCompliant
+                        : (ic.Stock.ShariahSourceOpinions.Any(o => o.Status != null && o.Status.ToUpper() == "COMPLIANT")
+                            ? Meezan.Domain.Enums.ShariahStatus.Compliant
+                            : (ic.Stock.ShariahCompliance != null ? ic.Stock.ShariahCompliance.Status : (Meezan.Domain.Enums.ShariahStatus)(-1))))
+                ));
+        }
+
+        if (!string.IsNullOrWhiteSpace(f.PriceComparison) &&
+            Enum.TryParse<Meezan.Domain.Enums.PriceComparison>(f.PriceComparison, ignoreCase: true, out var pc))
+        {
+            // "Unavailable" also covers stocks with no fair-value row at all: to the
+            // user both mean "no computable fair value".
+            query = pc == Meezan.Domain.Enums.PriceComparison.Unavailable
+                ? query.Where(ic => ic.Stock!.FairValue == null || ic.Stock!.FairValue.PriceComparison == pc)
+                : query.Where(ic => ic.Stock!.FairValue != null && ic.Stock!.FairValue.PriceComparison == pc);
+        }
+
+        if (f.MinCompliantSources.HasValue && f.MinCompliantSources.Value > 0)
+        {
+            var min = f.MinCompliantSources.Value;
+            query = query.Where(ic =>
+                (ic.Stock!.ShariahMetrics == null
+                 || ic.Stock.ShariahMetrics.CoreActivityCompliant == null
+                 || ic.Stock.ShariahMetrics.CoreActivityCompliant == true)
+                && ic.Stock.ShariahSourceOpinions.Count(o => o.Status != null && o.Status.ToUpper() == "COMPLIANT") >= min);
+        }
+
+        // PE Ratio range filter
+        if (f.MinPeRatio.HasValue)
+            query = query.Where(ic => ic.Stock!.MarketData != null && ic.Stock.MarketData.PeRatio != null && ic.Stock.MarketData.PeRatio >= f.MinPeRatio.Value);
+        if (f.MaxPeRatio.HasValue)
+            query = query.Where(ic => ic.Stock!.MarketData != null && ic.Stock.MarketData.PeRatio != null && ic.Stock.MarketData.PeRatio <= f.MaxPeRatio.Value);
+
+        // PB Ratio range filter
+        if (f.MinPbRatio.HasValue)
+            query = query.Where(ic => ic.Stock!.MarketData != null && ic.Stock.MarketData.PbRatio != null && ic.Stock.MarketData.PbRatio >= f.MinPbRatio.Value);
+        if (f.MaxPbRatio.HasValue)
+            query = query.Where(ic => ic.Stock!.MarketData != null && ic.Stock.MarketData.PbRatio != null && ic.Stock.MarketData.PbRatio <= f.MaxPbRatio.Value);
 
         // ── Total count (before pagination, after filtering) ──────────────────
         var totalCount = await query.CountAsync(cancellationToken);
@@ -124,7 +171,7 @@ public class IndexRepository : IIndexRepository
                 "fairvalue"                            => desc ? query.OrderByDescending(x => x.Stock!.FairValue != null ? x.Stock!.FairValue.FairValue : null) : query.OrderBy(x => x.Stock!.FairValue != null ? x.Stock!.FairValue.FairValue : null),
                 "pricecomparison"                      => desc ? query.OrderByDescending(x => x.Stock!.FairValue != null ? (Meezan.Domain.Enums.PriceComparison?)x.Stock!.FairValue.PriceComparison : null) : query.OrderBy(x => x.Stock!.FairValue != null ? (Meezan.Domain.Enums.PriceComparison?)x.Stock!.FairValue.PriceComparison : null),
                 "fairvaluediffpct"                     => desc ? query.OrderByDescending(x => x.Stock!.FairValue != null ? x.Stock!.FairValue.FairValueDiffPct : null) : query.OrderBy(x => x.Stock!.FairValue != null ? x.Stock!.FairValue.FairValueDiffPct : null),
-                "shariahstatus"                        => desc ? query.OrderByDescending(x => x.Stock!.ShariahCompliance != null ? (Meezan.Domain.Enums.ShariahStatus?)x.Stock!.ShariahCompliance.Status : null) : query.OrderBy(x => x.Stock!.ShariahCompliance != null ? (Meezan.Domain.Enums.ShariahStatus?)x.Stock!.ShariahCompliance.Status : null),
+                "shariahstatus"                        => desc ? query.OrderByDescending(x => x.Stock!.ShariahMetrics != null && x.Stock.ShariahMetrics.CoreActivityCompliant == false ? (Meezan.Domain.Enums.ShariahStatus?)Meezan.Domain.Enums.ShariahStatus.NonCompliant : (x.Stock.ShariahCompliance != null ? (Meezan.Domain.Enums.ShariahStatus?)x.Stock.ShariahCompliance.Status : null))                   : query.OrderBy(x => x.Stock!.ShariahMetrics != null && x.Stock.ShariahMetrics.CoreActivityCompliant == false ? (Meezan.Domain.Enums.ShariahStatus?)Meezan.Domain.Enums.ShariahStatus.NonCompliant : (x.Stock.ShariahCompliance != null ? (Meezan.Domain.Enums.ShariahStatus?)x.Stock.ShariahCompliance.Status : null)),
                 _                                      => query.OrderByDescending(x => x.Weight)
             });
         }
@@ -138,7 +185,14 @@ public class IndexRepository : IIndexRepository
                 ic.Stock!.Ticker,
                 ic.Stock.NameAr,
                 ic.Stock.NameEn,
-                ShariahStatus = ic.Stock.ShariahCompliance != null ? ic.Stock.ShariahCompliance.Status.ToString() : null,
+                // Board opinions win over stored compliance: any board says "compliant" = Compliant.
+                ShariahStatus = ic.Stock.ShariahMetrics != null && ic.Stock.ShariahMetrics.CoreActivityCompliant == false
+                    ? Meezan.Domain.Enums.ShariahStatus.NonCompliant.ToString()
+                    : (ic.Stock.ShariahSourceOpinions.Any(o => o.Status != null && o.Status.ToUpper() == "COMPLIANT")
+                        ? Meezan.Domain.Enums.ShariahStatus.Compliant.ToString()
+                        : (ic.Stock.ShariahCompliance != null
+                            ? ic.Stock.ShariahCompliance.Status.ToString()
+                            : null)),
                 ClosingPrice = ic.Stock.MarketData != null ? ic.Stock.MarketData.ClosingPrice : null,
                 Currency = ic.Stock.MarketData != null ? ic.Stock.MarketData.Currency : null,
                 ChangePct = ic.Stock.SupportResistance != null ? ic.Stock.SupportResistance.ChangePct : null,
@@ -152,19 +206,26 @@ public class IndexRepository : IIndexRepository
                     .Where(c => c.Index != null)
                     .Select(c => c.Index!.Code)
                     .ToList(),
-                Opinions = ic.Stock.ShariahSourceOpinions.Select(o => new
-                {
-                    o.Id,
-                    o.StockId,
-                    o.SourceKey,
-                    o.Status,
-                    o.Percentage,
-                    o.Note,
-                    o.PdfUrl,
-                    o.SourceLastUpdated,
-                    o.FetchedAt,
-                    o.ExtraData
-                }).ToList()
+                // Activity hard gate: نشاط الشركة غير متوافق is a standalone
+                // disqualification, so the source opinions are not read for those rows.
+                Opinions = ic.Stock.ShariahSourceOpinions
+                    .Where(o =>
+                        ic.Stock.ShariahMetrics == null
+                        || ic.Stock.ShariahMetrics.CoreActivityCompliant == null
+                        || ic.Stock.ShariahMetrics.CoreActivityCompliant == true)
+                    .Select(o => new
+                    {
+                        o.Id,
+                        o.StockId,
+                        o.SourceKey,
+                        o.Status,
+                        o.Percentage,
+                        o.Note,
+                        o.PdfUrl,
+                        o.SourceLastUpdated,
+                        o.FetchedAt,
+                        o.ExtraData
+                    }).ToList()
             })
             .ToListAsync(cancellationToken);
 

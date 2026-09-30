@@ -14,15 +14,18 @@ public class SeedShariahMapCommandHandler : IRequestHandler<SeedShariahMapComman
 {
     private readonly IStockRepository _stockRepository;
     private readonly IShariahComplianceRepository _complianceRepository;
+    private readonly IStockShariahMetricsRepository _metricsRepository;
     private readonly IUnitOfWork _unitOfWork;
 
     public SeedShariahMapCommandHandler(
         IStockRepository stockRepository,
         IShariahComplianceRepository complianceRepository,
+        IStockShariahMetricsRepository metricsRepository,
         IUnitOfWork unitOfWork)
     {
         _stockRepository = stockRepository;
         _complianceRepository = complianceRepository;
+        _metricsRepository = metricsRepository;
         _unitOfWork = unitOfWork;
     }
 
@@ -59,6 +62,21 @@ public class SeedShariahMapCommandHandler : IRequestHandler<SeedShariahMapComman
 
             // 2. Parse status
             var status = ParseStatus(item.Status);
+
+            // Per-stock activity gate (single source of truth): the seed map is keyed by
+            // ticker and can carry a "compliant" verdict that predates (or ignores) this
+            // stock's own نشاط الشركة. Never persist a Compliant/Pending verdict on a stock
+            // whose OWN core-activity flag says غير متوافق — that is exactly how the list
+            // ended up showing متوافق while the detail page showed غير متوافق. The check
+            // reads only this stock's metrics row: never the sector, never another stock.
+            if (status == ShariahStatus.Compliant || status == ShariahStatus.Pending)
+            {
+                var ownMetrics = await _metricsRepository.GetByStockIdAsync(stock.Id, cancellationToken);
+                if (ownMetrics?.CoreActivityCompliant == false)
+                {
+                    status = ShariahStatus.NonCompliant;
+                }
+            }
 
             // Board governance indicated by the seed note (plain "لجنة شرعية" and accredited
             // "هيئة رقابة شرعية داخلية معتمدة" are the same case).

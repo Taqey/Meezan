@@ -28,6 +28,17 @@ public class ShariahSourceOpinionRepository : IShariahSourceOpinionRepository
             .FirstOrDefaultAsync(o => o.StockId == stockId && o.SourceKey == sourceKey, cancellationToken);
     }
 
+    public async Task<List<ShariahSourceOpinion>> GetBySourceKeyAsync(ShariahSourceKey sourceKey, CancellationToken cancellationToken = default)
+    {
+        // Tracked + Stock included: the manual import updates/removes these rows in place
+        // and matches them to the JSON by ticker.
+        return await _context.ShariahSourceOpinions
+            .Include(o => o.Stock)
+            .Where(o => o.SourceKey == sourceKey)
+            .OrderBy(o => o.Stock!.Ticker)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task AddAsync(ShariahSourceOpinion opinion, CancellationToken cancellationToken = default)
     {
         await _context.ShariahSourceOpinions.AddAsync(opinion, cancellationToken);

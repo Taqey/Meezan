@@ -32,7 +32,7 @@ public class ExternalStockMergedDto
     public ExternalSourceOpinionDto? Kashif { get; set; }
     public ExternalSourceOpinionDto? HalalInvest { get; set; }
     public ExternalSourceOpinionDto? FaisalBank { get; set; }
-    public ExternalSourceOpinionDto? Osoul { get; set; }
+    public ExternalSourceOpinionDto? Ostoul { get; set; }
     public ExternalSourceOpinionDto? Thndr { get; set; }
 }
 

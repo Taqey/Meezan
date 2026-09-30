@@ -88,7 +88,7 @@ public class ShariahSourceClient : IShariahSourceClient
             Kashif = ParseSourceOpinion(elem, "kashif", "purity", "haram_percentage", "sector", "statement_date"),
             HalalInvest = ParseSourceOpinion(elem, "halal_invest"),
             FaisalBank = ParseSourceOpinion(elem, "faisal_bank"),
-            Osoul = ParseSourceOpinion(elem, "osoul", "haram_percentage", "avg_market_cap", "total_assets", "deposits_percentage", "loans_percentage", "liquid_assets_percentage", "sector"),
+            Ostoul = ParseSourceOpinion(elem, "osoul", "haram_percentage", "avg_market_cap", "total_assets", "deposits_percentage", "loans_percentage", "liquid_assets_percentage", "sector"),
             Thndr = ParseSourceOpinion(elem, "thndr")
         };
 

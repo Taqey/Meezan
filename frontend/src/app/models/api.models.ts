@@ -16,9 +16,24 @@ export enum ShariahSourceKey {
   Kashif = 3,
   HalalInvest = 4,
   FaisalBank = 5,
+  Ostoul = 6,
   Osoul = 6,
   Thndr = 7
 }
+
+/**
+ * Tickers whose Shariah display is frozen to a single "يوجد لجنة شرعية" badge.
+ * For this ticker group, detailed board opinions and AAOIFI/S&P metric panels are skipped entirely.
+ */
+export const SHARIAH_BOARD_FROZEN_TICKERS: readonly string[] = [
+  'ADIB',
+  'SAUD',
+  'FAIT',
+  'FAITA',
+  'ATLC',
+  'AMIA'
+];
+
 
 export const SHARIAH_SOURCE_NAMES: Record<number, { ar: string, en: string }> = {
   [ShariahSourceKey.HalalBourse]: { ar: 'بورصة حلال', en: 'Halal Bourse' },
@@ -26,7 +41,7 @@ export const SHARIAH_SOURCE_NAMES: Record<number, { ar: string, en: string }> = 
   [ShariahSourceKey.Kashif]: { ar: 'كاشف', en: 'Kashif' },
   [ShariahSourceKey.HalalInvest]: { ar: 'حلال إنفست', en: 'Halal Invest' },
   [ShariahSourceKey.FaisalBank]: { ar: 'بنك فيصل الإسلامي', en: 'Faisal Bank' },
-  [ShariahSourceKey.Osoul]: { ar: 'أسطول', en: 'Osoul' },
+  [ShariahSourceKey.Ostoul]: { ar: 'أسطول', en: 'Ostoul' },
   [ShariahSourceKey.Thndr]: { ar: 'ثندر', en: 'Thndr' }
 };
 
@@ -62,6 +77,8 @@ export interface StockListItemDto {
   fairValueDiffPct?: number | null;
   currency?: string | null;
   sectorNameAr?: string | null;
+  peRatio?: number | null;
+  pbRatio?: number | null;
 }
 
 export interface IndexSummaryDto {
@@ -100,6 +117,7 @@ export interface ShariahSourceOpinionDto {
   stockId?: number;
   sourceKey: number;
   sourceKeyName?: string;
+  /** This board's verdict for THIS stock. null = no recorded opinion ("لا يوجد رأي مسجّل"). */
   status?: string | null;
   percentage?: number | null;
   note?: string | null;
@@ -129,6 +147,15 @@ export interface MarketDataDto {
    */
   hasShariahBoard?: boolean;
   shariahBoardNote?: string | null;
+  /**
+   * Activity hard gate (first screening): false = نشاط الشركة غير متوافق, an automatic
+   * standalone disqualification. When false the API returns no shariahOpinions, no
+   * shariahPct and no shariahMetrics, and the page shows only the activity verdict.
+   * Null = unknown (no metrics row).
+   */
+  activityCompliant?: boolean | null;
+  /** Business-activity classification behind the verdict, e.g. "خدمات مالية / تخصيص". */
+  activityClassification?: string | null;
   nominalValue?: number | null;
   marketValue?: number | null;
   bookValue?: number | null;

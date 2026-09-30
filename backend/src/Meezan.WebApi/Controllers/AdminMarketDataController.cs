@@ -134,7 +134,7 @@ public class AdminMarketDataController : ControllerBase
         marketData.FetchedAt = now;
         marketData.SlowDataFetchedAt = now;
 
-        // Recalculate Fair Value if valuation inputs exist
+        // Recalculate Fair Value if valuation inputs exist (Graham only for primary fields)
         decimal? calculatedFairValue = null;
         if (marketData.ClosingPrice.HasValue || marketData.Eps.HasValue || marketData.BookValue.HasValue)
         {
@@ -162,18 +162,13 @@ public class AdminMarketDataController : ControllerBase
                 PbRatio: marketData.PbRatio
             );
 
-            var estimates = FairValueCalculator.BuildMethodEstimates(
-                inputValues,
-                sectorMedians,
-                stock.SectorId
-            );
+            // Graham only for primary fair value
+            var grahamResult = FairValueCalculator.ComputeGrahamOnly(inputValues, marketData.ClosingPrice);
+            // Individual methods for detail display
+            var individualMethods = FairValueCalculator.ComputeIndividualMethods(
+                inputValues, sectorMedians, stock.SectorId);
 
-            var fvResult = FairValueCalculator.Compute(estimates, marketData.ClosingPrice);
-
-            // Persist Unavailable results too (FairValue null) — a skipped row used to read
-            // back as a fabricated "قريبة من العادلة" verdict. calculatedFairValue stays null
-            // so the response never reports a number that was not computed.
-            calculatedFairValue = fvResult.FairValue;
+            calculatedFairValue = grahamResult.FairValue;
 
             var existingFv = await _context.StockFairValues
                 .Include(fv => fv.Methods)
@@ -184,32 +179,32 @@ public class AdminMarketDataController : ControllerBase
                 existingFv = new StockFairValue
                 {
                     StockId = stock.Id,
-                    FairValue = fvResult.FairValue,
-                    PriceComparison = fvResult.Comparison,
-                    FairValueDiff = fvResult.DiffAbs,
-                    FairValueDiffPct = fvResult.DiffPct,
-                    MethodsUsedCount = fvResult.MethodsUsedCount,
-                    MethodsExcludedCount = fvResult.MethodsExcludedCount,
-                    Confidence = fvResult.Confidence,
+                    FairValue = grahamResult.FairValue,
+                    PriceComparison = grahamResult.Comparison,
+                    FairValueDiff = grahamResult.DiffAbs,
+                    FairValueDiffPct = grahamResult.DiffPct,
+                    MethodsUsedCount = grahamResult.MethodsUsedCount,
+                    MethodsExcludedCount = grahamResult.MethodsExcludedCount,
+                    Confidence = grahamResult.Confidence,
                     ComputedAt = now
                 };
                 await _context.StockFairValues.AddAsync(existingFv, cancellationToken);
             }
             else
             {
-                existingFv.FairValue = fvResult.FairValue;
-                existingFv.PriceComparison = fvResult.Comparison;
-                existingFv.FairValueDiff = fvResult.DiffAbs;
-                existingFv.FairValueDiffPct = fvResult.DiffPct;
-                existingFv.MethodsUsedCount = fvResult.MethodsUsedCount;
-                existingFv.MethodsExcludedCount = fvResult.MethodsExcludedCount;
-                existingFv.Confidence = fvResult.Confidence;
+                existingFv.FairValue = grahamResult.FairValue;
+                existingFv.PriceComparison = grahamResult.Comparison;
+                existingFv.FairValueDiff = grahamResult.DiffAbs;
+                existingFv.FairValueDiffPct = grahamResult.DiffPct;
+                existingFv.MethodsUsedCount = grahamResult.MethodsUsedCount;
+                existingFv.MethodsExcludedCount = grahamResult.MethodsExcludedCount;
+                existingFv.Confidence = grahamResult.Confidence;
                 existingFv.ComputedAt = now;
 
                 _context.StockFairValueMethods.RemoveRange(existingFv.Methods);
             }
 
-            existingFv.Methods = fvResult.Methods.Select(m => new StockFairValueMethod
+            existingFv.Methods = individualMethods.Select(m => new StockFairValueMethod
             {
                 StockFairValueId = existingFv.Id,
                 MethodName = m.Name,

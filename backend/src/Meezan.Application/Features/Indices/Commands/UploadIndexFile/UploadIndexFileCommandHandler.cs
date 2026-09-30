@@ -1,5 +1,7 @@
+using Meezan.Application.Common;
 using Meezan.Application.Common.Interfaces;
 using Meezan.Domain.Entities;
+using Meezan.Domain.Enums;
 using FluentValidation;
 using MediatR;
 
@@ -11,6 +13,8 @@ public class UploadIndexFileCommandHandler : IRequestHandler<UploadIndexFileComm
     private readonly IStockRepository _stockRepository;
     private readonly IUploadHistoryRepository _uploadHistoryRepository;
     private readonly IExcelParserService _excelParserService;
+    private readonly IShariahComplianceRepository _complianceRepository;
+    private readonly IStockShariahMetricsRepository _metricsRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IValidator<UploadIndexFileCommand> _validator;
 
@@ -19,6 +23,8 @@ public class UploadIndexFileCommandHandler : IRequestHandler<UploadIndexFileComm
         IStockRepository stockRepository,
         IUploadHistoryRepository uploadHistoryRepository,
         IExcelParserService excelParserService,
+        IShariahComplianceRepository complianceRepository,
+        IStockShariahMetricsRepository metricsRepository,
         IUnitOfWork unitOfWork,
         IValidator<UploadIndexFileCommand> validator)
     {
@@ -26,6 +32,8 @@ public class UploadIndexFileCommandHandler : IRequestHandler<UploadIndexFileComm
         _stockRepository = stockRepository;
         _uploadHistoryRepository = uploadHistoryRepository;
         _excelParserService = excelParserService;
+        _complianceRepository = complianceRepository;
+        _metricsRepository = metricsRepository;
         _unitOfWork = unitOfWork;
         _validator = validator;
     }
@@ -195,6 +203,18 @@ public class UploadIndexFileCommandHandler : IRequestHandler<UploadIndexFileComm
             result.Status = "Success";
             result.Message = $"Successfully processed {constituentsToSave.Count} constituents for index '{index.Code}'.";
 
+            // ── Persist resolved Shariah compliance status for Shariah index ─────
+            // When the uploaded file is for the EGX 33 Shariah index, EGX33
+            // membership itself is a compliance signal (same weight as a board
+            // opinion). Persist this back to ShariahCompliance.Status so every
+            // reader that bypasses EffectiveStatus gets the right answer.
+            if (IsShariahIndex(index.Code))
+            {
+                await PersistShariahIndexComplianceAsync(
+                    constituentsToSave, cancellationToken);
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+            }
+
             return result;
         }
         catch (Exception ex)
@@ -248,5 +268,61 @@ public class UploadIndexFileCommandHandler : IRequestHandler<UploadIndexFileComm
         }
 
         return (symbolCode ?? string.Empty).Trim().ToUpperInvariant();
+    }
+
+    /// <summary>
+    /// Returns true when <paramref name="indexCode"/> refers to the EGX 33 Shariah index.
+    /// The seeded code is "Shariah" (Id = 6); guard against any alternate spellings used
+    /// historically in the codebase ("EGX33", "EGX 33").
+    /// </summary>
+    private static bool IsShariahIndex(string indexCode)
+        => string.Equals(indexCode, "Shariah",  StringComparison.OrdinalIgnoreCase)
+        || string.Equals(indexCode, "EGX33",    StringComparison.OrdinalIgnoreCase)
+        || string.Equals(indexCode, "EGX 33",   StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// For every stock now listed in the Shariah index, persist
+    /// <see cref="ShariahCompliance.Status"/> = <see cref="ShariahStatus.Compliant"/>
+    /// — unless the activity gate says غير متوافق (CoreActivityCompliant == false),
+    /// in which case NonCompliant wins and the stored value is left as-is (or corrected
+    /// to NonCompliant if it was stale). EGX33 membership is treated as equal to a
+    /// board opinion, so it wins over any previously stored NonCompliant that was not
+    /// caused by the activity gate.
+    /// </summary>
+    private async Task PersistShariahIndexComplianceAsync(
+        List<IndexConstituent> constituents,
+        CancellationToken cancellationToken)
+    {
+        var now = DateTime.UtcNow;
+        foreach (var constituent in constituents)
+        {
+            var stockId = constituent.StockId != 0 ? constituent.StockId : constituent.Stock?.Id ?? 0;
+            if (stockId == 0) continue;
+
+            var compliance = await _complianceRepository.GetByStockIdAsync(stockId, cancellationToken);
+            if (compliance == null) continue;
+
+            var metrics = await _metricsRepository.GetByStockIdAsync(stockId, cancellationToken);
+
+            // Activity gate: CoreActivityCompliant == false always wins.
+            if (metrics?.CoreActivityCompliant == false)
+            {
+                if (compliance.Status != ShariahStatus.NonCompliant)
+                {
+                    compliance.Status = ShariahStatus.NonCompliant;
+                    compliance.UpdatedAt = now;
+                    _complianceRepository.Update(compliance);
+                }
+                continue;
+            }
+
+            // EGX33 membership → Compliant (mirrors "any board compliant" rule).
+            if (compliance.Status != ShariahStatus.Compliant)
+            {
+                compliance.Status = ShariahStatus.Compliant;
+                compliance.UpdatedAt = now;
+                _complianceRepository.Update(compliance);
+            }
+        }
     }
 }

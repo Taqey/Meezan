@@ -7,6 +7,12 @@ public class ShariahSourceOpinion
     public int Id { get; set; }
     public int StockId { get; set; }
     public ShariahSourceKey SourceKey { get; set; }
+
+    /// <summary>
+    /// Three-state per (stock, board) pair, same rule for all 7 boards: "compliant",
+    /// "non_compliant", or null = this board has no opinion on this stock — never
+    /// defaulted to either verdict, never counted in any aggregate.
+    /// </summary>
     public string? Status { get; set; }
     public decimal? Percentage { get; set; }
     public string? Note { get; set; }

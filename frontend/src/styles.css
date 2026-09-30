@@ -677,12 +677,28 @@ button, input, select, textarea {
 .filters {
   background: var(--card);
   border: 1px solid var(--border);
-  padding: 12px;
+  padding: 16px;
   border-radius: 14px;
-  display: grid;
-  grid-template-columns: 1.5fr repeat(5, 1fr);
-  gap: 8px;
   margin: 0 24px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.filters-row-main {
+  display: grid;
+  grid-template-columns: 1.5fr repeat(4, 1fr);
+  gap: 10px;
+  align-items: center;
+}
+
+.filters-row-secondary {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.2fr 0.8fr;
+  gap: 14px;
+  align-items: center;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
 }
 
 .search-wrap {
@@ -717,14 +733,162 @@ button, input, select, textarea {
   background: #fbfcfb;
   color: var(--foreground);
   padding: 0 10px;
+  height: 40px;
   outline-color: var(--primary);
   font-size: 12px;
+}
+
+/* Multi-select dropdown custom popup */
+.multi-dropdown {
+  position: relative;
+  min-width: 0;
+}
+
+.multi-dropdown-trigger {
+  width: 100%;
+  height: 40px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: #fbfcfb;
+  color: var(--foreground);
+  padding: 0 10px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  text-align: right;
+  gap: 6px;
+}
+
+.multi-dropdown-trigger:hover {
+  border-color: var(--primary);
+}
+
+.multi-dropdown-trigger .trigger-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.multi-dropdown-panel {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  left: 0;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  z-index: 100;
+  max-height: 240px;
+  overflow-y: auto;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.multi-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--foreground);
+  user-select: none;
+}
+
+.multi-dropdown-item:hover {
+  background: var(--secondary);
+}
+
+.multi-dropdown-item input[type="checkbox"] {
+  accent-color: var(--primary);
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+}
+
+/* Slicer controls */
+.slicer-card {
+  background: #fbfcfb;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.slicer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: var(--muted-foreground);
+  font-weight: 600;
+}
+
+.slicer-inputs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.slicer-inputs input[type="number"] {
+  width: 58px;
+  height: 28px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0 6px;
+  font-size: 11px;
+  text-align: center;
+  background: #fff;
+  outline-color: var(--primary);
+}
+
+.slicer-slider-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.slicer-slider-wrap input[type="range"] {
+  width: 100%;
+  accent-color: var(--primary);
+  height: 4px;
+  cursor: pointer;
+}
+
+.sort-group {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.sort-group select {
+  flex: 1;
 }
 
 .results-head {
   padding: 0 24px 18px;
   color: var(--muted-foreground);
   font-size: 13px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.active-filters-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
 }
 
 .active-filter {
@@ -744,6 +908,29 @@ button, input, select, textarea {
   background: none;
   cursor: pointer;
   font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+}
+
+/* Page size selector */
+.page-size-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+
+.page-size-selector select {
+  height: 32px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--card);
+  color: var(--foreground);
+  padding: 0 8px;
+  font-size: 12px;
+  cursor: pointer;
 }
 
 .stock-grid {
@@ -1260,6 +1447,127 @@ button, input, select, textarea {
   margin: 8px 0;
 }
 
+/* Board with no recorded opinion on this stock — an explicit third state, never a
+   fabricated متوافق/غير متوافق verdict, and never counted in the aggregate. */
+.source-card.no-opinion {
+  background: var(--muted);
+  border-style: dashed;
+}
+
+/* Unified full-color cards for ALL 7 Shariah boards — no progress bar, no percentage.
+   Color is determined by the status VALUE, not the source key. */
+.source-card {
+  padding: 16px;
+  border-radius: 12px;
+  color: #fff;
+  font-weight: 500;
+}
+
+.source-card .source-top strong,
+.source-card .verdict-badge,
+.source-card .verdict-meta,
+.source-card .verdict-note {
+  color: #fff;
+}
+
+.source-card.compliant {
+  background: #1e7a2e; /* solid green */
+}
+
+.source-card.non-compliant {
+  background: #b02a2a; /* solid red */
+}
+
+.source-card.doubtful {
+  background: #c7880e; /* solid amber/yellow */
+  color: #1a1a1a; /* dark text for readability on yellow */
+}
+
+.source-card.doubtful .source-top strong,
+.source-card.doubtful .verdict-badge,
+.source-card.doubtful .verdict-meta,
+.source-card.doubtful .verdict-note {
+  color: #1a1a1a;
+}
+
+/* noOpinion: full gray — used for both "لا يوجد رأي" boards AND EGX33 non-membership. */
+.source-card.no-opinion {
+  background: var(--muted);
+  color: var(--muted-foreground);
+  border-style: dashed;
+}
+
+.source-card.no-opinion .source-top strong,
+.source-card.no-opinion .no-opinion-label,
+.source-card.no-opinion .verdict-badge,
+.source-card.no-opinion .verdict-note {
+  color: var(--muted-foreground);
+}
+
+.verdict-badge {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 8px 0 12px;
+  text-align: center;
+  letter-spacing: 0.5px;
+}
+
+.verdict-meta {
+  font-size: 11px;
+  opacity: 0.9;
+  margin-bottom: 12px;
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.verdict-note {
+  font-size: 12px;
+  opacity: 0.95;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.verdict-pdf-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  margin-top: 10px;
+  color: inherit; /* matches card's text color (white on colored, dark on amber, muted on gray) */
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.verdict-pdf-link:hover {
+  opacity: 0.8;
+}
+
+.no-opinion-label {
+  color: var(--muted-foreground);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border: 1px dashed var(--border);
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.source-card .no-opinion-hint {
+  min-height: 0;
+  margin: 12px 0 0;
+}
+
+.ratio-big .coverage-note {
+  line-height: 1.6;
+}
+
+.ratio-big .no-coverage {
+  color: var(--muted-foreground);
+}
+
 .pdf-link {
   color: var(--primary);
   display: inline-flex;
@@ -1317,6 +1625,24 @@ button, input, select, textarea {
   border-radius: 12px;
   padding: 10px 14px;
   background: var(--muted);
+}
+
+/* Activity hard gate: a single "غير متوافق مع الشريعة — النشاط: …" verdict replaces the
+   7-source opinion grid and the AAOIFI/S&P ratio panel for prohibited activities. */
+.activity-verdict-card {
+  border-color: rgba(200, 68, 61, 0.35);
+  background: var(--bad-soft);
+}
+
+.activity-verdict-card h2 {
+  color: var(--bad);
+  font-size: 19px;
+  line-height: 1.6;
+}
+
+.activity-verdict-card .muted {
+  margin-top: 14px;
+  line-height: 1.8;
 }
 
 .board-only-notice strong {
@@ -1688,8 +2014,11 @@ footer {
     grid-template-columns: 1fr;
     gap: 35px;
   }
-  .filters {
-    grid-template-columns: repeat(2, 1fr);
+  .filters-row-main {
+    grid-template-columns: 1fr 1fr;
+  }
+  .filters-row-secondary {
+    grid-template-columns: 1fr;
   }
   .search-wrap {
     grid-column: 1 / -1;
@@ -1712,8 +2041,10 @@ footer {
   .leader-grid, .stock-grid, .index-grid {
     grid-template-columns: 1fr;
   }
-  .filters {
+  .filters-row-main {
     grid-template-columns: 1fr;
+  }
+  .filters {
     margin-inline: 16px;
   }
   .opinion-grid {

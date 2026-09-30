@@ -28,10 +28,16 @@ public class GetStocksListQueryHandler
             SortDir:         request.SortDir,
             Search:          request.Search,
             IndexCode:       request.IndexCode,
+            IndexCodes:      request.IndexCodes,
             SectorId:        request.SectorId,
             ShariahStatus:   request.ShariahStatus,
+            ShariahStatuses: request.ShariahStatuses,
             PriceComparison: request.PriceComparison,
-            MinCompliantSources: request.MinCompliantSources
+            MinCompliantSources: request.MinCompliantSources,
+            MinPeRatio:      request.MinPeRatio,
+            MaxPeRatio:      request.MaxPeRatio,
+            MinPbRatio:      request.MinPbRatio,
+            MaxPbRatio:      request.MaxPbRatio
         );
 
         var (projections, totalCount) = await _stockRepo.QueryPagedAsync(filter, cancellationToken);
@@ -51,7 +57,9 @@ public class GetStocksListQueryHandler
             PriceComparison: p.PriceComparison,
             FairValueDiffPct:p.FairValueDiffPct,
             Currency:        p.Currency,
-            SectorNameAr:    p.SectorNameAr
+            SectorNameAr:    p.SectorNameAr,
+            PeRatio:         p.PeRatio,
+            PbRatio:         p.PbRatio
         )).ToList();
 
         return PagedResult<StockListItemDto>.Create(items, page, pageSize, totalCount);

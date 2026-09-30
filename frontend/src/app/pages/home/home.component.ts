@@ -105,6 +105,7 @@ import { IndexSummaryDto, StockListItemDto } from '../../models/api.models';
           [changePct]="s.changePct"
           [fairValue]="s.fairValue"
           [priceComparison]="s.priceComparison"
+          [fairValueDiffPct]="s.fairValueDiffPct"
           [shariahStatus]="s.shariahStatus"
           [indices]="s.indices"
           [currency]="s.currency"
@@ -158,7 +159,7 @@ export class HomeComponent implements OnInit {
     { name: 'بورصة حلال (Halal Bourse)', status: 'Pending' },
     { name: 'ثندر (Thndr)', status: 'Compliant' },
     { name: 'بنك فيصل الإسلامي', status: 'Compliant' },
-    { name: 'أسطول (Osoul)', status: 'Compliant' },
+    { name: 'أسطول (Ostoul)', status: 'Compliant' },
     { name: 'حلال إنفست (Halal Invest)', status: 'Compliant' }
   ];
 

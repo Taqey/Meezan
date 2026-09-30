@@ -442,30 +442,30 @@ public class RunCombinedScrapeCommandHandler
                 PbRatio: values.PbRatio
             );
 
-            var methodEstimates = FairValueCalculator.BuildMethodEstimates(
+            // Primary fair value: Graham only
+            var grahamResult = FairValueCalculator.ComputeGrahamOnly(inputValues, values.ClosingPrice);
+
+            // Individual methods for detail display (4 methods, no aggregation)
+            var individualMethods = FairValueCalculator.ComputeIndividualMethods(
                 inputValues,
                 sectorMedians,
                 raw.Stock.SectorId);
 
-            var result = FairValueCalculator.Compute(methodEstimates, values.ClosingPrice);
-
-            // Persist every attempted computation, including Unavailable ones (FairValue
-            // null) — a missing row used to read back as a fabricated "قريبة من العادلة"
-            // verdict on the frontend.
+            // Persist Graham result as primary fair value
             fvEntity = new StockFairValue
             {
                 StockId = raw.Stock.Id,
-                FairValue = result.FairValue,
-                PriceComparison = result.Comparison,
-                FairValueDiff = result.DiffAbs,
-                FairValueDiffPct = result.DiffPct,
-                MethodsUsedCount = result.MethodsUsedCount,
-                MethodsExcludedCount = result.MethodsExcludedCount,
-                Confidence = result.Confidence,
+                FairValue = grahamResult.FairValue,
+                PriceComparison = grahamResult.Comparison,
+                FairValueDiff = grahamResult.DiffAbs,
+                FairValueDiffPct = grahamResult.DiffPct,
+                MethodsUsedCount = grahamResult.MethodsUsedCount,
+                MethodsExcludedCount = grahamResult.MethodsExcludedCount,
+                Confidence = grahamResult.Confidence,
                 ComputedAt = DateTime.UtcNow
             };
 
-            fvMethods = result.Methods.Select(m => new StockFairValueMethod
+            fvMethods = individualMethods.Select(m => new StockFairValueMethod
             {
                 MethodName = m.Name,
                 EstimatedValue = m.Value,

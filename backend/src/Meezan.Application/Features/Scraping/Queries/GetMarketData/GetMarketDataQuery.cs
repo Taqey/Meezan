@@ -63,7 +63,21 @@ public record MarketDataDto(
     /// Unified board-supervision note shown for every board-governed stock (identical
     /// wording for both board descriptions).
     /// </summary>
-    string? ShariahBoardNote = null
+    string? ShariahBoardNote = null,
+    /// <summary>
+    /// First-screening gate: the company's own line of business (نشاط الشركة).
+    /// false = the activity itself is prohibited, which is an automatic standalone
+    /// disqualification. For those stocks this DTO returns an empty ShariahOpinions,
+    /// a null ShariahPct and a null ShariahMetrics — no board opinions, no purification
+    /// % and no AAOIFI/S&amp;P ratios are assembled. Null = unknown (no metrics row).
+    /// </summary>
+    bool? ActivityCompliant = null,
+    /// <summary>
+    /// Business-activity classification behind the verdict, e.g. "خدمات مالية / تخصيص".
+    /// Always populated when the metrics row exists, even though ShariahMetrics is null
+    /// for activity-non-compliant stocks.
+    /// </summary>
+    string? ActivityClassification = null
 );
 
 public record IndexInStockDto(

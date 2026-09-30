@@ -128,12 +128,116 @@ public static class FairValueCalculator
     }
 
     /// <summary>
-    /// Computes the fair value by averaging valid methods, excluding outliers
-    /// via the IQR (Interquartile Range) method — Tukey fences with multiplier 1.5.
-    /// Q1 and Q3 use linear interpolation between adjacent ranks (identical to
-    /// Excel QUARTILE.INC and NumPy percentile default), which handles small n
-    /// (3–4 estimates) consistently without special-casing.
-    /// Returns Empty if no estimates are provided.
+    /// Computes Graham-only fair value: √(22.5 × EPS × BookValue).
+    /// This is the single source of truth for the primary FairValue/PriceComparison fields.
+    /// </summary>
+    public static FairValueResult ComputeGrahamOnly(
+        ScrapedMarketDataValues v,
+        decimal? currentPrice)
+    {
+        // Graham requires EPS > 0 and BookValue > 0
+        if (!v.Eps.HasValue || !v.BookValue.HasValue || v.Eps.Value <= 0 || v.BookValue.Value <= 0)
+        {
+            return FairValueResult.Unavailable(methodsUsed: 0, methodsExcluded: 0, methods: null);
+        }
+
+        double grahamSq = 22.5 * (double)v.Eps.Value * (double)v.BookValue.Value;
+        if (grahamSq <= 0)
+        {
+            return FairValueResult.Unavailable(methodsUsed: 0, methodsExcluded: 0, methods: null);
+        }
+
+        var grahamValue = (decimal)Math.Sqrt(grahamSq);
+
+        var methodResults = new List<FairValueMethodResult>
+        {
+            new FairValueMethodResult("Graham", grahamValue, IsOutlier: false)
+        };
+
+        // No current price → Unavailable
+        if (!currentPrice.HasValue || currentPrice.Value <= 0)
+        {
+            return FairValueResult.Unavailable(1, 0, methodResults);
+        }
+
+        var comparison = PriceComparison.Fair;
+        var diffAbs = currentPrice.Value - grahamValue;
+        var diffPct = (diffAbs / currentPrice.Value) * 100m;
+
+        if (grahamValue > currentPrice.Value * 1.05m)
+            comparison = PriceComparison.Cheap;
+        else if (grahamValue < currentPrice.Value * 0.95m)
+            comparison = PriceComparison.Expensive;
+        else
+            comparison = PriceComparison.Fair;
+
+        // Confidence for Graham-only: always Low (single method) when available
+        var confidence = ValuationConfidence.Low;
+
+        return new FairValueResult(
+            FairValue: grahamValue,
+            Comparison: comparison,
+            DiffAbs: diffAbs,
+            DiffPct: diffPct,
+            MethodsUsedCount: 1,
+            MethodsExcludedCount: 0,
+            Confidence: confidence,
+            Methods: methodResults
+        );
+    }
+
+    /// <summary>
+    /// Computes the four individual method estimates (Graham, SectorPE×EPS, SectorPB×BV, BookValue)
+    /// WITHOUT aggregating them. Used for the detail page method list display.
+    /// </summary>
+    public static List<FairValueMethodResult> ComputeIndividualMethods(
+        ScrapedMarketDataValues v,
+        SectorMedians? sectorMedians,
+        int? stockSectorId)
+    {
+        var estimates = new List<(string Name, decimal Value)>();
+
+        // Method 1: Graham Number = √(22.5 × EPS × BookValue)
+        if (v.Eps.HasValue && v.BookValue.HasValue && v.Eps.Value > 0 && v.BookValue.Value > 0)
+        {
+            double grahamSq = 22.5 * (double)v.Eps.Value * (double)v.BookValue.Value;
+            if (grahamSq > 0)
+                estimates.Add(("Graham", (decimal)Math.Sqrt(grahamSq)));
+        }
+
+        if (sectorMedians is not null && stockSectorId.HasValue)
+        {
+            // Method 2: Sector-Median PE × this stock's EPS
+            var medianPe = ComputeMedianExcludingSelf(
+                sectorMedians.PeValues,
+                v.PeRatio.HasValue && v.PeRatio.Value > 0 && (double)v.PeRatio.Value <= MaxValidPeRatio
+                    ? (double?)v.PeRatio.Value
+                    : null);
+
+            if (medianPe.HasValue && v.Eps.HasValue && v.Eps.Value > 0)
+                estimates.Add(("SectorPE×EPS", (decimal)medianPe.Value * v.Eps.Value));
+
+            // Method 3: Sector-Median PB × this stock's BookValue
+            var medianPb = ComputeMedianExcludingSelf(
+                sectorMedians.PbValues,
+                v.PbRatio.HasValue && v.PbRatio.Value > 0 && (double)v.PbRatio.Value <= MaxValidPbRatio
+                    ? (double?)v.PbRatio.Value
+                    : null);
+
+            if (medianPb.HasValue && v.BookValue.HasValue && v.BookValue.Value > 0)
+                estimates.Add(("SectorPB×BV", (decimal)medianPb.Value * v.BookValue.Value));
+        }
+
+        // Method 4: Direct Book Value
+        if (v.BookValue.HasValue && v.BookValue.Value > 0)
+            estimates.Add(("BookValue", v.BookValue.Value));
+
+        // Return as method results (no outlier flag since we don't aggregate)
+        return estimates.Select(e => new FairValueMethodResult(e.Name, e.Value, IsOutlier: false)).ToList();
+    }
+
+    /// <summary>
+    /// Legacy aggregate computation (kept for reference, no longer drives primary fields).
     /// </summary>
     public static FairValueResult Compute(
         List<(string Name, decimal Value)> estimates,
@@ -156,18 +260,6 @@ public static class FairValueCalculator
         else
         {
             // 2. IQR-based outlier detection (Tukey fences).
-            //
-            // Q1/Q3 use linear interpolation ("exclusive" / type-7 method):
-            //   index = p × (n − 1)  where p = 0.25 or 0.75
-            //   Q = sorted[floor(index)] + frac(index) × (sorted[ceil(index)] − sorted[floor(index)])
-            //
-            // This is the same formula used by Excel QUARTILE.INC, NumPy (default),
-            // R (type 7), and Pandas. It is well-defined for any n ≥ 2 and gives
-            // sensible results with 3–4 points without any special-casing.
-            //
-            // Note: at very small n (3–4), the IQR bounds can be wide enough that
-            // few or no values get excluded — this is expected statistical behaviour,
-            // not a bug. The method is applied consistently at all n.
             var (lower, upper) = ComputeIqrBounds(estimates.Select(e => (double)e.Value).ToList());
 
             included = estimates
@@ -178,8 +270,6 @@ public static class FairValueCalculator
 
             if (included.Count == 0)
             {
-                // All estimates fell outside the IQR bounds (can happen at very small n).
-                // Fall back to using all of them so we always produce a result.
                 included = estimates;
                 excluded = [];
             }
@@ -191,34 +281,20 @@ public static class FairValueCalculator
             IsOutlier: excluded.Any(ex => ex.Name == e.Name)
         )).ToList();
 
-        // Defensive: nothing survived (would require the all-outliers fallback itself to
-        // fail) — report Unavailable rather than an empty average.
         if (included.Count == 0)
             return FairValueResult.Unavailable(0, excluded.Count, methodResults);
 
         var fairValue = (decimal)included.Select(e => (double)e.Value).Average();
 
-        // Unavailable: the stock's own current price is missing/zero/invalid, so no
-        // Cheap/Expensive/Fair verdict can be produced. Counts stay real, the fair value
-        // is dropped rather than presented as a standalone number.
         if (!currentPrice.HasValue || currentPrice.Value <= 0)
         {
             return FairValueResult.Unavailable(included.Count, excluded.Count, methodResults);
         }
 
-        // 3. Price comparison
         var comparison = PriceComparison.Fair;
-
-        // Diff = ClosingPrice - FairValue (matching scraper.py compute_fair_value_diff)
-        // Negative -> current price is below fair value (cheap)
-        // Positive -> current price is above fair value (expensive)
         var diffAbs = currentPrice.Value - fairValue;
         var diffPct = (diffAbs / currentPrice.Value) * 100m;
 
-        // Comparison logic matching scraper.py compute_price_comparison:
-        // FairValue > ClosingPrice * 1.05 -> Cheap ("أصغر")
-        // FairValue < ClosingPrice * 0.95 -> Expensive ("أكبر")
-        // Otherwise -> Fair ("تقريبًا قدها")
         if (fairValue > currentPrice.Value * 1.05m)
             comparison = PriceComparison.Cheap;
         else if (fairValue < currentPrice.Value * 0.95m)
@@ -226,7 +302,6 @@ public static class FairValueCalculator
         else
             comparison = PriceComparison.Fair;
 
-        // 4. Confidence: based on number of non-outlier methods used
         var confidence = included.Count switch
         {
             >= 3 => ValuationConfidence.High,
