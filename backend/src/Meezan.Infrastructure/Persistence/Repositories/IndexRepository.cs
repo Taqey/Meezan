@@ -105,11 +105,15 @@ public class IndexRepository : IIndexRepository
             // Effective status = (1) activity gate → (2) any board "compliant" → (3) stored verdict.
             // This mirrors Common.ShariahStatusResolver.EffectiveStatus and the SELECT projection
             // below exactly — the filter bucket must always match what the row displays.
+            // HalalBourse rule: compliant + percentage < 100 (or null) is treated as doubtful, not compliant.
             query = query.Where(ic =>
                 selectedShariahStatuses.Contains(
                     (ic.Stock!.ShariahMetrics != null && ic.Stock.ShariahMetrics.CoreActivityCompliant == false
                         ? Meezan.Domain.Enums.ShariahStatus.NonCompliant
-                        : (ic.Stock.ShariahSourceOpinions.Any(o => o.Status != null && o.Status.ToUpper() == "COMPLIANT")
+                        : (ic.Stock.ShariahSourceOpinions.Any(o =>
+                                o.Status != null && o.Status.ToUpper() == "COMPLIANT"
+                                && (o.SourceKey != Meezan.Domain.Enums.ShariahSourceKey.HalalBourse
+                                    || (o.Percentage != null && o.Percentage >= 100)))
                             ? Meezan.Domain.Enums.ShariahStatus.Compliant
                             : (ic.Stock.ShariahCompliance != null ? ic.Stock.ShariahCompliance.Status : (Meezan.Domain.Enums.ShariahStatus)(-1))))
                 ));
@@ -132,7 +136,11 @@ public class IndexRepository : IIndexRepository
                 (ic.Stock!.ShariahMetrics == null
                  || ic.Stock.ShariahMetrics.CoreActivityCompliant == null
                  || ic.Stock.ShariahMetrics.CoreActivityCompliant == true)
-                && ic.Stock.ShariahSourceOpinions.Count(o => o.Status != null && o.Status.ToUpper() == "COMPLIANT") >= min);
+                // HalalBourse rule: compliant + percentage < 100 (or null) counts as doubtful, not compliant.
+                && ic.Stock.ShariahSourceOpinions.Count(o =>
+                        o.Status != null && o.Status.ToUpper() == "COMPLIANT"
+                        && (o.SourceKey != Meezan.Domain.Enums.ShariahSourceKey.HalalBourse
+                            || (o.Percentage != null && o.Percentage >= 100))) >= min);
         }
 
         // PE Ratio range filter
@@ -186,9 +194,13 @@ public class IndexRepository : IIndexRepository
                 ic.Stock.NameAr,
                 ic.Stock.NameEn,
                 // Board opinions win over stored compliance: any board says "compliant" = Compliant.
+                // HalalBourse rule: compliant + percentage < 100 (or null) is treated as doubtful.
                 ShariahStatus = ic.Stock.ShariahMetrics != null && ic.Stock.ShariahMetrics.CoreActivityCompliant == false
                     ? Meezan.Domain.Enums.ShariahStatus.NonCompliant.ToString()
-                    : (ic.Stock.ShariahSourceOpinions.Any(o => o.Status != null && o.Status.ToUpper() == "COMPLIANT")
+                    : (ic.Stock.ShariahSourceOpinions.Any(o =>
+                            o.Status != null && o.Status.ToUpper() == "COMPLIANT"
+                            && (o.SourceKey != Meezan.Domain.Enums.ShariahSourceKey.HalalBourse
+                                || (o.Percentage != null && o.Percentage >= 100)))
                         ? Meezan.Domain.Enums.ShariahStatus.Compliant.ToString()
                         : (ic.Stock.ShariahCompliance != null
                             ? ic.Stock.ShariahCompliance.Status.ToString()

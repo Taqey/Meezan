@@ -91,9 +91,15 @@ public class RefreshSelectedStocksCommandHandler
                 busy, tickers.Select(t => new SelectedStockRefreshOutcome(t, false, busy)).ToList());
         }
 
+        var rawTriggeredBy = tickers.Count <= 3
+            ? $"{request.TriggeredBy} [{string.Join(",", tickers)}]"
+            : $"{request.TriggeredBy} ({tickers.Count} stocks)";
+        if (rawTriggeredBy.Length > 50)
+            rawTriggeredBy = rawTriggeredBy.Substring(0, 50);
+
         var log = await _runLogRepo.CreateAsync(new ScrapeRunLog
         {
-            TriggeredBy = $"{request.TriggeredBy} [{string.Join(",", tickers)}]",
+            TriggeredBy = rawTriggeredBy,
             StartedAt = startedAt
         }, cancellationToken);
 

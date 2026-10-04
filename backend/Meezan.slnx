@@ -5,4 +5,7 @@
     <Project Path="src/Meezan.Infrastructure/Meezan.Infrastructure.csproj" />
     <Project Path="src/Meezan.WebApi/Meezan.WebApi.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Meezan.Infrastructure.Tests/Meezan.Infrastructure.Tests.csproj" />
+  </Folder>
 </Solution>

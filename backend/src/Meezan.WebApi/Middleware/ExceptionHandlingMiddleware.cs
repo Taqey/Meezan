@@ -65,13 +65,32 @@ public class ExceptionHandlingMiddleware
                 };
                 break;
 
+            case Microsoft.EntityFrameworkCore.DbUpdateException dbUpdateEx:
+                code = HttpStatusCode.InternalServerError;
+                var innerMsg = dbUpdateEx.InnerException?.Message ?? dbUpdateEx.Message;
+                int? sqlErrorNumber = null;
+                if (dbUpdateEx.InnerException is Microsoft.Data.SqlClient.SqlException sqlEx)
+                {
+                    sqlErrorNumber = sqlEx.Number;
+                }
+                response = new
+                {
+                    status = (int)code,
+                    title = "Database Update Error",
+                    message = innerMsg,
+                    sqlErrorNumber = sqlErrorNumber,
+                    detail = dbUpdateEx.ToString()
+                };
+                break;
+
             default:
                 code = HttpStatusCode.InternalServerError;
                 response = new
                 {
                     status = (int)code,
                     title = "Server Error",
-                    message = exception.Message
+                    message = exception.InnerException?.Message ?? exception.Message,
+                    detail = exception.ToString()
                 };
                 break;
         }

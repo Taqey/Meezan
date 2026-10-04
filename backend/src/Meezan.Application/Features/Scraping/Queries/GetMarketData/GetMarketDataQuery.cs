@@ -77,7 +77,15 @@ public record MarketDataDto(
     /// Always populated when the metrics row exists, even though ShariahMetrics is null
     /// for activity-non-compliant stocks.
     /// </summary>
-    string? ActivityClassification = null
+    string? ActivityClassification = null,
+    /// <summary>
+    /// Why detailed financial screens are missing: "MISSING_FINANCIALS" when the
+    /// required inputs are absent (no metrics row or all ratio fields null),
+    /// "NOT_CALCULATED" when screens are intentionally not applied
+    /// (activity-non-compliant or board-governed stocks), null when data is present.
+    /// Lets the UI distinguish "not applicable" from "not available".
+    /// </summary>
+    string? ShariahMetricsUnavailableReason = null
 );
 
 public record IndexInStockDto(

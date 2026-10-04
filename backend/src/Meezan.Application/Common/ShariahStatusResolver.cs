@@ -57,12 +57,21 @@ public static class ShariahStatusResolver
             return ShariahStatus.NonCompliant;
 
         // 2. Any board says compliant? That wins over stored verdict.
+        //    Exception: HalalBourse "compliant" with percentage < 100 is treated as
+        //    doubtful (not compliant), so it does NOT trigger the compliant early-return.
         if (opinions != null)
         {
             foreach (var o in opinions)
             {
                 if (o.Status != null && o.Status.ToUpper() == "COMPLIANT")
+                {
+                    // HalalBourse-specific rule: percentage must be 100 to count as compliant.
+                    if (o.SourceKey == ShariahSourceKey.HalalBourse
+                        && (o.Percentage == null || o.Percentage < 100))
+                        continue; // treat as doubtful — do not elevate to compliant
+
                     return ShariahStatus.Compliant;
+                }
             }
         }
 

@@ -80,6 +80,17 @@ public class GetMarketDataQueryHandler : IRequestHandler<GetMarketDataQuery, Mar
                 })
                 .ToList();
 
+            // Financial screens depend on WHY the stock is non-compliant, not on the
+            // status alone: activity-non-compliant (impermissible core business) fails
+            // the first screen so ratios are meaningless; permissible-activity stocks
+            // (Compliant, Doubtful, or NonCompliant via financial ratios) must still
+            // receive their metrics so the user sees which criterion failed.
+            var partialMetrics = hasBoard1 || activityNonCompliant
+                ? null
+                : BuildMetricsDto(stock.ShariahMetrics);
+            var partialReason = ResolveMetricsUnavailableReason(
+                hasBoard1, activityNonCompliant, stock.ShariahMetrics, partialMetrics);
+
             return new MarketDataDto(
                 Ticker: stock.Ticker,
                 NameAr: stock.NameAr,
@@ -103,15 +114,12 @@ public class GetMarketDataQueryHandler : IRequestHandler<GetMarketDataQuery, Mar
                 FairValue: null, PriceComparison: null, FairValueDiff: null,
                 FairValueDiffPct: null, MethodsUsedCount: null, MethodsExcludedCount: null,
                 ValuationConfidence: null, FairValueMethods: null,
-                // Fix 4: NonCompliant and board-governed stocks show no detailed metrics.
-                // Activity-non-compliant stocks never do either (activity hard gate).
-                ShariahMetrics: hasBoard1 || activityNonCompliant || effectiveStatus == ShariahStatus.NonCompliant
-                    ? null
-                    : BuildMetricsDto(stock.ShariahMetrics),
+                ShariahMetrics: partialMetrics,
                 HasShariahBoard: hasBoard1,
                 ShariahBoardNote: boardNote1,
                 ActivityCompliant: activityCompliant,
-                ActivityClassification: activityClassification
+                ActivityClassification: activityClassification,
+                ShariahMetricsUnavailableReason: partialReason
             );
         }
 
@@ -158,16 +166,18 @@ public class GetMarketDataQueryHandler : IRequestHandler<GetMarketDataQuery, Mar
             })
             .ToList();
 
-        // ── Fix 4: Suppress ShariahMetrics for NonCompliant stocks ──────────────
-        // For a stock already confirmed non-compliant, showing "0 جم/سهم" or "0%"
-        // for every purification/haram-earnings metric is misleading noise.
-        // Only include the full metrics panel for Compliant and Pending stocks being
-        // actively evaluated against the standards. Board-governed stocks never show it:
-        // purification is the board's own internal responsibility.
-        var isNonCompliant = effectiveStatus == ShariahStatus.NonCompliant;
-        var metricsDto = isNonCompliant || hasBoard || activityNonCompliant
+        // Financial screens depend on WHY the stock is non-compliant, not on the
+        // status alone. A permissible-activity stock that is NonCompliant failed on
+        // financial ratios, so its metrics MUST be returned (the user needs to see
+        // which criterion failed). Only activity-non-compliant stocks (first screen
+        // fails, ratios meaningless) and board-governed stocks (board's own
+        // responsibility) suppress metrics. Never skip the calculation just because
+        // the status is NonCompliant.
+        var metricsDto = hasBoard || activityNonCompliant
             ? null
             : BuildMetricsDto(stock.ShariahMetrics);
+        var metricsReason = ResolveMetricsUnavailableReason(
+            hasBoard, activityNonCompliant, stock.ShariahMetrics, metricsDto);
 
         return new MarketDataDto(
             Ticker: stock.Ticker,
@@ -207,7 +217,8 @@ public class GetMarketDataQueryHandler : IRequestHandler<GetMarketDataQuery, Mar
             HasShariahBoard: hasBoard,
             ShariahBoardNote: boardNote,
             ActivityCompliant: activityCompliant,
-            ActivityClassification: activityClassification
+            ActivityClassification: activityClassification,
+            ShariahMetricsUnavailableReason: metricsReason
         );
     }
 
@@ -228,10 +239,42 @@ public class GetMarketDataQueryHandler : IRequestHandler<GetMarketDataQuery, Mar
         boardNote = Common.ShariahBoardDetector.NoteFor(hasBoard);
     }
 
+    /// <summary>
+    /// True when the metrics row carries no usable financial-screen inputs at all:
+    /// no row, or every ratio field (debt, deposits, non-compliant income) is null.
+    /// In that state we return null rather than inventing or estimating values.
+    /// </summary>
+    private static bool HasNoRatioData(Domain.Entities.StockShariahMetrics? sm)
+    {
+        if (sm is null) return true;
+        return sm.LoansPercentage == null
+            && sm.HaramEarningsPercentage == null
+            && sm.SpHaramEarningPercentage == null
+            && sm.AaoifiHaramEarningPerShare == null;
+    }
+
+    /// <summary>
+    /// Distinguishes "not applicable" (screens intentionally not applied) from
+    /// "not available" (inputs missing): board-governed or activity-non-compliant
+    /// → NOT_CALCULATED; metrics null/empty → MISSING_FINANCIALS; otherwise null.
+    /// </summary>
+    private static string? ResolveMetricsUnavailableReason(
+        bool hasBoard,
+        bool activityNonCompliant,
+        Domain.Entities.StockShariahMetrics? sm,
+        Meezan.Application.Features.Shariah.DTOs.StockShariahMetricsDto? dto)
+    {
+        if (dto != null) return null;
+        if (hasBoard || activityNonCompliant) return "NOT_CALCULATED";
+        return "MISSING_FINANCIALS";
+    }
+
     private static Meezan.Application.Features.Shariah.DTOs.StockShariahMetricsDto? BuildMetricsDto(
         Meezan.Domain.Entities.StockShariahMetrics? sm)
     {
         if (sm is null) return null;
+        // Never invent or estimate: without any ratio inputs there is nothing to screen.
+        if (HasNoRatioData(sm)) return null;
         return new Meezan.Application.Features.Shariah.DTOs.StockShariahMetricsDto
         {
             Id = sm.Id,

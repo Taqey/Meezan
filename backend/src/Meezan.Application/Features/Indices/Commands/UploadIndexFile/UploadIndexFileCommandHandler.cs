@@ -107,8 +107,8 @@ public class UploadIndexFileCommandHandler : IRequestHandler<UploadIndexFileComm
                     sector = await _stockRepository.GetOrCreateSectorAsync(item.SectorAr, item.SectorEn, cancellationToken);
                 }
 
-                // Stock handling by Ticker
-                var existingStock = await _stockRepository.GetByTickerAsync(ticker, cancellationToken);
+                // Stock handling by Ticker (including inactive stocks to avoid unique key violation)
+                var existingStock = await _stockRepository.GetByTickerIncludingInactiveAsync(ticker, cancellationToken);
                 if (existingStock == null)
                 {
                     existingStock = new Stock
@@ -126,6 +126,13 @@ public class UploadIndexFileCommandHandler : IRequestHandler<UploadIndexFileComm
                 else
                 {
                     bool modified = false;
+                    if (!existingStock.IsActive)
+                    {
+                        existingStock.IsActive = true;
+                        existingStock.DeactivationReason = null;
+                        existingStock.DeactivatedAt = null;
+                        modified = true;
+                    }
                     if (!string.IsNullOrWhiteSpace(item.NameAr) && existingStock.NameAr != item.NameAr!.Trim())
                     {
                         existingStock.NameAr = item.NameAr!.Trim();

@@ -1,10 +1,12 @@
 using System.IO;
 using System.Text.Json;
 using MediatR;
+using Meezan.Application.Common.Interfaces;
 using Meezan.Application.Features.Shariah.Commands.ImportFaisalOsoulOpinions;
 using Meezan.Application.Features.Shariah.Commands.RefreshShariahData;
 using Meezan.Application.Features.Shariah.Commands.SeedShariahMap;
 using Meezan.Application.Features.Shariah.DTOs;
+using Meezan.Domain.Enums;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 
@@ -16,11 +18,171 @@ public class ShariahController : ControllerBase
 {
     private readonly IMediator _mediator;
     private readonly IWebHostEnvironment _env;
+    private readonly IShariahSourceOpinionRepository _opinions;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public ShariahController(IMediator mediator, IWebHostEnvironment env)
+    public ShariahController(
+        IMediator mediator,
+        IWebHostEnvironment env,
+        IShariahSourceOpinionRepository opinions,
+        IUnitOfWork unitOfWork)
     {
         _mediator = mediator;
         _env = env;
+        _opinions = opinions;
+        _unitOfWork = unitOfWork;
+    }
+
+    // ── Stored source-PDF resolution (single source of truth) ──────────────
+    // The database (ShariahSourceOpinion.PdfUrl per source) is the primary
+    // reference; the file system is verified against it. No caller may rely on
+    // hard-coded file names alone: names are only a fallback when the DB has
+    // no path, plus a directory scan for that source.
+    private const string PdfStorageSubPath = "uploads/shariah";
+
+    /// <summary>DB status for one source's stored PDF report.</summary>
+    public class SourcePdfStatusDto
+    {
+        public string SourceKey { get; set; } = string.Empty;
+        public string? DbPdfUrl { get; set; }
+        /// <summary>"exists" | "missing-file" | "not-found".</summary>
+        public string Status { get; set; } = "not-found";
+        public string? FileName { get; set; }
+        public long? SizeBytes { get; set; }
+        public DateTime? LastModifiedUtc { get; set; }
+        public string? ViewPath { get; set; }
+    }
+
+    private static string? CanonicalSourceKey(string sourceKey) => sourceKey switch
+    {
+        "FaisalBank" => "FaisalBank",
+        "Ostoul" or "Osoul" => "Ostoul",
+        _ => null
+    };
+
+    private static ShariahSourceKey ToSourceKeyEnum(string canonical) => canonical switch
+    {
+        "FaisalBank" => ShariahSourceKey.FaisalBank,
+        "Ostoul" => ShariahSourceKey.Osoul,
+        _ => throw new ArgumentOutOfRangeException(nameof(canonical))
+    };
+
+    private static string CanonicalFileName(string canonical) => canonical switch
+    {
+        "FaisalBank" => "Faisal compliance-list.pdf",
+        // NOTE: historical name carries a trailing space before the extension.
+        "Ostoul" => "Ostoul compliance-list .pdf",
+        _ => throw new ArgumentOutOfRangeException(nameof(canonical))
+    };
+
+    /// <summary>
+    /// The one folder every PDF endpoint reads from and writes to. Always the
+    /// app's wwwroot (explicitly suffixed — never the content root itself), so
+    /// serve, upload and status can never drift apart.
+    /// </summary>
+    private string PdfStorageDir()
+    {
+        var webRoot = _env.WebRootPath;
+        if (string.IsNullOrWhiteSpace(webRoot))
+            webRoot = Path.Combine(_env.ContentRootPath, "wwwroot");
+        return Path.Combine(webRoot, PdfStorageSubPath);
+    }
+
+    private static string? FileNameFromUrl(string? url)
+    {
+        if (string.IsNullOrWhiteSpace(url)) return null;
+        try
+        {
+            // Stored urls look like "/uploads/shariah/Ostoul compliance-list .pdf":
+            // URL-decode first (%20 → space), then take the file name.
+            var decoded = Uri.UnescapeDataString(url);
+            return Path.GetFileName(decoded);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Locates the stored PDF for one source: (1) the DB-recorded pdfUrl
+    /// (URL-decoded) mapped into the storage dir, (2) the canonical file name,
+    /// (3) a case-insensitive scan of the storage dir for that source's files.
+    /// Returns the full on-disk path, or null when nothing is on disk.
+    /// </summary>
+    private static string? FindStoredPdfFile(string storageDir, string canonical, string? dbPdfUrl)
+    {
+        var dbFileName = FileNameFromUrl(dbPdfUrl);
+        if (!string.IsNullOrWhiteSpace(dbFileName))
+        {
+            var viaDb = Path.Combine(storageDir, dbFileName);
+            if (System.IO.File.Exists(viaDb)) return viaDb;
+        }
+
+        var viaCanonical = Path.Combine(storageDir, CanonicalFileName(canonical));
+        if (System.IO.File.Exists(viaCanonical)) return viaCanonical;
+
+        // Fallback: scan the folder for this source's PDF (case-insensitive).
+        try
+        {
+            if (!Directory.Exists(storageDir)) return null;
+            var token = canonical == "FaisalBank" ? "faisal" : "osoul";
+            var altToken = canonical == "FaisalBank" ? null : "ostoul";
+            foreach (var file in Directory.GetFiles(storageDir, "*.pdf"))
+            {
+                var name = Path.GetFileName(file).ToLowerInvariant();
+                if (name.Contains(token) || (altToken != null && name.Contains(altToken)))
+                    return file;
+            }
+        }
+        catch
+        {
+            // I/O errors mean "no verifiable file" — never throw from a probe.
+        }
+
+        return null;
+    }
+
+    private async Task<SourcePdfStatusDto> GetSourcePdfStatusAsync(
+        string canonical, CancellationToken cancellationToken)
+    {
+        var enumKey = ToSourceKeyEnum(canonical);
+        var rows = await _opinions.GetBySourceKeyAsync(enumKey, cancellationToken);
+        var dbPdfUrl = rows
+            .Select(r => r.PdfUrl)
+            .FirstOrDefault(u => !string.IsNullOrWhiteSpace(u));
+
+        var storageDir = PdfStorageDir();
+        var found = FindStoredPdfFile(storageDir, canonical, dbPdfUrl);
+
+        var dto = new SourcePdfStatusDto
+        {
+            SourceKey = canonical,
+            DbPdfUrl = dbPdfUrl,
+            ViewPath = $"api/shariah/source-pdf/{canonical}"
+        };
+
+        if (found != null)
+        {
+            var info = new FileInfo(found);
+            dto.Status = "exists";
+            dto.FileName = info.Name;
+            dto.SizeBytes = info.Length;
+            dto.LastModifiedUtc = info.LastWriteTimeUtc;
+        }
+        else if (!string.IsNullOrWhiteSpace(dbPdfUrl))
+        {
+            // Referenced by opinion rows but absent from disk: distinct state,
+            // not a plain "not found".
+            dto.Status = "missing-file";
+            dto.FileName = FileNameFromUrl(dbPdfUrl);
+        }
+        else
+        {
+            dto.Status = "not-found";
+        }
+
+        return dto;
     }
 
     /// <summary>
@@ -77,27 +239,48 @@ public class ShariahController : ControllerBase
     }
 
     /// <summary>
+    /// Per-source stored-PDF status for the admin "Currently stored files" box.
+    /// Decides "exists" from BOTH the database record (opinion PdfUrl) AND the
+    /// file on disk (URL-decoded path resolution): "exists" when the file is on
+    /// disk, "missing-file" when the DB references a path absent from disk,
+    /// "not-found" when neither exists. Never 404s itself.
+    /// </summary>
+    [HttpGet("source-pdfs/status")]
+    [ProducesResponseType(typeof(List<SourcePdfStatusDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetSourcePdfsStatus(CancellationToken cancellationToken)
+    {
+        var result = new List<SourcePdfStatusDto>
+        {
+            await GetSourcePdfStatusAsync("FaisalBank", cancellationToken),
+            await GetSourcePdfStatusAsync("Ostoul", cancellationToken)
+        };
+        return Ok(result);
+    }
+
+    /// <summary>
     /// Serves the stored source PDF for Faisal Bank or Ostoul.
+    /// Resolves via the DB-recorded pdfUrl first (URL-decoded), then the
+    /// canonical name, then a folder scan — same resolution as the status check.
     /// </summary>
     [HttpGet("source-pdf/{sourceKey}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public IActionResult GetSourcePdf(string sourceKey)
+    public async Task<IActionResult> GetSourcePdf(string sourceKey, CancellationToken cancellationToken)
     {
-        var fileName = sourceKey switch
-        {
-            "FaisalBank" => "Faisal compliance-list.pdf",
-            "Ostoul" or "Osoul" => "Ostoul compliance-list .pdf",
-            _ => null
-        };
+        var canonical = CanonicalSourceKey(sourceKey);
+        if (canonical == null) return NotFound();
 
-        if (fileName == null) return NotFound();
+        var enumKey = ToSourceKeyEnum(canonical);
+        var rows = await _opinions.GetBySourceKeyAsync(enumKey, cancellationToken);
+        var dbPdfUrl = rows
+            .Select(r => r.PdfUrl)
+            .FirstOrDefault(u => !string.IsNullOrWhiteSpace(u));
 
-        var filePath = Path.Combine(_env.WebRootPath ?? _env.ContentRootPath, "uploads/shariah", fileName);
-        if (!System.IO.File.Exists(filePath)) return NotFound();
+        var filePath = FindStoredPdfFile(PdfStorageDir(), canonical, dbPdfUrl);
+        if (filePath == null) return NotFound();
 
         var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
-        return File(stream, "application/pdf", fileName);
+        return File(stream, "application/pdf", Path.GetFileName(filePath));
     }
 
     /// <summary>
@@ -135,14 +318,12 @@ public class ShariahController : ControllerBase
             return BadRequest(new { message = "File size exceeds 50 MB limit." });
         }
 
-        var fileName = sourceKey switch
-        {
-            "FaisalBank" => "Faisal compliance-list.pdf",
-            "Ostoul" or "Osoul" => "Ostoul compliance-list .pdf",
-            _ => null // already validated
-        };
+        var canonical = CanonicalSourceKey(sourceKey)!;
+        // Same folder and same naming convention the status check reads from,
+        // so upload and status can never drift apart.
+        var fileName = CanonicalFileName(canonical);
 
-        var storageDir = Path.Combine(_env.WebRootPath ?? _env.ContentRootPath, "uploads/shariah");
+        var storageDir = PdfStorageDir();
         Directory.CreateDirectory(storageDir);
 
         var filePath = Path.Combine(storageDir, fileName);
@@ -159,23 +340,28 @@ public class ShariahController : ControllerBase
             await file.CopyToAsync(stream, cancellationToken);
         }
 
-        // Update PdfUrl in ShariahSourceOpinions for this source (same path for all rows of this source)
-        // We do this by calling the import command with the same JSON but it will re-persist the new PdfUrl.
-        // Simpler: update directly via repository? But that's in Application layer.
-        // For now, just return success; the next import-faisal-osoul run will pick up the new file.
-        // To make it immediate, we'd need to update the DB rows here — that requires injecting the opinion repo.
-        // Since this is an admin tool, the user will re-run the import after upload.
-        // We'll return the new file reference and a note.
+        // Update PdfUrl on this source's opinion rows immediately so the stored-
+        // files status (which reads the DB first) refreshes without waiting for
+        // the next import-faisal-osoul run.
+        var storedAt = $"/{PdfStorageSubPath}/{fileName}";
+        var enumKey = ToSourceKeyEnum(canonical);
+        var rows = await _opinions.GetBySourceKeyAsync(enumKey, cancellationToken);
+        foreach (var row in rows)
+        {
+            row.PdfUrl = storedAt;
+            _opinions.Update(row);
+        }
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         var reportDateParsed = DateTime.TryParse(reportDate, out var parsed) ? parsed : (DateTime?)null;
 
         return Ok(new
         {
             success = true,
-            message = $"PDF uploaded and replaced for {sourceKey}. Run import-faisal-osoul to refresh opinion records.",
-            sourceKey,
+            message = $"PDF uploaded and replaced for {canonical}.",
+            sourceKey = canonical,
             fileName,
-            storedAt = $"/uploads/shariah/{fileName}",
+            storedAt,
             reportDate = reportDateParsed?.ToString("yyyy-MM-dd"),
             uploadedAt = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ")
         });

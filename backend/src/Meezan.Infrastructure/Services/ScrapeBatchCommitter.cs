@@ -108,18 +108,27 @@ public class ScrapeBatchCommitter : IScrapeBatchCommitter
         var strategy = _context.Database.CreateExecutionStrategy();
         await strategy.ExecuteAsync(async () =>
         {
+            // ── Retry-safety ────────────────────────────────────────────────────
+            // ExecuteAsync can replay the entire lambda on transient SQL failures.
+            // On a retry, StockFairValue / StockFairValueMethod / StockSupportResistance
+            // objects from the previous (failed) attempt may still be tracked in EF's
+            // ChangeTracker (state Added). AddRangeAsync on the retry then throws because
+            // they are already tracked. Fix: detach just those entity types so each
+            // attempt starts clean for them, while leaving the caller's Stock and
+            // ScrapeRunLog entities tracked (a full Clear() would break the outer handler).
+            foreach (var entry in _context.ChangeTracker.Entries<StockFairValue>().ToList())
+                entry.State = EntityState.Detached;
+            foreach (var entry in _context.ChangeTracker.Entries<StockFairValueMethod>().ToList())
+                entry.State = EntityState.Detached;
+            foreach (var entry in _context.ChangeTracker.Entries<StockSupportResistance>().ToList())
+                entry.State = EntityState.Detached;
+            // ────────────────────────────────────────────────────────────────────
+
             await using var tx = await _context.Database.BeginTransactionAsync(ct);
             try
             {
-                // NOTE: NO ChangeTracker.Clear() here — unlike the full-run commits, this
-                // scoped commit runs inside the same request as the handler's tracked
-                // Stock/ScrapeRunLog entities. Clearing would detach them and their
-                // navigations, and the handler's later SaveChanges then fails with
-                // "Unexpected entry.EntityState: Detached". Scoped deletes use
-                // ExecuteDelete (bypass the tracker), and every upsert here resolves the
-                // DB row through a query, so tracked entities are never in conflict.
-
                 // Scoped deletes — ONLY the selected stocks' rows, never the whole table.
+                // ExecuteDelete bypasses the change tracker so these are safe on retry.
                 // (Two-step for methods: ExecuteDelete cannot join via navigation.)
                 var existingFvIds = await _context.StockFairValues
                     .Where(f => stockIds.Contains(f.StockId))
@@ -150,8 +159,17 @@ public class ScrapeBatchCommitter : IScrapeBatchCommitter
 
                     if (snapshot.FairValue is not null)
                     {
+                        // Reset PK so EF always does an INSERT (the DB row was just
+                        // deleted above, and Id may be non-zero from a previous attempt).
+                        snapshot.FairValue.Id = 0;
+                        snapshot.FairValue.Methods.Clear();
                         if (snapshot.FairValueMethods is { Count: > 0 })
                         {
+                            foreach (var m in snapshot.FairValueMethods)
+                            {
+                                m.Id = 0;
+                                m.StockFairValueId = 0;
+                            }
                             snapshot.FairValue.Methods = snapshot.FairValueMethods;
                         }
                         fairValueList.Add(snapshot.FairValue);
@@ -159,6 +177,8 @@ public class ScrapeBatchCommitter : IScrapeBatchCommitter
 
                     if (snapshot.SupportResistance is not null)
                     {
+                        // Reset PK so EF always does an INSERT.
+                        snapshot.SupportResistance.Id = 0;
                         supportResistanceList.Add(snapshot.SupportResistance);
                     }
                 }

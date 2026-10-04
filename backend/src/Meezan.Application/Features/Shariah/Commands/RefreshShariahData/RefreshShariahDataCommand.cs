@@ -3,6 +3,7 @@ using Meezan.Application.Common.Interfaces;
 using Meezan.Application.Common.Models;
 using Meezan.Domain.Entities;
 using Meezan.Domain.Enums;
+using Microsoft.Extensions.Logging;
 
 namespace Meezan.Application.Features.Shariah.Commands.RefreshShariahData;
 
@@ -25,6 +26,7 @@ public class RefreshShariahDataCommandHandler : IRequestHandler<RefreshShariahDa
     private readonly IStockShariahMetricsRepository _metricsRepository;
     private readonly IShariahRefreshLogRepository _logRepository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ILogger<RefreshShariahDataCommandHandler> _logger;
 
     public RefreshShariahDataCommandHandler(
         IShariahSourceClient sourceClient,
@@ -33,7 +35,8 @@ public class RefreshShariahDataCommandHandler : IRequestHandler<RefreshShariahDa
         IShariahSourceOpinionRepository opinionRepository,
         IStockShariahMetricsRepository metricsRepository,
         IShariahRefreshLogRepository logRepository,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        ILogger<RefreshShariahDataCommandHandler> logger)
     {
         _sourceClient = sourceClient;
         _stockRepository = stockRepository;
@@ -42,6 +45,7 @@ public class RefreshShariahDataCommandHandler : IRequestHandler<RefreshShariahDa
         _metricsRepository = metricsRepository;
         _logRepository = logRepository;
         _unitOfWork = unitOfWork;
+        _logger = logger;
     }
 
     public async Task<RefreshShariahDataResult> Handle(RefreshShariahDataCommand request, CancellationToken cancellationToken)
@@ -75,185 +79,212 @@ public class RefreshShariahDataCommandHandler : IRequestHandler<RefreshShariahDa
         int stocksFullyRefreshedCount = 0;
         var now = DateTime.UtcNow;
 
-        foreach (var item in externalData)
+        // Deduplicate external data by normalized symbol so duplicate items in feed don't conflict
+        var distinctItems = externalData
+            .Where(item => !string.IsNullOrWhiteSpace(item.Symbol))
+            .GroupBy(item => item.Symbol!.Trim().ToUpperInvariant())
+            .Select(g => g.Last())
+            .ToList();
+
+        foreach (var item in distinctItems)
         {
-            if (string.IsNullOrWhiteSpace(item.Symbol)) continue;
-            var symbol = item.Symbol.Trim().ToUpperInvariant();
+            var symbol = item.Symbol!.Trim().ToUpperInvariant();
 
-            // 1. Find or create Stock
-            var stock = await _stockRepository.GetBySymbolCodeAsync(symbol, cancellationToken);
-            if (stock == null)
+            try
             {
-                stock = new Stock
+                // 1. Find or create Stock
+                var stock = await _stockRepository.GetBySymbolCodeAsync(symbol, cancellationToken);
+                if (stock == null)
                 {
-                    Ticker = symbol,
-                    // Only set names when the external source has real data.
-                    // Leave null if the external name is empty — real names come from index upload.
-                    NameAr = !string.IsNullOrWhiteSpace(item.NameAr) ? item.NameAr : null,
-                    NameEn = !string.IsNullOrWhiteSpace(item.NameEn) ? item.NameEn : null,
-                    CreatedAt = now,
-                    UpdatedAt = now
-                };
-                await _stockRepository.AddAsync(stock, cancellationToken);
+                    stock = new Stock
+                    {
+                        Ticker = symbol,
+                        // Only set names when the external source has real data.
+                        // Leave null if the external name is empty — real names come from index upload.
+                        NameAr = !string.IsNullOrWhiteSpace(item.NameAr) ? item.NameAr : null,
+                        NameEn = !string.IsNullOrWhiteSpace(item.NameEn) ? item.NameEn : null,
+                        CreatedAt = now,
+                        UpdatedAt = now
+                    };
+                    await _stockRepository.AddAsync(stock, cancellationToken);
+                    await _unitOfWork.SaveChangesAsync(cancellationToken);
+                }
+                else
+                {
+                    // Backfill names when missing or still holding the old symbol-code placeholder.
+                    bool modified = false;
+                    bool nameArMissing = string.IsNullOrWhiteSpace(stock.NameAr) || stock.NameAr == stock.Ticker;
+                    bool nameEnMissing = string.IsNullOrWhiteSpace(stock.NameEn) || stock.NameEn == stock.Ticker;
+
+                    if (nameArMissing && !string.IsNullOrWhiteSpace(item.NameAr))
+                    {
+                        stock.NameAr = item.NameAr;
+                        modified = true;
+                    }
+                    if (nameEnMissing && !string.IsNullOrWhiteSpace(item.NameEn))
+                    {
+                        stock.NameEn = item.NameEn;
+                        modified = true;
+                    }
+                    if (modified)
+                    {
+                        await _stockRepository.UpdateAsync(stock, cancellationToken);
+                    }
+                }
+
+                // 2. Upsert StockShariahMetrics (always overwrite)
+                var metrics = await _metricsRepository.GetByStockIdAsync(stock.Id, cancellationToken);
+                if (metrics == null)
+                {
+                    metrics = new StockShariahMetrics
+                    {
+                        StockId = stock.Id,
+                        Zakat = item.Zakat,
+                        SpHaramEarningPercentage = item.SpHaramEarningPercentage,
+                        AaoifiHaramEarningPerShare = item.AaoifiHaramEarningPerShare,
+                        HaramEarningsPercentage = item.HaramEarningsPercentage,
+                        LoansPercentage = item.LoansPercentage,
+                        FairValueValuation = item.FairValueValuation,
+                        BookValue = item.BookValue,
+                        Profit = item.Profit,
+                        Dividend = item.Dividend,
+                        DividendType = item.DividendType,
+                        CoreActivityCompliant = item.CoreActivityCompliant,
+                        CashLiquidityCompliant = item.CashLiquidityCompliant,
+                        HaramInvestmentsCompliant = item.HaramInvestmentsCompliant,
+                        CategoryEn = item.Category,
+                        CategoryAr = item.CategoryAr,
+                        SourceUpdatedAt = item.UpdatedAt ?? item.LastUpdated,
+                        FetchedAt = now
+                    };
+                    await _metricsRepository.AddAsync(metrics, cancellationToken);
+                }
+                else
+                {
+                    metrics.Zakat = item.Zakat;
+                    metrics.SpHaramEarningPercentage = item.SpHaramEarningPercentage;
+                    metrics.AaoifiHaramEarningPerShare = item.AaoifiHaramEarningPerShare;
+                    metrics.HaramEarningsPercentage = item.HaramEarningsPercentage;
+                    metrics.LoansPercentage = item.LoansPercentage;
+                    metrics.FairValueValuation = item.FairValueValuation;
+                    metrics.BookValue = item.BookValue;
+                    metrics.Profit = item.Profit;
+                    metrics.Dividend = item.Dividend;
+                    metrics.DividendType = item.DividendType;
+                    metrics.CoreActivityCompliant = item.CoreActivityCompliant;
+                    metrics.CashLiquidityCompliant = item.CashLiquidityCompliant;
+                    metrics.HaramInvestmentsCompliant = item.HaramInvestmentsCompliant;
+                    metrics.CategoryEn = item.Category;
+                    metrics.CategoryAr = item.CategoryAr;
+                    metrics.SourceUpdatedAt = item.UpdatedAt ?? item.LastUpdated;
+                    metrics.FetchedAt = now;
+                    _metricsRepository.Update(metrics);
+                }
+
+                // 3. Upsert ShariahSourceOpinions (overwrite/replace for each source key)
+                // FaisalBank and Osoul are deliberately NOT written here: since the manual
+                // import (ImportFaisalOsoulOpinionsCommand) their published PDF reports are the
+                // only source of truth, so this scraper must never touch those two SourceKeys.
+                // Their "no opinion" state comes from having no row, exactly like every board.
+                var existingOpinions = await _opinionRepository.GetByStockIdAsync(stock.Id, cancellationToken);
+                var opinionsDict = existingOpinions.ToDictionary(o => o.SourceKey);
+
+                await UpdateOrAddOpinionAsync(opinionsDict, stock.Id, ShariahSourceKey.HalalBourse, item.HalalBourse, now, cancellationToken);
+                await UpdateOrAddOpinionAsync(opinionsDict, stock.Id, ShariahSourceKey.Musaffa, item.Musaffa, now, cancellationToken);
+                await UpdateOrAddOpinionAsync(opinionsDict, stock.Id, ShariahSourceKey.Kashif, item.Kashif, now, cancellationToken);
+                await UpdateOrAddOpinionAsync(opinionsDict, stock.Id, ShariahSourceKey.HalalInvest, item.HalalInvest, now, cancellationToken);
+                await UpdateOrAddOpinionAsync(opinionsDict, stock.Id, ShariahSourceKey.Thndr, item.Thndr, now, cancellationToken);
+
+                // 4. Update ShariahCompliance:
+                // "only backfill Pct from sp_haram_earning_percentage when the stock's Status is Compliant AND Pct is currently null.
+                // Never overwrite an already-set Pct. Everything else on ShariahCompliance is untouched by this job."
+                // Exception 1: HasShariahBoard is recomputed on every run so a stock that gains (or
+                // loses) a board/committee verdict in the source is displayed accordingly.
+                // Exception 2: Status is corrected to NonCompliant when the stock's OWN core-activity
+                // flag says غير متوافق (see below) — the verdict is per-stock, never sector-derived.
+                var compliance = await _complianceRepository.GetByStockIdAsync(stock.Id, cancellationToken);
+                if (compliance == null)
+                {
+                    skippedNotFoundCount++;
+                }
+                else
+                {
+                    bool dirty = false;
+
+                    bool hasBoardNow = Common.ShariahBoardDetector.IsBoardNote(compliance.Note)
+                        || opinionsDict.Values.Any(o => Common.ShariahBoardDetector.IsBoardNote(o.Note));
+                    if (compliance.HasShariahBoard != hasBoardNow)
+                    {
+                        compliance.HasShariahBoard = hasBoardNow;
+                        dirty = true;
+                    }
+
+                    // Per-stock activity gate: when THIS stock's own نشاط الشركة is غير متوافق
+                    // its stored verdict must read غير متوافق too, otherwise a stale "Compliant"
+                    // row would make the list show متوافق while the detail page (which reads the
+                    // activity field) shows غير متوافق. The value comes from this stock's own
+                    // metrics row only — never from its sector, never from another stock.
+                    if (item.CoreActivityCompliant == false && compliance.Status != ShariahStatus.NonCompliant)
+                    {
+                        compliance.Status = ShariahStatus.NonCompliant;
+                        dirty = true;
+                    }
+                    else if (item.CoreActivityCompliant != false)
+                    {
+                        // Positive board opinion wins: any board (including the ones just written
+                        // above) explicitly recording "compliant" means the stored row must also
+                        // say Compliant — so any reader that bypasses EffectiveStatus gets the
+                        // right answer too.
+                        // HalalBourse rule: compliant + percentage < 100 (or null) counts as
+                        // doubtful — does NOT elevate the stored compliance status.
+                        bool anyBoardCompliant = opinionsDict.Values
+                            .Any(o => o.Status != null && o.Status.ToUpper() == "COMPLIANT"
+                                 && (o.SourceKey != ShariahSourceKey.HalalBourse
+                                     || (o.Percentage != null && o.Percentage >= 100)));
+                        if (anyBoardCompliant && compliance.Status != ShariahStatus.Compliant)
+                        {
+                            compliance.Status = ShariahStatus.Compliant;
+                            dirty = true;
+                        }
+                        else if (!anyBoardCompliant && compliance.Status == ShariahStatus.Compliant)
+                        {
+                            // No scraped source says compliant, but a stale seeded/old value
+                            // recorded Compliant. Downgrade to Pending (= "no opinion") so we
+                            // never display a Compliant verdict without a supporting source.
+                            // Per rule: "never invent a status or a reason."
+                            compliance.Status = ShariahStatus.Pending;
+                            dirty = true;
+                        }
+                    }
+
+                    if (compliance.Status == ShariahStatus.Compliant && compliance.Pct == null)
+                    {
+                        if (item.SpHaramEarningPercentage.HasValue)
+                        {
+                            compliance.Pct = item.SpHaramEarningPercentage.Value;
+                            dirty = true;
+                            pctUpdatedCount++;
+                        }
+                        else
+                        {
+                            skippedNoValueCount++;
+                        }
+                    }
+
+                    if (dirty)
+                    {
+                        compliance.UpdatedAt = now;
+                        _complianceRepository.Update(compliance);
+                    }
+                }
+
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
+                stocksFullyRefreshedCount++;
             }
-            else
+            catch (Exception ex)
             {
-                // Backfill names when missing or still holding the old symbol-code placeholder.
-                bool modified = false;
-                bool nameArMissing = string.IsNullOrWhiteSpace(stock.NameAr) || stock.NameAr == stock.Ticker;
-                bool nameEnMissing = string.IsNullOrWhiteSpace(stock.NameEn) || stock.NameEn == stock.Ticker;
-
-                if (nameArMissing && !string.IsNullOrWhiteSpace(item.NameAr))
-                {
-                    stock.NameAr = item.NameAr;
-                    modified = true;
-                }
-                if (nameEnMissing && !string.IsNullOrWhiteSpace(item.NameEn))
-                {
-                    stock.NameEn = item.NameEn;
-                    modified = true;
-                }
-                if (modified)
-                {
-                    await _stockRepository.UpdateAsync(stock, cancellationToken);
-                }
+                _logger.LogWarning(ex, "Failed to update shariah data for stock {Symbol}: {Message}", symbol, ex.Message);
             }
-
-            // 2. Upsert StockShariahMetrics (always overwrite)
-            var metrics = await _metricsRepository.GetByStockIdAsync(stock.Id, cancellationToken);
-            if (metrics == null)
-            {
-                metrics = new StockShariahMetrics
-                {
-                    StockId = stock.Id,
-                    Zakat = item.Zakat,
-                    SpHaramEarningPercentage = item.SpHaramEarningPercentage,
-                    AaoifiHaramEarningPerShare = item.AaoifiHaramEarningPerShare,
-                    HaramEarningsPercentage = item.HaramEarningsPercentage,
-                    LoansPercentage = item.LoansPercentage,
-                    FairValueValuation = item.FairValueValuation,
-                    BookValue = item.BookValue,
-                    Profit = item.Profit,
-                    Dividend = item.Dividend,
-                    DividendType = item.DividendType,
-                    CoreActivityCompliant = item.CoreActivityCompliant,
-                    CashLiquidityCompliant = item.CashLiquidityCompliant,
-                    HaramInvestmentsCompliant = item.HaramInvestmentsCompliant,
-                    CategoryEn = item.Category,
-                    CategoryAr = item.CategoryAr,
-                    SourceUpdatedAt = item.UpdatedAt ?? item.LastUpdated,
-                    FetchedAt = now
-                };
-                await _metricsRepository.AddAsync(metrics, cancellationToken);
-            }
-            else
-            {
-                metrics.Zakat = item.Zakat;
-                metrics.SpHaramEarningPercentage = item.SpHaramEarningPercentage;
-                metrics.AaoifiHaramEarningPerShare = item.AaoifiHaramEarningPerShare;
-                metrics.HaramEarningsPercentage = item.HaramEarningsPercentage;
-                metrics.LoansPercentage = item.LoansPercentage;
-                metrics.FairValueValuation = item.FairValueValuation;
-                metrics.BookValue = item.BookValue;
-                metrics.Profit = item.Profit;
-                metrics.Dividend = item.Dividend;
-                metrics.DividendType = item.DividendType;
-                metrics.CoreActivityCompliant = item.CoreActivityCompliant;
-                metrics.CashLiquidityCompliant = item.CashLiquidityCompliant;
-                metrics.HaramInvestmentsCompliant = item.HaramInvestmentsCompliant;
-                metrics.CategoryEn = item.Category;
-                metrics.CategoryAr = item.CategoryAr;
-                metrics.SourceUpdatedAt = item.UpdatedAt ?? item.LastUpdated;
-                metrics.FetchedAt = now;
-                _metricsRepository.Update(metrics);
-            }
-
-            // 3. Upsert ShariahSourceOpinions (overwrite/replace for each source key)
-            // FaisalBank and Osoul are deliberately NOT written here: since the manual
-            // import (ImportFaisalOsoulOpinionsCommand) their published PDF reports are the
-            // only source of truth, so this scraper must never touch those two SourceKeys.
-            // Their "no opinion" state comes from having no row, exactly like every board.
-            var existingOpinions = await _opinionRepository.GetByStockIdAsync(stock.Id, cancellationToken);
-            var opinionsDict = existingOpinions.ToDictionary(o => o.SourceKey);
-
-            UpdateOrAddOpinion(opinionsDict, stock.Id, ShariahSourceKey.HalalBourse, item.HalalBourse, now);
-            UpdateOrAddOpinion(opinionsDict, stock.Id, ShariahSourceKey.Musaffa, item.Musaffa, now);
-            UpdateOrAddOpinion(opinionsDict, stock.Id, ShariahSourceKey.Kashif, item.Kashif, now);
-            UpdateOrAddOpinion(opinionsDict, stock.Id, ShariahSourceKey.HalalInvest, item.HalalInvest, now);
-            UpdateOrAddOpinion(opinionsDict, stock.Id, ShariahSourceKey.Thndr, item.Thndr, now);
-
-            // 4. Update ShariahCompliance:
-            // "only backfill Pct from sp_haram_earning_percentage when the stock's Status is Compliant AND Pct is currently null.
-            // Never overwrite an already-set Pct. Everything else on ShariahCompliance is untouched by this job."
-            // Exception 1: HasShariahBoard is recomputed on every run so a stock that gains (or
-            // loses) a board/committee verdict in the source is displayed accordingly.
-            // Exception 2: Status is corrected to NonCompliant when the stock's OWN core-activity
-            // flag says غير متوافق (see below) — the verdict is per-stock, never sector-derived.
-            var compliance = await _complianceRepository.GetByStockIdAsync(stock.Id, cancellationToken);
-            if (compliance == null)
-            {
-                skippedNotFoundCount++;
-            }
-            else
-            {
-                bool dirty = false;
-
-                bool hasBoardNow = Common.ShariahBoardDetector.IsBoardNote(compliance.Note)
-                    || opinionsDict.Values.Any(o => Common.ShariahBoardDetector.IsBoardNote(o.Note));
-                if (compliance.HasShariahBoard != hasBoardNow)
-                {
-                    compliance.HasShariahBoard = hasBoardNow;
-                    dirty = true;
-                }
-
-                // Per-stock activity gate: when THIS stock's own نشاط الشركة is غير متوافق
-                // its stored verdict must read غير متوافق too, otherwise a stale "Compliant"
-                // row would make the list show متوافق while the detail page (which reads the
-                // activity field) shows غير متوافق. The value comes from this stock's own
-                // metrics row only — never from its sector, never from another stock.
-                if (item.CoreActivityCompliant == false && compliance.Status != ShariahStatus.NonCompliant)
-                {
-                    compliance.Status = ShariahStatus.NonCompliant;
-                    dirty = true;
-                }
-                else if (item.CoreActivityCompliant != false)
-                {
-                    // Positive board opinion wins: any board (including the ones just written
-                    // above) explicitly recording "compliant" means the stored row must also
-                    // say Compliant — so any reader that bypasses EffectiveStatus gets the
-                    // right answer too.
-                    bool anyBoardCompliant = opinionsDict.Values
-                        .Any(o => o.Status != null && o.Status.ToUpper() == "COMPLIANT");
-                    if (anyBoardCompliant && compliance.Status != ShariahStatus.Compliant)
-                    {
-                        compliance.Status = ShariahStatus.Compliant;
-                        dirty = true;
-                    }
-                }
-
-                if (compliance.Status == ShariahStatus.Compliant && compliance.Pct == null)
-                {
-                    if (item.SpHaramEarningPercentage.HasValue)
-                    {
-                        compliance.Pct = item.SpHaramEarningPercentage.Value;
-                        dirty = true;
-                        pctUpdatedCount++;
-                    }
-                    else
-                    {
-                        skippedNoValueCount++;
-                    }
-                }
-
-                if (dirty)
-                {
-                    compliance.UpdatedAt = now;
-                    _complianceRepository.Update(compliance);
-                }
-            }
-
-            stocksFullyRefreshedCount++;
         }
 
         var log = new ShariahRefreshLog
@@ -278,12 +309,13 @@ public class RefreshShariahDataCommandHandler : IRequestHandler<RefreshShariahDa
             stocksFullyRefreshedCount);
     }
 
-    private void UpdateOrAddOpinion(
+    private async Task UpdateOrAddOpinionAsync(
         Dictionary<ShariahSourceKey, ShariahSourceOpinion> existingDict,
         int stockId,
         ShariahSourceKey key,
         ExternalSourceOpinionDto? dto,
-        DateTime fetchedAt)
+        DateTime fetchedAt,
+        CancellationToken cancellationToken)
     {
         if (dto == null) return;
 
@@ -315,7 +347,8 @@ public class RefreshShariahDataCommandHandler : IRequestHandler<RefreshShariahDa
                 FetchedAt = fetchedAt,
                 ExtraData = dto.ExtraDataJson
             };
-            _ = _opinionRepository.AddAsync(opinion);
+            await _opinionRepository.AddAsync(opinion, cancellationToken);
+            existingDict[key] = opinion;
         }
     }
 }

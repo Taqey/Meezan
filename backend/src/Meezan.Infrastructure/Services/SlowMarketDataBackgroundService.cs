@@ -38,19 +38,30 @@ public class SlowMarketDataBackgroundService : BackgroundService
 
         while (!stoppingToken.IsCancellationRequested)
         {
-            var delay = ComputeDelayUntilNextRun();
+            // ── Wait until the next quarterly trigger ───────────────────────────
+            // Task.Delay's maximum is Int32.MaxValue ms (~24.8 days). A quarterly
+            // delay (~3 months) overflows that limit with ArgumentOutOfRangeException.
+            // Wait in 1-hour chunks instead, exactly like ShariahRefreshBackgroundService.
+            var targetUtc = ComputeNextRunUtc();
             _logger.LogInformation(
-                "Next slow market-data scrape scheduled in {Minutes} minutes.",
-                (int)delay.TotalMinutes);
+                "Next slow market-data scrape scheduled at {Target} UTC ({Minutes} minutes from now).",
+                targetUtc, (int)(targetUtc - DateTime.UtcNow).TotalMinutes);
 
-            try
+            while (DateTime.UtcNow < targetUtc && !stoppingToken.IsCancellationRequested)
             {
-                await Task.Delay(delay, stoppingToken);
+                var remaining = targetUtc - DateTime.UtcNow;
+                var chunk = remaining > TimeSpan.FromHours(1) ? TimeSpan.FromHours(1) : remaining;
+                try
+                {
+                    await Task.Delay(chunk, stoppingToken);
+                }
+                catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+                {
+                    return;
+                }
             }
-            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
-            {
-                break;
-            }
+
+            if (stoppingToken.IsCancellationRequested) break;
 
             _logger.LogInformation("SlowMarketDataBackgroundService: triggering quarterly slow scrape run.");
             try
@@ -82,7 +93,7 @@ public class SlowMarketDataBackgroundService : BackgroundService
         _logger.LogInformation("SlowMarketDataBackgroundService stopped.");
     }
 
-    private static TimeSpan ComputeDelayUntilNextRun()
+    private static DateTime ComputeNextRunUtc()
     {
         var nowUtc = DateTime.UtcNow;
         var nowCairo = TimeZoneInfo.ConvertTimeFromUtc(nowUtc, CairoTimeZone);
@@ -92,18 +103,11 @@ public class SlowMarketDataBackgroundService : BackgroundService
             var candidate = new DateTime(nowCairo.Year, month, 1) + RunTime.ToTimeSpan();
             if (nowCairo < candidate)
             {
-                return ToDelay(candidate, nowUtc);
+                return TimeZoneInfo.ConvertTimeToUtc(candidate, CairoTimeZone);
             }
         }
 
         var nextYearCandidate = new DateTime(nowCairo.Year + 1, QuarterStartMonths[0], 1) + RunTime.ToTimeSpan();
-        return ToDelay(nextYearCandidate, nowUtc);
-    }
-
-    private static TimeSpan ToDelay(DateTime cairoTime, DateTime nowUtc)
-    {
-        var nextRunUtc = TimeZoneInfo.ConvertTimeToUtc(cairoTime, CairoTimeZone);
-        var delay = nextRunUtc - nowUtc;
-        return delay < TimeSpan.Zero ? TimeSpan.Zero : delay;
+        return TimeZoneInfo.ConvertTimeToUtc(nextYearCandidate, CairoTimeZone);
     }
 }

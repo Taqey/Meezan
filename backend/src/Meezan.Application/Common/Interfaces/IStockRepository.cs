@@ -6,6 +6,14 @@ namespace Meezan.Application.Common.Interfaces;
 public interface IStockRepository
 {
     Task<Stock?> GetByTickerAsync(string ticker, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Like GetByTickerAsync but also returns deactivated stocks.
+    /// Use in the Excel-upload flow to avoid a unique-key violation when a
+    /// previously-deactivated ticker is re-imported.
+    /// </summary>
+    Task<Stock?> GetByTickerIncludingInactiveAsync(string ticker, CancellationToken cancellationToken = default);
+
     Task<Stock?> GetBySymbolCodeAsync(string symbolCode, CancellationToken cancellationToken = default);
     Task<List<Stock>> GetAllAsync(CancellationToken cancellationToken = default);
 

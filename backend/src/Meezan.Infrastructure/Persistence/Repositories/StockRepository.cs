@@ -23,9 +23,22 @@ public class StockRepository : IStockRepository
             .FirstOrDefaultAsync(s => s.Ticker.ToUpper() == ticker.Trim().ToUpper(), cancellationToken);
     }
 
+    /// <summary>
+    /// Like <see cref="GetByTickerAsync"/> but also returns deactivated stocks.
+    /// Used by the Excel upload flow so that a previously-deactivated stock with the
+    /// same ticker is found and updated (or reactivated) rather than causing a
+    /// unique-constraint violation on the Stocks.Ticker column.
+    /// </summary>
+    public async Task<Stock?> GetByTickerIncludingInactiveAsync(string ticker, CancellationToken cancellationToken = default)
+    {
+        return await _context.Stocks
+            .Include(s => s.Sector)
+            .FirstOrDefaultAsync(s => s.Ticker.ToUpper() == ticker.Trim().ToUpper(), cancellationToken);
+    }
+
     public async Task<Stock?> GetBySymbolCodeAsync(string symbolCode, CancellationToken cancellationToken = default)
     {
-        return await GetByTickerAsync(symbolCode, cancellationToken);
+        return await GetByTickerIncludingInactiveAsync(symbolCode, cancellationToken);
     }
 
     public async Task<List<Stock>> GetAllAsync(CancellationToken cancellationToken = default)
@@ -148,11 +161,15 @@ public class StockRepository : IStockRepository
         if (selectedShariahStatuses.Count > 0)
         {
             // Effective status = (1) activity gate → (2) any board "compliant" → (3) stored verdict.
+            // HalalBourse rule: compliant + percentage < 100 (or null) is treated as doubtful, not compliant.
             query = query.Where(st =>
                 selectedShariahStatuses.Contains(
                     (st.ShariahMetrics != null && st.ShariahMetrics.CoreActivityCompliant == false
                         ? ShariahStatus.NonCompliant
-                        : (st.ShariahSourceOpinions.Any(o => o.Status != null && o.Status.ToUpper() == "COMPLIANT")
+                        : (st.ShariahSourceOpinions.Any(o =>
+                                o.Status != null && o.Status.ToUpper() == "COMPLIANT"
+                                && (o.SourceKey != ShariahSourceKey.HalalBourse
+                                    || (o.Percentage != null && o.Percentage >= 100)))
                             ? ShariahStatus.Compliant
                             : (st.ShariahCompliance != null ? st.ShariahCompliance.Status : (ShariahStatus)(-1))))
                 ));
@@ -179,7 +196,11 @@ public class StockRepository : IStockRepository
                 (st.ShariahMetrics == null
                  || st.ShariahMetrics.CoreActivityCompliant == null
                  || st.ShariahMetrics.CoreActivityCompliant == true)
-                && st.ShariahSourceOpinions.Count(o => o.Status != null && o.Status.ToUpper() == "COMPLIANT") >= min);
+                // HalalBourse rule: compliant + percentage < 100 (or null) counts as doubtful, not compliant.
+                && st.ShariahSourceOpinions.Count(o =>
+                        o.Status != null && o.Status.ToUpper() == "COMPLIANT"
+                        && (o.SourceKey != ShariahSourceKey.HalalBourse
+                            || (o.Percentage != null && o.Percentage >= 100))) >= min);
         }
 
         // PE Ratio range filter
@@ -227,9 +248,13 @@ public class StockRepository : IStockRepository
                 // the stock's own activity result wins over its stored ratio verdict, so
                 // this list and the stock-detail page can never disagree.
                 // Board opinions win over stored compliance: any board says "compliant" = Compliant.
+                // HalalBourse rule: compliant + percentage < 100 (or null) is treated as doubtful.
                 ShariahStatus = st.ShariahMetrics != null && st.ShariahMetrics.CoreActivityCompliant == false
                     ? ShariahStatus.NonCompliant.ToString()
-                    : (st.ShariahSourceOpinions.Any(o => o.Status != null && o.Status.ToUpper() == "COMPLIANT")
+                    : (st.ShariahSourceOpinions.Any(o =>
+                            o.Status != null && o.Status.ToUpper() == "COMPLIANT"
+                            && (o.SourceKey != ShariahSourceKey.HalalBourse
+                                || (o.Percentage != null && o.Percentage >= 100)))
                         ? ShariahStatus.Compliant.ToString()
                         : (st.ShariahCompliance != null
                             ? st.ShariahCompliance.Status.ToString()
@@ -315,7 +340,12 @@ public class StockRepository : IStockRepository
                 NameEn = cleanEn ?? cleanAr ?? string.Empty
             };
             await _context.Sectors.AddAsync(sector, cancellationToken);
-            await _context.SaveChangesAsync(cancellationToken);
+            // NOTE: Do NOT call SaveChangesAsync here — this method is called
+            // from within the upload handler's ambient transaction.  The sector
+            // row will be flushed by the handler's own SaveChangesAsync call.
+            // Previously calling SaveChanges here could cause a duplicate-key
+            // error when two rows race to create the same sector, or promote the
+            // local transaction to a distributed transaction on SQL Server.
         }
 
         return sector;
