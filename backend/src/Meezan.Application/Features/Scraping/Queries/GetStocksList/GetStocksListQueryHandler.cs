@@ -59,7 +59,9 @@ public class GetStocksListQueryHandler
             Currency:        p.Currency,
             SectorNameAr:    p.SectorNameAr,
             PeRatio:         p.PeRatio,
-            PbRatio:         p.PbRatio
+            PbRatio:         p.PbRatio,
+            Weight:          p.Weight,
+            WeightIndexCode: p.WeightIndexCode
         )).ToList();
 
         return PagedResult<StockListItemDto>.Create(items, page, pageSize, totalCount);

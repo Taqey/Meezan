@@ -79,6 +79,10 @@ export interface StockListItemDto {
   sectorNameAr?: string | null;
   peRatio?: number | null;
   pbRatio?: number | null;
+  /** Weight within weightIndexCode (null when absent). Shown on sector cards + sortable. */
+  weight?: number | null;
+  /** Index code the weight belongs to: the single selected index, else "SECTORAL-INDICES". */
+  weightIndexCode?: string | null;
 }
 
 export interface IndexSummaryDto {
@@ -90,11 +94,35 @@ export interface IndexSummaryDto {
   lastUpdated?: string | null;
 }
 
+export interface MarketSnapshotDto {
+  kind: string;
+  code: string;
+  mubasherCode: string;
+  value?: number | null;
+  change?: number | null;
+  changePct?: number | null;
+  sourceDateText?: string | null;
+  source?: string | null;
+  fetchedAt?: string | null;
+}
+
 export interface SectorSummaryDto {
   id: number;
   nameAr: string;
   nameEn: string;
   stocksCount: number;
+  /** Effective-verdict compliant count. Absent on older API responses. */
+  compliantStocksCount?: number | null;
+  /** 100 × compliant / total. Absent on older API responses. */
+  complianceRatePct?: number | null;
+  /** Mean daily change % (stocks with a value). Absent on older API responses. */
+  averageChangePct?: number | null;
+  /** Summed market value in EGP. Absent on older API responses. */
+  marketCapTotal?: number | null;
+  /** Summed market value (EGP) of compliant stocks. Absent on older API responses. */
+  compliantMarketCapTotal?: number | null;
+  /** Mean P/E over positive values. Absent on older API responses. */
+  averagePeRatio?: number | null;
 }
 
 export interface IndexInStockDto {

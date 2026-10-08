@@ -14,6 +14,7 @@ import {
   ChevronDown
 } from 'lucide-angular';
 import { ApiService } from '../../services/api.service';
+import { navigateQueryParams } from '../../utils/navigation-utils';
 import { StockCardComponent } from '../../components/stock-card/stock-card.component';
 import { IndexSummaryDto, PagedResult, StockListItemDto } from '../../models/api.models';
 
@@ -246,15 +247,21 @@ import { IndexSummaryDto, PagedResult, StockListItemDto } from '../../models/api
       </div>
     </div>
 
-    <!-- Loading Spinner -->
-    <div *ngIf="loading" class="empty-state">
-      <p>جارٍ تحميل بيانات الأسهم من الخادم...</p>
+    <!-- Loading skeletons -->
+    <div *ngIf="loading" class="stock-grid" aria-hidden="true">
+      <div class="skeleton-card" *ngFor="let n of [1, 2, 3, 4, 5, 6]">
+        <div class="sk-line sk-title"></div>
+        <div class="sk-line sk-text"></div>
+        <div class="sk-line sk-price"></div>
+        <div class="sk-line sk-badges"></div>
+      </div>
     </div>
 
     <!-- Stock Cards Grid -->
     <div class="stock-grid" *ngIf="!loading && stocks.length">
       <app-stock-card
-        *ngFor="let s of stocks"
+        *ngFor="let s of stocks; let i = index"
+        [style.--item-index]="i"
         [ticker]="s.ticker"
         [nameAr]="s.nameAr"
         [nameEn]="s.nameEn"
@@ -266,7 +273,8 @@ import { IndexSummaryDto, PagedResult, StockListItemDto } from '../../models/api
         [shariahStatus]="s.shariahStatus"
         [indices]="s.indices"
         [currency]="s.currency"
-        [sectorNameAr]="s.sectorNameAr">
+        [sectorNameAr]="s.sectorNameAr"
+        [showFavorite]="true">
       </app-stock-card>
     </div>
 
@@ -614,11 +622,8 @@ export class StocksListComponent implements OnInit {
       sortDir: this.sortDir !== 'desc' ? this.sortDir : null
     };
 
-    // Clean null fields from route
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams,
-      queryParamsHandling: ''
-    });
+    // Clean null fields from route. replaceUrl + equality guard live in
+    // the helper so Back always leaves the page instead of looping params.
+    navigateQueryParams(this.router, this.route, queryParams);
   }
 }

@@ -16,8 +16,43 @@ public static class FairValueCalculator
     private const double IqrMultiplier = 1.5;
 
     // Price must differ by more than this fraction from fair value to be
-    // classified as Cheap or Expensive.
-    private const double PriceTolerancePct = 0.05; // ±5%
+    // classified as Cheap or Expensive. Single value for every verdict so the
+    // badge, the percentage and the color can never contradict each other.
+    private const double PriceTolerancePct = 0.02; // ±2%
+
+    /// <summary>
+    /// The single source of truth for "distance from fair value" (premium %).
+    /// Convention — fair value is the denominator, always:
+    ///   premiumPct = (currentPrice − fairValue) / fairValue × 100
+    ///   positive when price &gt; fair value (overvalued/Expensive),
+    ///   negative when price &lt; fair value (undervalued/Cheap).
+    /// FairValueDiff follows the same sign (currentPrice − fairValue).
+    /// Verdict: within ±2% of fair value → Fair, otherwise Cheap/Expensive.
+    /// Guards: null/zero price or null/non-positive fair value → all nulls and
+    /// PriceComparison.Unavailable (callers show "N/A", never a fake number).
+    /// </summary>
+    public static (decimal? DiffAbs, decimal? DiffPct, PriceComparison Comparison) ComputePremium(
+        decimal? fairValue,
+        decimal? currentPrice)
+    {
+        if (!fairValue.HasValue || fairValue.Value <= 0
+            || !currentPrice.HasValue || currentPrice.Value <= 0)
+        {
+            return (null, null, PriceComparison.Unavailable);
+        }
+
+        var diffAbs = currentPrice.Value - fairValue.Value;
+        var diffPct = diffAbs / fairValue.Value * 100m;
+
+        var tolerance = (decimal)PriceTolerancePct;
+        var comparison = currentPrice.Value > fairValue.Value * (1 + tolerance)
+            ? PriceComparison.Expensive
+            : currentPrice.Value < fairValue.Value * (1 - tolerance)
+                ? PriceComparison.Cheap
+                : PriceComparison.Fair;
+
+        return (diffAbs, diffPct, comparison);
+    }
 
     // Caps for "valid" sector-peer ratios used in median computation.
     public const double MaxValidPeRatio = 100.0;
@@ -160,16 +195,7 @@ public static class FairValueCalculator
             return FairValueResult.Unavailable(1, 0, methodResults);
         }
 
-        var comparison = PriceComparison.Fair;
-        var diffAbs = currentPrice.Value - grahamValue;
-        var diffPct = (diffAbs / currentPrice.Value) * 100m;
-
-        if (grahamValue > currentPrice.Value * 1.05m)
-            comparison = PriceComparison.Cheap;
-        else if (grahamValue < currentPrice.Value * 0.95m)
-            comparison = PriceComparison.Expensive;
-        else
-            comparison = PriceComparison.Fair;
+        var (diffAbs, diffPct, comparison) = ComputePremium(grahamValue, currentPrice);
 
         // Confidence for Graham-only: always Low (single method) when available
         var confidence = ValuationConfidence.Low;
@@ -291,16 +317,7 @@ public static class FairValueCalculator
             return FairValueResult.Unavailable(included.Count, excluded.Count, methodResults);
         }
 
-        var comparison = PriceComparison.Fair;
-        var diffAbs = currentPrice.Value - fairValue;
-        var diffPct = (diffAbs / currentPrice.Value) * 100m;
-
-        if (fairValue > currentPrice.Value * 1.05m)
-            comparison = PriceComparison.Cheap;
-        else if (fairValue < currentPrice.Value * 0.95m)
-            comparison = PriceComparison.Expensive;
-        else
-            comparison = PriceComparison.Fair;
+        var (diffAbs, diffPct, comparison) = ComputePremium(fairValue, currentPrice);
 
         var confidence = included.Count switch
         {

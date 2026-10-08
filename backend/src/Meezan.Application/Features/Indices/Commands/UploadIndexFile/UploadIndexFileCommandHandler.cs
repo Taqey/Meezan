@@ -307,7 +307,24 @@ public class UploadIndexFileCommandHandler : IRequestHandler<UploadIndexFileComm
             if (stockId == 0) continue;
 
             var compliance = await _complianceRepository.GetByStockIdAsync(stockId, cancellationToken);
-            if (compliance == null) continue;
+            if (compliance == null)
+            {
+                // EGX33 membership is itself a compliance signal: a member with no
+                // stored row at all (e.g. a newly listed twin tranche) gets one
+                // created instead of being left verdict-less. The activity gate
+                // still wins over membership (see below).
+                var memberMetrics = await _metricsRepository.GetByStockIdAsync(stockId, cancellationToken);
+                compliance = new ShariahCompliance
+                {
+                    StockId = stockId,
+                    Status = memberMetrics?.CoreActivityCompliant == false
+                        ? ShariahStatus.NonCompliant
+                        : ShariahStatus.Compliant,
+                    UpdatedAt = now
+                };
+                await _complianceRepository.AddAsync(compliance, cancellationToken);
+                continue;
+            }
 
             var metrics = await _metricsRepository.GetByStockIdAsync(stockId, cancellationToken);
 

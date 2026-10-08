@@ -98,7 +98,18 @@ public record StockListProjection(
     string? Currency,        // null means EGP (جنيه مصري)
     string? SectorNameAr = null,
     decimal? PeRatio = null,
-    decimal? PbRatio = null
+    decimal? PbRatio = null,
+    /// <summary>
+    /// Weight within <see cref="WeightIndexCode"/> (null when the stock has no
+    /// constituent row in that index, e.g. weight-less source files).
+    /// Used by the sector page cards + weight sorting.
+    /// </summary>
+    decimal? Weight = null,
+    /// <summary>
+    /// Index code the <see cref="Weight"/> belongs to: the single selected index
+    /// when the request targets exactly one, else "SECTORAL-INDICES".
+    /// </summary>
+    string? WeightIndexCode = null
 );
 
 /// <summary>All optional filter/sort/page params for the stocks list query.</summary>

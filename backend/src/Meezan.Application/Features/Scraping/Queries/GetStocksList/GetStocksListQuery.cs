@@ -50,5 +50,15 @@ public record StockListItemDto(
     string? Currency,
     string? SectorNameAr = null,
     decimal? PeRatio = null,
-    decimal? PbRatio = null
+    decimal? PbRatio = null,
+    /// <summary>
+    /// Weight within <see cref="WeightIndexCode"/> (null when no such constituent row exists).
+    /// Surfaced for the sector page cards + weight sorting.
+    /// </summary>
+    decimal? Weight = null,
+    /// <summary>
+    /// Index code the <see cref="Weight"/> belongs to: the single selected index
+    /// when the request targets exactly one, else "SECTORAL-INDICES".
+    /// </summary>
+    string? WeightIndexCode = null
 );

@@ -11,6 +11,7 @@ import {
   ChevronDown
 } from 'lucide-angular';
 import { ApiService } from '../../services/api.service';
+import { navigateQueryParams } from '../../utils/navigation-utils';
 import { StockCardComponent } from '../../components/stock-card/stock-card.component';
 import { IndexSummaryDto, PagedResult, SectorSummaryDto, StockListItemDto } from '../../models/api.models';
 
@@ -191,6 +192,7 @@ import { IndexSummaryDto, PagedResult, SectorSummaryDto, StockListItemDto } from
           <!-- Separate Sort Controls: Field + Direction -->
           <div class="sort-group">
             <select [(ngModel)]="sortBy" (change)="onSortFieldChange()" aria-label="حقل الترتيب">
+              <option value="weight">الوزن النسبي</option>
               <option value="changePct">نسبة التغير</option>
               <option value="closingPrice">السعر</option>
               <option value="fairValueDiffPct">فارق العادلة</option>
@@ -264,7 +266,8 @@ import { IndexSummaryDto, PagedResult, SectorSummaryDto, StockListItemDto } from
       <!-- Stock Grid -->
       <div class="stock-grid" *ngIf="!stocksLoading && stocks.length">
         <app-stock-card
-          *ngFor="let s of stocks"
+          *ngFor="let s of stocks; let i = index"
+          [style.--item-index]="i"
           [ticker]="s.ticker"
           [nameAr]="s.nameAr"
           [nameEn]="s.nameEn"
@@ -275,6 +278,7 @@ import { IndexSummaryDto, PagedResult, SectorSummaryDto, StockListItemDto } from
           [fairValueDiffPct]="s.fairValueDiffPct"
           [shariahStatus]="s.shariahStatus"
           [indices]="s.indices"
+          [weight]="s.weight"
           [currency]="s.currency"
           [sectorNameAr]="s.sectorNameAr || sector?.nameAr">
         </app-stock-card>
@@ -646,10 +650,8 @@ export class SectorDetailComponent implements OnInit {
       sortDir: this.sortDir !== 'desc' ? this.sortDir : null
     };
 
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams,
-      queryParamsHandling: ''
-    });
+    // replaceUrl + equality guard live in the helper so Back always
+    // leaves the page instead of stepping through param states.
+    navigateQueryParams(this.router, this.route, queryParams);
   }
 }

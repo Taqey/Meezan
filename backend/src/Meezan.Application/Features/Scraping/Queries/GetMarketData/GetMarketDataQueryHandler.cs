@@ -43,7 +43,9 @@ public class GetMarketDataQueryHandler : IRequestHandler<GetMarketDataQuery, Mar
         // the same stock. The verdict is never derived from, or copied from, any other
         // stock — least of all from the sector/industry this stock belongs to.
         var effectiveStatus = Common.ShariahStatusResolver.EffectiveStatus(
-            stock.ShariahCompliance, stock.ShariahMetrics, stock.ShariahSourceOpinions);
+            stock.ShariahCompliance, stock.ShariahMetrics, stock.ShariahSourceOpinions,
+            isShariahIndexMember: stock.IndexConstituents.Any(ic =>
+                ic.Index != null && Common.ShariahStatusResolver.IsShariahIndexCode(ic.Index.Code)));
 
         // ── Fix 3: "Board exists only" stocks ────────────────────────────────────
         // Stocks imported via the Shariah source (stocks_merged.json) that are not
@@ -179,6 +181,10 @@ public class GetMarketDataQueryHandler : IRequestHandler<GetMarketDataQuery, Mar
         var metricsReason = ResolveMetricsUnavailableReason(
             hasBoard, activityNonCompliant, stock.ShariahMetrics, metricsDto);
 
+        // Fresh premium vs fair value from the CURRENT closing price (single
+        // source of truth; see FairValueCalculator.ComputePremium).
+        var upside = Services.FairValueCalculator.ComputePremium(fv?.FairValue, md.ClosingPrice);
+
         return new MarketDataDto(
             Ticker: stock.Ticker,
             NameAr: stock.NameAr,
@@ -206,9 +212,16 @@ public class GetMarketDataQueryHandler : IRequestHandler<GetMarketDataQuery, Mar
             SourceLastUpdateText: md.SourceLastUpdateText,
             FetchedAt: md.FetchedAt,
             FairValue: fv?.FairValue,
-            PriceComparison: fv?.PriceComparison.ToString(),
-            FairValueDiff: fv?.FairValueDiff,
-            FairValueDiffPct: fv?.FairValueDiffPct,
+            // Distance-from-fair-value (premium vs fair value) is computed HERE at
+            // response time from the current closing price and the cached fair
+            // value — never served from the persisted FairValueDiff/DiffPct/
+            // PriceComparison columns, so the badge and percentage are always
+            // fresh (e.g. right after a manual price edit) and always share one
+            // sign convention. See FairValueCalculator.ComputePremium, the
+            // single source of truth.
+            PriceComparison: upside.Comparison.ToString(),
+            FairValueDiff: upside.DiffAbs,
+            FairValueDiffPct: upside.DiffPct,
             MethodsUsedCount: fv?.MethodsUsedCount,
             MethodsExcludedCount: fv?.MethodsExcludedCount,
             ValuationConfidence: fv?.Confidence.ToString(),

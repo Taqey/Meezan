@@ -46,6 +46,9 @@ public static class DependencyInjection
         // Part 4 — singleton in-memory run progress tracker (transient, not persisted)
         services.AddSingleton<IScrapeProgressTracker, ScrapeProgressTracker>();
 
+        // Job enable/disable settings (singleton, file-backed)
+        services.AddSingleton<IJobSettingsService, JobSettingsService>();
+
         // Part 4 — Mubasher scraper client (named HttpClient)
         services.AddHttpClient<IStockScraperClient, MubasherScraperClient>(client =>
         {
@@ -61,6 +64,14 @@ public static class DependencyInjection
         // Part 4 — daily scraping background service (fires at 16:00 Cairo time)
         services.AddHostedService<ScrapingBackgroundService>();
         services.AddHostedService<SlowMarketDataBackgroundService>();
+
+        // Published market snapshots (Mubasher index/sector quotes cache)
+        services.AddScoped<IMarketSnapshotRepository, MarketSnapshotRepository>();
+        services.AddHttpClient<IMubasherMarketSnapshotClient, MubasherMarketSnapshotClient>(client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(30);
+        });
+        services.AddHostedService<MarketSnapshotsBackgroundService>();
 
         return services;
     }

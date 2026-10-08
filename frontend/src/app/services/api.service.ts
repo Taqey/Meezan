@@ -6,6 +6,7 @@ import {
   IndexConstituentsPagedResultDto,
   IndexSummaryDto,
   MarketDataDto,
+  MarketSnapshotDto,
   PagedResult,
   RefreshShariahDataResult,
   RunCombinedScrapeResult,
@@ -146,6 +147,11 @@ export class ApiService {
     return this.http.get<MarketDataDto>(`${this.baseUrl}/api/stocks/${ticker}/market-data`);
   }
 
+  /** Latest-good published quotes (indices + sectors). Empty when never fetched. */
+  getMarketSnapshots(): Observable<MarketSnapshotDto[]> {
+    return this.http.get<MarketSnapshotDto[]>(`${this.baseUrl}/api/market-snapshots`);
+  }
+
   getSupportResistance(ticker: string): Observable<SupportResistanceDto> {
     return this.http.get<SupportResistanceDto>(`${this.baseUrl}/api/stocks/${ticker}/support-resistance`);
   }
@@ -213,6 +219,17 @@ export class ApiService {
     return `${this.baseUrl}/api/shariah/source-pdf/${encodeURIComponent(sourceKey)}`;
   }
 
+  /**
+   * Absolute backend URL for a board's stored PDF report, or null when the
+   * source has none. THE single helper for Sharia document links: stored
+   * `pdfUrl` values are backend-relative paths that must never be used as-is
+   * on the frontend origin (the SPA catch-all would serve the app instead).
+   */
+  sourcePdfUrlFor(sourceKey: number | null | undefined): string | null {
+    const key = sourceKey === 5 ? 'FaisalBank' : sourceKey === 6 ? 'Ostoul' : null;
+    return key ? this.getSourcePdfUrl(key) : null;
+  }
+
   seedShariah(payload?: any): Observable<SeedShariahResultDto> {
     return this.http.post<SeedShariahResultDto>(`${this.baseUrl}/api/shariah/seed`, payload || null);
   }
@@ -220,4 +237,17 @@ export class ApiService {
   refreshShariah(): Observable<RefreshShariahDataResult> {
     return this.http.post<RefreshShariahDataResult>(`${this.baseUrl}/api/shariah/refresh`, {});
   }
+
+  // ── Job Settings (Automation toggles) ──────────────────────────────
+  getJobSettings(): Observable<Record<string, boolean>> {
+    return this.http.get<Record<string, boolean>>(`${this.baseUrl}/api/job-settings`);
+  }
+
+  setJobSetting(jobKey: string, enabled: boolean): Observable<{ jobKey: string; enabled: boolean }> {
+    return this.http.put<{ jobKey: string; enabled: boolean }>(
+      `${this.baseUrl}/api/job-settings/${encodeURIComponent(jobKey)}`,
+      { enabled }
+    );
+  }
 }
+

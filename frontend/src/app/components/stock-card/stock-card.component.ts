@@ -4,12 +4,14 @@ import { RouterLink } from '@angular/router';
 import { LucideAngularModule, ShieldCheck } from 'lucide-angular';
 import { ComparisonBadgeComponent } from '../comparison-badge/comparison-badge.component';
 import { StatusBadgeComponent } from '../status-badge/status-badge.component';
+import { FavoriteToggleComponent } from '../favorite-toggle/favorite-toggle.component';
+import { PriceFlashDirective } from '../../directives/price-flash.directive';
 import { INDEX_ARABIC_NAMES } from '../../models/api.models';
 
 @Component({
   selector: 'app-stock-card',
   standalone: true,
-  imports: [CommonModule, RouterLink, LucideAngularModule, ComparisonBadgeComponent, StatusBadgeComponent],
+  imports: [CommonModule, RouterLink, LucideAngularModule, ComparisonBadgeComponent, StatusBadgeComponent, FavoriteToggleComponent, PriceFlashDirective],
   template: `
     <a [routerLink]="['/stocks', ticker]" class="stock-card">
       <div class="stock-top">
@@ -17,25 +19,28 @@ import { INDEX_ARABIC_NAMES } from '../../models/api.models';
           {{ ticker }}
           <span *ngIf="nameEn">{{ nameEn }}</span>
         </div>
-        <span class="change" *ngIf="changePct !== null && changePct !== undefined"
-              [ngClass]="changePct >= 0 ? 'positive' : 'negative'">
-          {{ changePct > 0 ? '+' : '' }}{{ changePct | number:'1.2-2' }}%
-        </span>
+        <div class="stock-top-side">
+          <span class="change" *ngIf="changePct !== null && changePct !== undefined"
+                [ngClass]="changePct >= 0 ? 'positive' : 'negative'">
+            {{ changePct > 0 ? '+' : '' }}{{ changePct | number:'1.2-2' }}%
+          </span>
+          <app-favorite-toggle *ngIf="showFavorite" [symbol]="ticker"></app-favorite-toggle>
+        </div>
       </div>
 
       <div class="stock-name">{{ nameAr || ticker }}</div>
 
       <div class="stock-price">
-        <strong>{{ closingPrice !== null && closingPrice !== undefined ? (closingPrice | number:'1.2-2') : '—' }}</strong>
+        <strong [appPriceFlash]="closingPrice">{{ closingPrice !== null && closingPrice !== undefined ? (closingPrice | number:'1.2-2') : '—' }}</strong>
         <span>{{ currencyLabel }}</span>
-        <em *ngIf="weight && weight > 0">الوزن {{ weight | number:'1.2-2' }}%</em>
+        <em *ngIf="weight && weight > 0" class="neutral-pill">الوزن {{ weight | number:'1.2-2' }}%</em>
       </div>
 
       <div class="stock-bottom">
         <div class="mini-ratio">
           <app-status-badge [status]="shariahStatus"></app-status-badge>
         </div>
-        <app-comparison-badge [comparison]="priceComparison" [fairValueDiffPct]="fairValueDiffPct"></app-comparison-badge>
+        <app-comparison-badge [comparison]="priceComparison" [fairValueDiffPct]="fairValueDiffPct" [closingPrice]="closingPrice" [fairValue]="fairValue"></app-comparison-badge>
       </div>
 
       <div class="stock-meta" *ngIf="indexLabels && indexLabels.length">
@@ -58,6 +63,8 @@ export class StockCardComponent {
   @Input() weight?: number | null;
   @Input() currency?: string | null;
   @Input() sectorNameAr?: string | null;
+  /** Shows the favorite star toggle next to the change percentage. */
+  @Input() showFavorite = false;
 
   readonly ShieldCheckIcon = ShieldCheck;
 

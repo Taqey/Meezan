@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import {
@@ -10,11 +10,16 @@ import {
   Info,
   Calendar,
   Layers,
-  FileText
+  FileText,
+  Check,
+  X,
+  Minus
 } from 'lucide-angular';
 import { ApiService } from '../../services/api.service';
 import { ComparisonBadgeComponent } from '../../components/comparison-badge/comparison-badge.component';
 import { StatusBadgeComponent } from '../../components/status-badge/status-badge.component';
+import { FavoriteToggleComponent } from '../../components/favorite-toggle/favorite-toggle.component';
+import { RevealDirective } from '../../directives/reveal.directive';
 import {
   MarketDataDto,
   SHARIAH_SOURCE_NAMES,
@@ -24,14 +29,29 @@ import {
   INDEX_ARABIC_NAMES,
   SHARIAH_BOARD_FROZEN_TICKERS
 } from '../../models/api.models';
+import {
+  CRITERION_LABELS,
+  CRITERION_ORDER,
+  evaluateStandards,
+  getEffectiveSourceStatuses,
+  normalizeStatusValue,
+  resolveInternalVerdict,
+  type EffectiveSourceStatus,
+  type ShariahCriterionKey,
+  type StandardsEvaluation,
+  type StockRatios
+} from '../../models/shariah-standards';
 
 /** One board's card: either its real stored opinion, or an explicit "no opinion" state. */
 type ShariahSourceOpinionView = ShariahSourceOpinionDto & { noOpinion: boolean };
 
+/** Card view with the single effective status every consumer must read. */
+type EffectiveOpinionView = ShariahSourceOpinionView & EffectiveSourceStatus;
+
 @Component({
   selector: 'app-stock-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, LucideAngularModule, ComparisonBadgeComponent, StatusBadgeComponent],
+  imports: [CommonModule, RouterLink, LucideAngularModule, ComparisonBadgeComponent, StatusBadgeComponent, FavoriteToggleComponent, RevealDirective],
   template: `
     <div *ngIf="loading" class="empty-state">
       <p>جارٍ تحميل بيانات السهم والتقييمات من قاعدة البيانات...</p>
@@ -53,6 +73,7 @@ type ShariahSourceOpinionView = ShariahSourceOpinionDto & { noOpinion: boolean }
           <div>
             <div class="ticker large">
               {{ marketData.ticker }}
+              <app-favorite-toggle [symbol]="marketData.ticker"></app-favorite-toggle>
               <span *ngIf="marketData.nameEn">{{ marketData.nameEn }}</span>
             </div>
             <h1>{{ marketData.nameAr || marketData.ticker }}</h1>
@@ -150,7 +171,7 @@ type ShariahSourceOpinionView = ShariahSourceOpinionDto & { noOpinion: boolean }
               <span class="eyebrow">نموذج جراهام (Graham Formula)</span>
               <h2>القيمة العادلة</h2>
             </div>
-            <app-comparison-badge [comparison]="marketData.priceComparison"></app-comparison-badge>
+            <app-comparison-badge [comparison]="fairValueComparison"></app-comparison-badge>
           </div>
 
           <!-- Insufficient data: no trustworthy fair value exists (Graham needs EPS > 0 & BookValue > 0).
@@ -168,10 +189,13 @@ type ShariahSourceOpinionView = ShariahSourceOpinionDto & { noOpinion: boolean }
             <div class="fair-number">
               <strong>{{ marketData.fairValue | number:'1.2-2' }}</strong>
               <span>{{ currencyLabel }}</span>
-              <b *ngIf="marketData.fairValueDiffPct !== null && marketData.fairValueDiffPct !== undefined"
-                 [ngClass]="marketData.fairValueDiffPct >= 0 ? 'positive' : 'negative'">
-                {{ marketData.fairValueDiffPct > 0 ? '+' : '' }}{{ marketData.fairValueDiffPct | number:'1.2-2' }}% عن السعر الحالي
+              <b *ngIf="fairValuePremiumPct !== null; else fvGapNa"
+                 [ngClass]="fairValueSignal === 'cheap' ? 'positive' : (fairValueSignal === 'expensive' ? 'negative' : '')">
+                <ng-container *ngIf="fairValueSignal === 'expensive'">-{{ fairValuePremiumPct | number:'1.1-1' }}% — السعر أعلى من القيمة العادلة بنسبة {{ fairValuePremiumPct | number:'1.1-1' }}%-<span *ngIf="showFairValueMultiple"> (فرصة للهبوط {{ fairValueMultiple | number:'1.1-1' }}x للوصول للسعر العادل)</span></ng-container>
+                <ng-container *ngIf="fairValueSignal === 'cheap'">السعر أقل من القيمة العادلة — فرصة صعود +{{ fairValueUpsidePct | number:'1.1-1' }}% ({{ fairValueUpsideMultiple | number:'1.1-1' }}x للوصول للعادلة)</ng-container>
+                <ng-container *ngIf="fairValueSignal !== 'cheap' && fairValueSignal !== 'expensive'">{{ fairValuePremiumPct | number:'1.1-1' }}% — السعر قريب من القيمة العادلة</ng-container>
               </b>
+              <ng-template #fvGapNa><b class="muted">N/A</b></ng-template>
             </div>
 
             <p class="muted">
@@ -193,7 +217,7 @@ type ShariahSourceOpinionView = ShariahSourceOpinionDto & { noOpinion: boolean }
       <!-- Shariah Opinions Grid: Multi-source evaluators.
            Hidden entirely when نشاط الشركة is غير متوافق: the activity is a standalone,
            automatic disqualification, so no board opinion grid and no ratio panel apply. -->
-      <section class="detail-card shariah-card" *ngIf="!isActivityNonCompliant">
+      <section class="detail-card shariah-card" *ngIf="!isActivityNonCompliant" appReveal>
         <!-- Permanent display-layer override for frozen ticker group:
              ADIB, SAUD, FAIT, FAITA, ATLC, AMIA.
              Shows only a single green "يوجد لجنة شرعية" badge.
@@ -243,7 +267,7 @@ type ShariahSourceOpinionView = ShariahSourceOpinionDto & { noOpinion: boolean }
             <div>
               <span class="eyebrow">تغطية الجهات الشرعية</span>
               <h2>آراء الهيئات الشرعية (7 مصادر مستقلة)</h2>
-              <p>الحكم الداخلي المعتمد: <app-status-badge [status]="marketData.shariahStatus"></app-status-badge> <span *ngIf="marketData.shariahPct"> (نسبة التطهير: {{ marketData.shariahPct }}%)</span></p>
+              <p>الحكم الداخلي المعتمد: <app-status-badge [status]="internalVerdict"></app-status-badge> <span *ngIf="marketData.shariahPct"> (نسبة التطهير: {{ marketData.shariahPct }}%)</span> <span *ngIf="verdictSolelyFromOverride" class="verdict-override-note">متوافق وفق بعض المعايير فقط</span></p>
             </div>
             <div class="ratio-big">
               <!-- Aggregate is over boards that actually returned a stored opinion for THIS
@@ -264,19 +288,23 @@ type ShariahSourceOpinionView = ShariahSourceOpinionDto & { noOpinion: boolean }
           </div>
 
           <div class="opinion-grid" *ngIf="!marketData.hasShariahBoard">
-          <!-- 7 board cards -->
+          <!-- 7 board cards.
+               The displayed status comes from getCardStatus: identical to the stored
+               status for every board except a doubtful Bourse Halal card that passes
+               at least one quantitative standard (shown as compliant, see below). -->
           <div class="source-card"
                [class.no-opinion]="op.noOpinion"
-               [class.compliant]="!op.noOpinion && isCompliant(op.status)"
-               [class.non-compliant]="!op.noOpinion && !isCompliant(op.status) && !isDoubtful(op.status)"
-               [class.doubtful]="!op.noOpinion && isDoubtful(op.status)"
-               *ngFor="let op of sourceOpinionsList">
+               [class.compliant]="!op.noOpinion && isCompliant(getCardStatus(op))"
+               [class.non-compliant]="!op.noOpinion && !isCompliant(getCardStatus(op)) && !isDoubtful(getCardStatus(op))"
+               [class.doubtful]="!op.noOpinion && isDoubtful(getCardStatus(op))"
+               *ngFor="let op of sourceOpinionsList; let i = index; trackBy: trackOpinionByKey"
+               [style.--item-index]="i">
             <div class="source-top">
               <strong>{{ getSourceName(op.sourceKey) }}</strong>
               <!-- No recorded opinion on this stock: say so explicitly instead of
                    rendering a default متوافق / غير متوافق verdict. -->
               <span class="no-opinion-label" *ngIf="op.noOpinion">لا يوجد رأي مسجّل</span>
-              <app-status-badge *ngIf="!op.noOpinion && !isManualSource(op)" [status]="op.status"></app-status-badge>
+              <app-status-badge *ngIf="!op.noOpinion && !isManualSource(op)" [status]="getCardStatus(op)"></app-status-badge>
             </div>
 
             <p class="no-opinion-hint" *ngIf="op.noOpinion">
@@ -286,17 +314,31 @@ type ShariahSourceOpinionView = ShariahSourceOpinionDto & { noOpinion: boolean }
             <!-- All 7 boards: unified full-color card, no progress/score -->
             <ng-container *ngIf="!op.noOpinion">
               <div class="verdict-badge">
-                {{ getVerdictLabel(op.status) }}
+                {{ getVerdictLabel(getCardStatus(op)) }}
               </div>
               <div class="verdict-meta">
                 <span *ngIf="op.sourceLastUpdated">تحديث: {{ op.sourceLastUpdated | date:'yyyy-MM-dd' }}</span>
                 <span *ngIf="!op.sourceLastUpdated && op.fetchedAt">جُلب: {{ op.fetchedAt | date:'yyyy-MM-dd' }}</span>
               </div>
               <p class="verdict-note">{{ op.note || 'لا توجد ملاحظات تفصيلية مسجلة من المصدر.' }}</p>
-              <!-- PDF link for manual sources (FaisalBank, Ostoul) when stored -->
-              <a *ngIf="isManualSource(op) && op.pdfUrl" [href]="op.pdfUrl" target="_blank" rel="noopener noreferrer" class="verdict-pdf-link">
+              <!-- PDF link for manual sources (FaisalBank, Ostoul) when stored.
+                   Absolute backend URL via the shared helper: the stored path is
+                   backend-relative and would resolve to the SPA (home page) here. -->
+              <a *ngIf="isManualSource(op) && pdfUrlFor(op)" [href]="pdfUrlFor(op)" target="_blank" rel="noopener noreferrer" class="verdict-pdf-link">
                 <lucide-icon [img]="FileTextIcon" size="14"></lucide-icon> View PDF
               </a>
+              <!-- Smarter Bourse Halal card: a doubtful verdict upgraded by the
+                   quantitative standards shows a partial-compliance disclaimer
+                   (when it passes only some standards) and a details button. -->
+              <ng-container *ngIf="isHalalBourseCard(op) && halalBourseUpgraded">
+                <p class="upgrade-note" *ngIf="halalBoursePartial">
+                  <lucide-icon [img]="InfoIcon" size="13"></lucide-icon>
+                  <span>متوافق وفق بعض المعايير فقط وليس جميعها ({{ standardsEvaluation.passedCount }} من {{ standardsEvaluation.totalCount }} معايير)</span>
+                </p>
+                <button type="button" class="details-button" (click)="openStandardsDialog($event)">
+                  عرض التفاصيل
+                </button>
+              </ng-container>
             </ng-container>
           </div>
 
@@ -375,7 +417,7 @@ type ShariahSourceOpinionView = ShariahSourceOpinionDto & { noOpinion: boolean }
       <!-- Activity hard gate: when the company's own line of business is prohibited the
            stock is out at the first screening gate. Single verdict with the activity as
            the only reason — no 7-source opinion grid and no AAOIFI/S&P ratio panel. -->
-      <section class="detail-card shariah-card activity-verdict-card" *ngIf="isActivityNonCompliant">
+      <section class="detail-card shariah-card activity-verdict-card" *ngIf="isActivityNonCompliant" appReveal>
         <div class="card-heading">
           <div>
             <span class="eyebrow">حُكم النشاط</span>
@@ -391,8 +433,61 @@ type ShariahSourceOpinionView = ShariahSourceOpinionDto & { noOpinion: boolean }
         </p>
       </section>
 
+      <!-- Quantitative standards dialog (Bourse Halal card "عرض التفاصيل").
+           Accessible: role=dialog + aria-modal, focus trap, ESC/backdrop close,
+           RTL, scrollable panel on mobile. -->
+      <div class="standards-dialog-backdrop" *ngIf="showStandardsDialog" [class.closing]="dialogClosing" (click)="onStandardsBackdropClick($event)">
+        <div class="standards-dialog" role="dialog" aria-modal="true" aria-labelledby="std-dialog-title"
+             tabindex="-1" (keydown)="onStandardsDialogKeydown($event)">
+          <div class="standards-dialog-head">
+            <div>
+              <span class="eyebrow">بورصة حلال · الفحص الكمي</span>
+              <h2 id="std-dialog-title">تفاصيل المطابقة للمعايير الشرعية</h2>
+            </div>
+            <button type="button" class="standards-dialog-close" (click)="closeStandardsDialog()" aria-label="إغلاق">
+              <lucide-icon [img]="XIcon" size="18"></lucide-icon>
+            </button>
+          </div>
+
+          <p class="standards-summary">
+            اجتاز {{ standardsEvaluation.passedCount }} من {{ standardsEvaluation.totalCount }} معايير
+          </p>
+
+          <div class="std-block" *ngFor="let ev of standardsEvaluation.standards">
+            <div class="std-block-head">
+              <span class="std-verdict" [class.pass]="ev.passed" [class.fail]="!ev.passed">
+                <lucide-icon [img]="ev.passed ? CheckIcon : XIcon" size="14"></lucide-icon>
+              </span>
+              <div class="std-block-title">
+                <strong>{{ ev.standard.nameAr }}</strong>
+                <span class="std-en">{{ ev.standard.nameEn }}</span>
+              </div>
+            </div>
+            <div class="criterion-row" *ngFor="let key of criterionOrder">
+              <span class="criterion-name">{{ criterionLabels[key].ar }}</span>
+              <span class="criterion-values">
+                <ng-container *ngIf="ev.criteria[key].hasData; else noCriterionData">
+                  {{ ev.criteria[key].value | number:'1.0-2' }}% / ≤ {{ ev.criteria[key].max }}%
+                </ng-container>
+                <ng-template #noCriterionData>—</ng-template>
+              </span>
+              <span class="criterion-mark"
+                    [class.pass]="ev.criteria[key].hasData && ev.criteria[key].passed"
+                    [class.fail]="ev.criteria[key].hasData && !ev.criteria[key].passed"
+                    [class.nodata]="!ev.criteria[key].hasData">
+                <lucide-icon *ngIf="ev.criteria[key].hasData && ev.criteria[key].passed" [img]="CheckIcon" size="14"></lucide-icon>
+                <lucide-icon *ngIf="ev.criteria[key].hasData && !ev.criteria[key].passed" [img]="XIcon" size="14"></lucide-icon>
+                <lucide-icon *ngIf="!ev.criteria[key].hasData" [img]="MinusIcon" size="14"></lucide-icon>
+              </span>
+            </div>
+          </div>
+
+          <p class="muted standards-dialog-foot">الفحص كمي فقط، ولا يزال الفحص النوعي لنشاط الشركة مطلوبًا</p>
+        </div>
+      </div>
+
       <!-- Market Data Fundamentals (Only if stock has market data) -->
-      <section class="detail-card market-card" *ngIf="marketData.hasMarketData !== false">
+      <section class="detail-card market-card" *ngIf="marketData.hasMarketData !== false" appReveal>
         <div class="card-heading">
           <div>
             <span class="eyebrow">بيانات التداول والقوائم</span>
@@ -439,7 +534,7 @@ type ShariahSourceOpinionView = ShariahSourceOpinionDto & { noOpinion: boolean }
     </div>
   `
 })
-export class StockDetailComponent implements OnInit {
+export class StockDetailComponent implements OnInit, OnDestroy {
   readonly ArrowLeftIcon = ArrowLeft;
   readonly BookOpenIcon = BookOpen;
   readonly FileTextIcon = FileText;
@@ -449,6 +544,18 @@ export class StockDetailComponent implements OnInit {
   marketData?: MarketDataDto | null;
   supportResistance?: SupportResistanceDto | null;
   loading = true;
+
+  /** Quantitative-standards dialog state (Bourse Halal card). */
+  showStandardsDialog = false;
+  dialogClosing = false;
+  private standardsDialogTrigger: HTMLElement | null = null;
+  private dialogCloseTimer: ReturnType<typeof setTimeout> | null = null;
+
+  readonly CheckIcon = Check;
+  readonly XIcon = X;
+  readonly MinusIcon = Minus;
+  readonly criterionOrder: readonly ShariahCriterionKey[] = CRITERION_ORDER;
+  readonly criterionLabels = CRITERION_LABELS;
 
   /** Single source of truth ticker freeze list (also imported from models) */
   readonly frozenShariahTickers = SHARIAH_BOARD_FROZEN_TICKERS;
@@ -467,7 +574,8 @@ export class StockDetailComponent implements OnInit {
 
   constructor(
     private route: ActivatedRoute,
-    private api: ApiService
+    private api: ApiService,
+    private host: ElementRef<HTMLElement>
   ) { }
 
   ngOnInit(): void {
@@ -477,6 +585,15 @@ export class StockDetailComponent implements OnInit {
         this.loadStockData();
       }
     });
+  }
+
+  ngOnDestroy(): void {
+    // Never leave the page scroll locked if navigation happens with the dialog open.
+    document.body.style.overflow = '';
+    if (this.dialogCloseTimer !== null) {
+      clearTimeout(this.dialogCloseTimer);
+      this.dialogCloseTimer = null;
+    }
   }
 
   loadStockData(): void {
@@ -519,8 +636,12 @@ export class StockDetailComponent implements OnInit {
    * (no row at all, or a row whose status is null/empty) get `noOpinion: true` with a
    * null status — never a fabricated متوافق / غير متوافق default — and are excluded from
    * the aggregate. The same board may have a real verdict on another stock.
+   *
+   * Every card carries ONE effective status (see getEffectiveSourceStatuses): the
+   * template, the verdict badge and the counters all read `effectiveStatus` — never
+   * the raw stored status.
    */
-  get sourceOpinionsList(): ShariahSourceOpinionView[] {
+  get sourceOpinionsList(): EffectiveOpinionView[] {
     const existing = this.marketData?.shariahOpinions || [];
     const map = new Map<number, ShariahSourceOpinionDto>();
     for (const op of existing) {
@@ -528,15 +649,15 @@ export class StockDetailComponent implements OnInit {
       if (!Number.isNaN(key)) map.set(key, op);
     }
 
-    return this.allSourceKeys.map((key) => {
+    const raw: ShariahSourceOpinionView[] = this.allSourceKeys.map((key) => {
       const real = map.get(key);
       if (real && (real.status || '').trim()) {
-        // HalalBourse-specific rule: compliant + percentage < 100 → treat as doubtful.
-        const effectiveStatus = this.halalBourseEffectiveStatus(real, key);
-        return { ...real, status: effectiveStatus, noOpinion: false };
+        return { ...real, noOpinion: false };
       }
       return { sourceKey: key, status: null, percentage: null, note: null, noOpinion: true };
     });
+
+    return getEffectiveSourceStatuses(raw, this.standardsEvaluation, ShariahSourceKey.HalalBourse);
   }
 
   /** Boards that actually returned a stored verdict for this stock. */
@@ -550,23 +671,17 @@ export class StockDetailComponent implements OnInit {
    * Single helper that normalizes every Shariah status value exactly once.
    * The API returns PascalCase ("Compliant", "NonCompliant", "Doubtful"); legacy
    * rows may use "non_compliant"/"non-compliant". All comparisons in this
-   * component go through this helper — no scattered string comparisons.
+   * component go through the shared normalizer — no scattered string comparisons.
    */
   normalizeShariahStatus(status?: string | null): 'compliant' | 'noncompliant' | 'doubtful' | 'pending' | 'blocked' | '' {
-    const s = (status || '').toLowerCase().replace(/[-_ ]/g, '');
-    if (s === 'compliant') return 'compliant';
-    if (s === 'noncompliant') return 'noncompliant';
-    if (s === 'doubtful') return 'doubtful';
-    if (s === 'pending') return 'pending';
-    if (s === 'blocked') return 'blocked';
-    return '';
+    return normalizeStatusValue(status);
   }
 
+  /** Boards with an EFFECTIVE compliant status — drives the "X من Y" counter. */
   get compliantSourcesCount(): number {
-    return this.recordedOpinions.filter((o) => {
-      const effective = this.halalBourseEffectiveStatus(o, Number(o.sourceKey));
-      return this.normalizeShariahStatus(effective) === 'compliant';
-    }).length;
+    return this.sourceOpinionsList.filter(
+      (o) => !o.noOpinion && this.normalizeShariahStatus(o.effectiveStatus) === 'compliant'
+    ).length;
   }
 
   /** Aggregate denominator: boards with a recorded opinion — not a fixed 7. */
@@ -590,21 +705,13 @@ export class StockDetailComponent implements OnInit {
   }
 
   /**
-   * HalalBourse-specific rule (sourceKey = 1):
-   * if status is "compliant" but percentage < 100 (or percentage is null/missing),
-   * override the displayed/counted status to "doubtful".
-   * All other sources and all other statuses are returned unchanged.
+   * Absolute backend URL for this opinion's stored PDF (or null). Goes through
+   * the shared ApiService helper so the link always hits the backend file
+   * route instead of the frontend SPA catch-all.
    */
-  private halalBourseEffectiveStatus(
-    op: ShariahSourceOpinionDto | ShariahSourceOpinionView,
-    key: number
-  ): string | null {
-    const status = this.normalizeShariahStatus(op.status);
-    if (key === ShariahSourceKey.HalalBourse && status === 'compliant') {
-      const pct = op.percentage;
-      if (pct == null || pct < 100) return 'doubtful';
-    }
-    return op.status ?? null;
+  pdfUrlFor(op: ShariahSourceOpinionView): string | null {
+    if (!op.pdfUrl) return null;
+    return this.api.sourcePdfUrlFor(op.sourceKey);
   }
 
   isCompliant(status?: string | null): boolean {
@@ -617,6 +724,154 @@ export class StockDetailComponent implements OnInit {
 
   isNonCompliant(status?: string | null): boolean {
     return this.normalizeShariahStatus(status) === 'noncompliant';
+  }
+
+  // ── Quantitative Shariah standards (Bourse Halal card) ──────────────
+  // The stock's own ratios, taken from the same values shown in the
+  // "AAOIFI & S&P detailed ratios" section. The API exposes no numeric
+  // prohibited-investments % or cash % (boolean flags only), so those two
+  // criteria are always "no data" and are excluded from every decision.
+  get standardsStockRatios(): StockRatios {
+    return {
+      prohibitedRevenue: this.spHaramPct,
+      debt: this.loansPct,
+      prohibitedInvestments: null,
+      cash: null
+    };
+  }
+
+  get standardsEvaluation(): StandardsEvaluation {
+    return evaluateStandards(this.standardsStockRatios);
+  }
+
+  isHalalBourseCard(op: ShariahSourceOpinionView): boolean {
+    return Number(op.sourceKey) === ShariahSourceKey.HalalBourse;
+  }
+
+  private get halalBourseCard(): EffectiveOpinionView | undefined {
+    return this.sourceOpinionsList.find((op) => this.isHalalBourseCard(op));
+  }
+
+  /**
+   * True when the Bourse Halal card was flipped to compliant by the standards
+   * upgrade. Every other board is untouched.
+   */
+  get halalBourseUpgraded(): boolean {
+    return this.halalBourseCard?.upgraded ?? false;
+  }
+
+  /** Upgraded but not all standards pass → show the "some standards only" note. */
+  get halalBoursePartial(): boolean {
+    const ev = this.standardsEvaluation;
+    return this.halalBourseUpgraded && ev.passedCount < ev.totalCount;
+  }
+
+  /**
+   * Display status for an opinion card — the single effective status, computed
+   * once in sourceOpinionsList. No caller reads the raw status anymore.
+   */
+  getCardStatus(op: EffectiveOpinionView): string | null {
+    return op.effectiveStatus ?? null;
+  }
+
+  /**
+   * Stable identity for opinion cards. sourceOpinionsList is a getter that
+   * builds a fresh array every change-detection cycle; without trackBy,
+   * Angular would destroy/recreate every card (replaying its entrance
+   * animation) whenever any unrelated async event fires.
+   */
+  trackOpinionByKey(_index: number, op: EffectiveOpinionView): number {
+    return Number(op.sourceKey);
+  }
+
+  /**
+   * Internal verdict from EFFECTIVE statuses: at least one effective compliant
+   * → "Compliant"; otherwise the API verdict (existing behavior preserved for
+   * every other case).
+   */
+  get internalVerdict(): string | null {
+    return resolveInternalVerdict(
+      this.sourceOpinionsList.map((o) => o.effectiveStatus),
+      this.marketData?.shariahStatus ?? null
+    );
+  }
+
+  /**
+   * True when the verdict is compliant ONLY because of the standards-based
+   * Bourse Halal override (no other source is effectively compliant) — the
+   * verdict badge then carries a transparency note.
+   */
+  get verdictSolelyFromOverride(): boolean {
+    if (this.normalizeShariahStatus(this.internalVerdict) !== 'compliant') return false;
+    const otherCompliant = this.sourceOpinionsList.some(
+      (o) => !o.noOpinion && !this.isHalalBourseCard(o) && this.isCompliant(o.effectiveStatus)
+    );
+    return !otherCompliant && this.halalBourseUpgraded;
+  }
+
+  openStandardsDialog(event?: Event): void {
+    this.standardsDialogTrigger = (event?.currentTarget as HTMLElement | null) ?? null;
+    if (this.dialogCloseTimer !== null) {
+      clearTimeout(this.dialogCloseTimer);
+      this.dialogCloseTimer = null;
+    }
+    this.dialogClosing = false;
+    this.showStandardsDialog = true;
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => {
+      this.host.nativeElement.querySelector<HTMLElement>('.standards-dialog')?.focus();
+    }, 0);
+  }
+
+  closeStandardsDialog(): void {
+    if (!this.showStandardsDialog || this.dialogClosing) return;
+    // Play the fade/scale-out animation before detaching the dialog.
+    this.dialogClosing = true;
+    this.dialogCloseTimer = setTimeout(() => {
+      this.showStandardsDialog = false;
+      this.dialogClosing = false;
+      this.dialogCloseTimer = null;
+      document.body.style.overflow = '';
+      this.standardsDialogTrigger?.focus();
+      this.standardsDialogTrigger = null;
+    }, 180);
+  }
+
+  onStandardsBackdropClick(event: MouseEvent): void {
+    if ((event.target as HTMLElement).classList.contains('standards-dialog-backdrop')) {
+      this.closeStandardsDialog();
+    }
+  }
+
+  /** ESC closes; Tab cycles inside the dialog (focus trap). */
+  onStandardsDialogKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Escape') {
+      event.stopPropagation();
+      this.closeStandardsDialog();
+      return;
+    }
+    if (event.key !== 'Tab') return;
+    const dialog = this.host.nativeElement.querySelector<HTMLElement>('.standards-dialog');
+    if (!dialog) return;
+    const focusables = Array.from(
+      dialog.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), [href], [tabindex]:not([tabindex="-1"])'
+      )
+    ).filter((el) => el.offsetParent !== null);
+    if (!focusables.length) {
+      event.preventDefault();
+      return;
+    }
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+    const active = document.activeElement as HTMLElement | null;
+    if (event.shiftKey && (active === first || !dialog.contains(active))) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && active === last) {
+      event.preventDefault();
+      first.focus();
+    }
   }
 
   getVerdictLabel(status?: string | null): string {
@@ -671,6 +926,85 @@ export class StockDetailComponent implements OnInit {
     if ((md.valuationConfidence || '').trim().toLowerCase() === 'none') return true;
 
     return false;
+  }
+
+  /**
+   * Single helper for the Fair Value card verdict: the badge, the percentage
+   * sign/wording and the color ALL derive from here, so they can never
+   * contradict each other. Convention (matches the API's ComputePremium):
+   * 'expensive' = price above fair value (positive premium, red),
+   * 'cheap' = price below fair value (negative premium, green),
+   * 'fair' = within ±2% (neutral), anything else = 'unavailable' (N/A).
+   */
+  get fairValueSignal(): 'cheap' | 'expensive' | 'fair' | 'unavailable' {
+    const c = (this.marketData?.priceComparison || '').trim().toLowerCase();
+    if (c === 'cheap') return 'cheap';
+    if (c === 'expensive') return 'expensive';
+    if (c === 'fair') return 'fair';
+    return 'unavailable';
+  }
+
+  /** Canonical comparison string fed to the badge — always agrees with the signal. */
+  get fairValueComparison(): string {
+    switch (this.fairValueSignal) {
+      case 'cheap': return 'Cheap';
+      case 'expensive': return 'Expensive';
+      case 'fair': return 'Fair';
+      default: return 'Unavailable';
+    }
+  }
+
+  /** Premium % from the API: (price − fairValue) / fairValue × 100; null → show N/A. */
+  get fairValuePremiumPct(): number | null {
+    const v = this.marketData?.fairValueDiffPct;
+    if (v === null || v === undefined) return null;
+    const n = Number(v);
+    return isNaN(n) ? null : n;
+  }
+
+  /** Magnitude of the premium (for "below fair value" wording, shown unsigned). */
+  get fairValuePremiumAbs(): number | null {
+    const p = this.fairValuePremiumPct;
+    return p === null ? null : Math.abs(p);
+  }
+
+  /** Upside when price is below fair value: (fair / price - 1) * 100; null when not computable. */
+  get fairValueUpsidePct(): number | null {
+    const price = this.marketData?.closingPrice;
+    const fair = this.marketData?.fairValue;
+    if (price === null || price === undefined || fair === null || fair === undefined) return null;
+    const p = Number(price);
+    const f = Number(fair);
+    if (isNaN(p) || isNaN(f) || p <= 0 || f <= 0) return null;
+    return (f / p - 1) * 100;
+  }
+
+  /** Fair-to-price multiple for the below-fair case: fair / price (e.g. 4.2x); null when not computable. */
+  get fairValueUpsideMultiple(): number | null {
+    const price = this.marketData?.closingPrice;
+    const fair = this.marketData?.fairValue;
+    if (price === null || price === undefined || fair === null || fair === undefined) return null;
+    const p = Number(price);
+    const f = Number(fair);
+    if (isNaN(p) || isNaN(f) || p <= 0 || f <= 0) return null;
+    return f / p;
+  }
+
+  /** Price as a multiple of fair value (e.g. 8.3x); null when not computable. */
+  get fairValueMultiple(): number | null {
+    const price = this.marketData?.closingPrice;
+    const fair = this.marketData?.fairValue;
+    if (price === null || price === undefined || fair === null || fair === undefined) return null;
+    const p = Number(price);
+    const f = Number(fair);
+    if (isNaN(p) || isNaN(f) || p <= 0 || f <= 0) return null;
+    return p / f;
+  }
+
+  /** Show the multiple hint only for large gaps (above 100%). */
+  get showFairValueMultiple(): boolean {
+    const p = this.fairValuePremiumPct;
+    return p !== null && Math.abs(p) > 100 && this.fairValueMultiple !== null;
   }
 
   get aaoifiHaramPerShare(): number | null {

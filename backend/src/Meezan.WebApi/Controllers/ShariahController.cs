@@ -280,7 +280,9 @@ public class ShariahController : ControllerBase
         if (filePath == null) return NotFound();
 
         var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
-        return File(stream, "application/pdf", Path.GetFileName(filePath));
+        // No download file name → inline disposition so the PDF opens in the
+        // browser tab instead of forcing a download.
+        return File(stream, "application/pdf");
     }
 
     /// <summary>

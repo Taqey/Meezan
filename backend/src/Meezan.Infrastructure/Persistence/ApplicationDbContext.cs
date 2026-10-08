@@ -27,6 +27,9 @@ public class ApplicationDbContext : DbContext
     public DbSet<StockSupportResistance> StockSupportResistance => Set<StockSupportResistance>();
     public DbSet<ScrapeRunLog> ScrapeRunLogs => Set<ScrapeRunLog>();
 
+    // Published market snapshots (Mubasher index/sector quotes cache)
+    public DbSet<MarketIndexSnapshot> MarketIndexSnapshots => Set<MarketIndexSnapshot>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
