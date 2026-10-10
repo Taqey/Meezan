@@ -77,8 +77,8 @@ public static class ShariahStatusResolver
         IEnumerable<ShariahSourceOpinion>? opinions = null,
         bool isShariahIndexMember = false)
     {
-        // 1. Activity screen wins
-        if (metrics?.CoreActivityCompliant == false)
+        // 1. Activity screen wins (use effective value: override wins over feed)
+        if (metrics?.EffectiveCoreActivityCompliant == false)
             return ShariahStatus.NonCompliant;
 
         // 2. Any board says compliant? That wins over stored verdict.
@@ -107,8 +107,8 @@ public static class ShariahStatusResolver
         // those criteria are always "no data" and excluded here too).
         if (ShariahStandardsEvaluator.HasDoubtfulBourseHalal(opinions))
         {
-            var revenue = metrics?.SpHaramEarningPercentage ?? compliance?.Pct;
-            var debt = metrics?.LoansPercentage;
+            var revenue = metrics?.EffectiveHaramRevenuePercentage ?? compliance?.Pct;
+            var debt = metrics?.EffectiveLoansPercentage;
             if (ShariahStandardsEvaluator.PassesAnyStandard(revenue, debt, null, null))
                 return ShariahStatus.Compliant;
         }

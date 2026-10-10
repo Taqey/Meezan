@@ -23,7 +23,16 @@ import {
   AdminStockLookupItem,
   RemovalCandidateDto,
   RemovalCandidatesActionResult,
-  RefreshSelectedStocksResult
+  RefreshSelectedStocksResult,
+  StockManagementItem,
+  SectorPickerItem,
+  IndexPickerItem,
+  ConstituentManagementItem,
+  CreateStockRequest,
+  AssignSectorRequest,
+  AddToIndexRequest,
+  ShariahOverridesDto,
+  SaveShariahOverridesRequest
 } from '../models/api.models';
 
 @Injectable({
@@ -248,6 +257,64 @@ export class ApiService {
       `${this.baseUrl}/api/job-settings/${encodeURIComponent(jobKey)}`,
       { enabled }
     );
+  }
+
+  // ── Stock / Sector / Index Management (admin) ───────────────────────
+  searchStocksForManagement(q?: string): Observable<StockManagementItem[]> {
+    const params = q ? `?q=${encodeURIComponent(q)}` : '';
+    return this.http.get<StockManagementItem[]>(`${this.baseUrl}/api/admin/stocks-management/search${params}`);
+  }
+
+  createManagedStock(req: CreateStockRequest): Observable<StockManagementItem> {
+    return this.http.post<StockManagementItem>(`${this.baseUrl}/api/admin/stocks-management`, req);
+  }
+
+  assignStockSector(stockId: number, sectorId: number): Observable<StockManagementItem> {
+    return this.http.patch<StockManagementItem>(
+      `${this.baseUrl}/api/admin/stocks-management/${stockId}/sector`,
+      { sectorId } as AssignSectorRequest
+    );
+  }
+
+  removeStockFromSector(stockId: number): Observable<StockManagementItem> {
+    return this.http.delete<StockManagementItem>(
+      `${this.baseUrl}/api/admin/stocks-management/${stockId}/sector`
+    );
+  }
+
+  getManagementSectors(): Observable<SectorPickerItem[]> {
+    return this.http.get<SectorPickerItem[]>(`${this.baseUrl}/api/admin/stocks-management/sectors`);
+  }
+
+  getManagementIndices(): Observable<IndexPickerItem[]> {
+    return this.http.get<IndexPickerItem[]>(`${this.baseUrl}/api/admin/stocks-management/indices`);
+  }
+
+  addStockToIndex(stockId: number, indexId: number, req?: AddToIndexRequest): Observable<ConstituentManagementItem> {
+    return this.http.post<ConstituentManagementItem>(
+      `${this.baseUrl}/api/admin/stocks-management/${stockId}/indices/${indexId}`,
+      req || {}
+    );
+  }
+
+  removeStockFromIndex(stockId: number, indexId: number): Observable<void> {
+    return this.http.delete<void>(
+      `${this.baseUrl}/api/admin/stocks-management/${stockId}/indices/${indexId}`
+    );
+  }
+
+  // ── Shariah Manual Overrides ───────────────────────────────────────────────
+
+  getShariahOverrides(ticker: string): Observable<ShariahOverridesDto> {
+    return this.http.get<ShariahOverridesDto>(`${this.baseUrl}/api/admin/market-data/${encodeURIComponent(ticker)}/shariah-overrides`);
+  }
+
+  saveShariahOverrides(ticker: string, request: SaveShariahOverridesRequest): Observable<ShariahOverridesDto> {
+    return this.http.patch<ShariahOverridesDto>(`${this.baseUrl}/api/admin/market-data/${encodeURIComponent(ticker)}/shariah-overrides`, request);
+  }
+
+  resetShariahOverride(ticker: string, fieldName: string): Observable<ShariahOverridesDto> {
+    return this.http.delete<ShariahOverridesDto>(`${this.baseUrl}/api/admin/market-data/${encodeURIComponent(ticker)}/shariah-overrides/${encodeURIComponent(fieldName)}`);
   }
 }
 

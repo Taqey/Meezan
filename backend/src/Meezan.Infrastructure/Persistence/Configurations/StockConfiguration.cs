@@ -44,6 +44,12 @@ public class StockConfiguration : IEntityTypeConfiguration<Stock>
         builder.Property(e => e.IsActive)
             .IsRequired();
 
+        // IsManual: same pattern — no HasDefaultValue().
+        // DB-level DEFAULT (0) is applied in the migration SQL.
+        // The C# initialiser (IsManual = false) ensures correct value is sent on INSERT.
+        builder.Property(e => e.IsManual)
+            .IsRequired();
+
         builder.Property(e => e.DeactivatedAt);
 
         builder.Property(e => e.DeactivationReason)

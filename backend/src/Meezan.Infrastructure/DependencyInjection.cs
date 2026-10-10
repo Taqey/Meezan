@@ -42,12 +42,17 @@ public static class DependencyInjection
         services.AddScoped<IStockSupportResistanceRepository, StockSupportResistanceRepository>();
         services.AddScoped<IScrapeRunLogRepository, ScrapeRunLogRepository>();
         services.AddScoped<IScrapeBatchCommitter, ScrapeBatchCommitter>();
+        services.AddScoped<IMarketSnapshotRepository, MarketSnapshotRepository>();
 
         // Part 4 — singleton in-memory run progress tracker (transient, not persisted)
         services.AddSingleton<IScrapeProgressTracker, ScrapeProgressTracker>();
 
         // Part 4 — Mubasher scraper client (named HttpClient)
         services.AddHttpClient<IStockScraperClient, MubasherScraperClient>(client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(30);
+        });
+        services.AddHttpClient<IMubasherMarketSnapshotClient, MubasherMarketSnapshotClient>(client =>
         {
             client.Timeout = TimeSpan.FromSeconds(30);
         });

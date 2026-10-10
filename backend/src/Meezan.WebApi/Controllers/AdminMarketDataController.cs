@@ -1,3 +1,4 @@
+using Meezan.Application.Common;
 using Meezan.Application.Features.Scraping.Services;
 using Meezan.Domain.Entities;
 using Meezan.Domain.Enums;
@@ -17,6 +18,236 @@ public class AdminMarketDataController : ControllerBase
     {
         _context = context;
     }
+
+    // ── Shariah Manual Overrides ──────────────────────────────────────────────
+
+    /// <summary>
+    /// Gets the current Shariah metrics for a stock, including any manual overrides.
+    /// </summary>
+    [HttpGet("{ticker}/shariah-overrides")]
+    [ProducesResponseType(typeof(ShariahOverridesDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetShariahOverrides(
+        [FromRoute] string ticker,
+        CancellationToken cancellationToken)
+    {
+        var stock = await _context.Stocks
+            .Include(s => s.ShariahMetrics)
+            .FirstOrDefaultAsync(s => s.Ticker.ToUpper() == ticker.Trim().ToUpper(), cancellationToken);
+
+        if (stock is null)
+            return NotFound();
+
+        var m = stock.ShariahMetrics;
+        if (m is null)
+            return NotFound("No Shariah metrics found for this stock.");
+
+        return Ok(new ShariahOverridesDto(
+            Ticker: stock.Ticker,
+            // Feed values
+            FeedCoreActivityCompliant: m.CoreActivityCompliant,
+            FeedCategoryAr: m.CategoryAr,
+            FeedCategoryEn: m.CategoryEn,
+            FeedHaramRevenuePercentage: m.HaramEarningsPercentage,
+            FeedLoansPercentage: m.LoansPercentage,
+            // Override values
+            OverrideCoreActivityCompliant: m.CoreActivityCompliantOverride,
+            OverrideCategoryAr: m.CategoryArOverride,
+            OverrideCategoryEn: m.CategoryEnOverride,
+            OverrideHaramRevenuePercentage: m.HaramRevenuePercentageOverride,
+            OverrideLoansPercentage: m.LoansPercentageOverride,
+            // Effective values (override wins)
+            EffectiveCoreActivityCompliant: m.EffectiveCoreActivityCompliant,
+            EffectiveCategoryAr: m.EffectiveCategoryAr,
+            EffectiveCategoryEn: m.EffectiveCategoryEn,
+            EffectiveHaramRevenuePercentage: m.EffectiveHaramRevenuePercentage,
+            EffectiveLoansPercentage: m.EffectiveLoansPercentage
+        ));
+    }
+
+    /// <summary>
+    /// Saves manual Shariah overrides for a stock. Null values clear the override (revert to feed).
+    /// Validation: percentage overrides must be between 0 and 100.
+    /// </summary>
+    [HttpPatch("{ticker}/shariah-overrides")]
+    [ProducesResponseType(typeof(ShariahOverridesDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> SaveShariahOverrides(
+        [FromRoute] string ticker,
+        [FromBody] SaveShariahOverridesRequest request,
+        CancellationToken cancellationToken)
+    {
+        // Validate percentage ranges
+        if (request.HaramRevenuePercentageOverride.HasValue &&
+            (request.HaramRevenuePercentageOverride < 0 || request.HaramRevenuePercentageOverride > 100))
+        {
+            return BadRequest("Haram revenue percentage must be between 0 and 100.");
+        }
+        if (request.LoansPercentageOverride.HasValue &&
+            (request.LoansPercentageOverride < 0 || request.LoansPercentageOverride > 100))
+        {
+            return BadRequest("Loans/interest percentage must be between 0 and 100.");
+        }
+
+        var stock = await _context.Stocks
+            .Include(s => s.ShariahMetrics)
+            .Include(s => s.ShariahCompliance)
+            .FirstOrDefaultAsync(s => s.Ticker.ToUpper() == ticker.Trim().ToUpper(), cancellationToken);
+
+        if (stock is null)
+            return NotFound();
+
+        var metrics = stock.ShariahMetrics;
+        if (metrics is null)
+            return NotFound("No Shariah metrics found for this stock.");
+
+        // Apply overrides (null = clear override)
+        metrics.CoreActivityCompliantOverride = request.CoreActivityCompliantOverride;
+        metrics.CategoryArOverride = string.IsNullOrWhiteSpace(request.CategoryArOverride) ? null : request.CategoryArOverride.Trim();
+        metrics.CategoryEnOverride = string.IsNullOrWhiteSpace(request.CategoryEnOverride) ? null : request.CategoryEnOverride.Trim();
+        metrics.HaramRevenuePercentageOverride = request.HaramRevenuePercentageOverride;
+        metrics.LoansPercentageOverride = request.LoansPercentageOverride;
+
+        _context.StockShariahMetrics.Update(metrics);
+
+        // Recompute compliance status immediately since effective values changed
+        if (stock.ShariahCompliance != null)
+        {
+            var opinions = await _context.ShariahSourceOpinions
+                .Where(o => o.StockId == stock.Id)
+                .ToListAsync(cancellationToken);
+
+            var isShariahIndexMember = stock.IndexConstituents.Any(ic =>
+                ic.Index != null && ShariahStatusResolver.IsShariahIndexCode(ic.Index.Code));
+
+            var newStatus = ShariahStatusResolver.EffectiveStatus(
+                stock.ShariahCompliance, metrics, opinions, isShariahIndexMember);
+
+            if (newStatus.HasValue && stock.ShariahCompliance.Status != newStatus.Value)
+            {
+                stock.ShariahCompliance.Status = newStatus.Value;
+                stock.ShariahCompliance.UpdatedAt = DateTime.UtcNow;
+                _context.ShariahCompliances.Update(stock.ShariahCompliance);
+            }
+        }
+
+        await _context.SaveChangesAsync(cancellationToken);
+
+        // Return updated overrides
+        return Ok(new ShariahOverridesDto(
+            Ticker: stock.Ticker,
+            FeedCoreActivityCompliant: metrics.CoreActivityCompliant,
+            FeedCategoryAr: metrics.CategoryAr,
+            FeedCategoryEn: metrics.CategoryEn,
+            FeedHaramRevenuePercentage: metrics.HaramEarningsPercentage,
+            FeedLoansPercentage: metrics.LoansPercentage,
+            OverrideCoreActivityCompliant: metrics.CoreActivityCompliantOverride,
+            OverrideCategoryAr: metrics.CategoryArOverride,
+            OverrideCategoryEn: metrics.CategoryEnOverride,
+            OverrideHaramRevenuePercentage: metrics.HaramRevenuePercentageOverride,
+            OverrideLoansPercentage: metrics.LoansPercentageOverride,
+            EffectiveCoreActivityCompliant: metrics.EffectiveCoreActivityCompliant,
+            EffectiveCategoryAr: metrics.EffectiveCategoryAr,
+            EffectiveCategoryEn: metrics.EffectiveCategoryEn,
+            EffectiveHaramRevenuePercentage: metrics.EffectiveHaramRevenuePercentage,
+            EffectiveLoansPercentage: metrics.EffectiveLoansPercentage
+        ));
+    }
+
+    /// <summary>
+    /// Resets a specific Shariah override field to feed value (clears the override).
+    /// Field names: "CoreActivityCompliant", "CategoryAr", "CategoryEn", "HaramRevenuePercentage", "LoansPercentage"
+    /// </summary>
+    [HttpDelete("{ticker}/shariah-overrides/{fieldName}")]
+    [ProducesResponseType(typeof(ShariahOverridesDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> ResetShariahOverride(
+        [FromRoute] string ticker,
+        [FromRoute] string fieldName,
+        CancellationToken cancellationToken)
+    {
+        var stock = await _context.Stocks
+            .Include(s => s.ShariahMetrics)
+            .Include(s => s.ShariahCompliance)
+            .FirstOrDefaultAsync(s => s.Ticker.ToUpper() == ticker.Trim().ToUpper(), cancellationToken);
+
+        if (stock is null)
+            return NotFound();
+
+        var metrics = stock.ShariahMetrics;
+        if (metrics is null)
+            return NotFound("No Shariah metrics found for this stock.");
+
+        // Clear the specific override field
+        switch (fieldName.ToLowerInvariant())
+        {
+            case "coreactivitycompliant":
+                metrics.CoreActivityCompliantOverride = null;
+                break;
+            case "categoryar":
+                metrics.CategoryArOverride = null;
+                break;
+            case "categoryen":
+                metrics.CategoryEnOverride = null;
+                break;
+            case "haramrevenuepercentage":
+                metrics.HaramRevenuePercentageOverride = null;
+                break;
+            case "loanspercentage":
+                metrics.LoansPercentageOverride = null;
+                break;
+            default:
+                return BadRequest($"Unknown field '{fieldName}'. Valid fields: CoreActivityCompliant, CategoryAr, CategoryEn, HaramRevenuePercentage, LoansPercentage");
+        }
+
+        _context.StockShariahMetrics.Update(metrics);
+
+        // Recompute compliance status
+        if (stock.ShariahCompliance != null)
+        {
+            var opinions = await _context.ShariahSourceOpinions
+                .Where(o => o.StockId == stock.Id)
+                .ToListAsync(cancellationToken);
+
+            var isShariahIndexMember = stock.IndexConstituents.Any(ic =>
+                ic.Index != null && ShariahStatusResolver.IsShariahIndexCode(ic.Index.Code));
+
+            var newStatus = ShariahStatusResolver.EffectiveStatus(
+                stock.ShariahCompliance, metrics, opinions, isShariahIndexMember);
+
+            if (newStatus.HasValue && stock.ShariahCompliance.Status != newStatus.Value)
+            {
+                stock.ShariahCompliance.Status = newStatus.Value;
+                stock.ShariahCompliance.UpdatedAt = DateTime.UtcNow;
+                _context.ShariahCompliances.Update(stock.ShariahCompliance);
+            }
+        }
+
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return Ok(new ShariahOverridesDto(
+            Ticker: stock.Ticker,
+            FeedCoreActivityCompliant: metrics.CoreActivityCompliant,
+            FeedCategoryAr: metrics.CategoryAr,
+            FeedCategoryEn: metrics.CategoryEn,
+            FeedHaramRevenuePercentage: metrics.HaramEarningsPercentage,
+            FeedLoansPercentage: metrics.LoansPercentage,
+            OverrideCoreActivityCompliant: metrics.CoreActivityCompliantOverride,
+            OverrideCategoryAr: metrics.CategoryArOverride,
+            OverrideCategoryEn: metrics.CategoryEnOverride,
+            OverrideHaramRevenuePercentage: metrics.HaramRevenuePercentageOverride,
+            OverrideLoansPercentage: metrics.LoansPercentageOverride,
+            EffectiveCoreActivityCompliant: metrics.EffectiveCoreActivityCompliant,
+            EffectiveCategoryAr: metrics.EffectiveCategoryAr,
+            EffectiveCategoryEn: metrics.EffectiveCategoryEn,
+            EffectiveHaramRevenuePercentage: metrics.EffectiveHaramRevenuePercentage,
+            EffectiveLoansPercentage: metrics.EffectiveLoansPercentage
+        ));
+    }
+
+    // ── Existing endpoints ─────────────────────────────────────────────────────
 
     [HttpGet("stocks")]
     [ProducesResponseType(typeof(List<AdminStockLookupItem>), StatusCodes.Status200OK)]
@@ -273,3 +504,32 @@ public sealed record StockDataStatusItem(
 
 /// <summary>Request body for the manual DataStatus override endpoint.</summary>
 public sealed record UpdateDataStatusRequest(string DataStatus);
+
+// ── Shariah Override DTOs ────────────────────────────────────────────────────
+
+/// <summary>Response DTO for Shariah manual overrides (feed, override, and effective values).</summary>
+public sealed record ShariahOverridesDto(
+    string Ticker,
+    bool? FeedCoreActivityCompliant,
+    string? FeedCategoryAr,
+    string? FeedCategoryEn,
+    decimal? FeedHaramRevenuePercentage,
+    decimal? FeedLoansPercentage,
+    bool? OverrideCoreActivityCompliant,
+    string? OverrideCategoryAr,
+    string? OverrideCategoryEn,
+    decimal? OverrideHaramRevenuePercentage,
+    decimal? OverrideLoansPercentage,
+    bool? EffectiveCoreActivityCompliant,
+    string? EffectiveCategoryAr,
+    string? EffectiveCategoryEn,
+    decimal? EffectiveHaramRevenuePercentage,
+    decimal? EffectiveLoansPercentage);
+
+/// <summary>Request body for saving Shariah manual overrides. Null values clear the override.</summary>
+public sealed record SaveShariahOverridesRequest(
+    bool? CoreActivityCompliantOverride,
+    string? CategoryArOverride,
+    string? CategoryEnOverride,
+    decimal? HaramRevenuePercentageOverride,
+    decimal? LoansPercentageOverride);

@@ -33,9 +33,9 @@ public class GetMarketDataQueryHandler : IRequestHandler<GetMarketDataQuery, Mar
         // AAOIFI/S&P ratios are assembled or returned for it — the UI shows a single
         // activity verdict instead. Nothing about how the flag itself is derived is
         // touched here.
-        var activityCompliant = stock.ShariahMetrics?.CoreActivityCompliant;
+        var activityCompliant = stock.ShariahMetrics?.EffectiveCoreActivityCompliant;
         var activityNonCompliant = activityCompliant == false;
-        var activityClassification = stock.ShariahMetrics?.CategoryAr ?? stock.ShariahMetrics?.CategoryEn;
+        var activityClassification = stock.ShariahMetrics?.EffectiveCategoryAr ?? stock.ShariahMetrics?.EffectiveCategoryEn;
 
         // ── Single source of truth for the displayed verdict ─────────────────────
         // This stock's own نشاط الشركة result wins over the stored ratio/board status,
@@ -136,14 +136,45 @@ public class GetMarketDataQueryHandler : IRequestHandler<GetMarketDataQuery, Mar
                 .ToList();
         }
 
+        // Compute dynamic sector weight within this stock's sector
+        decimal? calculatedSectorWeight = null;
+        bool? isSectorWeightCapped = null;
+        decimal? sectorCappingFactor = null;
+
+        if (stock.SectorId.HasValue)
+        {
+            var sectorStocks = await _stockRepo.GetStocksBySectorIdAsync(stock.SectorId.Value, cancellationToken);
+            var inputs = sectorStocks.Select(s => new Meezan.Application.Common.SectorStockWeightInput(
+                s.Id,
+                s.Ticker,
+                s.MarketData?.MarketValue,
+                s.MarketData?.Currency
+            ));
+
+            var calcResult = Meezan.Application.Common.SectorWeightCalculator.Calculate(stock.SectorId.Value, inputs);
+            var stockWeightResult = calcResult.StockWeights.FirstOrDefault(w => w.Ticker.Equals(stock.Ticker, StringComparison.OrdinalIgnoreCase));
+            if (stockWeightResult != null)
+            {
+                calculatedSectorWeight = stockWeightResult.FinalWeight;
+                isSectorWeightCapped = stockWeightResult.IsCapped;
+                sectorCappingFactor = stockWeightResult.CappingFactor;
+            }
+        }
+
         var indices = stock.IndexConstituents
             .Where(ic => ic.Index != null)
-            .Select(ic => new IndexInStockDto(
-                ic.Index!.Code,
-                ic.Index.NameAr,
-                ic.Index.NameEn,
-                ic.Weight
-            ))
+            .Select(ic =>
+            {
+                bool isSectoral = string.Equals(ic.Index!.Code, "Sectoral-Indices", StringComparison.OrdinalIgnoreCase);
+                return new IndexInStockDto(
+                    ic.Index!.Code,
+                    ic.Index.NameAr,
+                    ic.Index.NameEn,
+                    isSectoral ? calculatedSectorWeight : ic.Weight,
+                    isSectoral ? isSectorWeightCapped : null,
+                    isSectoral ? sectorCappingFactor : null
+                );
+            })
             .ToList();
 
         DetectShariahBoard(stock, out var hasBoard, out var boardNote);
@@ -231,7 +262,10 @@ public class GetMarketDataQueryHandler : IRequestHandler<GetMarketDataQuery, Mar
             ShariahBoardNote: boardNote,
             ActivityCompliant: activityCompliant,
             ActivityClassification: activityClassification,
-            ShariahMetricsUnavailableReason: metricsReason
+            ShariahMetricsUnavailableReason: metricsReason,
+            SectorWeight: calculatedSectorWeight,
+            IsSectorWeightCapped: isSectorWeightCapped,
+            SectorCappingFactor: sectorCappingFactor
         );
     }
 
@@ -256,12 +290,13 @@ public class GetMarketDataQueryHandler : IRequestHandler<GetMarketDataQuery, Mar
     /// True when the metrics row carries no usable financial-screen inputs at all:
     /// no row, or every ratio field (debt, deposits, non-compliant income) is null.
     /// In that state we return null rather than inventing or estimating values.
+    /// Uses effective values (override wins over feed).
     /// </summary>
     private static bool HasNoRatioData(Domain.Entities.StockShariahMetrics? sm)
     {
         if (sm is null) return true;
-        return sm.LoansPercentage == null
-            && sm.HaramEarningsPercentage == null
+        return sm.EffectiveLoansPercentage == null
+            && sm.EffectiveHaramRevenuePercentage == null
             && sm.SpHaramEarningPercentage == null
             && sm.AaoifiHaramEarningPerShare == null;
     }
@@ -295,18 +330,18 @@ public class GetMarketDataQueryHandler : IRequestHandler<GetMarketDataQuery, Mar
             Zakat = sm.Zakat,
             SpHaramEarningPercentage = sm.SpHaramEarningPercentage,
             AaoifiHaramEarningPerShare = sm.AaoifiHaramEarningPerShare,
-            HaramEarningsPercentage = sm.HaramEarningsPercentage,
-            LoansPercentage = sm.LoansPercentage,
+            HaramEarningsPercentage = sm.EffectiveHaramRevenuePercentage,
+            LoansPercentage = sm.EffectiveLoansPercentage,
             FairValueValuation = sm.FairValueValuation,
             BookValue = sm.BookValue,
             Profit = sm.Profit,
             Dividend = sm.Dividend,
             DividendType = sm.DividendType,
-            CoreActivityCompliant = sm.CoreActivityCompliant,
+            CoreActivityCompliant = sm.EffectiveCoreActivityCompliant,
             CashLiquidityCompliant = sm.CashLiquidityCompliant,
             HaramInvestmentsCompliant = sm.HaramInvestmentsCompliant,
-            CategoryEn = sm.CategoryEn,
-            CategoryAr = sm.CategoryAr,
+            CategoryEn = sm.EffectiveCategoryEn,
+            CategoryAr = sm.EffectiveCategoryAr,
             SourceUpdatedAt = sm.SourceUpdatedAt,
             FetchedAt = sm.FetchedAt
         };

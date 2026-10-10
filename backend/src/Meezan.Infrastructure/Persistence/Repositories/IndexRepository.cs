@@ -251,26 +251,96 @@ public class IndexRepository : IIndexRepository
                                 && o.Status != null
                                 && (o.Status.ToUpper() == "DOUBTFUL"
                                     || (o.Status.ToUpper() == "COMPLIANT" && (o.Percentage == null || o.Percentage < 100))))
-                            && ((((ic.Stock.ShariahMetrics.SpHaramEarningPercentage ?? ic.Stock.ShariahCompliance.Pct) == null
-                                    || (ic.Stock.ShariahMetrics.SpHaramEarningPercentage ?? ic.Stock.ShariahCompliance.Pct) <= 10)
-                                && (ic.Stock.ShariahMetrics.LoansPercentage == null || ic.Stock.ShariahMetrics.LoansPercentage <= 33)
-                                && ((ic.Stock.ShariahMetrics.SpHaramEarningPercentage ?? ic.Stock.ShariahCompliance.Pct) != null || ic.Stock.ShariahMetrics.LoansPercentage != null))
-                            || (((ic.Stock.ShariahMetrics.SpHaramEarningPercentage ?? ic.Stock.ShariahCompliance.Pct) == null
-                                    || (ic.Stock.ShariahMetrics.SpHaramEarningPercentage ?? ic.Stock.ShariahCompliance.Pct) <= 10)
-                                && (ic.Stock.ShariahMetrics.LoansPercentage == null || ic.Stock.ShariahMetrics.LoansPercentage <= 30)
-                                && ((ic.Stock.ShariahMetrics.SpHaramEarningPercentage ?? ic.Stock.ShariahCompliance.Pct) != null || ic.Stock.ShariahMetrics.LoansPercentage != null))
-                            || (((ic.Stock.ShariahMetrics.SpHaramEarningPercentage ?? ic.Stock.ShariahCompliance.Pct) == null
-                                    || (ic.Stock.ShariahMetrics.SpHaramEarningPercentage ?? ic.Stock.ShariahCompliance.Pct) <= 5)
-                                && (ic.Stock.ShariahMetrics.LoansPercentage == null || ic.Stock.ShariahMetrics.LoansPercentage <= 30)
-                                && ((ic.Stock.ShariahMetrics.SpHaramEarningPercentage ?? ic.Stock.ShariahCompliance.Pct) != null || ic.Stock.ShariahMetrics.LoansPercentage != null))
-                            || (((ic.Stock.ShariahMetrics.SpHaramEarningPercentage ?? ic.Stock.ShariahCompliance.Pct) == null
-                                    || (ic.Stock.ShariahMetrics.SpHaramEarningPercentage ?? ic.Stock.ShariahCompliance.Pct) <= 5)
-                                && (ic.Stock.ShariahMetrics.LoansPercentage == null || ic.Stock.ShariahMetrics.LoansPercentage <= 33)
-                                && ((ic.Stock.ShariahMetrics.SpHaramEarningPercentage ?? ic.Stock.ShariahCompliance.Pct) != null || ic.Stock.ShariahMetrics.LoansPercentage != null))
-                            || (((ic.Stock.ShariahMetrics.SpHaramEarningPercentage ?? ic.Stock.ShariahCompliance.Pct) == null
-                                    || (ic.Stock.ShariahMetrics.SpHaramEarningPercentage ?? ic.Stock.ShariahCompliance.Pct) <= 20)
-                                && (ic.Stock.ShariahMetrics.LoansPercentage == null || ic.Stock.ShariahMetrics.LoansPercentage <= 33)
-                                && ((ic.Stock.ShariahMetrics.SpHaramEarningPercentage ?? ic.Stock.ShariahCompliance.Pct) != null || ic.Stock.ShariahMetrics.LoansPercentage != null))))
+                            && ((((ic.Stock.ShariahMetrics.HaramRevenuePercentageOverride != null
+                                    ? ic.Stock.ShariahMetrics.HaramRevenuePercentageOverride
+                                    : (ic.Stock.ShariahMetrics.SpHaramEarningPercentage ?? ic.Stock.ShariahCompliance.Pct)) == null
+                                    || (ic.Stock.ShariahMetrics.HaramRevenuePercentageOverride != null
+                                        ? ic.Stock.ShariahMetrics.HaramRevenuePercentageOverride
+                                        : (ic.Stock.ShariahMetrics.SpHaramEarningPercentage ?? ic.Stock.ShariahCompliance.Pct)) <= 10)
+                                && ((ic.Stock.ShariahMetrics.LoansPercentageOverride != null
+                                        ? ic.Stock.ShariahMetrics.LoansPercentageOverride
+                                        : ic.Stock.ShariahMetrics.LoansPercentage) == null
+                                    || (ic.Stock.ShariahMetrics.LoansPercentageOverride != null
+                                        ? ic.Stock.ShariahMetrics.LoansPercentageOverride
+                                        : ic.Stock.ShariahMetrics.LoansPercentage) <= 33)
+                                && ((ic.Stock.ShariahMetrics.HaramRevenuePercentageOverride != null
+                                        ? ic.Stock.ShariahMetrics.HaramRevenuePercentageOverride
+                                        : (ic.Stock.ShariahMetrics.SpHaramEarningPercentage ?? ic.Stock.ShariahCompliance.Pct)) != null
+                                    || (ic.Stock.ShariahMetrics.LoansPercentageOverride != null
+                                        ? ic.Stock.ShariahMetrics.LoansPercentageOverride
+                                        : ic.Stock.ShariahMetrics.LoansPercentage) != null))
+                            || (((ic.Stock.ShariahMetrics.HaramRevenuePercentageOverride != null
+                                    ? ic.Stock.ShariahMetrics.HaramRevenuePercentageOverride
+                                    : (ic.Stock.ShariahMetrics.SpHaramEarningPercentage ?? ic.Stock.ShariahCompliance.Pct)) == null
+                                    || (ic.Stock.ShariahMetrics.HaramRevenuePercentageOverride != null
+                                        ? ic.Stock.ShariahMetrics.HaramRevenuePercentageOverride
+                                        : (ic.Stock.ShariahMetrics.SpHaramEarningPercentage ?? ic.Stock.ShariahCompliance.Pct)) <= 10)
+                                && ((ic.Stock.ShariahMetrics.LoansPercentageOverride != null
+                                        ? ic.Stock.ShariahMetrics.LoansPercentageOverride
+                                        : ic.Stock.ShariahMetrics.LoansPercentage) == null
+                                    || (ic.Stock.ShariahMetrics.LoansPercentageOverride != null
+                                        ? ic.Stock.ShariahMetrics.LoansPercentageOverride
+                                        : ic.Stock.ShariahMetrics.LoansPercentage) <= 30)
+                                && ((ic.Stock.ShariahMetrics.HaramRevenuePercentageOverride != null
+                                        ? ic.Stock.ShariahMetrics.HaramRevenuePercentageOverride
+                                        : (ic.Stock.ShariahMetrics.SpHaramEarningPercentage ?? ic.Stock.ShariahCompliance.Pct)) != null
+                                    || (ic.Stock.ShariahMetrics.LoansPercentageOverride != null
+                                        ? ic.Stock.ShariahMetrics.LoansPercentageOverride
+                                        : ic.Stock.ShariahMetrics.LoansPercentage) != null))
+                            || (((ic.Stock.ShariahMetrics.HaramRevenuePercentageOverride != null
+                                    ? ic.Stock.ShariahMetrics.HaramRevenuePercentageOverride
+                                    : (ic.Stock.ShariahMetrics.SpHaramEarningPercentage ?? ic.Stock.ShariahCompliance.Pct)) == null
+                                    || (ic.Stock.ShariahMetrics.HaramRevenuePercentageOverride != null
+                                        ? ic.Stock.ShariahMetrics.HaramRevenuePercentageOverride
+                                        : (ic.Stock.ShariahMetrics.SpHaramEarningPercentage ?? ic.Stock.ShariahCompliance.Pct)) <= 5)
+                                && ((ic.Stock.ShariahMetrics.LoansPercentageOverride != null
+                                        ? ic.Stock.ShariahMetrics.LoansPercentageOverride
+                                        : ic.Stock.ShariahMetrics.LoansPercentage) == null
+                                    || (ic.Stock.ShariahMetrics.LoansPercentageOverride != null
+                                        ? ic.Stock.ShariahMetrics.LoansPercentageOverride
+                                        : ic.Stock.ShariahMetrics.LoansPercentage) <= 30)
+                                && ((ic.Stock.ShariahMetrics.HaramRevenuePercentageOverride != null
+                                        ? ic.Stock.ShariahMetrics.HaramRevenuePercentageOverride
+                                        : (ic.Stock.ShariahMetrics.SpHaramEarningPercentage ?? ic.Stock.ShariahCompliance.Pct)) != null
+                                    || (ic.Stock.ShariahMetrics.LoansPercentageOverride != null
+                                        ? ic.Stock.ShariahMetrics.LoansPercentageOverride
+                                        : ic.Stock.ShariahMetrics.LoansPercentage) != null))
+                            || (((ic.Stock.ShariahMetrics.HaramRevenuePercentageOverride != null
+                                    ? ic.Stock.ShariahMetrics.HaramRevenuePercentageOverride
+                                    : (ic.Stock.ShariahMetrics.SpHaramEarningPercentage ?? ic.Stock.ShariahCompliance.Pct)) == null
+                                    || (ic.Stock.ShariahMetrics.HaramRevenuePercentageOverride != null
+                                        ? ic.Stock.ShariahMetrics.HaramRevenuePercentageOverride
+                                        : (ic.Stock.ShariahMetrics.SpHaramEarningPercentage ?? ic.Stock.ShariahCompliance.Pct)) <= 5)
+                                && ((ic.Stock.ShariahMetrics.LoansPercentageOverride != null
+                                        ? ic.Stock.ShariahMetrics.LoansPercentageOverride
+                                        : ic.Stock.ShariahMetrics.LoansPercentage) == null
+                                    || (ic.Stock.ShariahMetrics.LoansPercentageOverride != null
+                                        ? ic.Stock.ShariahMetrics.LoansPercentageOverride
+                                        : ic.Stock.ShariahMetrics.LoansPercentage) <= 33)
+                                && ((ic.Stock.ShariahMetrics.HaramRevenuePercentageOverride != null
+                                        ? ic.Stock.ShariahMetrics.HaramRevenuePercentageOverride
+                                        : (ic.Stock.ShariahMetrics.SpHaramEarningPercentage ?? ic.Stock.ShariahCompliance.Pct)) != null
+                                    || (ic.Stock.ShariahMetrics.LoansPercentageOverride != null
+                                        ? ic.Stock.ShariahMetrics.LoansPercentageOverride
+                                        : ic.Stock.ShariahMetrics.LoansPercentage) != null))
+                            || (((ic.Stock.ShariahMetrics.HaramRevenuePercentageOverride != null
+                                    ? ic.Stock.ShariahMetrics.HaramRevenuePercentageOverride
+                                    : (ic.Stock.ShariahMetrics.SpHaramEarningPercentage ?? ic.Stock.ShariahCompliance.Pct)) == null
+                                    || (ic.Stock.ShariahMetrics.HaramRevenuePercentageOverride != null
+                                        ? ic.Stock.ShariahMetrics.HaramRevenuePercentageOverride
+                                        : (ic.Stock.ShariahMetrics.SpHaramEarningPercentage ?? ic.Stock.ShariahCompliance.Pct)) <= 20)
+                                && ((ic.Stock.ShariahMetrics.LoansPercentageOverride != null
+                                        ? ic.Stock.ShariahMetrics.LoansPercentageOverride
+                                        : ic.Stock.ShariahMetrics.LoansPercentage) == null
+                                    || (ic.Stock.ShariahMetrics.LoansPercentageOverride != null
+                                        ? ic.Stock.ShariahMetrics.LoansPercentageOverride
+                                        : ic.Stock.ShariahMetrics.LoansPercentage) <= 33)
+                                && ((ic.Stock.ShariahMetrics.HaramRevenuePercentageOverride != null
+                                        ? ic.Stock.ShariahMetrics.HaramRevenuePercentageOverride
+                                        : (ic.Stock.ShariahMetrics.SpHaramEarningPercentage ?? ic.Stock.ShariahCompliance.Pct)) != null
+                                    || (ic.Stock.ShariahMetrics.LoansPercentageOverride != null
+                                        ? ic.Stock.ShariahMetrics.LoansPercentageOverride
+                                        : ic.Stock.ShariahMetrics.LoansPercentage) != null))))
                             ? Meezan.Domain.Enums.ShariahStatus.Compliant.ToString()
                             : (ic.Stock.IndexConstituents.Any(c => c.Index != null && (c.Index.Code.ToUpper() == "EGX 33" || c.Index.Code.ToUpper() == "EGX33" || c.Index.Code.ToUpper() == "SHARIAH"))
                                 ? Meezan.Domain.Enums.ShariahStatus.Compliant.ToString()

@@ -61,7 +61,15 @@ public class GetStocksListQueryHandler
             PeRatio:         p.PeRatio,
             PbRatio:         p.PbRatio,
             Weight:          p.Weight,
-            WeightIndexCode: p.WeightIndexCode
+            WeightIndexCode: p.WeightIndexCode,
+            IsCapped:        p.IsCapped,
+            CappingFactor:   p.CappingFactor,
+            CoreActivityCompliant: p.CoreActivityCompliant,
+            CategoryAr:      p.CategoryAr,
+            CategoryEn:      p.CategoryEn,
+            SpHaramEarningPercentage: p.SpHaramEarningPercentage,
+            LoansPercentage: p.LoansPercentage,
+            PurificationPct: p.PurificationPct
         )).ToList();
 
         return PagedResult<StockListItemDto>.Create(items, page, pageSize, totalCount);

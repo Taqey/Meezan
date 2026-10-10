@@ -69,6 +69,24 @@ export const adminRoutes: Routes = [
           title: 'قائمة المراجعة',
           subtitle: 'مراجعة الأسهم المرشحة للإزالة أو التحديث'
         }
+      },
+      {
+        path: 'shariah-edit',
+        component: AdminComponent,
+        data: {
+          tab: 'shariah-edit',
+          title: 'تعديل البيانات الشرعية',
+          subtitle: 'تعديل تصنيف النشاط، مطابقة النشاط الأساسي، نسبة الإيراد المحرم، نسبة القروض والفوائد'
+        }
+      },
+      {
+        path: 'stocks',
+        component: AdminComponent,
+        data: {
+          tab: 'stocks',
+          title: 'إدارة الأسهم والقطاعات والمؤشرات',
+          subtitle: 'تعيين الأسهم للقطاعات والمؤشرات يدوياً وإنشاء أسهم جديدة'
+        }
       }
     ]
   }

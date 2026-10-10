@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, ElementRef, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { NavigationEnd, Router, RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
-import { filter, Subscription } from 'rxjs';
+import { NavigationEnd, NavigationStart, Router, RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { FavoritesService } from '../../services/favorites.service';
 import { ToastHostComponent } from '../../components/toast-host/toast-host.component';
 import {
@@ -45,8 +45,13 @@ import {
         <nav class="nav-links" [class.is-open]="isMenuOpen" aria-label="التنقل الرئيسي">
           <a routerLink="/stocks" routerLinkActive="active" (click)="closeMenu()">الأسهم</a>
           <a routerLink="/indices" routerLinkActive="active" (click)="closeMenu()">المؤشرات</a>
+          <a routerLink="/portfolio" routerLinkActive="active" (click)="closeMenu()">تكوين محفظة استثمارية</a>
           <a routerLink="/shariah-standards" routerLinkActive="active" (click)="closeMenu()">المعايير الشرعية</a>
           <a routerLink="/purification" routerLinkActive="active" (click)="closeMenu()">التطهير</a>
+          <a routerLink="/favorites" routerLinkActive="active" (click)="closeMenu()">
+            المفضلة
+            <span *ngIf="favCount > 0" class="nav-count">{{ favCount }}</span>
+          </a>
         </nav>
 
         <div class="header-meta">
@@ -66,8 +71,13 @@ import {
       <nav class="drawer-nav" aria-label="القائمة الجانبية">
         <a routerLink="/stocks" routerLinkActive="active" (click)="closeDrawer()">الأسهم</a>
         <a routerLink="/indices" routerLinkActive="active" (click)="closeDrawer()">المؤشرات</a>
+        <a routerLink="/portfolio" routerLinkActive="active" (click)="closeDrawer()">تكوين محفظة استثمارية</a>
         <a routerLink="/shariah-standards" routerLinkActive="active" (click)="closeDrawer()">المعايير الشرعية</a>
         <a routerLink="/purification" routerLinkActive="active" (click)="closeDrawer()">التطهير</a>
+        <a routerLink="/favorites" routerLinkActive="active" (click)="closeDrawer()">
+          المفضلة
+          <span *ngIf="favCount > 0" class="nav-count">{{ favCount }}</span>
+        </a>
       </nav>
     </aside>
 
@@ -324,6 +334,8 @@ export class PublicLayoutComponent implements AfterViewInit, OnDestroy {
   private routerSub: Subscription | null = null;
   private resizeHandler: (() => void) | null = null;
   private remeasureTimer: ReturnType<typeof setTimeout> | null = null;
+  private scrollResetTimer: ReturnType<typeof setTimeout> | null = null;
+  private lastNavTrigger: string | null = null;
 
   constructor(
     readonly favorites: FavoritesService,
@@ -336,9 +348,25 @@ export class PublicLayoutComponent implements AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
-    this.routerSub = this.router.events
-      .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
-      .subscribe(() => this.scheduleIndicatorUpdate());
+    this.routerSub = this.router.events.subscribe((e) => {
+      if (e instanceof NavigationStart) {
+        this.lastNavTrigger = e.navigationTrigger ?? null;
+      }
+      if (e instanceof NavigationEnd) {
+        // Reset scroll AFTER the new route component has been inserted into the
+        // outlet (setTimeout defers past the current microtask/render cycle).
+        // Skip on browser Back/Forward — withInMemoryScrolling restores those.
+        if (this.lastNavTrigger !== 'popstate') {
+          if (this.scrollResetTimer !== null) clearTimeout(this.scrollResetTimer);
+          this.scrollResetTimer = setTimeout(() => {
+            document.documentElement.scrollTop = 0;
+            document.body.scrollTop = 0;
+            this.scrollResetTimer = null;
+          }, 0);
+        }
+        this.scheduleIndicatorUpdate();
+      }
+    });
     this.resizeHandler = () => {
       if (window.innerWidth > 1024 && this.isDrawerOpen) {
         this.closeDrawer();
@@ -362,6 +390,10 @@ export class PublicLayoutComponent implements AfterViewInit, OnDestroy {
     if (this.remeasureTimer !== null) {
       clearTimeout(this.remeasureTimer);
       this.remeasureTimer = null;
+    }
+    if (this.scrollResetTimer !== null) {
+      clearTimeout(this.scrollResetTimer);
+      this.scrollResetTimer = null;
     }
   }
 

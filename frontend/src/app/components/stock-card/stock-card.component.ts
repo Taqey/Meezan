@@ -7,6 +7,7 @@ import { StatusBadgeComponent } from '../status-badge/status-badge.component';
 import { FavoriteToggleComponent } from '../favorite-toggle/favorite-toggle.component';
 import { PriceFlashDirective } from '../../directives/price-flash.directive';
 import { INDEX_ARABIC_NAMES } from '../../models/api.models';
+import { getNonComplianceReasons, normalizeStatusValue } from '../../models/shariah-standards';
 
 @Component({
   selector: 'app-stock-card',
@@ -33,7 +34,10 @@ import { INDEX_ARABIC_NAMES } from '../../models/api.models';
       <div class="stock-price">
         <strong [appPriceFlash]="closingPrice">{{ closingPrice !== null && closingPrice !== undefined ? (closingPrice | number:'1.2-2') : '—' }}</strong>
         <span>{{ currencyLabel }}</span>
-        <em *ngIf="weight && weight > 0" class="neutral-pill">الوزن {{ weight | number:'1.2-2' }}%</em>
+        <em *ngIf="weight !== null && weight !== undefined && weight > 0" class="neutral-pill" [class.capped-pill]="isCapped" [title]="isCapped ? 'تم سقف الوزن عند 35% (معامل السقف: ' + (cappingFactor | number:'1.4-4') + ')' : ''">
+          الوزن {{ weight | number:'1.2-2' }}%
+          <span *ngIf="isCapped" class="capped-badge" [title]="'معامل السقف: ' + (cappingFactor | number:'1.4-4')">(مسقوف)</span>
+        </em>
       </div>
 
       <div class="stock-bottom">
@@ -41,6 +45,11 @@ import { INDEX_ARABIC_NAMES } from '../../models/api.models';
           <app-status-badge [status]="shariahStatus"></app-status-badge>
         </div>
         <app-comparison-badge [comparison]="priceComparison" [fairValueDiffPct]="fairValueDiffPct" [closingPrice]="closingPrice" [fairValue]="fairValue"></app-comparison-badge>
+      </div>
+
+      <!-- Non-compliance reason line (shown only when status is NonCompliant and reasons exist) -->
+      <div class="noncompliance-reason" *ngIf="nonComplianceReasons.length > 0">
+        <span *ngFor="let r of nonComplianceReasons; let last = last">{{ r }}<span *ngIf="!last"> · </span></span>
       </div>
 
       <div class="stock-meta" *ngIf="indexLabels && indexLabels.length">
@@ -61,10 +70,18 @@ export class StockCardComponent {
   @Input() shariahStatus?: string | null;
   @Input() indices: string[] = [];
   @Input() weight?: number | null;
+  @Input() isCapped?: boolean | null;
+  @Input() cappingFactor?: number | null;
   @Input() currency?: string | null;
   @Input() sectorNameAr?: string | null;
   /** Shows the favorite star toggle next to the change percentage. */
   @Input() showFavorite = false;
+
+  // Shariah metrics for non-compliance reason display
+  @Input() coreActivityCompliant?: boolean | null;
+  @Input() categoryAr?: string | null;
+  @Input() spHaramEarningPercentage?: number | null;
+  @Input() loansPercentage?: number | null;
 
   readonly ShieldCheckIcon = ShieldCheck;
 
@@ -81,4 +98,17 @@ export class StockCardComponent {
       return INDEX_ARABIC_NAMES[code] || code;
     });
   }
+
+  /** Non-compliance reasons to show below the badge — empty unless status is NonCompliant. */
+  get nonComplianceReasons(): string[] {
+    if (normalizeStatusValue(this.shariahStatus) !== 'noncompliant') return [];
+    return getNonComplianceReasons({
+      coreActivityCompliant: this.coreActivityCompliant,
+      categoryAr: this.categoryAr,
+      spHaramEarningPercentage: this.spHaramEarningPercentage,
+      loansPercentage: this.loansPercentage
+    });
+  }
 }
+
+

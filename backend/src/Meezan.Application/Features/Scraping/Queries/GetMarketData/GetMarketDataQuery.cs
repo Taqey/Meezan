@@ -85,14 +85,22 @@ public record MarketDataDto(
     /// (activity-non-compliant or board-governed stocks), null when data is present.
     /// Lets the UI distinguish "not applicable" from "not available".
     /// </summary>
-    string? ShariahMetricsUnavailableReason = null
+    string? ShariahMetricsUnavailableReason = null,
+    /// <summary>Computed dynamic weight of this stock within its sector index.</summary>
+    decimal? SectorWeight = null,
+    /// <summary>True if this stock is capped at 35% within its sector.</summary>
+    bool? IsSectorWeightCapped = null,
+    /// <summary>Capping factor applied to this stock's market cap within its sector if capped.</summary>
+    decimal? SectorCappingFactor = null
 );
 
 public record IndexInStockDto(
     string Code,
     string NameAr,
     string NameEn,
-    decimal? Weight
+    decimal? Weight,
+    bool? IsCapped = null,
+    decimal? CappingFactor = null
 );
 
 public record FairValueMethodDto(

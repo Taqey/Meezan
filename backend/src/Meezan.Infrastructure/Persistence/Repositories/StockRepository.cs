@@ -62,6 +62,15 @@ public class StockRepository : IStockRepository
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<List<Stock>> GetStocksBySectorIdAsync(int sectorId, CancellationToken cancellationToken = default)
+    {
+        return await _context.Stocks
+            .AsNoTracking()
+            .Where(s => s.IsActive && s.SectorId == sectorId)
+            .Include(s => s.MarketData)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<Stock?> GetByTickerWithFullDetailsAsync(
         string ticker, CancellationToken cancellationToken = default)
     {
@@ -150,6 +159,7 @@ public class StockRepository : IStockRepository
         var weightIndexCode = selectedIndexCodes.Distinct().Count() == 1
             ? selectedIndexCodes[0]
             : "SECTORAL-INDICES";
+        bool isSectoral = weightIndexCode.Equals("SECTORAL-INDICES", StringComparison.OrdinalIgnoreCase);
 
         // Shariah status filter: support both single ShariahStatus and multiple ShariahStatuses (OR logic)
         var selectedShariahStatuses = new List<ShariahStatus>();
@@ -194,34 +204,104 @@ public class StockRepository : IStockRepository
                                     && o.Status != null
                                     && (o.Status.ToUpper() == "DOUBTFUL"
                                         || (o.Status.ToUpper() == "COMPLIANT" && (o.Percentage == null || o.Percentage < 100))))
-                                && ((((st.ShariahMetrics.SpHaramEarningPercentage ?? st.ShariahCompliance.Pct) == null
-                                        || (st.ShariahMetrics.SpHaramEarningPercentage ?? st.ShariahCompliance.Pct) <= 10)
-                                    && (st.ShariahMetrics.LoansPercentage == null || st.ShariahMetrics.LoansPercentage <= 33)
-                                    && ((st.ShariahMetrics.SpHaramEarningPercentage ?? st.ShariahCompliance.Pct) != null || st.ShariahMetrics.LoansPercentage != null))
-                                || (((st.ShariahMetrics.SpHaramEarningPercentage ?? st.ShariahCompliance.Pct) == null
-                                        || (st.ShariahMetrics.SpHaramEarningPercentage ?? st.ShariahCompliance.Pct) <= 10)
-                                    && (st.ShariahMetrics.LoansPercentage == null || st.ShariahMetrics.LoansPercentage <= 30)
-                                    && ((st.ShariahMetrics.SpHaramEarningPercentage ?? st.ShariahCompliance.Pct) != null || st.ShariahMetrics.LoansPercentage != null))
-                                || (((st.ShariahMetrics.SpHaramEarningPercentage ?? st.ShariahCompliance.Pct) == null
-                                        || (st.ShariahMetrics.SpHaramEarningPercentage ?? st.ShariahCompliance.Pct) <= 5)
-                                    && (st.ShariahMetrics.LoansPercentage == null || st.ShariahMetrics.LoansPercentage <= 30)
-                                    && ((st.ShariahMetrics.SpHaramEarningPercentage ?? st.ShariahCompliance.Pct) != null || st.ShariahMetrics.LoansPercentage != null))
-                                || (((st.ShariahMetrics.SpHaramEarningPercentage ?? st.ShariahCompliance.Pct) == null
-                                        || (st.ShariahMetrics.SpHaramEarningPercentage ?? st.ShariahCompliance.Pct) <= 5)
-                                    && (st.ShariahMetrics.LoansPercentage == null || st.ShariahMetrics.LoansPercentage <= 33)
-                                    && ((st.ShariahMetrics.SpHaramEarningPercentage ?? st.ShariahCompliance.Pct) != null || st.ShariahMetrics.LoansPercentage != null))
-                                || (((st.ShariahMetrics.SpHaramEarningPercentage ?? st.ShariahCompliance.Pct) == null
-                                        || (st.ShariahMetrics.SpHaramEarningPercentage ?? st.ShariahCompliance.Pct) <= 20)
-                                    && (st.ShariahMetrics.LoansPercentage == null || st.ShariahMetrics.LoansPercentage <= 33)
-                                    && ((st.ShariahMetrics.SpHaramEarningPercentage ?? st.ShariahCompliance.Pct) != null || st.ShariahMetrics.LoansPercentage != null))))
+                                && ((((st.ShariahMetrics.HaramRevenuePercentageOverride != null
+                                        ? st.ShariahMetrics.HaramRevenuePercentageOverride
+                                        : (st.ShariahMetrics.SpHaramEarningPercentage ?? st.ShariahCompliance.Pct)) == null
+                                        || (st.ShariahMetrics.HaramRevenuePercentageOverride != null
+                                            ? st.ShariahMetrics.HaramRevenuePercentageOverride
+                                            : (st.ShariahMetrics.SpHaramEarningPercentage ?? st.ShariahCompliance.Pct)) <= 10)
+                                    && ((st.ShariahMetrics.LoansPercentageOverride != null
+                                            ? st.ShariahMetrics.LoansPercentageOverride
+                                            : st.ShariahMetrics.LoansPercentage) == null
+                                        || (st.ShariahMetrics.LoansPercentageOverride != null
+                                            ? st.ShariahMetrics.LoansPercentageOverride
+                                            : st.ShariahMetrics.LoansPercentage) <= 33)
+                                    && ((st.ShariahMetrics.HaramRevenuePercentageOverride != null
+                                            ? st.ShariahMetrics.HaramRevenuePercentageOverride
+                                            : (st.ShariahMetrics.SpHaramEarningPercentage ?? st.ShariahCompliance.Pct)) != null
+                                        || (st.ShariahMetrics.LoansPercentageOverride != null
+                                            ? st.ShariahMetrics.LoansPercentageOverride
+                                            : st.ShariahMetrics.LoansPercentage) != null))
+                                || (((st.ShariahMetrics.HaramRevenuePercentageOverride != null
+                                        ? st.ShariahMetrics.HaramRevenuePercentageOverride
+                                        : (st.ShariahMetrics.SpHaramEarningPercentage ?? st.ShariahCompliance.Pct)) == null
+                                        || (st.ShariahMetrics.HaramRevenuePercentageOverride != null
+                                            ? st.ShariahMetrics.HaramRevenuePercentageOverride
+                                            : (st.ShariahMetrics.SpHaramEarningPercentage ?? st.ShariahCompliance.Pct)) <= 10)
+                                    && ((st.ShariahMetrics.LoansPercentageOverride != null
+                                            ? st.ShariahMetrics.LoansPercentageOverride
+                                            : st.ShariahMetrics.LoansPercentage) == null
+                                        || (st.ShariahMetrics.LoansPercentageOverride != null
+                                            ? st.ShariahMetrics.LoansPercentageOverride
+                                            : st.ShariahMetrics.LoansPercentage) <= 30)
+                                    && ((st.ShariahMetrics.HaramRevenuePercentageOverride != null
+                                            ? st.ShariahMetrics.HaramRevenuePercentageOverride
+                                            : (st.ShariahMetrics.SpHaramEarningPercentage ?? st.ShariahCompliance.Pct)) != null
+                                        || (st.ShariahMetrics.LoansPercentageOverride != null
+                                            ? st.ShariahMetrics.LoansPercentageOverride
+                                            : st.ShariahMetrics.LoansPercentage) != null))
+                                || (((st.ShariahMetrics.HaramRevenuePercentageOverride != null
+                                        ? st.ShariahMetrics.HaramRevenuePercentageOverride
+                                        : (st.ShariahMetrics.SpHaramEarningPercentage ?? st.ShariahCompliance.Pct)) == null
+                                        || (st.ShariahMetrics.HaramRevenuePercentageOverride != null
+                                            ? st.ShariahMetrics.HaramRevenuePercentageOverride
+                                            : (st.ShariahMetrics.SpHaramEarningPercentage ?? st.ShariahCompliance.Pct)) <= 5)
+                                    && ((st.ShariahMetrics.LoansPercentageOverride != null
+                                            ? st.ShariahMetrics.LoansPercentageOverride
+                                            : st.ShariahMetrics.LoansPercentage) == null
+                                        || (st.ShariahMetrics.LoansPercentageOverride != null
+                                            ? st.ShariahMetrics.LoansPercentageOverride
+                                            : st.ShariahMetrics.LoansPercentage) <= 30)
+                                    && ((st.ShariahMetrics.HaramRevenuePercentageOverride != null
+                                            ? st.ShariahMetrics.HaramRevenuePercentageOverride
+                                            : (st.ShariahMetrics.SpHaramEarningPercentage ?? st.ShariahCompliance.Pct)) != null
+                                        || (st.ShariahMetrics.LoansPercentageOverride != null
+                                            ? st.ShariahMetrics.LoansPercentageOverride
+                                            : st.ShariahMetrics.LoansPercentage) != null))
+                                || (((st.ShariahMetrics.HaramRevenuePercentageOverride != null
+                                        ? st.ShariahMetrics.HaramRevenuePercentageOverride
+                                        : (st.ShariahMetrics.SpHaramEarningPercentage ?? st.ShariahCompliance.Pct)) == null
+                                        || (st.ShariahMetrics.HaramRevenuePercentageOverride != null
+                                            ? st.ShariahMetrics.HaramRevenuePercentageOverride
+                                            : (st.ShariahMetrics.SpHaramEarningPercentage ?? st.ShariahCompliance.Pct)) <= 5)
+                                    && ((st.ShariahMetrics.LoansPercentageOverride != null
+                                            ? st.ShariahMetrics.LoansPercentageOverride
+                                            : st.ShariahMetrics.LoansPercentage) == null
+                                        || (st.ShariahMetrics.LoansPercentageOverride != null
+                                            ? st.ShariahMetrics.LoansPercentageOverride
+                                            : st.ShariahMetrics.LoansPercentage) <= 33)
+                                    && ((st.ShariahMetrics.HaramRevenuePercentageOverride != null
+                                            ? st.ShariahMetrics.HaramRevenuePercentageOverride
+                                            : (st.ShariahMetrics.SpHaramEarningPercentage ?? st.ShariahCompliance.Pct)) != null
+                                        || (st.ShariahMetrics.LoansPercentageOverride != null
+                                            ? st.ShariahMetrics.LoansPercentageOverride
+                                            : st.ShariahMetrics.LoansPercentage) != null))
+                                || (((st.ShariahMetrics.HaramRevenuePercentageOverride != null
+                                        ? st.ShariahMetrics.HaramRevenuePercentageOverride
+                                        : (st.ShariahMetrics.SpHaramEarningPercentage ?? st.ShariahCompliance.Pct)) == null
+                                        || (st.ShariahMetrics.HaramRevenuePercentageOverride != null
+                                            ? st.ShariahMetrics.HaramRevenuePercentageOverride
+                                            : (st.ShariahMetrics.SpHaramEarningPercentage ?? st.ShariahCompliance.Pct)) <= 20)
+                                    && ((st.ShariahMetrics.LoansPercentageOverride != null
+                                            ? st.ShariahMetrics.LoansPercentageOverride
+                                            : st.ShariahMetrics.LoansPercentage) == null
+                                        || (st.ShariahMetrics.LoansPercentageOverride != null
+                                            ? st.ShariahMetrics.LoansPercentageOverride
+                                            : st.ShariahMetrics.LoansPercentage) <= 33)
+                                    && ((st.ShariahMetrics.HaramRevenuePercentageOverride != null
+                                            ? st.ShariahMetrics.HaramRevenuePercentageOverride
+                                            : (st.ShariahMetrics.SpHaramEarningPercentage ?? st.ShariahCompliance.Pct)) != null
+                                        || (st.ShariahMetrics.LoansPercentageOverride != null
+                                            ? st.ShariahMetrics.LoansPercentageOverride
+                                            : st.ShariahMetrics.LoansPercentage) != null))))
+                            ? ShariahStatus.Compliant
+                            : (st.IndexConstituents.Any(ic => ic.Index != null && (ic.Index.Code.ToUpper() == "EGX 33" || ic.Index.Code.ToUpper() == "EGX33" || ic.Index.Code.ToUpper() == "SHARIAH"))
                                 ? ShariahStatus.Compliant
-                                : (st.IndexConstituents.Any(ic => ic.Index != null && (ic.Index.Code.ToUpper() == "EGX 33" || ic.Index.Code.ToUpper() == "EGX33" || ic.Index.Code.ToUpper() == "SHARIAH"))
-                                    ? ShariahStatus.Compliant
-                                    : (st.ShariahCompliance == null
-                                        && st.ShariahSourceOpinions.Any(o => o.Status != null && (o.Status.ToUpper() == "NONCOMPLIANT" || o.Status.ToUpper() == "NON_COMPLIANT" || o.Status.ToUpper() == "NON-COMPLIANT"))
-                                        && !st.ShariahSourceOpinions.Any(o => o.Status != null && (o.Status.ToUpper() == "PENDING" || o.Status.ToUpper() == "BLOCKED"))
-                                        ? ShariahStatus.NonCompliant
-                                        : (st.ShariahCompliance != null ? st.ShariahCompliance.Status : (ShariahStatus)(-1)))))))
+                                : (st.ShariahCompliance == null
+                                    && st.ShariahSourceOpinions.Any(o => o.Status != null && (o.Status.ToUpper() == "NONCOMPLIANT" || o.Status.ToUpper() == "NON_COMPLIANT" || o.Status.ToUpper() == "NON-COMPLIANT"))
+                                    && !st.ShariahSourceOpinions.Any(o => o.Status != null && (o.Status.ToUpper() == "PENDING" || o.Status.ToUpper() == "BLOCKED"))
+                                    ? ShariahStatus.NonCompliant
+                                    : (st.ShariahCompliance != null ? st.ShariahCompliance.Status : (ShariahStatus)(-1)))))))
                 ));
 #pragma warning restore CS8602, CS8629
         }
@@ -283,10 +363,17 @@ public class StockRepository : IStockRepository
             "pricecomparison" or "priceComparison" => desc ? query.OrderByDescending(x => x.FairValue != null ? (PriceComparison?)x.FairValue.PriceComparison : null) : query.OrderBy(x => x.FairValue != null ? (PriceComparison?)x.FairValue.PriceComparison : null),
             "fairvaluediffpct" or "fairValueDiffPct"=> desc ? query.OrderByDescending(x => x.FairValue != null ? x.FairValue.FairValueDiffPct : null) : query.OrderBy(x => x.FairValue != null ? x.FairValue.FairValueDiffPct : null),
             "shariahstatus" or "shariahStatus"     => desc ? query.OrderByDescending(x => x.ShariahMetrics != null && x.ShariahMetrics.CoreActivityCompliant == false ? (ShariahStatus?)ShariahStatus.NonCompliant : (x.ShariahSourceOpinions.Any(o => o.Status != null && o.Status.ToUpper() == "COMPLIANT" && (o.SourceKey != ShariahSourceKey.HalalBourse || (o.Percentage != null && o.Percentage >= 100))) ? (ShariahStatus?)ShariahStatus.Compliant : ((x.ShariahSourceOpinions.Any(o => o.SourceKey == ShariahSourceKey.HalalBourse && o.Status != null && (o.Status.ToUpper() == "DOUBTFUL" || (o.Status.ToUpper() == "COMPLIANT" && (o.Percentage == null || o.Percentage < 100)))) && ((((x.ShariahMetrics.SpHaramEarningPercentage ?? x.ShariahCompliance.Pct) == null || (x.ShariahMetrics.SpHaramEarningPercentage ?? x.ShariahCompliance.Pct) <= 10) && (x.ShariahMetrics.LoansPercentage == null || x.ShariahMetrics.LoansPercentage <= 33) && ((x.ShariahMetrics.SpHaramEarningPercentage ?? x.ShariahCompliance.Pct) != null || x.ShariahMetrics.LoansPercentage != null)) || (((x.ShariahMetrics.SpHaramEarningPercentage ?? x.ShariahCompliance.Pct) == null || (x.ShariahMetrics.SpHaramEarningPercentage ?? x.ShariahCompliance.Pct) <= 10) && (x.ShariahMetrics.LoansPercentage == null || x.ShariahMetrics.LoansPercentage <= 30) && ((x.ShariahMetrics.SpHaramEarningPercentage ?? x.ShariahCompliance.Pct) != null || x.ShariahMetrics.LoansPercentage != null)) || (((x.ShariahMetrics.SpHaramEarningPercentage ?? x.ShariahCompliance.Pct) == null || (x.ShariahMetrics.SpHaramEarningPercentage ?? x.ShariahCompliance.Pct) <= 5) && (x.ShariahMetrics.LoansPercentage == null || x.ShariahMetrics.LoansPercentage <= 30) && ((x.ShariahMetrics.SpHaramEarningPercentage ?? x.ShariahCompliance.Pct) != null || x.ShariahMetrics.LoansPercentage != null)) || (((x.ShariahMetrics.SpHaramEarningPercentage ?? x.ShariahCompliance.Pct) == null || (x.ShariahMetrics.SpHaramEarningPercentage ?? x.ShariahCompliance.Pct) <= 5) && (x.ShariahMetrics.LoansPercentage == null || x.ShariahMetrics.LoansPercentage <= 33) && ((x.ShariahMetrics.SpHaramEarningPercentage ?? x.ShariahCompliance.Pct) != null || x.ShariahMetrics.LoansPercentage != null)) || (((x.ShariahMetrics.SpHaramEarningPercentage ?? x.ShariahCompliance.Pct) == null || (x.ShariahMetrics.SpHaramEarningPercentage ?? x.ShariahCompliance.Pct) <= 20) && (x.ShariahMetrics.LoansPercentage == null || x.ShariahMetrics.LoansPercentage <= 33) && ((x.ShariahMetrics.SpHaramEarningPercentage ?? x.ShariahCompliance.Pct) != null || x.ShariahMetrics.LoansPercentage != null)))) ? (ShariahStatus?)ShariahStatus.Compliant : ((x.IndexConstituents.Any(ic => ic.Index != null && (ic.Index.Code.ToUpper() == "EGX 33" || ic.Index.Code.ToUpper() == "EGX33" || ic.Index.Code.ToUpper() == "SHARIAH"))) ? (ShariahStatus?)ShariahStatus.Compliant : ((x.ShariahCompliance == null && x.ShariahSourceOpinions.Any(o => o.Status != null && (o.Status.ToUpper() == "NONCOMPLIANT" || o.Status.ToUpper() == "NON_COMPLIANT" || o.Status.ToUpper() == "NON-COMPLIANT")) && !x.ShariahSourceOpinions.Any(o => o.Status != null && (o.Status.ToUpper() == "PENDING" || o.Status.ToUpper() == "BLOCKED"))) ? (ShariahStatus?)ShariahStatus.NonCompliant : (x.ShariahCompliance != null ? (ShariahStatus?)x.ShariahCompliance.Status : null)))))) : query.OrderBy(x => x.ShariahMetrics != null && x.ShariahMetrics.CoreActivityCompliant == false ? (ShariahStatus?)ShariahStatus.NonCompliant : (x.ShariahSourceOpinions.Any(o => o.Status != null && o.Status.ToUpper() == "COMPLIANT" && (o.SourceKey != ShariahSourceKey.HalalBourse || (o.Percentage != null && o.Percentage >= 100))) ? (ShariahStatus?)ShariahStatus.Compliant : ((x.ShariahSourceOpinions.Any(o => o.SourceKey == ShariahSourceKey.HalalBourse && o.Status != null && (o.Status.ToUpper() == "DOUBTFUL" || (o.Status.ToUpper() == "COMPLIANT" && (o.Percentage == null || o.Percentage < 100)))) && ((((x.ShariahMetrics.SpHaramEarningPercentage ?? x.ShariahCompliance.Pct) == null || (x.ShariahMetrics.SpHaramEarningPercentage ?? x.ShariahCompliance.Pct) <= 10) && (x.ShariahMetrics.LoansPercentage == null || x.ShariahMetrics.LoansPercentage <= 33) && ((x.ShariahMetrics.SpHaramEarningPercentage ?? x.ShariahCompliance.Pct) != null || x.ShariahMetrics.LoansPercentage != null)) || (((x.ShariahMetrics.SpHaramEarningPercentage ?? x.ShariahCompliance.Pct) == null || (x.ShariahMetrics.SpHaramEarningPercentage ?? x.ShariahCompliance.Pct) <= 10) && (x.ShariahMetrics.LoansPercentage == null || x.ShariahMetrics.LoansPercentage <= 30) && ((x.ShariahMetrics.SpHaramEarningPercentage ?? x.ShariahCompliance.Pct) != null || x.ShariahMetrics.LoansPercentage != null)) || (((x.ShariahMetrics.SpHaramEarningPercentage ?? x.ShariahCompliance.Pct) == null || (x.ShariahMetrics.SpHaramEarningPercentage ?? x.ShariahCompliance.Pct) <= 5) && (x.ShariahMetrics.LoansPercentage == null || x.ShariahMetrics.LoansPercentage <= 30) && ((x.ShariahMetrics.SpHaramEarningPercentage ?? x.ShariahCompliance.Pct) != null || x.ShariahMetrics.LoansPercentage != null)) || (((x.ShariahMetrics.SpHaramEarningPercentage ?? x.ShariahCompliance.Pct) == null || (x.ShariahMetrics.SpHaramEarningPercentage ?? x.ShariahCompliance.Pct) <= 5) && (x.ShariahMetrics.LoansPercentage == null || x.ShariahMetrics.LoansPercentage <= 33) && ((x.ShariahMetrics.SpHaramEarningPercentage ?? x.ShariahCompliance.Pct) != null || x.ShariahMetrics.LoansPercentage != null)) || (((x.ShariahMetrics.SpHaramEarningPercentage ?? x.ShariahCompliance.Pct) == null || (x.ShariahMetrics.SpHaramEarningPercentage ?? x.ShariahCompliance.Pct) <= 20) && (x.ShariahMetrics.LoansPercentage == null || x.ShariahMetrics.LoansPercentage <= 33) && ((x.ShariahMetrics.SpHaramEarningPercentage ?? x.ShariahCompliance.Pct) != null || x.ShariahMetrics.LoansPercentage != null)))) ? (ShariahStatus?)ShariahStatus.Compliant : ((x.IndexConstituents.Any(ic => ic.Index != null && (ic.Index.Code.ToUpper() == "EGX 33" || ic.Index.Code.ToUpper() == "EGX33" || ic.Index.Code.ToUpper() == "SHARIAH"))) ? (ShariahStatus?)ShariahStatus.Compliant : ((x.ShariahCompliance == null && x.ShariahSourceOpinions.Any(o => o.Status != null && (o.Status.ToUpper() == "NONCOMPLIANT" || o.Status.ToUpper() == "NON_COMPLIANT" || o.Status.ToUpper() == "NON-COMPLIANT")) && !x.ShariahSourceOpinions.Any(o => o.Status != null && (o.Status.ToUpper() == "PENDING" || o.Status.ToUpper() == "BLOCKED"))) ? (ShariahStatus?)ShariahStatus.NonCompliant : (x.ShariahCompliance != null ? (ShariahStatus?)x.ShariahCompliance.Status : null)))))),
-            // Weight in the resolved weightIndexCode (single selected index, else
-            // Sectoral-Indices). Ordering applies in SQL before Skip/Take, so it covers
-            // all filtered results, not just the page.
-            "weight"                             => desc ? query.OrderByDescending(x => x.IndexConstituents.Where(ic => ic.Index != null && ic.Index.Code.ToUpper() == weightIndexCode).Select(ic => ic.Weight).FirstOrDefault()) : query.OrderBy(x => x.IndexConstituents.Where(ic => ic.Index != null && ic.Index.Code.ToUpper() == weightIndexCode).Select(ic => ic.Weight).FirstOrDefault()),
+            // Weight in the resolved weightIndexCode.
+            // For Sectoral-Indices (or sector views), weights are dynamic and strictly monotonic
+            // with effective market cap in EGP (MarketValue * (Currency == 'USD' ? 52.4m : 1.0m)).
+            // For other official indices (EGX30, etc.), sort by stored ic.Weight.
+            "weight"                             => isSectoral
+                ? (desc
+                    ? query.OrderByDescending(x => x.MarketData != null ? x.MarketData.MarketValue * (x.MarketData.Currency == "USD" ? 52.4m : 1.0m) : (decimal?)null)
+                    : query.OrderBy(x => x.MarketData != null ? x.MarketData.MarketValue * (x.MarketData.Currency == "USD" ? 52.4m : 1.0m) : (decimal?)null))
+                : (desc
+                    ? query.OrderByDescending(x => x.IndexConstituents.Where(ic => ic.Index != null && ic.Index.Code.ToUpper() == weightIndexCode).Select(ic => ic.Weight).FirstOrDefault())
+                    : query.OrderBy(x => x.IndexConstituents.Where(ic => ic.Index != null && ic.Index.Code.ToUpper() == weightIndexCode).Select(ic => ic.Weight).FirstOrDefault())),
             _                                      => desc ? query.OrderByDescending(x => x.Ticker)                                    : query.OrderBy(x => x.Ticker)
 #pragma warning restore CS8602, CS8629
         });
@@ -360,9 +447,11 @@ public class StockRepository : IStockRepository
                 SectorNameAr = st.Sector != null ? st.Sector.NameAr : null,
                 PeRatio = st.MarketData != null ? st.MarketData.PeRatio : null,
                 PbRatio = st.MarketData != null ? st.MarketData.PbRatio : null,
+                SectorId = st.SectorId,
+                MarketValue = st.MarketData != null ? st.MarketData.MarketValue : null,
                 // Weight within the resolved weightIndexCode (null when the stock has no
                 // constituent row in that index, e.g. weight-less source files).
-                Weight = st.IndexConstituents
+                StoredWeight = st.IndexConstituents
                     .Where(ic => ic.Index != null && ic.Index.Code.ToUpper() == weightIndexCode)
                     .Select(ic => ic.Weight)
                     .FirstOrDefault(),
@@ -370,28 +459,113 @@ public class StockRepository : IStockRepository
                 IndexCodesList = st.IndexConstituents
                     .Where(ic => ic.Index != null)
                     .Select(ic => ic.Index!.Code)
-                    .ToList()
+                    .ToList(),
+                // Shariah metrics for non-compliance reason display on the card
+                CoreActivityCompliant = st.ShariahMetrics != null ? st.ShariahMetrics.CoreActivityCompliant : null,
+                CategoryAr = st.ShariahMetrics != null ? st.ShariahMetrics.CategoryAr : null,
+                CategoryEn = st.ShariahMetrics != null ? st.ShariahMetrics.CategoryEn : null,
+                SpHaramEarningPercentage = st.ShariahMetrics != null ? st.ShariahMetrics.SpHaramEarningPercentage : null,
+                LoansPercentage = st.ShariahMetrics != null ? st.ShariahMetrics.LoansPercentage : null,
+                PurificationPct = st.ShariahCompliance != null ? st.ShariahCompliance.Pct : null
             })
             .ToListAsync(cancellationToken);
 
-        var items = pageEntities.Select(st => new StockListProjection(
-            st.Ticker,
-            st.NameAr,
-            st.NameEn,
-            string.Join("|", st.IndexCodesList),
-            st.ShariahStatus,
-            st.ClosingPrice,
-            st.ChangePct,
-            st.FairValue,
-            st.PriceComparison,
-            st.FairValueDiffPct,
-            st.Currency,
-            st.SectorNameAr,
-            st.PeRatio,
-            st.PbRatio,
-            st.Weight,
-            st.WeightIndexCode
-        )).ToList();
+        // If weightIndexCode is SECTORAL-INDICES, sector weights are calculated dynamically on the fly
+        // using SectorWeightCalculator based on MarketValue (with USD->EGP conversion and 35% cap).
+        // For single official indices (EGX30, etc.), stored weights from IndexConstituent are used.
+        Dictionary<string, (decimal? Weight, bool IsCapped, decimal CappingFactor)> sectorWeightsByTicker = new(StringComparer.OrdinalIgnoreCase);
+
+        if (isSectoral)
+        {
+            // Group the page's stocks by SectorId and calculate for each sector
+            var distinctSectorIds = pageEntities
+                .Where(x => x.SectorId != null)
+                .Select(x => x.SectorId!.Value)
+                .Distinct()
+                .ToList();
+
+            if (distinctSectorIds.Count > 0)
+            {
+                // Fetch all active stocks in these sectors to ensure full sector denominator and capping accuracy
+                var allSectorStocks = await _context.Stocks
+                    .AsNoTracking()
+                    .Where(s => s.IsActive && s.SectorId != null && distinctSectorIds.Contains(s.SectorId.Value))
+                    .Select(s => new
+                    {
+                        s.Id,
+                        s.Ticker,
+                        SectorId = s.SectorId!.Value,
+                        MarketValue = s.MarketData != null ? s.MarketData.MarketValue : null,
+                        Currency = s.MarketData != null ? s.MarketData.Currency : null
+                    })
+                    .ToListAsync(cancellationToken);
+
+                foreach (var secId in distinctSectorIds)
+                {
+                    var sectorStocks = allSectorStocks.Where(s => s.SectorId == secId).ToList();
+                    var inputs = sectorStocks.Select(s => new Meezan.Application.Common.SectorStockWeightInput(
+                        s.Id,
+                        s.Ticker,
+                        s.MarketValue,
+                        s.Currency
+                    ));
+
+                    var calcResult = Meezan.Application.Common.SectorWeightCalculator.Calculate(secId, inputs);
+                    foreach (var w in calcResult.StockWeights)
+                    {
+                        sectorWeightsByTicker[w.Ticker] = (w.FinalWeight, w.IsCapped, w.CappingFactor);
+                    }
+                }
+            }
+        }
+
+        var items = pageEntities.Select(st =>
+        {
+            decimal? finalWeight = null;
+            bool? isCapped = null;
+            decimal? cappingFactor = null;
+
+            if (isSectoral)
+            {
+                if (sectorWeightsByTicker.TryGetValue(st.Ticker, out var secW))
+                {
+                    finalWeight = secW.Weight;
+                    isCapped = secW.IsCapped;
+                    cappingFactor = secW.CappingFactor;
+                }
+            }
+            else
+            {
+                finalWeight = st.StoredWeight;
+            }
+
+            return new StockListProjection(
+                st.Ticker,
+                st.NameAr,
+                st.NameEn,
+                string.Join("|", st.IndexCodesList),
+                st.ShariahStatus,
+                st.ClosingPrice,
+                st.ChangePct,
+                st.FairValue,
+                st.PriceComparison,
+                st.FairValueDiffPct,
+                st.Currency,
+                st.SectorNameAr,
+                st.PeRatio,
+                st.PbRatio,
+                finalWeight,
+                st.WeightIndexCode,
+                isCapped,
+                cappingFactor,
+                CoreActivityCompliant: st.CoreActivityCompliant,
+                CategoryAr: st.CategoryAr,
+                CategoryEn: st.CategoryEn,
+                SpHaramEarningPercentage: st.SpHaramEarningPercentage,
+                LoansPercentage: st.LoansPercentage,
+                PurificationPct: st.PurificationPct
+            );
+        }).ToList();
 
         return (items, totalCount);
     }
@@ -450,6 +624,56 @@ public class StockRepository : IStockRepository
         }
 
         return sector;
+    }
+
+    public async Task<(Sector? Sector, bool IsNew)> GetOrCreateSectorWithFlagAsync(
+        string? nameAr, string? nameEn, CancellationToken cancellationToken = default)
+    {
+        var cleanAr = nameAr?.Trim();
+        var cleanEn = nameEn?.Trim();
+
+        if (string.IsNullOrWhiteSpace(cleanAr) && string.IsNullOrWhiteSpace(cleanEn))
+            return (null, false);
+
+        var sector = await _context.Sectors
+            .FirstOrDefaultAsync(s =>
+                (!string.IsNullOrEmpty(cleanEn) && s.NameEn.ToUpper() == cleanEn.ToUpper()) ||
+                (!string.IsNullOrEmpty(cleanAr) && s.NameAr == cleanAr),
+                cancellationToken);
+
+        if (sector != null)
+            return (sector, false);
+
+        sector = new Sector
+        {
+            NameAr = cleanAr ?? cleanEn ?? string.Empty,
+            NameEn = cleanEn ?? cleanAr ?? string.Empty
+        };
+        await _context.Sectors.AddAsync(sector, cancellationToken);
+        return (sector, true);
+    }
+
+    /// <summary>
+    /// Returns ALL stocks (active + inactive) with only essential columns loaded.
+    /// Used by the Excel-upload flow to build an in-memory Arabic-name lookup table
+    /// without issuing one query per file row.
+    /// </summary>
+    public async Task<List<Stock>> GetAllIncludingInactiveAsync(CancellationToken cancellationToken = default)
+    {
+        return await _context.Stocks
+            .AsNoTracking()
+            .Select(s => new Stock
+            {
+                Id       = s.Id,
+                Ticker   = s.Ticker,
+                NameAr   = s.NameAr,
+                NameEn   = s.NameEn,
+                SectorId = s.SectorId,
+                IsActive = s.IsActive,
+                DeactivatedAt      = s.DeactivatedAt,
+                DeactivationReason = s.DeactivationReason
+            })
+            .ToListAsync(cancellationToken);
     }
 
     public async Task AddAsync(Stock stock, CancellationToken cancellationToken = default)

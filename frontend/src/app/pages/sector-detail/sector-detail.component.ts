@@ -14,6 +14,7 @@ import { ApiService } from '../../services/api.service';
 import { navigateQueryParams } from '../../utils/navigation-utils';
 import { StockCardComponent } from '../../components/stock-card/stock-card.component';
 import { IndexSummaryDto, PagedResult, SectorSummaryDto, StockListItemDto } from '../../models/api.models';
+import { matchesNonComplianceType } from '../../models/shariah-standards';
 
 @Component({
   selector: 'app-sector-detail',
@@ -93,6 +94,13 @@ import { IndexSummaryDto, PagedResult, SectorSummaryDto, StockListItemDto } from
               </label>
             </div>
           </div>
+
+          <!-- Non-compliance sub-filter (shown when NonCompliant is selected) -->
+          <select *ngIf="shariahStatuses.includes('NonCompliant')" [(ngModel)]="nonComplianceType" (change)="onFilterChange()" aria-label="سبب عدم التوافق">
+            <option value="">الكل (نشاط + نسب)</option>
+            <option value="activity">النشاط الأساسي</option>
+            <option value="ratios">النسب المالية</option>
+          </select>
 
           <!-- Price Comparison Filter (Cheap / Fair / Expensive) -->
           <select [(ngModel)]="priceComparison" (change)="onFilterChange()" aria-label="مقارنة القيمة العادلة">
@@ -239,6 +247,11 @@ import { IndexSummaryDto, PagedResult, SectorSummaryDto, StockListItemDto } from
             </span>
           </ng-container>
 
+          <span *ngIf="nonComplianceType" class="active-filter">
+            سبب عدم التوافق: {{ nonComplianceType === 'activity' ? 'النشاط' : 'النسب المالية' }}
+            <button (click)="clearFilter('nonComplianceType')">×</button>
+          </span>
+
           <span *ngIf="priceComparison" class="active-filter">
             التقييم: {{ getPriceComparisonLabel(priceComparison) }}
             <button (click)="clearFilter('priceComparison')">×</button>
@@ -258,15 +271,21 @@ import { IndexSummaryDto, PagedResult, SectorSummaryDto, StockListItemDto } from
         </div>
       </div>
 
+      <!-- Sector Weight Warning Banner (warns if sector weights do not sum to 100%) -->
+      <div *ngIf="sectorWeightWarning" class="weight-warning-banner" role="alert">
+        <lucide-icon [img]="FilterIcon" size="18"></lucide-icon>
+        <span>{{ sectorWeightWarning }}</span>
+      </div>
+
       <!-- Loading -->
       <div *ngIf="stocksLoading" class="empty-state">
         <p>جارٍ تحميل أسهم القطاع...</p>
       </div>
 
       <!-- Stock Grid -->
-      <div class="stock-grid" *ngIf="!stocksLoading && stocks.length">
+      <div class="stock-grid" *ngIf="!stocksLoading && displayedStocks.length">
         <app-stock-card
-          *ngFor="let s of stocks; let i = index"
+          *ngFor="let s of displayedStocks; let i = index"
           [style.--item-index]="i"
           [ticker]="s.ticker"
           [nameAr]="s.nameAr"
@@ -279,13 +298,20 @@ import { IndexSummaryDto, PagedResult, SectorSummaryDto, StockListItemDto } from
           [shariahStatus]="s.shariahStatus"
           [indices]="s.indices"
           [weight]="s.weight"
+          [isCapped]="s.isCapped"
+          [cappingFactor]="s.cappingFactor"
           [currency]="s.currency"
-          [sectorNameAr]="s.sectorNameAr || sector?.nameAr">
+          [sectorNameAr]="s.sectorNameAr || sector.nameAr"
+          [coreActivityCompliant]="s.coreActivityCompliant"
+          [categoryAr]="s.categoryAr"
+          [spHaramEarningPercentage]="s.spHaramEarningPercentage"
+          [loansPercentage]="s.loansPercentage"
+          [showFavorite]="true">
         </app-stock-card>
       </div>
 
       <!-- Empty -->
-      <div *ngIf="!stocksLoading && !stocks.length" class="empty-state">
+      <div *ngIf="!stocksLoading && !displayedStocks.length" class="empty-state">
         <lucide-icon [img]="SearchIcon" size="32"></lucide-icon>
         <h3>لا توجد أسهم مطابقة للفلاتر المختارة</h3>
         <p>جرّب إزالة أحد الفلاتر لتوسيع النتائج.</p>
@@ -340,6 +366,11 @@ export class SectorDetailComponent implements OnInit {
   maxPe: number | null = null;
   minPb: number | null = null;
   maxPb: number | null = null;
+
+  /** Client-side sub-filter for non-compliance type: '' | 'activity' | 'ratios' */
+  nonComplianceType = '';
+
+  sectorWeightWarning: string | null = null;
 
   // Dropdown state
   openDropdown: 'index' | 'shariah' | null = null;
@@ -412,6 +443,7 @@ export class SectorDetailComponent implements OnInit {
       this.maxPe = params['maxPe'] !== undefined && params['maxPe'] !== null ? Number(params['maxPe']) : null;
       this.minPb = params['minPb'] !== undefined && params['minPb'] !== null ? Number(params['minPb']) : null;
       this.maxPb = params['maxPb'] !== undefined && params['maxPb'] !== null ? Number(params['maxPb']) : null;
+      this.nonComplianceType = params['nonComplianceType'] || '';
 
       if (this.sectorId) {
         this.loadStocks();
@@ -504,11 +536,21 @@ export class SectorDetailComponent implements OnInit {
     this.updateUrl();
   }
 
+  get isNonComplianceFiltered(): boolean {
+    return !!(this.nonComplianceType && this.shariahStatuses.includes('NonCompliant'));
+  }
+
   loadStocks(): void {
     this.stocksLoading = true;
+
+    // When client-side nonComplianceType sub-filter is active, fetch all NonCompliant items (up to 200)
+    // so filtering, totalCount, and pagination apply to the entire matching dataset.
+    const queryPageSize = this.isNonComplianceFiltered ? 200 : this.pageSize;
+    const queryPage = this.isNonComplianceFiltered ? 1 : this.page;
+
     this.api.getStocks({
-      page: this.page,
-      pageSize: this.pageSize,
+      page: queryPage,
+      pageSize: queryPageSize,
       sectorId: this.sectorId ?? undefined,
       search: this.search || undefined,
       indexCodes: this.indexCodes.length ? this.indexCodes : undefined,
@@ -524,13 +566,44 @@ export class SectorDetailComponent implements OnInit {
     }).subscribe({
       next: (res: PagedResult<StockListItemDto>) => {
         this.stocks = res.items || [];
-        this.totalCount = res.totalCount || 0;
-        this.totalPages = res.totalPages || Math.ceil(this.totalCount / this.pageSize) || 1;
+
+        if (this.isNonComplianceFiltered) {
+          const filtered = this.stocks.filter((s) => matchesNonComplianceType(s, this.nonComplianceType));
+          this.totalCount = filtered.length;
+          this.totalPages = Math.max(1, Math.ceil(this.totalCount / this.pageSize));
+          if (this.page > this.totalPages) {
+            this.page = 1;
+          }
+        } else {
+          this.totalCount = res.totalCount || 0;
+          this.totalPages = res.totalPages || Math.ceil(this.totalCount / this.pageSize) || 1;
+        }
+
         this.stocksLoading = false;
+
+        // When viewing without sub-filters that restrict the sector constituents, check weight sum:
+        if (!this.search && !this.indexCodes.length && !this.shariahStatuses.length && !this.priceComparison && !this.minCompliantSources && !this.nonComplianceType) {
+          const sum = this.stocks.reduce((acc, s) => acc + (s.weight || 0), 0);
+          // If all stocks in sector fit on one page or we sum what's loaded
+          if (this.totalCount <= this.pageSize && this.stocks.length > 0) {
+            if (Math.abs(sum - 100) > 0.5) {
+              this.sectorWeightWarning = `تنبيه: مجموع أوزان أسهم القطاع (${sum.toFixed(2)}%) لا يساوي 100%.`;
+            } else {
+              this.sectorWeightWarning = null;
+            }
+          } else {
+            this.sectorWeightWarning = null;
+          }
+        } else {
+          this.sectorWeightWarning = null;
+        }
       },
       error: () => {
         this.stocks = [];
+        this.totalCount = 0;
+        this.totalPages = 1;
         this.stocksLoading = false;
+        this.sectorWeightWarning = null;
       }
     });
   }
@@ -608,6 +681,7 @@ export class SectorDetailComponent implements OnInit {
   clearFilter(key: string): void {
     if (key === 'priceComparison') this.priceComparison = '';
     if (key === 'minCompliantSources') this.minCompliantSources = '';
+    if (key === 'nonComplianceType') this.nonComplianceType = '';
     this.page = 1;
     this.updateUrl();
   }
@@ -646,6 +720,7 @@ export class SectorDetailComponent implements OnInit {
       maxPe: this.maxPe !== null ? this.maxPe : null,
       minPb: this.minPb !== null ? this.minPb : null,
       maxPb: this.maxPb !== null ? this.maxPb : null,
+      nonComplianceType: this.nonComplianceType || null,
       sortBy: this.sortBy !== 'changePct' ? this.sortBy : null,
       sortDir: this.sortDir !== 'desc' ? this.sortDir : null
     };
@@ -653,5 +728,13 @@ export class SectorDetailComponent implements OnInit {
     // replaceUrl + equality guard live in the helper so Back always
     // leaves the page instead of stepping through param states.
     navigateQueryParams(this.router, this.route, queryParams);
+  }
+
+  /** Displayed stocks: when nonComplianceType is active, filters and paginates client-side. */
+  get displayedStocks() {
+    if (!this.isNonComplianceFiltered) return this.stocks;
+    const filtered = this.stocks.filter((s) => matchesNonComplianceType(s, this.nonComplianceType));
+    const start = (this.page - 1) * this.pageSize;
+    return filtered.slice(start, start + this.pageSize);
   }
 }

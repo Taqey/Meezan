@@ -60,5 +60,15 @@ public record StockListItemDto(
     /// Index code the <see cref="Weight"/> belongs to: the single selected index
     /// when the request targets exactly one, else "SECTORAL-INDICES".
     /// </summary>
-    string? WeightIndexCode = null
+    string? WeightIndexCode = null,
+    /// <summary>True when the stock is capped at 35% in its sector index calculation.</summary>
+    bool? IsCapped = null,
+    /// <summary>The capping factor applied to the stock's market cap if capped.</summary>
+    decimal? CappingFactor = null,
+    bool? CoreActivityCompliant = null,
+    string? CategoryAr = null,
+    string? CategoryEn = null,
+    decimal? SpHaramEarningPercentage = null,
+    decimal? LoansPercentage = null,
+    decimal? PurificationPct = null
 );

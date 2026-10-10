@@ -20,6 +20,9 @@ public interface IStockRepository
     /// <summary>Loads all stocks eagerly with MarketData, FairValue (with Methods), SupportResistance, and Sector.</summary>
     Task<List<Stock>> GetAllWithMarketDataAsync(CancellationToken cancellationToken = default);
 
+    /// <summary>Loads all active stocks belonging to a sector with MarketData.</summary>
+    Task<List<Stock>> GetStocksBySectorIdAsync(int sectorId, CancellationToken cancellationToken = default);
+
     /// <summary>
     /// Loads one stock with Sector, IndexConstituents→Index, and ShariahCompliance eager-loaded.
     /// Used by the detailed market-data endpoint so sector names, index memberships,
@@ -35,6 +38,20 @@ public interface IStockRepository
         StockListFilter filter, CancellationToken cancellationToken = default);
 
     Task<Sector?> GetOrCreateSectorAsync(string? nameAr, string? nameEn, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Like GetOrCreateSectorAsync but also reports whether a new Sector row was added.
+    /// Used by the upload handler to count <see cref="UploadIndexFileResultDto.SectorsAdded"/>.
+    /// </summary>
+    Task<(Sector? Sector, bool IsNew)> GetOrCreateSectorWithFlagAsync(
+        string? nameAr, string? nameEn, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Returns ALL stocks (active + inactive) with only Id, Ticker, and NameAr loaded.
+    /// Used by the Excel-upload flow to build an in-memory lookup for Arabic-name matching
+    /// without N+1 queries per row.
+    /// </summary>
+    Task<List<Stock>> GetAllIncludingInactiveAsync(CancellationToken cancellationToken = default);
     Task AddAsync(Stock stock, CancellationToken cancellationToken = default);
     Task UpdateAsync(Stock stock, CancellationToken cancellationToken = default);
 
@@ -109,7 +126,17 @@ public record StockListProjection(
     /// Index code the <see cref="Weight"/> belongs to: the single selected index
     /// when the request targets exactly one, else "SECTORAL-INDICES".
     /// </summary>
-    string? WeightIndexCode = null
+    string? WeightIndexCode = null,
+    /// <summary>True when the stock is capped at 35% in its sector index calculation.</summary>
+    bool? IsCapped = null,
+    /// <summary>The capping factor applied to the stock's market cap if capped.</summary>
+    decimal? CappingFactor = null,
+    bool? CoreActivityCompliant = null,
+    string? CategoryAr = null,
+    string? CategoryEn = null,
+    decimal? SpHaramEarningPercentage = null,
+    decimal? LoansPercentage = null,
+    decimal? PurificationPct = null
 );
 
 /// <summary>All optional filter/sort/page params for the stocks list query.</summary>

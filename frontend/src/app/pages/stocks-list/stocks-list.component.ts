@@ -17,6 +17,7 @@ import { ApiService } from '../../services/api.service';
 import { navigateQueryParams } from '../../utils/navigation-utils';
 import { StockCardComponent } from '../../components/stock-card/stock-card.component';
 import { IndexSummaryDto, PagedResult, StockListItemDto } from '../../models/api.models';
+import { matchesNonComplianceType } from '../../models/shariah-standards';
 
 @Component({
   selector: 'app-stocks-list',
@@ -81,6 +82,13 @@ import { IndexSummaryDto, PagedResult, StockListItemDto } from '../../models/api
             </label>
           </div>
         </div>
+
+        <!-- Non-compliance sub-filter (shown when NonCompliant is selected) -->
+        <select *ngIf="shariahStatuses.includes('NonCompliant')" [(ngModel)]="nonComplianceType" (change)="onFilterChange()" aria-label="سبب عدم التوافق">
+          <option value="">الكل (نشاط + نسب)</option>
+          <option value="activity">النشاط الأساسي</option>
+          <option value="ratios">النسب المالية</option>
+        </select>
 
         <!-- Price Comparison Filter (Cheap / Fair / Expensive) -->
         <select [(ngModel)]="priceComparison" (change)="onFilterChange()" aria-label="مقارنة القيمة العادلة">
@@ -228,6 +236,11 @@ import { IndexSummaryDto, PagedResult, StockListItemDto } from '../../models/api
           </span>
         </ng-container>
 
+        <span *ngIf="nonComplianceType" class="active-filter">
+          سبب عدم التوافق: {{ nonComplianceType === 'activity' ? 'النشاط' : 'النسب المالية' }}
+          <button (click)="clearFilter('nonComplianceType')">×</button>
+        </span>
+
         <span *ngIf="priceComparison" class="active-filter">
           التقييم: {{ getPriceComparisonLabel(priceComparison) }}
           <button (click)="clearFilter('priceComparison')">×</button>
@@ -258,9 +271,9 @@ import { IndexSummaryDto, PagedResult, StockListItemDto } from '../../models/api
     </div>
 
     <!-- Stock Cards Grid -->
-    <div class="stock-grid" *ngIf="!loading && stocks.length">
+    <div class="stock-grid" *ngIf="!loading && displayedStocks.length">
       <app-stock-card
-        *ngFor="let s of stocks; let i = index"
+        *ngFor="let s of displayedStocks; let i = index"
         [style.--item-index]="i"
         [ticker]="s.ticker"
         [nameAr]="s.nameAr"
@@ -274,12 +287,16 @@ import { IndexSummaryDto, PagedResult, StockListItemDto } from '../../models/api
         [indices]="s.indices"
         [currency]="s.currency"
         [sectorNameAr]="s.sectorNameAr"
+        [coreActivityCompliant]="s.coreActivityCompliant"
+        [categoryAr]="s.categoryAr"
+        [spHaramEarningPercentage]="s.spHaramEarningPercentage"
+        [loansPercentage]="s.loansPercentage"
         [showFavorite]="true">
       </app-stock-card>
     </div>
 
     <!-- Empty State -->
-    <div *ngIf="!loading && !stocks.length" class="empty-state">
+    <div *ngIf="!loading && !displayedStocks.length" class="empty-state">
       <lucide-icon [img]="SearchIcon" size="32"></lucide-icon>
       <h3>لا توجد نتائج مطابقة للفلاتر المختارة</h3>
       <p>جرّب تعديل خيارات البحث أو إزالة أحد الفلاتر لتوسيع نطاق النتائج.</p>
@@ -337,6 +354,9 @@ export class StocksListComponent implements OnInit {
   maxPe: number | null = null;
   minPb: number | null = null;
   maxPb: number | null = null;
+
+  /** Client-side sub-filter for non-compliance type: '' | 'activity' | 'ratios' */
+  nonComplianceType = '';
 
   // Dropdown state
   openDropdown: 'index' | 'shariah' | null = null;
@@ -401,6 +421,7 @@ export class StocksListComponent implements OnInit {
       this.maxPe = params['maxPe'] !== undefined && params['maxPe'] !== null ? Number(params['maxPe']) : null;
       this.minPb = params['minPb'] !== undefined && params['minPb'] !== null ? Number(params['minPb']) : null;
       this.maxPb = params['maxPb'] !== undefined && params['maxPb'] !== null ? Number(params['maxPb']) : null;
+      this.nonComplianceType = params['nonComplianceType'] || '';
 
       this.fetchStocks();
     });
@@ -491,11 +512,24 @@ export class StocksListComponent implements OnInit {
     return list;
   }
 
+  allFetchedStocks: StockListItemDto[] = [];
+  rawTotalCount = 0;
+
+  get isNonComplianceFiltered(): boolean {
+    return !!(this.nonComplianceType && this.shariahStatuses.includes('NonCompliant'));
+  }
+
   fetchStocks(): void {
     this.loading = true;
+
+    // When client-side nonComplianceType sub-filter is active, fetch all NonCompliant items (up to 200)
+    // so filtering, totalCount, and pagination apply to the entire matching dataset.
+    const queryPageSize = this.isNonComplianceFiltered ? 200 : this.pageSize;
+    const queryPage = this.isNonComplianceFiltered ? 1 : this.page;
+
     this.api.getStocks({
-      page: this.page,
-      pageSize: this.pageSize,
+      page: queryPage,
+      pageSize: queryPageSize,
       search: this.search || undefined,
       indexCodes: this.indexCodes.length ? this.indexCodes : undefined,
       shariahStatuses: this.shariahStatuses.length ? this.shariahStatuses : undefined,
@@ -510,12 +544,26 @@ export class StocksListComponent implements OnInit {
     }).subscribe({
       next: (res) => {
         this.stocks = res.items || [];
-        this.totalCount = res.totalCount || 0;
-        this.totalPages = res.totalPages || Math.ceil(this.totalCount / this.pageSize) || 1;
+        this.rawTotalCount = res.totalCount || 0;
+
+        if (this.isNonComplianceFiltered) {
+          const filtered = this.stocks.filter((s) => matchesNonComplianceType(s, this.nonComplianceType));
+          this.totalCount = filtered.length;
+          this.totalPages = Math.max(1, Math.ceil(this.totalCount / this.pageSize));
+          if (this.page > this.totalPages) {
+            this.page = 1;
+          }
+        } else {
+          this.totalCount = res.totalCount || 0;
+          this.totalPages = res.totalPages || Math.ceil(this.totalCount / this.pageSize) || 1;
+        }
+
         this.loading = false;
       },
       error: () => {
         this.stocks = [];
+        this.totalCount = 0;
+        this.totalPages = 1;
         this.loading = false;
       }
     });
@@ -594,6 +642,7 @@ export class StocksListComponent implements OnInit {
   clearFilter(key: string): void {
     if (key === 'priceComparison') this.priceComparison = '';
     if (key === 'minCompliantSources') this.minCompliantSources = '';
+    if (key === 'nonComplianceType') this.nonComplianceType = '';
     this.page = 1;
     this.updateUrl();
   }
@@ -618,6 +667,7 @@ export class StocksListComponent implements OnInit {
       maxPe: this.maxPe !== null ? this.maxPe : null,
       minPb: this.minPb !== null ? this.minPb : null,
       maxPb: this.maxPb !== null ? this.maxPb : null,
+      nonComplianceType: this.nonComplianceType || null,
       sortBy: this.sortBy !== 'changePct' ? this.sortBy : null,
       sortDir: this.sortDir !== 'desc' ? this.sortDir : null
     };
@@ -625,5 +675,13 @@ export class StocksListComponent implements OnInit {
     // Clean null fields from route. replaceUrl + equality guard live in
     // the helper so Back always leaves the page instead of looping params.
     navigateQueryParams(this.router, this.route, queryParams);
+  }
+
+  /** Displayed stocks: when nonComplianceType is active, filters and paginates client-side. */
+  get displayedStocks() {
+    if (!this.isNonComplianceFiltered) return this.stocks;
+    const filtered = this.stocks.filter((s) => matchesNonComplianceType(s, this.nonComplianceType));
+    const start = (this.page - 1) * this.pageSize;
+    return filtered.slice(start, start + this.pageSize);
   }
 }

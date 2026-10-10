@@ -132,8 +132,44 @@ public class RefreshShariahDataCommandHandler : IRequestHandler<RefreshShariahDa
                     }
                 }
 
-                // 2. Upsert StockShariahMetrics (always overwrite)
-                var metrics = await _metricsRepository.GetByStockIdAsync(stock.Id, cancellationToken);
+                // ---------------------------------------------------------------
+                // Part B — Skip rules (evaluated before any write)
+                // ---------------------------------------------------------------
+                // Rule 1: Stock has its own internal Sharia board / committee.
+                //   The board's own ruling is the authoritative verdict.  We must
+                //   not overwrite it with scraped external data.
+                var existingCompliance = await _complianceRepository.GetByStockIdAsync(stock.Id, cancellationToken);
+                if (existingCompliance?.HasShariahBoard == true)
+                {
+                    _logger.LogInformation(
+                        "[ShariahRefresh] Skipping {Symbol}: skipped: internal sharia board",
+                        symbol);
+                    skippedNoValueCount++;
+                    continue;
+                }
+
+                // Rule 2: Stock's core activity is prohibited.
+                //   Prohibited-activity stocks never pass the activity gate, so
+                //   fetching or overwriting their financial ratios is meaningless.
+                //   We skip the rest of the loop but leave the stored Non-Compliant
+                //   verdict intact.
+                // NOTE: Use effective value (override wins over feed) for the activity gate check.
+                var existingMetrics = await _metricsRepository.GetByStockIdAsync(stock.Id, cancellationToken);
+                var effectiveActivityCompliantForSkip = existingMetrics?.EffectiveCoreActivityCompliant ?? true;
+                if (effectiveActivityCompliantForSkip == false)
+                {
+                    _logger.LogInformation(
+                        "[ShariahRefresh] Skipping {Symbol}: skipped: prohibited activity",
+                        symbol);
+                    skippedNoValueCount++;
+                    continue;
+                }
+
+                // 2. Upsert StockShariahMetrics (overwrite feed values, but preserve manual overrides)
+                // Re-use the row we may have already fetched above to avoid a
+                // redundant DB round-trip.
+                var metrics = existingMetrics
+                    ?? await _metricsRepository.GetByStockIdAsync(stock.Id, cancellationToken);
                 if (metrics == null)
                 {
                     metrics = new StockShariahMetrics
@@ -156,26 +192,36 @@ public class RefreshShariahDataCommandHandler : IRequestHandler<RefreshShariahDa
                         CategoryAr = item.CategoryAr,
                         SourceUpdatedAt = item.UpdatedAt ?? item.LastUpdated,
                         FetchedAt = now
+                        // Override columns remain null (use feed)
                     };
                     await _metricsRepository.AddAsync(metrics, cancellationToken);
                 }
                 else
                 {
+                    // Update feed values, but DO NOT overwrite manual overrides
                     metrics.Zakat = item.Zakat;
                     metrics.SpHaramEarningPercentage = item.SpHaramEarningPercentage;
                     metrics.AaoifiHaramEarningPerShare = item.AaoifiHaramEarningPerShare;
-                    metrics.HaramEarningsPercentage = item.HaramEarningsPercentage;
-                    metrics.LoansPercentage = item.LoansPercentage;
+                    // Only update feed values if no manual override is set
+                    if (!metrics.HaramRevenuePercentageOverride.HasValue)
+                        metrics.HaramEarningsPercentage = item.HaramEarningsPercentage;
+                    if (!metrics.LoansPercentageOverride.HasValue)
+                        metrics.LoansPercentage = item.LoansPercentage;
                     metrics.FairValueValuation = item.FairValueValuation;
                     metrics.BookValue = item.BookValue;
                     metrics.Profit = item.Profit;
                     metrics.Dividend = item.Dividend;
                     metrics.DividendType = item.DividendType;
-                    metrics.CoreActivityCompliant = item.CoreActivityCompliant;
+                    // CoreActivityCompliant: only update feed value if no manual override
+                    if (!metrics.CoreActivityCompliantOverride.HasValue)
+                        metrics.CoreActivityCompliant = item.CoreActivityCompliant;
                     metrics.CashLiquidityCompliant = item.CashLiquidityCompliant;
                     metrics.HaramInvestmentsCompliant = item.HaramInvestmentsCompliant;
-                    metrics.CategoryEn = item.Category;
-                    metrics.CategoryAr = item.CategoryAr;
+                    // Category: only update feed value if no manual override
+                    if (string.IsNullOrWhiteSpace(metrics.CategoryEnOverride))
+                        metrics.CategoryEn = item.Category;
+                    if (string.IsNullOrWhiteSpace(metrics.CategoryArOverride))
+                        metrics.CategoryAr = item.CategoryAr;
                     metrics.SourceUpdatedAt = item.UpdatedAt ?? item.LastUpdated;
                     metrics.FetchedAt = now;
                     _metricsRepository.Update(metrics);
@@ -202,13 +248,15 @@ public class RefreshShariahDataCommandHandler : IRequestHandler<RefreshShariahDa
                 // loses) a board/committee verdict in the source is displayed accordingly.
                 // Exception 2: Status is corrected to NonCompliant when the stock's OWN core-activity
                 // flag says غير متوافق (see below) — the verdict is per-stock, never sector-derived.
-                var compliance = await _complianceRepository.GetByStockIdAsync(stock.Id, cancellationToken);
+                // Re-use the compliance row fetched above for the Part-B guard.
+                var compliance = existingCompliance
+                    ?? await _complianceRepository.GetByStockIdAsync(stock.Id, cancellationToken);
                 if (compliance == null)
                 {
                     skippedNotFoundCount++;
                 }
                 else
-                {
+{
                     bool dirty = false;
 
                     bool hasBoardNow = Common.ShariahBoardDetector.IsBoardNote(compliance.Note)
@@ -224,12 +272,15 @@ public class RefreshShariahDataCommandHandler : IRequestHandler<RefreshShariahDa
                     // row would make the list show متوافق while the detail page (which reads the
                     // activity field) shows غير متوافق. The value comes from this stock's own
                     // metrics row only — never from its sector, never from another stock.
-                    if (item.CoreActivityCompliant == false && compliance.Status != ShariahStatus.NonCompliant)
+                    // Use effective value (manual override wins over feed).
+                    bool effectiveActivityCompliant = metrics.EffectiveCoreActivityCompliant ?? true;
+
+                    if (!effectiveActivityCompliant && compliance.Status != ShariahStatus.NonCompliant)
                     {
                         compliance.Status = ShariahStatus.NonCompliant;
                         dirty = true;
                     }
-                    else if (item.CoreActivityCompliant != false)
+                    else if (effectiveActivityCompliant)
                     {
                         // Positive board opinion wins: any board (including the ones just written
                         // above) explicitly recording "compliant" means the stored row must also
@@ -240,7 +291,7 @@ public class RefreshShariahDataCommandHandler : IRequestHandler<RefreshShariahDa
                         bool anyBoardCompliant = opinionsDict.Values
                             .Any(o => o.Status != null && o.Status.ToUpper() == "COMPLIANT"
                                  && (o.SourceKey != ShariahSourceKey.HalalBourse
-                                     || (o.Percentage != null && o.Percentage >= 100)));
+                                      || (o.Percentage != null && o.Percentage >= 100)));
                         if (anyBoardCompliant && compliance.Status != ShariahStatus.Compliant)
                         {
                             compliance.Status = ShariahStatus.Compliant;

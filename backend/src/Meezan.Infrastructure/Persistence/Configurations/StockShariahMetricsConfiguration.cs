@@ -26,6 +26,13 @@ public class StockShariahMetricsConfiguration : IEntityTypeConfiguration<StockSh
         builder.Property(e => e.CategoryEn).HasMaxLength(250);
         builder.Property(e => e.CategoryAr).HasMaxLength(250);
 
+        // Override columns
+        builder.Property(e => e.CoreActivityCompliantOverride);
+        builder.Property(e => e.CategoryArOverride).HasMaxLength(250);
+        builder.Property(e => e.CategoryEnOverride).HasMaxLength(250);
+        builder.Property(e => e.HaramRevenuePercentageOverride).HasPrecision(18, 4);
+        builder.Property(e => e.LoansPercentageOverride).HasPrecision(18, 4);
+
         builder.Property(e => e.FetchedAt).IsRequired();
 
         builder.HasIndex(e => e.StockId)

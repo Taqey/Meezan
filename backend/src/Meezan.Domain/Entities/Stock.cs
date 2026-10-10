@@ -23,6 +23,15 @@ public class Stock
     public DateTime? DeactivatedAt { get; set; }
     public string? DeactivationReason { get; set; }
 
+    /// <summary>
+    /// True when the sector assignment was made (or overridden) manually via the admin UI.
+    /// When true, automated Excel uploads will NOT overwrite SectorId — the manual
+    /// assignment takes precedence over file-derived data.
+    /// NOTE: Do NOT use HasDefaultValue() in EF config for this column.
+    /// DB-level DEFAULT (0) is set in the migration SQL; C# initializer provides false for new rows.
+    /// </summary>
+    public bool IsManual { get; set; } = false;
+
     public Sector? Sector { get; set; }
     public ICollection<IndexConstituent> IndexConstituents { get; set; } = new List<IndexConstituent>();
 

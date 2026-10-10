@@ -83,6 +83,20 @@ export interface StockListItemDto {
   weight?: number | null;
   /** Index code the weight belongs to: the single selected index, else "SECTORAL-INDICES". */
   weightIndexCode?: string | null;
+  isCapped?: boolean | null;
+  cappingFactor?: number | null;
+  /** False = activity non-compliant (e.g. traditional bank). */
+  coreActivityCompliant?: boolean | null;
+  /** Arabic activity category name (used in non-compliance reason). */
+  categoryAr?: string | null;
+  /** English activity category name. */
+  categoryEn?: string | null;
+  /** S&P haram earning percentage (primary ratio for non-compliance reason). */
+  spHaramEarningPercentage?: number | null;
+  /** Loans/debt percentage (secondary ratio). */
+  loansPercentage?: number | null;
+  /** Purification percentage from ShariahCompliance (legacy Pct field). */
+  purificationPct?: number | null;
 }
 
 export interface IndexSummaryDto {
@@ -131,6 +145,8 @@ export interface IndexInStockDto {
   nameEn: string;
   /** null when the source file for this index had no weight column */
   weight: number | null;
+  isCapped?: boolean | null;
+  cappingFactor?: number | null;
 }
 
 export interface FairValueMethodDto {
@@ -222,6 +238,9 @@ export interface MarketDataDto {
    * (camelCase to match the API's camelCase JSON.)
    */
   shariahMetricsUnavailableReason?: 'MISSING_FINANCIALS' | 'NOT_CALCULATED' | string | null;
+  sectorWeight?: number | null;
+  isSectorWeightCapped?: boolean | null;
+  sectorCappingFactor?: number | null;
 }
 
 export interface SupportResistanceDto {
@@ -435,10 +454,12 @@ export interface UploadIndexFileResultDto {
   inserted: number;
   updated: number;
   skipped: number;
+  sectorsAdded?: number;
   totalConstituents: number;
   skippedDetails: SkippedRowDetail[];
   status: string;
   message: string;
+  warning?: string | null;
 }
 
 export interface ManualMarketDataUpdateRequest {
@@ -466,10 +487,95 @@ export interface ManualMarketDataUpdateResponse {
   fairValue?: number | null;
 }
 
+// ── Shariah Manual Overrides ────────────────────────────────────────────────
+
+export interface ShariahOverridesDto {
+  ticker: string;
+  // Feed values
+  feedCoreActivityCompliant?: boolean | null;
+  feedCategoryAr?: string | null;
+  feedCategoryEn?: string | null;
+  feedHaramRevenuePercentage?: number | null;
+  feedLoansPercentage?: number | null;
+  // Override values
+  overrideCoreActivityCompliant?: boolean | null;
+  overrideCategoryAr?: string | null;
+  overrideCategoryEn?: string | null;
+  overrideHaramRevenuePercentage?: number | null;
+  overrideLoansPercentage?: number | null;
+  // Effective values (override wins)
+  effectiveCoreActivityCompliant?: boolean | null;
+  effectiveCategoryAr?: string | null;
+  effectiveCategoryEn?: string | null;
+  effectiveHaramRevenuePercentage?: number | null;
+  effectiveLoansPercentage?: number | null;
+}
+
+export interface SaveShariahOverridesRequest {
+  coreActivityCompliantOverride?: boolean | null;
+  categoryArOverride?: string | null;
+  categoryEnOverride?: string | null;
+  haramRevenuePercentageOverride?: number | null;
+  loansPercentageOverride?: number | null;
+}
+
 export interface AdminStockLookupItem {
   ticker: string;
   nameAr?: string | null;
   nameEn?: string | null;
 }
 
+// ── Stock / Sector / Index Management (admin) ─────────────────────────────────
+
+export interface StockManagementItem {
+  id: number;
+  ticker: string;
+  nameAr?: string | null;
+  nameEn?: string | null;
+  sectorId?: number | null;
+  sectorNameAr?: string | null;
+  sectorNameEn?: string | null;
+  isManual: boolean;
+  isActive: boolean;
+}
+
+export interface SectorPickerItem {
+  id: number;
+  nameAr: string;
+  nameEn: string;
+}
+
+export interface IndexPickerItem {
+  id: number;
+  code: string;
+  nameAr: string;
+  nameEn: string;
+}
+
+export interface ConstituentManagementItem {
+  id: number;
+  stockId: number;
+  ticker: string;
+  nameAr?: string | null;
+  indexId: number;
+  indexCode: string;
+  weight?: number | null;
+  effectiveDate: string;
+}
+
+export interface CreateStockRequest {
+  ticker: string;
+  nameAr?: string | null;
+  nameEn?: string | null;
+  sectorId?: number | null;
+}
+
+export interface AssignSectorRequest {
+  sectorId: number;
+}
+
+export interface AddToIndexRequest {
+  weight?: number | null;
+  effectiveDate?: string | null;
+}
 
