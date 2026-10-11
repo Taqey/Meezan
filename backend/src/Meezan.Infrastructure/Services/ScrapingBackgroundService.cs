@@ -1,4 +1,5 @@
 using MediatR;
+using Meezan.Application.Common.Interfaces;
 using Meezan.Application.Features.Scraping.Commands.RunCombinedScrape;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -18,13 +19,16 @@ public class ScrapingBackgroundService : BackgroundService
     private static readonly TimeOnly RunTime = new(16, 0, 0); // 4:00 PM Cairo
 
     private readonly IServiceProvider _serviceProvider;
+    private readonly IJobSettingsService _jobSettings;
     private readonly ILogger<ScrapingBackgroundService> _logger;
 
     public ScrapingBackgroundService(
         IServiceProvider serviceProvider,
+        IJobSettingsService jobSettings,
         ILogger<ScrapingBackgroundService> logger)
     {
         _serviceProvider = serviceProvider;
+        _jobSettings = jobSettings;
         _logger = logger;
     }
 
@@ -47,6 +51,12 @@ public class ScrapingBackgroundService : BackgroundService
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {
                 break;
+            }
+
+            if (!_jobSettings.IsEnabled("LiveDaily"))
+            {
+                _logger.LogInformation("ScrapingBackgroundService: scheduled run skipped because LiveDaily job is disabled.");
+                continue;
             }
 
             _logger.LogInformation("ScrapingBackgroundService: triggering daily live scrape run.");

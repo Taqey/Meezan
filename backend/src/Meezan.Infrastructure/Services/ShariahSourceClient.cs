@@ -104,7 +104,8 @@ public class ShariahSourceClient : IShariahSourceClient
 
         var dto = new ExternalSourceOpinionDto
         {
-            Status = GetString(elem, "status"),
+            // Doubtful/مشكوك never reaches the UI: stored as null (no opinion).
+            Status = Meezan.Application.Common.ShariahVerdictService.SanitizeOpinionStatus(GetString(elem, "status")),
             Percentage = GetDecimal(elem, "percentage"),
             Note = GetString(elem, "note"),
             PdfUrl = GetString(elem, "pdf_url"),

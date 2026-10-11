@@ -255,6 +255,11 @@ public class AdminStocksManagementController : ControllerBase
         _context.IndexConstituents.Add(constituent);
         await _context.SaveChangesAsync(cancellationToken);
 
+        // EGX33 membership is an overall-verdict input: recompute that stock only,
+        // in the same operation. Other indices never change the signal.
+        if (Meezan.Application.Common.ShariahStatusResolver.IsShariahIndexCode(index.Code))
+            await RecomputeOverallAsync(stockId, cancellationToken);
+
         return Ok(new ConstituentManagementItem(constituent.Id, stockId, stock.Ticker,
             stock.NameAr, indexId, index.Code, constituent.Weight, constituent.EffectiveDate));
     }
@@ -269,13 +274,77 @@ public class AdminStocksManagementController : ControllerBase
         CancellationToken cancellationToken)
     {
         var constituent = await _context.IndexConstituents
+            .Include(ic => ic.Index)
             .FirstOrDefaultAsync(ic => ic.StockId == stockId && ic.IndexId == indexId, cancellationToken);
 
         if (constituent is null) return NotFound();
 
+        var wasShariah = constituent.Index != null
+            && Meezan.Application.Common.ShariahStatusResolver.IsShariahIndexCode(constituent.Index.Code);
         _context.IndexConstituents.Remove(constituent);
         await _context.SaveChangesAsync(cancellationToken);
+
+        // Membership removal changes the verdict input: recompute that stock only.
+        if (wasShariah)
+            await RecomputeOverallAsync(stockId, cancellationToken);
+
         return NoContent();
+    }
+
+    /// <summary>
+    /// Recomputes one stock's stored overall verdict via the shared service (same
+    /// operation that changed its EGX33 membership). The Halal input comes from the
+    /// row's own stored Halal fields; rows predating that storage get it backfilled
+    /// from metrics when present. A failure keeps the previous value.
+    /// </summary>
+    private async Task RecomputeOverallAsync(int stockId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var compliance = await _context.ShariahCompliances
+                .FirstOrDefaultAsync(c => c.StockId == stockId, cancellationToken);
+            var metrics = await _context.StockShariahMetrics
+                .FirstOrDefaultAsync(m => m.StockId == stockId, cancellationToken);
+            bool member = await _context.IndexConstituents.AsNoTracking().AnyAsync(
+                ic => ic.StockId == stockId && ic.Index != null
+                    && (ic.Index.Code.ToUpper() == "EGX 33" || ic.Index.Code.ToUpper() == "EGX33" || ic.Index.Code.ToUpper() == "SHARIAH"),
+                cancellationToken);
+            if (compliance == null)
+            {
+                if (!member) return;
+                var now = DateTime.UtcNow;
+                compliance = new Meezan.Domain.Entities.ShariahCompliance
+                {
+                    StockId = stockId,
+                    Status = Meezan.Domain.Enums.ShariahStatus.Pending,
+                    HasShariahBoard = false,
+                    LastCheckedAt = now,
+                    UpdatedAt = now
+                };
+                if (metrics != null)
+                {
+                    var halal = Meezan.Application.Common.ShariahVerdictService.ComputeForStock(metrics, compliance);
+                    Meezan.Application.Common.ShariahVerdictService.TryApplyHalal(compliance, halal);
+                }
+                _context.ShariahCompliances.Add(compliance);
+            }
+            else if (compliance.HalalStatus == null && metrics != null)
+            {
+                var halal = Meezan.Application.Common.ShariahVerdictService.ComputeForStock(metrics, compliance);
+                Meezan.Application.Common.ShariahVerdictService.TryApplyHalal(compliance, halal);
+            }
+
+            var opinions = await _context.ShariahSourceOpinions
+                .Where(o => o.StockId == stockId)
+                .ToListAsync(cancellationToken);
+            Meezan.Application.Common.ShariahVerdictService.ApplyOverall(
+                compliance, metrics?.EffectiveCoreActivityCompliant, opinions, member);
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Verdict] overall recompute failed for stock {stockId} ({ex.Message}); keeping previous stored value.");
+        }
     }
 }
 

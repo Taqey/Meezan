@@ -91,6 +91,13 @@ public interface IStockRepository
     /// <summary>Flushes all pending EF changes to the database.</summary>
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// True when the stock is currently a constituent of the EGX33 Shariah index
+    /// (any historical code spelling). Single cheap EXISTS query for overall-verdict
+    /// recomputes that need the membership input without loading the full graph.
+    /// </summary>
+    Task<bool> IsShariahIndexMemberAsync(int stockId, CancellationToken cancellationToken = default);
+
     /// <summary>Returns all sectors that have at least one stock, sorted by stock count descending.</summary>
     Task<List<SectorSummaryDto>> GetSectorsWithCountAsync(CancellationToken cancellationToken = default);
 }
@@ -136,7 +143,9 @@ public record StockListProjection(
     string? CategoryEn = null,
     decimal? SpHaramEarningPercentage = null,
     decimal? LoansPercentage = null,
-    decimal? PurificationPct = null
+    decimal? PurificationPct = null,
+    bool ViaScholarsOnly = false,
+    string? VerdictDetailsJson = null
 );
 
 /// <summary>All optional filter/sort/page params for the stocks list query.</summary>

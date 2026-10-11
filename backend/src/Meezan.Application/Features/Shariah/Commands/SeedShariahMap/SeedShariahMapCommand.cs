@@ -82,7 +82,12 @@ public class SeedShariahMapCommandHandler : IRequestHandler<SeedShariahMapComman
             // "هيئة رقابة شرعية داخلية معتمدة" are the same case).
             bool hasBoard = Common.ShariahBoardDetector.IsBoardNote(item.Note);
 
-            // 3. Upsert ShariahCompliance
+            // 3. Upsert ShariahCompliance.
+            // NOTE: seed writes the map's Status verbatim; the Halal ratio verdict and
+            // the aggregated overall verdict are (re)computed from current inputs by
+            // the backfill / admin recompute button (RecomputeVerdictsCommand) and by
+            // later pulls/overrides/imports/uploads. Reset the verdict storage here so
+            // stale Halal/overall fields can never survive a seed overwrite.
             var compliance = await _complianceRepository.GetByStockIdAsync(stock.Id, cancellationToken);
             if (compliance == null)
             {
@@ -93,6 +98,10 @@ public class SeedShariahMapCommandHandler : IRequestHandler<SeedShariahMapComman
                     Pct = item.Pct,
                     Note = item.Note,
                     HasShariahBoard = hasBoard,
+                    ViaScholarsOnly = false,
+                    VerdictDetailsJson = null,
+                    HalalStatus = null,
+                    VerdictSource = Common.ShariahVerdictService.OverallSource.Stored,
                     LastCheckedAt = now,
                     UpdatedAt = now
                 };
@@ -105,6 +114,10 @@ public class SeedShariahMapCommandHandler : IRequestHandler<SeedShariahMapComman
                 compliance.Pct = item.Pct;
                 compliance.Note = item.Note;
                 compliance.HasShariahBoard = hasBoard;
+                compliance.ViaScholarsOnly = false;
+                compliance.VerdictDetailsJson = null;
+                compliance.HalalStatus = null;
+                compliance.VerdictSource = Common.ShariahVerdictService.OverallSource.Stored;
                 compliance.LastCheckedAt = now;
                 compliance.UpdatedAt = now;
                 _complianceRepository.Update(compliance);

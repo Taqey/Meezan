@@ -102,6 +102,12 @@ public class AdminMarketDataController : ControllerBase
         if (metrics is null)
             return NotFound("No Shariah metrics found for this stock.");
 
+        // Snapshot the Halal inputs BEFORE mutating, so we recompute that stock
+        // only when its ratios actually changed — in the same save operation.
+        decimal? oldRevenue = metrics.EffectiveHaramRevenuePercentage;
+        decimal? oldDebt = metrics.EffectiveLoansPercentage;
+        bool? oldActivity = metrics.EffectiveCoreActivityCompliant;
+
         // Apply overrides (null = clear override)
         metrics.CoreActivityCompliantOverride = request.CoreActivityCompliantOverride;
         metrics.CategoryArOverride = string.IsNullOrWhiteSpace(request.CategoryArOverride) ? null : request.CategoryArOverride.Trim();
@@ -111,24 +117,32 @@ public class AdminMarketDataController : ControllerBase
 
         _context.StockShariahMetrics.Update(metrics);
 
-        // Recompute compliance status immediately since effective values changed
-        if (stock.ShariahCompliance != null)
+        // Recompute the stored verdicts in the SAME save operation via the ONE shared
+        // service, so the change shows immediately. Safety: a failed recompute keeps
+        // the previous stored value and never breaks the admin save.
+        if (stock.ShariahCompliance != null
+            && Meezan.Application.Common.ShariahVerdictService.HalalInputsChanged(
+                oldRevenue, oldDebt, oldActivity,
+                metrics.EffectiveHaramRevenuePercentage, metrics.EffectiveLoansPercentage, metrics.EffectiveCoreActivityCompliant))
         {
-            var opinions = await _context.ShariahSourceOpinions
-                .Where(o => o.StockId == stock.Id)
-                .ToListAsync(cancellationToken);
-
-            var isShariahIndexMember = stock.IndexConstituents.Any(ic =>
-                ic.Index != null && ShariahStatusResolver.IsShariahIndexCode(ic.Index.Code));
-
-            var newStatus = ShariahStatusResolver.EffectiveStatus(
-                stock.ShariahCompliance, metrics, opinions, isShariahIndexMember);
-
-            if (newStatus.HasValue && stock.ShariahCompliance.Status != newStatus.Value)
+            try
             {
-                stock.ShariahCompliance.Status = newStatus.Value;
-                stock.ShariahCompliance.UpdatedAt = DateTime.UtcNow;
+                var verdict = Meezan.Application.Common.ShariahVerdictService.ComputeForStock(metrics, stock.ShariahCompliance);
+                Meezan.Application.Common.ShariahVerdictService.TryApplyHalal(stock.ShariahCompliance, verdict);
+                var opinions = await _context.ShariahSourceOpinions
+                    .Where(o => o.StockId == stock.Id)
+                    .ToListAsync(cancellationToken);
+                bool member = await _context.IndexConstituents.AsNoTracking().AnyAsync(
+                    ic => ic.StockId == stock.Id && ic.Index != null
+                        && (ic.Index.Code.ToUpper() == "EGX 33" || ic.Index.Code.ToUpper() == "EGX33" || ic.Index.Code.ToUpper() == "SHARIAH"),
+                    cancellationToken);
+                Meezan.Application.Common.ShariahVerdictService.ApplyOverall(
+                    stock.ShariahCompliance, metrics.EffectiveCoreActivityCompliant, opinions, member);
                 _context.ShariahCompliances.Update(stock.ShariahCompliance);
+            }
+            catch (Exception vex)
+            {
+                Console.WriteLine($"[Verdict] recompute failed for {stock.Ticker}: {vex.Message}");
             }
         }
 
@@ -180,6 +194,12 @@ public class AdminMarketDataController : ControllerBase
         if (metrics is null)
             return NotFound("No Shariah metrics found for this stock.");
 
+        // Snapshot the Halal inputs BEFORE clearing, so a reset recomputes that
+        // stock only when its effective ratios actually changed.
+        decimal? oldRevenue = metrics.EffectiveHaramRevenuePercentage;
+        decimal? oldDebt = metrics.EffectiveLoansPercentage;
+        bool? oldActivity = metrics.EffectiveCoreActivityCompliant;
+
         // Clear the specific override field
         switch (fieldName.ToLowerInvariant())
         {
@@ -204,24 +224,31 @@ public class AdminMarketDataController : ControllerBase
 
         _context.StockShariahMetrics.Update(metrics);
 
-        // Recompute compliance status
-        if (stock.ShariahCompliance != null)
+        // Clearing an override changes the effective ratios: recompute that stock
+        // (same operation), but only when the inputs actually changed.
+        if (stock.ShariahCompliance != null
+            && Meezan.Application.Common.ShariahVerdictService.HalalInputsChanged(
+                oldRevenue, oldDebt, oldActivity,
+                metrics.EffectiveHaramRevenuePercentage, metrics.EffectiveLoansPercentage, metrics.EffectiveCoreActivityCompliant))
         {
-            var opinions = await _context.ShariahSourceOpinions
-                .Where(o => o.StockId == stock.Id)
-                .ToListAsync(cancellationToken);
-
-            var isShariahIndexMember = stock.IndexConstituents.Any(ic =>
-                ic.Index != null && ShariahStatusResolver.IsShariahIndexCode(ic.Index.Code));
-
-            var newStatus = ShariahStatusResolver.EffectiveStatus(
-                stock.ShariahCompliance, metrics, opinions, isShariahIndexMember);
-
-            if (newStatus.HasValue && stock.ShariahCompliance.Status != newStatus.Value)
+            try
             {
-                stock.ShariahCompliance.Status = newStatus.Value;
-                stock.ShariahCompliance.UpdatedAt = DateTime.UtcNow;
+                var verdict = Meezan.Application.Common.ShariahVerdictService.ComputeForStock(metrics, stock.ShariahCompliance);
+                Meezan.Application.Common.ShariahVerdictService.TryApplyHalal(stock.ShariahCompliance, verdict);
+                var opinions = await _context.ShariahSourceOpinions
+                    .Where(o => o.StockId == stock.Id)
+                    .ToListAsync(cancellationToken);
+                bool member = await _context.IndexConstituents.AsNoTracking().AnyAsync(
+                    ic => ic.StockId == stock.Id && ic.Index != null
+                        && (ic.Index.Code.ToUpper() == "EGX 33" || ic.Index.Code.ToUpper() == "EGX33" || ic.Index.Code.ToUpper() == "SHARIAH"),
+                    cancellationToken);
+                Meezan.Application.Common.ShariahVerdictService.ApplyOverall(
+                    stock.ShariahCompliance, metrics.EffectiveCoreActivityCompliant, opinions, member);
                 _context.ShariahCompliances.Update(stock.ShariahCompliance);
+            }
+            catch (Exception vex)
+            {
+                Console.WriteLine($"[Verdict] recompute failed for {stock.Ticker}: {vex.Message}");
             }
         }
 

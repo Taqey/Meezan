@@ -1,4 +1,5 @@
 using MediatR;
+using Meezan.Application.Common.Interfaces;
 using Meezan.Application.Features.Scraping.Commands.RunCombinedScrape;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -20,13 +21,16 @@ public class SlowMarketDataBackgroundService : BackgroundService
     private static readonly TimeOnly RunTime = new(9, 0, 0);
 
     private readonly IServiceProvider _serviceProvider;
+    private readonly IJobSettingsService _jobSettings;
     private readonly ILogger<SlowMarketDataBackgroundService> _logger;
 
     public SlowMarketDataBackgroundService(
         IServiceProvider serviceProvider,
+        IJobSettingsService jobSettings,
         ILogger<SlowMarketDataBackgroundService> logger)
     {
         _serviceProvider = serviceProvider;
+        _jobSettings = jobSettings;
         _logger = logger;
     }
 
@@ -62,6 +66,12 @@ public class SlowMarketDataBackgroundService : BackgroundService
             }
 
             if (stoppingToken.IsCancellationRequested) break;
+
+            if (!_jobSettings.IsEnabled("SlowQuarterly"))
+            {
+                _logger.LogInformation("SlowMarketDataBackgroundService: scheduled run skipped because SlowQuarterly job is disabled.");
+                continue;
+            }
 
             _logger.LogInformation("SlowMarketDataBackgroundService: triggering quarterly slow scrape run.");
             try

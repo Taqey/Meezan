@@ -11,28 +11,40 @@ public class RefreshMarketSnapshotsCommandHandler
 {
     /// <summary>Politeness gap between page fetches (robots.txt asks crawl-delay 5).</summary>
     private static readonly TimeSpan PolitenessDelay = TimeSpan.FromSeconds(5);
+    private static readonly SemaphoreSlim RunLock = new(1, 1);
 
     private readonly IIndexRepository _indexRepository;
     private readonly IMarketSnapshotRepository _snapshotRepository;
     private readonly IMubasherMarketSnapshotClient _snapshotClient;
+    private readonly IScrapeProgressTracker _progress;
     private readonly ILogger<RefreshMarketSnapshotsCommandHandler> _logger;
 
     public RefreshMarketSnapshotsCommandHandler(
         IIndexRepository indexRepository,
         IMarketSnapshotRepository snapshotRepository,
         IMubasherMarketSnapshotClient snapshotClient,
+        IScrapeProgressTracker progress,
         ILogger<RefreshMarketSnapshotsCommandHandler> logger)
     {
         _indexRepository = indexRepository;
         _snapshotRepository = snapshotRepository;
         _snapshotClient = snapshotClient;
+        _progress = progress;
         _logger = logger;
     }
 
     public async Task<RefreshMarketSnapshotsResult> Handle(
         RefreshMarketSnapshotsCommand request, CancellationToken cancellationToken)
     {
-        var started = DateTime.UtcNow;
+        if (!await RunLock.WaitAsync(0, cancellationToken))
+        {
+            _logger.LogWarning("RefreshMarketSnapshotsCommand rejected: another refresh is already running.");
+            throw new InvalidOperationException("Another market snapshot refresh is already in progress.");
+        }
+
+        try
+        {
+            var started = DateTime.UtcNow;
         var targets = new List<(string Kind, string Code, string MubasherCode, int? SectorId)>();
 
         // Indices: every DB index code that has a Mubasher slug.
@@ -51,11 +63,15 @@ public class RefreshMarketSnapshotsCommandHandler
             targets.Add(("Sector", sectorId.ToString(), slug, sectorId));
         }
 
+        _progress.StartRun("MarketSnapshots", request.TriggeredBy, targets.Count);
+
         var succeeded = 0;
         var failed = 0;
         var first = true;
         foreach (var (kind, code, slug, _) in targets)
         {
+            _progress.SetCurrentItem("MarketSnapshots", $"{kind}:{code}");
+
             if (!first)
             {
                 try { await Task.Delay(PolitenessDelay, cancellationToken); }
@@ -63,6 +79,7 @@ public class RefreshMarketSnapshotsCommandHandler
             }
             first = false;
 
+            var itemSuccess = false;
             try
             {
                 // One retry on transient failure; a failed target keeps its last good row.
@@ -86,6 +103,7 @@ public class RefreshMarketSnapshotsCommandHandler
                     FetchedAt = DateTime.UtcNow
                 }, cancellationToken);
                 succeeded++;
+                itemSuccess = true;
             }
             catch (OperationCanceledException) { throw; }
             catch (Exception ex)
@@ -93,8 +111,31 @@ public class RefreshMarketSnapshotsCommandHandler
                 _logger.LogWarning(ex, "Market snapshot refresh failed for {Kind}/{Code}", kind, code);
                 failed++;
             }
+            finally
+            {
+                _progress.RecordItemCompleted("MarketSnapshots", $"{kind}:{code}", itemSuccess);
+            }
+        }
+
+        if (failed == targets.Count && targets.Count > 0)
+        {
+            _progress.SetFailed("MarketSnapshots", "All market snapshot requests failed.");
+        }
+        else
+        {
+            _progress.SetCompleted("MarketSnapshots");
         }
 
         return new RefreshMarketSnapshotsResult(succeeded, failed, targets.Count, DateTime.UtcNow - started);
+        }
+        catch (Exception ex) when (ex is not InvalidOperationException)
+        {
+            _progress.SetFailed("MarketSnapshots", ex.Message);
+            throw;
+        }
+        finally
+        {
+            RunLock.Release();
+        }
     }
 }

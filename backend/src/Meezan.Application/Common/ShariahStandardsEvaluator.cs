@@ -25,6 +25,9 @@ public static class ShariahStandardsEvaluator
     public static readonly StandardThresholds Sp = new(5, 33, 33, 70);
     public static readonly StandardThresholds Klsi = new(20, 33, 33, 70);
 
+    /// <summary>Single source of truth for thresholds — used by the shared verdict service. No duplicates.</summary>
+    public static IReadOnlyList<StandardThresholds> AllThresholds => All;
+
     private static readonly StandardThresholds[] All = [Egx33, Dfm, Aaoifi, Sp, Klsi];
 
     /// <summary>

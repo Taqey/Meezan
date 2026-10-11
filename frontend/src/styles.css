@@ -673,6 +673,11 @@ button, input, select, textarea {
   background: var(--warn-soft);
 }
 
+.status-badge.status-neutral {
+  color: var(--muted-foreground);
+  background: var(--muted);
+}
+
 .status-dot {
   width: 6px;
   height: 6px;
@@ -3082,6 +3087,16 @@ app-shariah-standards .explainer-note {
   font-weight: 700;
   font-size: 13px;
   margin: 14px 0;
+}
+
+.standards-summary.pass {
+  background: var(--good-soft);
+  color: var(--good);
+}
+
+.standards-summary.fail {
+  background: var(--bad-soft);
+  color: var(--bad);
 }
 
 .std-block {

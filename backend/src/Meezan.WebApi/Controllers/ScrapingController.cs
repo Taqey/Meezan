@@ -53,24 +53,48 @@ public class ScrapingController : ControllerBase
     /// </summary>
     [HttpGet("status")]
     [ProducesResponseType(typeof(ScrapeStatusResponse), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetStatus(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetStatus(
+        [FromQuery] string? jobKey,
+        CancellationToken cancellationToken)
     {
-        var snapshot = _progress.GetSnapshot();
+        var all = _progress.GetAllSnapshots();
+
+        // If a specific jobKey was requested, use it; otherwise pick active running job, or default to LiveDaily
+        ScrapeProgressSnapshot snapshot;
+        if (!string.IsNullOrEmpty(jobKey) && all.TryGetValue(jobKey, out var specific))
+        {
+            snapshot = specific;
+        }
+        else
+        {
+            var active = all.Values.FirstOrDefault(j => j.Status is ScrapeRunStatus.Running or ScrapeRunStatus.Committing);
+            snapshot = active ?? all.GetValueOrDefault("LiveDaily", _progress.GetSnapshot());
+        }
+
+        var jobsDict = all.ToDictionary(
+            kvp => kvp.Key,
+            kvp => new JobProgressInfo(
+                JobKey: kvp.Key,
+                Status: kvp.Value.Status.ToString(),
+                Live: kvp.Value.Status is ScrapeRunStatus.NotRunning ? null : MapLive(kvp.Value),
+                FinishedAt: kvp.Value.FinishedAt,
+                ErrorReason: kvp.Value.ErrorReason
+            )
+        );
 
         // While a run is actively in-flight, return the live state immediately.
-        // No DB touch — response time is O(1).
         bool isActive = snapshot.Status is ScrapeRunStatus.Running or ScrapeRunStatus.Committing;
         if (isActive)
         {
             return Ok(new ScrapeStatusResponse(
                 Status: snapshot.Status.ToString(),
                 Live: MapLive(snapshot),
-                LastRun: null
+                LastRun: null,
+                Jobs: jobsDict
             ));
         }
 
         // When idle / completed / failed, also pull the last persisted run summary.
-        // One lightweight query — only happens when the frontend is NOT polling rapidly.
         var lastLog = await _runLogRepo.GetLatestAsync(cancellationToken);
         LastRunSummary? lastRun = lastLog is null ? null : new LastRunSummary(
             RunAt: lastLog.StartedAt,
@@ -88,7 +112,8 @@ public class ScrapingController : ControllerBase
         return Ok(new ScrapeStatusResponse(
             Status: snapshot.Status.ToString(),
             Live: snapshot.Status is ScrapeRunStatus.NotRunning ? null : MapLive(snapshot),
-            LastRun: lastRun
+            LastRun: lastRun,
+            Jobs: jobsDict
         ));
     }
 
@@ -104,7 +129,8 @@ public class ScrapingController : ControllerBase
         CurrentStockTicker: s.CurrentStockTicker,
         StartedAt: s.StartedAt,
         ElapsedSeconds: s.ElapsedSeconds,
-        EstimatedSecondsRemaining: s.EstimatedSecondsRemaining
+        EstimatedSecondsRemaining: s.EstimatedSecondsRemaining,
+        JobKey: s.JobKey
     );
 }
 
@@ -117,10 +143,21 @@ public sealed record ScrapeStatusResponse(
     /// <summary>Populated while a run is Running or Committing; also populated briefly after Completed/Failed.</summary>
     LiveProgressInfo? Live,
     /// <summary>Populated when Status is NotRunning/Completed/Failed. Null if no run has ever been recorded.</summary>
-    LastRunSummary? LastRun
+    LastRunSummary? LastRun,
+    /// <summary>Per-job progress snapshots keyed by jobKey (e.g. "LiveDaily", "SlowQuarterly", "MarketSnapshots").</summary>
+    Dictionary<string, JobProgressInfo>? Jobs = null
 );
 
-/// <summary>Live per-stock progress, ready to bind directly to a progress bar.</summary>
+/// <summary>Per-job status and live progress.</summary>
+public sealed record JobProgressInfo(
+    string JobKey,
+    string Status,
+    LiveProgressInfo? Live,
+    DateTime? FinishedAt = null,
+    string? ErrorReason = null
+);
+
+/// <summary>Live per-item progress, ready to bind directly to a progress bar.</summary>
 public sealed record LiveProgressInfo(
     string? TriggeredBy,
     int TotalStocks,
@@ -129,13 +166,14 @@ public sealed record LiveProgressInfo(
     int FailedCount,
     /// <summary>0.0–100.0, 1 decimal place. Bind directly to progress bar value/width.</summary>
     double PercentComplete,
-    /// <summary>Ticker currently being scraped, e.g. "COMI". Null during commit phase.</summary>
+    /// <summary>Current item label, e.g. "COMI" or "Index:EGX30". Null during commit phase.</summary>
     string? CurrentStockTicker,
     DateTime? StartedAt,
     /// <summary>Pre-computed: (now − StartedAt).TotalSeconds, rounded to 1 decimal.</summary>
     double ElapsedSeconds,
-    /// <summary>Null until 5 stocks complete (avoids wild early estimates). Rounded to whole seconds.</summary>
-    double? EstimatedSecondsRemaining
+    /// <summary>Null until 5 items complete (avoids wild early estimates). Rounded to whole seconds.</summary>
+    double? EstimatedSecondsRemaining,
+    string JobKey = "LiveDaily"
 );
 
 /// <summary>Summary of the last persisted scrape run, pulled from ScrapeRunLog.</summary>

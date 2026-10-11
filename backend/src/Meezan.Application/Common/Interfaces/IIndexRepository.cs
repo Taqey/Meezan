@@ -10,6 +10,13 @@ public interface IIndexRepository
     Task UpdateAsync(Index index, CancellationToken cancellationToken = default);
     Task ReplaceConstituentsAsync(int indexId, IEnumerable<IndexConstituent> constituents, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Current member stock IDs of one index. Used to diff membership before a
+    /// replace so EGX33-driven overall verdicts recompute only for added/removed
+    /// members, in the same upload operation.
+    /// </summary>
+    Task<HashSet<int>> GetConstituentStockIdsAsync(int indexId, CancellationToken cancellationToken = default);
+
     Task<List<IndexSummaryProjection>> GetAllSummariesAsync(CancellationToken cancellationToken = default);
     Task<(List<ConstituentProjection> Items, int TotalCount)> QueryConstituentsPagedAsync(
         string indexCode, ConstituentListFilter filter, CancellationToken cancellationToken = default);

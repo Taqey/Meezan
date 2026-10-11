@@ -2,6 +2,9 @@ import {
   evaluateStandards,
   getEffectiveSourceStatuses,
   resolveInternalVerdict,
+  resolveVerdictWithScholars,
+  isViaScholarsOnly,
+  normalizeStatusValue,
   shouldUpgradeDoubtfulToCompliant,
   SHARIAH_STANDARDS,
   scholarsDebtMax,
@@ -238,5 +241,85 @@ describe('resolveInternalVerdict', () => {
 
   it('returns null when nothing is compliant and there is no fallback', () => {
     expect(resolveInternalVerdict([null, null], null)).toBeNull();
+  });
+});
+
+describe('resolveVerdictWithScholars (corrected rule)', () => {
+  it('FWRY: revenue 33%, debt 17.1% -> NonCompliant (revenue exceeds every max)', () => {
+    const ev = evaluateStandards({ prohibitedRevenue: 33, debt: 17.1 });
+    expect(resolveVerdictWithScholars(ev, 17.1)).toBe('NonCompliant');
+    expect(isViaScholarsOnly(ev, 17.1)).toBeFalse();
+  });
+
+  it('MIPH: revenue 0.89%, debt 34.12% -> Compliant via scholars only', () => {
+    const ev = evaluateStandards({ prohibitedRevenue: 0.89, debt: 34.12 });
+    expect(ev.passedCount).toBe(0);
+    expect(resolveVerdictWithScholars(ev, 34.12)).toBe('Compliant');
+    expect(isViaScholarsOnly(ev, 34.12)).toBeTrue();
+  });
+
+  it('debt available but revenue missing -> Pending (insufficient)', () => {
+    const ev = evaluateStandards({ prohibitedRevenue: null, debt: 10 });
+    expect(resolveVerdictWithScholars(ev, 10)).toBe('Pending');
+  });
+
+  it('revenue available but debt missing -> Pending (insufficient)', () => {
+    const ev = evaluateStandards({ prohibitedRevenue: 5, debt: null });
+    expect(resolveVerdictWithScholars(ev, null)).toBe('Pending');
+  });
+
+  it('both missing -> Pending (insufficient)', () => {
+    const ev = evaluateStandards({ prohibitedRevenue: null, debt: null });
+    expect(resolveVerdictWithScholars(ev, null)).toBe('Pending');
+  });
+
+  it('investments/cash missing -> verdict computed normally', () => {
+    const ev = evaluateStandards({ prohibitedRevenue: 4, debt: 10, prohibitedInvestments: null, cash: null });
+    expect(resolveVerdictWithScholars(ev, 10)).toBe('Compliant');
+    expect(isViaScholarsOnly(ev, 10)).toBeFalse();
+  });
+
+  it('debt <= 50 but revenue above every max -> NonCompliant', () => {
+    const ev = evaluateStandards({ prohibitedRevenue: 33, debt: 10 });
+    expect(resolveVerdictWithScholars(ev, 10)).toBe('NonCompliant');
+  });
+
+  it('debt > 50 -> NonCompliant', () => {
+    const ev = evaluateStandards({ prohibitedRevenue: 2, debt: 51 });
+    expect(resolveVerdictWithScholars(ev, 51)).toBe('NonCompliant');
+    expect(isViaScholarsOnly(ev, 51)).toBeFalse();
+  });
+
+  it('fully passing a main standard -> Compliant, not via scholars', () => {
+    const ev = evaluateStandards({ prohibitedRevenue: 4, debt: 10, prohibitedInvestments: 10, cash: 20 });
+    expect(resolveVerdictWithScholars(ev, 10)).toBe('Compliant');
+    expect(isViaScholarsOnly(ev, 10)).toBeFalse();
+  });
+
+  it('never returns a doubtful value', () => {
+    const cases = [
+      evaluateStandards({ prohibitedRevenue: 33, debt: 17.1 }),
+      evaluateStandards({ prohibitedRevenue: null, debt: null })
+    ];
+    for (const ev of cases) {
+      const v = resolveVerdictWithScholars(ev, 17.1);
+      expect(normalizeStatusValue(v)).not.toBe('doubtful');
+      expect(v).not.toContain('مشكوك');
+    }
+  });
+
+  it('merged compliance filter returns scholars-only stocks as Compliant', () => {
+    // Both standard-compliant and scholars-only stocks have overall verdict Compliant.
+    // A single Compliant filter returns both without requiring a separate scholars filter.
+    const standardCompliantStock = { ticker: 'ABUK', shariahStatus: 'Compliant', viaScholarsOnly: false };
+    const scholarsOnlyStock = { ticker: 'MIPH', shariahStatus: 'Compliant', viaScholarsOnly: true };
+    const nonCompliantStock = { ticker: 'FWRY', shariahStatus: 'NonCompliant', viaScholarsOnly: false };
+
+    const selectedFilter = 'Compliant';
+    const list = [standardCompliantStock, scholarsOnlyStock, nonCompliantStock];
+    const filtered = list.filter(s => s.shariahStatus === selectedFilter);
+
+    expect(filtered.map(s => s.ticker)).toEqual(['ABUK', 'MIPH']);
+    expect(filtered.some(s => s.viaScholarsOnly)).toBeTrue();
   });
 });

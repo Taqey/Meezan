@@ -112,7 +112,7 @@ public class GetIndexConstituentsQueryHandler : IRequestHandler<GetIndexConstitu
                 ShariahStatus: p.ShariahStatus,
                 ShariahOpinions: hasBoard
                     ? new List<Meezan.Application.Features.Shariah.DTOs.ShariahSourceOpinionDto>()
-                    : p.ShariahOpinions,
+                    : p.ShariahOpinions.Select(o => { o.Status = Common.ShariahVerdictService.SanitizeOpinionStatus(o.Status); return o; }).ToList(),
                 ClosingPrice: p.ClosingPrice,
                 ChangePct: p.ChangePct,
                 FairValue: p.FairValue,

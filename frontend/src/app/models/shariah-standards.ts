@@ -111,6 +111,27 @@ export const SHARIAH_STANDARDS: readonly ShariahStandard[] = [
  */
 export const scholarsDebtMax = 50;
 
+/** Arabic label for the individual-scholars criterion. */
+export const SCHOLARS_STANDARD_NAME_AR = 'فتاوى علماء أفراد';
+/** English label for the individual-scholars criterion. */
+export const SCHOLARS_STANDARD_NAME_EN = 'Individual Scholars';
+
+/**
+ * Arabic verdict label for a stock that passes only the individual-scholars
+ * debt threshold (≤ 50%) but fails all five institutional standards.
+ */
+export const SCHOLARS_COMPLIANT_VERDICT = 'متوافق (بحسب بعض العلماء الأفراد)';
+
+/**
+ * Evaluates only the scholars' debt criterion: debt ≤ scholarsDebtMax.
+ * Returns true if the debt ratio is available AND within the 50% ceiling.
+ * Returns false if debt is null/undefined (no data) or exceeds the ceiling.
+ */
+export function evaluateScholarsDebt(debtPct: number | null | undefined): boolean {
+  if (debtPct == null || isNaN(Number(debtPct))) return false;
+  return Number(debtPct) <= scholarsDebtMax;
+}
+
 /** The stock's own quantitative ratios (percentages), as shown in the
  *  "AAOIFI & S&P detailed ratios" section. Missing/unknown ratios are
  *  null/undefined — never 0. */
@@ -306,6 +327,68 @@ export function resolveInternalVerdict(
 ): string | null {
   if (effectiveStatuses.some((s) => normalizeStatusValue(s) === 'compliant')) return 'Compliant';
   return fallback ?? null;
+}
+
+/**
+ * Shared verdict rule (mirrors the backend ShariahVerdictService — same thresholds,
+ * no duplicates; thresholds live only in SHARIAH_STANDARDS):
+ *
+ * - Insufficient (Pending = البيانات غير كافية): debt OR prohibited revenue missing.
+ *   No standard evaluated, scholars never applied.
+ * - Compliant: fully passes ≥1 of the 5 main standards (all available ratios pass;
+ *   investments/cash missing are skipped).
+ * - Compliant via scholars (returns 'Compliant'; use isViaScholarsOnly to detect):
+ *   ≥1 main standard where every available non-debt ratio passes, the ONLY failure
+ *   is debt, and debt ≤ 50%.
+ * - Otherwise NonCompliant (revenue/investments/cash failing everywhere even with
+ *   debt ≤ 50%, or debt > 50%).
+ */
+export function resolveVerdictWithScholars(
+  evaluation: StandardsEvaluation,
+  debtPct: number | null | undefined
+): string {
+  // Insufficient: debt or revenue missing on every standard (same ratios everywhere).
+  const first = evaluation.standards[0];
+  if (first) {
+    const revMissing = !first.criteria['prohibitedRevenue'].hasData;
+    const debtMissing = !first.criteria['debt'].hasData;
+    if (revMissing || debtMissing) return 'Pending';
+  } else {
+    return 'Pending';
+  }
+  // Fully passes ≥1 main standard → Compliant.
+  if (evaluation.passedCount > 0) return 'Compliant';
+  // Scholars-only: debt ≤ 50 AND ≥1 standard whose non-debt ratios all pass with debt the sole failure.
+  if (isViaScholarsOnly(evaluation, debtPct)) return 'Compliant';
+  return 'NonCompliant';
+}
+
+/**
+ * True when the stock is Compliant ONLY through the scholars relaxation
+ * (debt ≤ 50% with all non-debt ratios passing on ≥1 standard).
+ * The badge stays green "متوافق"; the note shows only on the detail page.
+ */
+export function isViaScholarsOnly(
+  evaluation: StandardsEvaluation,
+  debtPct: number | null | undefined
+): boolean {
+  if (evaluation.passedCount > 0) return false;
+  if (debtPct == null || isNaN(Number(debtPct))) return false;
+  if (Number(debtPct) > scholarsDebtMax) return false;
+  for (const s of evaluation.standards) {
+    const rev = s.criteria['prohibitedRevenue'];
+    const debt = s.criteria['debt'];
+    const inv = s.criteria['prohibitedInvestments'];
+    const cash = s.criteria['cash'];
+    const nonDebtOk =
+      (!rev.hasData || rev.passed) &&
+      (!inv.hasData || inv.passed) &&
+      (!cash.hasData || cash.passed);
+    // Revenue/debt are required (insufficient handled above), so hasData is true here.
+    if (!rev.hasData || !debt.hasData) return false;
+    if (nonDebtOk && !debt.passed) return true;
+  }
+  return false;
 }
 
 // ── Non-compliance reason helper ────────────────────────────────────────────

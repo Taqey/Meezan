@@ -328,7 +328,7 @@ export class StocksListComponent implements OnInit {
   readonly shariahOptions = [
     { value: 'Compliant', label: 'متوافق شرعاً' },
     { value: 'NonCompliant', label: 'غير متوافق' },
-    { value: 'Pending', label: 'قيد المراجعة / مشكل' },
+    { value: 'Pending', label: 'البيانات غير كافية' },
     { value: 'Blocked', label: 'محظور' }
   ];
 
@@ -522,8 +522,11 @@ export class StocksListComponent implements OnInit {
   fetchStocks(): void {
     this.loading = true;
 
-    // When client-side nonComplianceType sub-filter is active, fetch all NonCompliant items (up to 200)
-    // so filtering, totalCount, and pagination apply to the entire matching dataset.
+    // Stored verdicts only: the backend filters/sorts on the persisted verdict,
+    // so the list reads it directly with no client-side recomputation and no
+    // "fetch NonCompliant then filter locally" workaround.
+    const queryStatuses = this.shariahStatuses;
+
     const queryPageSize = this.isNonComplianceFiltered ? 200 : this.pageSize;
     const queryPage = this.isNonComplianceFiltered ? 1 : this.page;
 
@@ -532,7 +535,7 @@ export class StocksListComponent implements OnInit {
       pageSize: queryPageSize,
       search: this.search || undefined,
       indexCodes: this.indexCodes.length ? this.indexCodes : undefined,
-      shariahStatuses: this.shariahStatuses.length ? this.shariahStatuses : undefined,
+      shariahStatuses: queryStatuses.length ? queryStatuses : undefined,
       priceComparison: this.priceComparison || undefined,
       minCompliantSources: this.minCompliantSources ? Number(this.minCompliantSources) : undefined,
       minPeRatio: this.minPe !== null ? this.minPe : undefined,
@@ -677,11 +680,13 @@ export class StocksListComponent implements OnInit {
     navigateQueryParams(this.router, this.route, queryParams);
   }
 
-  /** Displayed stocks: when nonComplianceType is active, filters and paginates client-side. */
+  /** Displayed stocks: when the nonComplianceType sub-filter is active, filters and paginates client-side. */
   get displayedStocks() {
-    if (!this.isNonComplianceFiltered) return this.stocks;
-    const filtered = this.stocks.filter((s) => matchesNonComplianceType(s, this.nonComplianceType));
-    const start = (this.page - 1) * this.pageSize;
-    return filtered.slice(start, start + this.pageSize);
+    if (this.isNonComplianceFiltered) {
+      const filtered = this.stocks.filter((s) => matchesNonComplianceType(s, this.nonComplianceType));
+      const start = (this.page - 1) * this.pageSize;
+      return filtered.slice(start, start + this.pageSize);
+    }
+    return this.stocks;
   }
 }

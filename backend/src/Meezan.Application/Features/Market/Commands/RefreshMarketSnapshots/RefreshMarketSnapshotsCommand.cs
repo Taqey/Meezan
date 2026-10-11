@@ -7,7 +7,7 @@ namespace Meezan.Application.Features.Market.Commands.RefreshMarketSnapshots;
 /// mapped index/sector page). Only successful parses overwrite the stored
 /// rows, so readers always see the last good values.
 /// </summary>
-public record RefreshMarketSnapshotsCommand : IRequest<RefreshMarketSnapshotsResult>;
+public record RefreshMarketSnapshotsCommand(string TriggeredBy = "Manual-MarketSnapshots") : IRequest<RefreshMarketSnapshotsResult>;
 
 public record RefreshMarketSnapshotsResult(
     int Succeeded,

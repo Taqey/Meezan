@@ -223,6 +223,18 @@ public class ShariahController : ControllerBase
     }
 
     /// <summary>
+    /// Recomputes and stores the Shariah verdict for ALL stocks with the shared
+    /// verdict service. Idempotent — safe to re-run (used as the one-time backfill
+    /// after deployment and as the admin "إعادة حساب الأحكام الشرعية" button).
+    /// </summary>
+    [HttpPost("recompute-verdicts")]
+    public async Task<IActionResult> RecomputeVerdicts(CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new Meezan.Application.Features.Shariah.Commands.RecomputeVerdicts.RecomputeVerdictsCommand(), cancellationToken);
+        return Ok(result);
+    }
+
+    /// <summary>
     /// Imports the Faisal Bank and Osoul boards' opinions from shariah_opinions_faisal_osoul.json.
     /// Each run fully replaces those two SourceKeys' opinion set (the other 5 boards are
     /// untouched); tickers the file no longer covers resolve to "لا يوجد رأي".

@@ -7,7 +7,10 @@ import { StatusBadgeComponent } from '../status-badge/status-badge.component';
 import { FavoriteToggleComponent } from '../favorite-toggle/favorite-toggle.component';
 import { PriceFlashDirective } from '../../directives/price-flash.directive';
 import { INDEX_ARABIC_NAMES } from '../../models/api.models';
-import { getNonComplianceReasons, normalizeStatusValue } from '../../models/shariah-standards';
+import {
+  getNonComplianceReasons,
+  normalizeStatusValue
+} from '../../models/shariah-standards';
 
 @Component({
   selector: 'app-stock-card',
@@ -42,7 +45,7 @@ import { getNonComplianceReasons, normalizeStatusValue } from '../../models/shar
 
       <div class="stock-bottom">
         <div class="mini-ratio">
-          <app-status-badge [status]="shariahStatus"></app-status-badge>
+          <app-status-badge [status]="effectiveShariahStatus"></app-status-badge>
         </div>
         <app-comparison-badge [comparison]="priceComparison" [fairValueDiffPct]="fairValueDiffPct" [closingPrice]="closingPrice" [fairValue]="fairValue"></app-comparison-badge>
       </div>
@@ -99,9 +102,19 @@ export class StockCardComponent {
     });
   }
 
-  /** Non-compliance reasons to show below the badge — empty unless status is NonCompliant. */
+  /**
+   * Stored verdict only — no client-side recomputation or upgrade.
+   * Scholars-only compliant stocks are normal green "متوافق" here (no amber,
+   * no extra text); that note lives only on the detail page.
+   * Doubtful/مشكوك never renders (mapped to insufficient upstream).
+   */
+  get effectiveShariahStatus(): string | null | undefined {
+    return this.shariahStatus;
+  }
+
+  /** Non-compliance reasons to show below the badge — empty unless effective status is NonCompliant. */
   get nonComplianceReasons(): string[] {
-    if (normalizeStatusValue(this.shariahStatus) !== 'noncompliant') return [];
+    if (normalizeStatusValue(this.effectiveShariahStatus) !== 'noncompliant') return [];
     return getNonComplianceReasons({
       coreActivityCompliant: this.coreActivityCompliant,
       categoryAr: this.categoryAr,
@@ -110,5 +123,4 @@ export class StockCardComponent {
     });
   }
 }
-
 

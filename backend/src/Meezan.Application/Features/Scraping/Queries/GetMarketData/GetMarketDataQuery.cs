@@ -91,7 +91,15 @@ public record MarketDataDto(
     /// <summary>True if this stock is capped at 35% within its sector.</summary>
     bool? IsSectorWeightCapped = null,
     /// <summary>Capping factor applied to this stock's market cap within its sector if capped.</summary>
-    decimal? SectorCappingFactor = null
+    decimal? SectorCappingFactor = null,
+    /// <summary>Stored verdict flag: true when Compliant ONLY via the scholars rule. Green everywhere; note only on detail.</summary>
+    bool ViaScholarsOnly = false,
+    /// <summary>Stored per-criterion results JSON (6 criteria, per-ratio pass/fail/skipped, counts). Read directly by the dialog.</summary>
+    string? VerdictDetailsJson = null,
+    /// <summary>Halal Bourse source's OWN stored verdict (Compliant/NonCompliant/Pending). Null when never computed.</summary>
+    string? HalalStatus = null,
+    /// <summary>Which path produced the overall verdict (Activity/Boards/Halal/HalalScholars/EGX33/BoardsFallback/...).</summary>
+    string? VerdictSource = null
 );
 
 public record IndexInStockDto(

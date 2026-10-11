@@ -5,10 +5,9 @@ using Meezan.Domain.Enums;
 namespace Meezan.Infrastructure.Tests;
 
 /// <summary>
-/// Covers the standards-based Bourse Halal upgrade:
-/// ShariahStandardsEvaluator (thresholds mirrored from
-/// frontend/src/app/models/shariah-standards.ts) and its integration into
-/// ShariahStatusResolver.EffectiveStatus.
+/// Covers ShariahStandardsEvaluator thresholds and their integration into
+/// ShariahStatusResolver.EffectiveStatus, where the Halal Bourse input is the
+/// STORED ratio verdict (raw doubtful/مشكوك never counts).
 /// </summary>
 public class ShariahStandardsEvaluatorTests
 {
@@ -90,9 +89,19 @@ public class ShariahStandardsEvaluatorTests
 
     private static (ShariahCompliance Compliance, StockShariahMetrics Metrics, List<ShariahSourceOpinion> Opinions) AbukLike(
         string hbStatus = "Compliant", decimal? hbPct = 50m,
-        decimal? revenue = 8.5m, decimal? debt = 0m)
+        decimal? revenue = 8.5m, decimal? debt = 0m,
+        ShariahStatus? halalStatus = ShariahStatus.Compliant, bool viaScholars = false)
     {
-        var compliance = new ShariahCompliance { StockId = 1, Status = ShariahStatus.NonCompliant };
+        var compliance = new ShariahCompliance
+        {
+            StockId = 1,
+            Status = ShariahStatus.NonCompliant,
+            HalalStatus = halalStatus,
+            ViaScholarsOnly = viaScholars,
+            VerdictSource = halalStatus == ShariahStatus.Compliant
+                ? (viaScholars ? ShariahVerdictService.OverallSource.HalalScholars : ShariahVerdictService.OverallSource.Halal)
+                : null
+        };
         var metrics = new StockShariahMetrics
         {
             StockId = 1,
@@ -111,6 +120,8 @@ public class ShariahStandardsEvaluatorTests
     [Fact]
     public void DoubtfulBourseHalal_PassingStandards_UpgradesToCompliant()
     {
+        // Stored Halal verdict (ratios 8.5%/0% pass) decides; the raw doubtful
+        // value never counts. Same expectation as pre-refactor, new input.
         var (c, m, o) = AbukLike();
         Assert.Equal(ShariahStatus.Compliant, ShariahStatusResolver.EffectiveStatus(c, m, o));
     }
@@ -118,22 +129,24 @@ public class ShariahStandardsEvaluatorTests
     [Fact]
     public void DoubtfulBourseHalal_FailingAllStandards_KeepsStoredVerdict()
     {
-        var (c, m, o) = AbukLike(revenue: 60m, debt: 80m);
+        var (c, m, o) = AbukLike(revenue: 60m, debt: 80m, halalStatus: ShariahStatus.NonCompliant);
         Assert.Equal(ShariahStatus.NonCompliant, ShariahStatusResolver.EffectiveStatus(c, m, o));
     }
 
     [Fact]
     public void AlreadyCompliantBourseHalal_BehavesAsBefore()
     {
-        // Full-percentage compliant: the classic board-wins path, no upgrade involved.
-        var (c, m, o) = AbukLike(hbStatus: "Compliant", hbPct: 100m, revenue: 60m, debt: 80m);
-        Assert.Equal(ShariahStatus.Compliant, ShariahStatusResolver.EffectiveStatus(c, m, o));
+        // A raw full-percentage "compliant" alone never counts: the stored Halal
+        // verdict (NonCompliant here — ratios 60%/80% fail) decides instead.
+        var (c, m, o) = AbukLike(hbStatus: "Compliant", hbPct: 100m, revenue: 60m, debt: 80m, halalStatus: ShariahStatus.NonCompliant);
+        Assert.Equal(ShariahStatus.NonCompliant, ShariahStatusResolver.EffectiveStatus(c, m, o));
     }
 
     [Fact]
     public void NoBourseHalalOpinion_NoUpgrade()
     {
-        var (c, m, o) = AbukLike();
+        // No Halal opinion row and stored Halal NonCompliant: nothing vouches.
+        var (c, m, o) = AbukLike(halalStatus: ShariahStatus.NonCompliant);
         o.RemoveAll(x => x.SourceKey == ShariahSourceKey.HalalBourse);
         Assert.Equal(ShariahStatus.NonCompliant, ShariahStatusResolver.EffectiveStatus(c, m, o));
     }

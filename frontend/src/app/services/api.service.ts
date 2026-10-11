@@ -7,6 +7,7 @@ import {
   IndexSummaryDto,
   MarketDataDto,
   MarketSnapshotDto,
+  RefreshMarketSnapshotsResult,
   PagedResult,
   RefreshShariahDataResult,
   RunCombinedScrapeResult,
@@ -161,6 +162,11 @@ export class ApiService {
     return this.http.get<MarketSnapshotDto[]>(`${this.baseUrl}/api/market-snapshots`);
   }
 
+  /** Triggers a market snapshots scrape on demand */
+  refreshMarketSnapshots(): Observable<RefreshMarketSnapshotsResult> {
+    return this.http.post<RefreshMarketSnapshotsResult>(`${this.baseUrl}/api/market-snapshots/refresh`, {});
+  }
+
   getSupportResistance(ticker: string): Observable<SupportResistanceDto> {
     return this.http.get<SupportResistanceDto>(`${this.baseUrl}/api/stocks/${ticker}/support-resistance`);
   }
@@ -245,6 +251,10 @@ export class ApiService {
 
   refreshShariah(): Observable<RefreshShariahDataResult> {
     return this.http.post<RefreshShariahDataResult>(`${this.baseUrl}/api/shariah/refresh`, {});
+  }
+
+  recomputeVerdicts(): Observable<{ success: boolean; totalStocks: number; recomputedCount: number; changedCount: number; failedCount: number; message?: string | null }> {
+    return this.http.post<{ success: boolean; totalStocks: number; recomputedCount: number; changedCount: number; failedCount: number; message?: string | null }>(`${this.baseUrl}/api/shariah/recompute-verdicts`, {});
   }
 
   // ── Job Settings (Automation toggles) ──────────────────────────────

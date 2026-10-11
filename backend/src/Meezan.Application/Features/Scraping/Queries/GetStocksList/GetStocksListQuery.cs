@@ -70,5 +70,7 @@ public record StockListItemDto(
     string? CategoryEn = null,
     decimal? SpHaramEarningPercentage = null,
     decimal? LoansPercentage = null,
-    decimal? PurificationPct = null
+    decimal? PurificationPct = null,
+    bool ViaScholarsOnly = false,
+    string? VerdictDetailsJson = null
 );

@@ -20,7 +20,9 @@ export class StatusBadgeComponent {
     const s = (this.status || '').toLowerCase().replace(/[-_ ]/g, '');
     if (s === 'compliant' || s === 'متوافق') return 'status-good';
     if (s === 'noncompliant' || s === 'غير متوافق') return 'status-bad';
-    return 'status-warn';
+    // Insufficient data (Pending) is neutral — never green, never red.
+    // Doubtful must never render: treat it as neutral insufficient too.
+    return 'status-neutral';
   }
 
   get label(): string {
@@ -28,9 +30,9 @@ export class StatusBadgeComponent {
     if (s === 'compliant' || s === 'متوافق') return 'متوافق';
     if (s === 'noncompliant' || s === 'غير متوافق') return 'غير متوافق';
     if (s === 'blocked') return 'محظور';
-    if (s === 'pending') return 'قيد المراجعة';
-    // A real stored verdict that is neither agreement nor refusal — never shown as one.
-    if (s === 'doubtful' || s === 'مشكوك') return 'مشكوك';
+    // Old "قيد المراجعة" is now "البيانات غير كافية". Doubtful/مشكوك never displays.
+    if (s === 'pending') return 'البيانات غير كافية';
+    if (s === 'doubtful' || (this.status || '').includes('مشكوك')) return 'البيانات غير كافية';
     return this.status || 'غير محدد';
   }
 }

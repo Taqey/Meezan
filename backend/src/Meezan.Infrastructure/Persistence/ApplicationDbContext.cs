@@ -30,6 +30,9 @@ public class ApplicationDbContext : DbContext
     // Published market snapshots (Mubasher index/sector quotes cache)
     public DbSet<MarketIndexSnapshot> MarketIndexSnapshots => Set<MarketIndexSnapshot>();
 
+    // Job enabled/disabled flags (persisted across restarts)
+    public DbSet<JobSetting> JobSettings => Set<JobSetting>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

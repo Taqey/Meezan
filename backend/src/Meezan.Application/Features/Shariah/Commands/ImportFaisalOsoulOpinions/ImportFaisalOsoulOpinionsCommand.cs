@@ -153,28 +153,31 @@ public class ImportFaisalOsoulOpinionsCommandHandler
 
         var now = DateTime.UtcNow;
         var results = new List<ImportSourceOpinionsResult>();
+        // Stocks whose opinions changed in this run (inserted/updated/removed rows).
+        // Only these get their overall verdict recomputed — same operation.
+        var affectedStockIds = new HashSet<int>();
 
         if (file.FaisalBank != null)
         {
             results.Add(await ImportBlockAsync(
                 ShariahSourceKey.FaisalBank, "بنك فيصل الإسلامي", file.FaisalBank,
-                byTicker, now, faisalPdfUrl, cancellationToken));
+                byTicker, now, faisalPdfUrl, affectedStockIds, cancellationToken));
         }
 
         if (file.Ostoul != null)
         {
             results.Add(await ImportBlockAsync(
                 ShariahSourceKey.Osoul, "أسطول", file.Ostoul,
-                byTicker, now, osoulPdfUrl, cancellationToken));
+                byTicker, now, osoulPdfUrl, affectedStockIds, cancellationToken));
         }
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         // ── Persist resolved compliance status ──────────────────────────────
-        // After writing opinions, re-evaluate each affected stock's stored
-        // ShariahCompliance.Status so readers that bypass EffectiveStatus
-        // always see the right answer.
-        await PersistResolvedStatusesAsync(byTicker, cancellationToken);
+        // After writing opinions, re-evaluate each AFFECTED stock's stored overall
+        // verdict via the shared service, so readers that bypass EffectiveStatus
+        // always see the right answer. Untouched stocks keep their stored values.
+        await PersistResolvedStatusesAsync(byTicker, affectedStockIds, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         var message = string.Join("; ", results.Select(r =>
@@ -185,51 +188,68 @@ public class ImportFaisalOsoulOpinionsCommandHandler
     }
 
     /// <summary>
-    /// For every stock touched by this import run, re-evaluate <see cref="ShariahCompliance.Status"/>
-    /// using the same rule as <see cref="ShariahStatusResolver.EffectiveStatus"/>:
-    /// activity gate wins; otherwise any board opinion of "compliant" → Compliant.
+    /// For every stock whose opinions changed in this import run, re-evaluate the
+    /// stored OVERALL verdict (<see cref="ShariahCompliance.Status"/> +
+    /// VerdictSource) via the shared service. The Halal input comes from the
+    /// row's own stored Halal fields (ratios are untouched by this import).
     /// Also ensure <see cref="ShariahCompliance.HasShariahBoard"/> is updated so stocks that
     /// receive standard board opinions do not retain a stale HasShariahBoard flag unless a board
-    /// note actually specifies it.
+    /// note actually specifies it. Untouched stocks are never rewritten.
+    /// A failed recompute keeps the previous stored value and never breaks the import.
     /// </summary>
     private async Task PersistResolvedStatusesAsync(
         Dictionary<string, Stock> byTicker,
+        HashSet<int> affectedStockIds,
         CancellationToken cancellationToken)
     {
-        // Process ALL known stocks: we cannot predict which stocks were implicitly
-        // affected by opinion removals (e.g. a ticker removed from a board's list).
-        // Only stocks that have a ShariahCompliance row are updated.
         var now = DateTime.UtcNow;
-        foreach (var stock in byTicker.Values)
+        foreach (var stockId in affectedStockIds)
         {
-            var compliance = await _complianceRepository.GetByStockIdAsync(stock.Id, cancellationToken);
-            if (compliance == null) continue;
-
-            var metrics = await _metricsRepository.GetByStockIdAsync(stock.Id, cancellationToken);
-            var opinions = await _opinionRepository.GetByStockIdAsync(stock.Id, cancellationToken);
-
-            bool dirty = false;
-
-            // Clear stale HasShariahBoard flag if stock receives standard opinions and has no board notes
-            bool hasBoardNow = Common.ShariahBoardDetector.IsBoardNote(compliance.Note)
-                || opinions.Any(o => Common.ShariahBoardDetector.IsBoardNote(o.Note));
-            if (compliance.HasShariahBoard != hasBoardNow)
+            try
             {
-                compliance.HasShariahBoard = hasBoardNow;
-                dirty = true;
+                var compliance = await _complianceRepository.GetByStockIdAsync(stockId, cancellationToken);
+                if (compliance == null) continue;
+
+                var metrics = await _metricsRepository.GetByStockIdAsync(stockId, cancellationToken);
+                var opinions = await _opinionRepository.GetByStockIdAsync(stockId, cancellationToken);
+
+                bool dirty = false;
+
+                // Clear stale HasShariahBoard flag if stock receives standard opinions and has no board notes
+                bool hasBoardNow = Common.ShariahBoardDetector.IsBoardNote(compliance.Note)
+                    || opinions.Any(o => Common.ShariahBoardDetector.IsBoardNote(o.Note));
+                if (compliance.HasShariahBoard != hasBoardNow)
+                {
+                    compliance.HasShariahBoard = hasBoardNow;
+                    dirty = true;
+                }
+
+                // Backfill the Halal input when the row predates it (never recomputed
+                // from ratios here — ratios are untouched by this import).
+                if (compliance.HalalStatus == null && metrics != null)
+                {
+                    var halal = Common.ShariahVerdictService.ComputeForStock(metrics, compliance);
+                    if (Common.ShariahVerdictService.TryApplyHalal(compliance, halal))
+                        dirty = true;
+                }
+
+                bool member = await _stockRepository.IsShariahIndexMemberAsync(stockId, cancellationToken);
+                if (Common.ShariahVerdictService.ApplyOverall(
+                        compliance, metrics?.EffectiveCoreActivityCompliant, opinions, member))
+                {
+                    dirty = true;
+                }
+
+                if (dirty)
+                {
+                    compliance.UpdatedAt = now;
+                    _complianceRepository.Update(compliance);
+                }
             }
-
-            var resolved = ShariahStatusResolver.EffectiveStatus(compliance, metrics, opinions);
-            if (resolved.HasValue && compliance.Status != resolved.Value)
+            catch (Exception ex)
             {
-                compliance.Status = resolved.Value;
-                dirty = true;
-            }
-
-            if (dirty)
-            {
-                compliance.UpdatedAt = now;
-                _complianceRepository.Update(compliance);
+                var ticker = byTicker.FirstOrDefault(kv => kv.Value.Id == stockId).Key ?? stockId.ToString();
+                Console.WriteLine($"[Verdict] overall recompute failed for {ticker} ({ex.Message}); keeping previous stored value.");
             }
         }
     }
@@ -259,6 +279,7 @@ public class ImportFaisalOsoulOpinionsCommandHandler
         Dictionary<string, Stock> byTicker,
         DateTime now,
         string? pdfUrl,
+        HashSet<int> affectedStockIds,
         CancellationToken cancellationToken)
     {
         DateTime? reportDate = DateTime.TryParse(block.ReportDate, out var parsed) ? parsed : null;
@@ -314,6 +335,7 @@ public class ImportFaisalOsoulOpinionsCommandHandler
                 row.ExtraData = null;
                 _opinionRepository.Update(row);
                 updated++;
+                affectedStockIds.Add(stock.Id);
             }
             else
             {
@@ -329,6 +351,7 @@ public class ImportFaisalOsoulOpinionsCommandHandler
                     FetchedAt = now
                 }, cancellationToken);
                 inserted++;
+                affectedStockIds.Add(stock.Id);
             }
         }
 
@@ -342,6 +365,7 @@ public class ImportFaisalOsoulOpinionsCommandHandler
 
         if (stale.Count > 0)
         {
+            foreach (var r in stale) affectedStockIds.Add(r.StockId);
             _opinionRepository.RemoveRange(stale);
         }
 

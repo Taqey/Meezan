@@ -72,7 +72,7 @@ public class GetMarketDataQueryHandler : IRequestHandler<GetMarketDataQuery, Mar
                     Id = o.Id,
                     StockId = o.StockId,
                     SourceKey = o.SourceKey,
-                    Status = o.Status,
+                    Status = Common.ShariahVerdictService.SanitizeOpinionStatus(o.Status),
                     Percentage = o.Percentage,
                     Note = o.Note,
                     PdfUrl = o.PdfUrl,
@@ -121,7 +121,14 @@ public class GetMarketDataQueryHandler : IRequestHandler<GetMarketDataQuery, Mar
                 ShariahBoardNote: boardNote1,
                 ActivityCompliant: activityCompliant,
                 ActivityClassification: activityClassification,
-                ShariahMetricsUnavailableReason: partialReason
+                ShariahMetricsUnavailableReason: partialReason,
+                SectorWeight: null,
+                IsSectorWeightCapped: null,
+                SectorCappingFactor: null,
+                ViaScholarsOnly: stock.ShariahCompliance?.ViaScholarsOnly ?? false,
+                VerdictDetailsJson: stock.ShariahCompliance?.VerdictDetailsJson,
+                HalalStatus: stock.ShariahCompliance?.HalalStatus?.ToString(),
+                VerdictSource: stock.ShariahCompliance?.VerdictSource
             );
         }
 
@@ -189,7 +196,7 @@ public class GetMarketDataQueryHandler : IRequestHandler<GetMarketDataQuery, Mar
                 Id = o.Id,
                 StockId = o.StockId,
                 SourceKey = o.SourceKey,
-                Status = o.Status,
+                Status = Common.ShariahVerdictService.SanitizeOpinionStatus(o.Status),
                 Percentage = o.Percentage,
                 Note = o.Note,
                 PdfUrl = o.PdfUrl,
@@ -265,7 +272,11 @@ public class GetMarketDataQueryHandler : IRequestHandler<GetMarketDataQuery, Mar
             ShariahMetricsUnavailableReason: metricsReason,
             SectorWeight: calculatedSectorWeight,
             IsSectorWeightCapped: isSectorWeightCapped,
-            SectorCappingFactor: sectorCappingFactor
+            SectorCappingFactor: sectorCappingFactor,
+            ViaScholarsOnly: stock.ShariahCompliance?.ViaScholarsOnly ?? false,
+            VerdictDetailsJson: stock.ShariahCompliance?.VerdictDetailsJson,
+            HalalStatus: stock.ShariahCompliance?.HalalStatus?.ToString(),
+            VerdictSource: stock.ShariahCompliance?.VerdictSource
         );
     }
 
@@ -328,7 +339,9 @@ public class GetMarketDataQueryHandler : IRequestHandler<GetMarketDataQuery, Mar
             Id = sm.Id,
             StockId = sm.StockId,
             Zakat = sm.Zakat,
-            SpHaramEarningPercentage = sm.SpHaramEarningPercentage,
+            // Use effective value (override wins over feed) so manual overrides are
+            // reflected on the stock page and everywhere SpHaramEarningPercentage is read.
+            SpHaramEarningPercentage = sm.EffectiveHaramRevenuePercentage,
             AaoifiHaramEarningPerShare = sm.AaoifiHaramEarningPerShare,
             HaramEarningsPercentage = sm.EffectiveHaramRevenuePercentage,
             LoansPercentage = sm.EffectiveLoansPercentage,

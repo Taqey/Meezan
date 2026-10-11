@@ -170,6 +170,11 @@ public class RefreshShariahDataCommandHandler : IRequestHandler<RefreshShariahDa
                 // redundant DB round-trip.
                 var metrics = existingMetrics
                     ?? await _metricsRepository.GetByStockIdAsync(stock.Id, cancellationToken);
+                // Snapshot effective ratios BEFORE the feed update so the pull can
+                // recompute the stored verdict ONLY for stocks whose ratios changed.
+                decimal? oldEffRevenue = metrics?.EffectiveHaramRevenuePercentage ?? metrics?.SpHaramEarningPercentage;
+                decimal? oldEffDebt = metrics?.EffectiveLoansPercentage;
+                bool? oldEffActivity = metrics?.EffectiveCoreActivityCompliant;
                 if (metrics == null)
                 {
                     metrics = new StockShariahMetrics
@@ -233,6 +238,12 @@ public class RefreshShariahDataCommandHandler : IRequestHandler<RefreshShariahDa
                 // only source of truth, so this scraper must never touch those two SourceKeys.
                 // Their "no opinion" state comes from having no row, exactly like every board.
                 var existingOpinions = await _opinionRepository.GetByStockIdAsync(stock.Id, cancellationToken);
+                // Snapshot NON-Halal votes BEFORE the upserts so the pull recomputes the
+                // overall verdict when opinions change even if ratios did not. Raw Halal
+                // changes alone never trigger it (Halal follows the stored ratio verdict).
+                var oldVotes = existingOpinions
+                    .Where(o => o.SourceKey != ShariahSourceKey.HalalBourse)
+                    .ToDictionary(o => o.SourceKey, o => (Common.ShariahVerdictService.SanitizeOpinionStatus(o.Status), o.Percentage));
                 var opinionsDict = existingOpinions.ToDictionary(o => o.SourceKey);
 
                 await UpdateOrAddOpinionAsync(opinionsDict, stock.Id, ShariahSourceKey.HalalBourse, item.HalalBourse, now, cancellationToken);
@@ -241,22 +252,58 @@ public class RefreshShariahDataCommandHandler : IRequestHandler<RefreshShariahDa
                 await UpdateOrAddOpinionAsync(opinionsDict, stock.Id, ShariahSourceKey.HalalInvest, item.HalalInvest, now, cancellationToken);
                 await UpdateOrAddOpinionAsync(opinionsDict, stock.Id, ShariahSourceKey.Thndr, item.Thndr, now, cancellationToken);
 
-                // 4. Update ShariahCompliance:
-                // "only backfill Pct from sp_haram_earning_percentage when the stock's Status is Compliant AND Pct is currently null.
-                // Never overwrite an already-set Pct. Everything else on ShariahCompliance is untouched by this job."
-                // Exception 1: HasShariahBoard is recomputed on every run so a stock that gains (or
-                // loses) a board/committee verdict in the source is displayed accordingly.
-                // Exception 2: Status is corrected to NonCompliant when the stock's OWN core-activity
-                // flag says غير متوافق (see below) — the verdict is per-stock, never sector-derived.
-                // Re-use the compliance row fetched above for the Part-B guard.
+                // 4. Update stored verdicts via the ONE shared service.
+                // Halal (ratios) recomputes ONLY when the effective ratios changed;
+                // overall recomputes when ratios OR source opinions changed (membership
+                // is untouched by this pull) — only for this affected stock, as part
+                // of this same import. A stock can flip compliant<->non-compliant or
+                // insufficient<->verdict here. Safety: a failed recompute keeps the
+                // previous stored value and never breaks the pull.
                 var compliance = existingCompliance
                     ?? await _complianceRepository.GetByStockIdAsync(stock.Id, cancellationToken);
+                decimal? newEffRevenue = metrics.EffectiveHaramRevenuePercentage ?? metrics.SpHaramEarningPercentage;
+                decimal? newEffDebt = metrics.EffectiveLoansPercentage;
+                bool? newEffActivity = metrics.EffectiveCoreActivityCompliant;
+                bool ratiosChanged = Common.ShariahVerdictService.HalalInputsChanged(
+                    oldEffRevenue, oldEffDebt, oldEffActivity, newEffRevenue, newEffDebt, newEffActivity);
+                var newVotes = opinionsDict.Values
+                    .Where(o => o.SourceKey != ShariahSourceKey.HalalBourse)
+                    .ToDictionary(o => o.SourceKey, o => (Common.ShariahVerdictService.SanitizeOpinionStatus(o.Status), o.Percentage));
+                bool opinionsChanged = Common.ShariahVerdictService.OpinionInputsChanged(oldVotes, newVotes);
                 if (compliance == null)
                 {
-                    skippedNotFoundCount++;
+                    // No stored row yet: create one with the computed Halal verdict
+                    // and the aggregated overall verdict.
+                    try
+                        {
+                            var v0 = Common.ShariahVerdictService.Compute(newEffRevenue, newEffDebt, null, null, newEffActivity);
+                            compliance = new ShariahCompliance
+                            {
+                                StockId = stock.Id,
+                                Status = ShariahStatus.Pending,
+                                Pct = item.SpHaramEarningPercentage,
+                                Note = null,
+                                HasShariahBoard = false,
+                                ViaScholarsOnly = false,
+                                VerdictDetailsJson = null,
+                                HalalStatus = null,
+                                VerdictSource = null,
+                                LastCheckedAt = now,
+                                UpdatedAt = now
+                            };
+                            Common.ShariahVerdictService.TryApplyHalal(compliance, v0, _logger);
+                            bool member0 = await _stockRepository.IsShariahIndexMemberAsync(stock.Id, cancellationToken);
+                            Common.ShariahVerdictService.ApplyOverall(compliance, newEffActivity, opinionsDict.Values, member0, _logger);
+                            await _complianceRepository.AddAsync(compliance, cancellationToken);
+                        }
+                    catch (Exception vex)
+                    {
+                        _logger.LogWarning(vex, "Verdict recompute failed for new stock {Symbol}; keeping no row.", symbol);
+                        skippedNotFoundCount++;
+                    }
                 }
                 else
-{
+                {
                     bool dirty = false;
 
                     bool hasBoardNow = Common.ShariahBoardDetector.IsBoardNote(compliance.Note)
@@ -267,44 +314,31 @@ public class RefreshShariahDataCommandHandler : IRequestHandler<RefreshShariahDa
                         dirty = true;
                     }
 
-                    // Per-stock activity gate: when THIS stock's own نشاط الشركة is غير متوافق
-                    // its stored verdict must read غير متوافق too, otherwise a stale "Compliant"
-                    // row would make the list show متوافق while the detail page (which reads the
-                    // activity field) shows غير متوافق. The value comes from this stock's own
-                    // metrics row only — never from its sector, never from another stock.
-                    // Use effective value (manual override wins over feed).
-                    bool effectiveActivityCompliant = metrics.EffectiveCoreActivityCompliant ?? true;
-
-                    if (!effectiveActivityCompliant && compliance.Status != ShariahStatus.NonCompliant)
+                    if (ratiosChanged)
                     {
-                        compliance.Status = ShariahStatus.NonCompliant;
-                        dirty = true;
-                    }
-                    else if (effectiveActivityCompliant)
-                    {
-                        // Positive board opinion wins: any board (including the ones just written
-                        // above) explicitly recording "compliant" means the stored row must also
-                        // say Compliant — so any reader that bypasses EffectiveStatus gets the
-                        // right answer too.
-                        // HalalBourse rule: compliant + percentage < 100 (or null) counts as
-                        // doubtful — does NOT elevate the stored compliance status.
-                        bool anyBoardCompliant = opinionsDict.Values
-                            .Any(o => o.Status != null && o.Status.ToUpper() == "COMPLIANT"
-                                 && (o.SourceKey != ShariahSourceKey.HalalBourse
-                                      || (o.Percentage != null && o.Percentage >= 100)));
-                        if (anyBoardCompliant && compliance.Status != ShariahStatus.Compliant)
+                        try
                         {
-                            compliance.Status = ShariahStatus.Compliant;
+                            var v = Common.ShariahVerdictService.Compute(newEffRevenue, newEffDebt, null, null, newEffActivity);
+                            Common.ShariahVerdictService.TryApplyHalal(compliance, v, _logger);
                             dirty = true;
                         }
-                        else if (!anyBoardCompliant && compliance.Status == ShariahStatus.Compliant)
+                        catch (Exception vex)
                         {
-                            // No scraped source says compliant, but a stale seeded/old value
-                            // recorded Compliant. Downgrade to Pending (= "no opinion") so we
-                            // never display a Compliant verdict without a supporting source.
-                            // Per rule: "never invent a status or a reason."
-                            compliance.Status = ShariahStatus.Pending;
-                            dirty = true;
+                            _logger.LogWarning(vex, "Halal verdict recompute failed for stock {Symbol}; keeping previous stored value.", symbol);
+                        }
+                    }
+
+                    if (ratiosChanged || opinionsChanged)
+                    {
+                        try
+                        {
+                            bool member = await _stockRepository.IsShariahIndexMemberAsync(stock.Id, cancellationToken);
+                            if (Common.ShariahVerdictService.ApplyOverall(compliance, newEffActivity, opinionsDict.Values, member, _logger))
+                                dirty = true;
+                        }
+                        catch (Exception vex)
+                        {
+                            _logger.LogWarning(vex, "Overall verdict recompute failed for stock {Symbol}; keeping previous stored value.", symbol);
                         }
                     }
 
@@ -372,7 +406,7 @@ public class RefreshShariahDataCommandHandler : IRequestHandler<RefreshShariahDa
 
         if (existingDict.TryGetValue(key, out var existing))
         {
-            existing.Status = dto.Status;
+            existing.Status = Common.ShariahVerdictService.SanitizeOpinionStatus(dto.Status);
             existing.Percentage = dto.Percentage;
             existing.Note = dto.Note;
             existing.PdfUrl = Common.ShariahPdfUrlNormalizer.Normalize(dto.PdfUrl);
@@ -390,7 +424,7 @@ public class RefreshShariahDataCommandHandler : IRequestHandler<RefreshShariahDa
             {
                 StockId = stockId,
                 SourceKey = key,
-                Status = dto.Status,
+                Status = Common.ShariahVerdictService.SanitizeOpinionStatus(dto.Status),
                 Percentage = dto.Percentage,
                 Note = dto.Note,
                 PdfUrl = Common.ShariahPdfUrlNormalizer.Normalize(dto.PdfUrl),

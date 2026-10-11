@@ -15,6 +15,7 @@ public class UploadIndexFileCommandHandler : IRequestHandler<UploadIndexFileComm
     private readonly IExcelParserService _excelParserService;
     private readonly IShariahComplianceRepository _complianceRepository;
     private readonly IStockShariahMetricsRepository _metricsRepository;
+    private readonly IShariahSourceOpinionRepository _opinionRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IValidator<UploadIndexFileCommand> _validator;
 
@@ -25,6 +26,7 @@ public class UploadIndexFileCommandHandler : IRequestHandler<UploadIndexFileComm
         IExcelParserService excelParserService,
         IShariahComplianceRepository complianceRepository,
         IStockShariahMetricsRepository metricsRepository,
+        IShariahSourceOpinionRepository opinionRepository,
         IUnitOfWork unitOfWork,
         IValidator<UploadIndexFileCommand> validator)
     {
@@ -34,6 +36,7 @@ public class UploadIndexFileCommandHandler : IRequestHandler<UploadIndexFileComm
         _excelParserService = excelParserService;
         _complianceRepository = complianceRepository;
         _metricsRepository = metricsRepository;
+        _opinionRepository = opinionRepository;
         _unitOfWork = unitOfWork;
         _validator = validator;
     }
@@ -329,6 +332,11 @@ public class UploadIndexFileCommandHandler : IRequestHandler<UploadIndexFileComm
             }
 
             // Replace IndexConstituent rows for this index
+            // Snapshot current members first when this is the Shariah index, so the
+            // membership-driven overall verdict recomputes only added/removed members.
+            HashSet<int>? oldMemberIds = null;
+            if (IsShariahIndex(index.Code))
+                oldMemberIds = await _indexRepository.GetConstituentStockIdsAsync(index.Id, cancellationToken);
             await _indexRepository.ReplaceConstituentsAsync(index.Id, constituentsToSave, cancellationToken);
 
             // Update Index LastUpdated
@@ -362,15 +370,19 @@ public class UploadIndexFileCommandHandler : IRequestHandler<UploadIndexFileComm
                 + (insertedStocks > 0 ? $" {insertedStocks} new stock(s) added." : string.Empty);
 
 
-            // ── Persist resolved Shariah compliance status for Shariah index ─────
-            // When the uploaded file is for the EGX 33 Shariah index, EGX33
-            // membership itself is a compliance signal (same weight as a board
-            // opinion). Persist this back to ShariahCompliance.Status so every
-            // reader that bypasses EffectiveStatus gets the right answer.
-            if (IsShariahIndex(index.Code))
+            // ── Recompute overall verdicts for membership-affected stocks ─────
+            // EGX33 membership is an aggregation input (same weight as a board
+            // opinion). Recompute ONLY added/removed members, in this same upload
+            // operation, via the shared service. Other indices never change the
+            // membership signal, so they trigger no recompute.
+            if (IsShariahIndex(index.Code) && oldMemberIds != null)
             {
-                await PersistShariahIndexComplianceAsync(
-                    constituentsToSave, cancellationToken);
+                var newMemberIds = new HashSet<int>(constituentsToSave
+                    .Select(c => c.StockId != 0 ? c.StockId : c.Stock?.Id ?? 0)
+                    .Where(id => id != 0));
+                var affected = new HashSet<int>(newMemberIds);
+                affected.UnionWith(oldMemberIds.Except(newMemberIds));
+                await RecomputeMembersOverallAsync(affected, cancellationToken);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
             }
 
@@ -440,64 +452,62 @@ public class UploadIndexFileCommandHandler : IRequestHandler<UploadIndexFileComm
         || string.Equals(indexCode, "EGX 33",   StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
-    /// For every stock now listed in the Shariah index, persist
-    /// <see cref="ShariahCompliance.Status"/> = <see cref="ShariahStatus.Compliant"/>
-    /// — unless the activity gate says غير متوافق (CoreActivityCompliant == false),
-    /// in which case NonCompliant wins and the stored value is left as-is (or corrected
-    /// to NonCompliant if it was stale). EGX33 membership is treated as equal to a
-    /// board opinion, so it wins over any previously stored NonCompliant that was not
-    /// caused by the activity gate.
+    /// Recomputes the stored OVERALL verdict for the given stocks (EGX33 members
+    /// added/removed by this upload) via the shared service. The Halal input comes
+    /// from each row's own stored Halal fields (ratios are untouched by uploads);
+    /// rows predating the Halal storage get it backfilled from metrics when present.
+    /// A failed recompute keeps the previous stored value and never breaks the upload.
     /// </summary>
-    private async Task PersistShariahIndexComplianceAsync(
-        List<IndexConstituent> constituents,
+    private async Task RecomputeMembersOverallAsync(
+        HashSet<int> affectedStockIds,
         CancellationToken cancellationToken)
     {
         var now = DateTime.UtcNow;
-        foreach (var constituent in constituents)
+        foreach (var stockId in affectedStockIds)
         {
-            var stockId = constituent.StockId != 0 ? constituent.StockId : constituent.Stock?.Id ?? 0;
-            if (stockId == 0) continue;
-
-            var compliance = await _complianceRepository.GetByStockIdAsync(stockId, cancellationToken);
-            if (compliance == null)
+            try
             {
-                // EGX33 membership is itself a compliance signal: a member with no
-                // stored row at all (e.g. a newly listed twin tranche) gets one
-                // created instead of being left verdict-less. The activity gate
-                // still wins over membership (see below).
-                var memberMetrics = await _metricsRepository.GetByStockIdAsync(stockId, cancellationToken);
-                compliance = new ShariahCompliance
+                var compliance = await _complianceRepository.GetByStockIdAsync(stockId, cancellationToken);
+                var metrics = await _metricsRepository.GetByStockIdAsync(stockId, cancellationToken);
+                bool member = await _stockRepository.IsShariahIndexMemberAsync(stockId, cancellationToken);
+                bool isNewRow = false;
+                if (compliance == null)
                 {
-                    StockId = stockId,
-                    Status = memberMetrics?.CoreActivityCompliant == false
-                        ? ShariahStatus.NonCompliant
-                        : ShariahStatus.Compliant,
-                    UpdatedAt = now
-                };
-                await _complianceRepository.AddAsync(compliance, cancellationToken);
-                continue;
-            }
-
-            var metrics = await _metricsRepository.GetByStockIdAsync(stockId, cancellationToken);
-
-            // Activity gate: CoreActivityCompliant == false always wins.
-            if (metrics?.CoreActivityCompliant == false)
-            {
-                if (compliance.Status != ShariahStatus.NonCompliant)
-                {
-                    compliance.Status = ShariahStatus.NonCompliant;
-                    compliance.UpdatedAt = now;
-                    _complianceRepository.Update(compliance);
+                    if (!member) continue; // removed non-member with no row: nothing to store
+                    compliance = new ShariahCompliance
+                    {
+                        StockId = stockId,
+                        Status = ShariahStatus.Pending,
+                        Pct = null,
+                        Note = null,
+                        HasShariahBoard = false,
+                        ViaScholarsOnly = false,
+                        VerdictDetailsJson = null,
+                        HalalStatus = null,
+                        VerdictSource = null,
+                        LastCheckedAt = now,
+                        UpdatedAt = now
+                    };
+                    isNewRow = true;
                 }
-                continue;
-            }
 
-            // EGX33 membership → Compliant (mirrors "any board compliant" rule).
-            if (compliance.Status != ShariahStatus.Compliant)
+                if (compliance.HalalStatus == null && metrics != null)
+                {
+                    var halal = Common.ShariahVerdictService.ComputeForStock(metrics, compliance);
+                    Common.ShariahVerdictService.TryApplyHalal(compliance, halal);
+                }
+
+                var opinions = await _opinionRepository.GetByStockIdAsync(stockId, cancellationToken);
+                Common.ShariahVerdictService.ApplyOverall(
+                    compliance, metrics?.EffectiveCoreActivityCompliant, opinions, member);
+                if (isNewRow)
+                    await _complianceRepository.AddAsync(compliance, cancellationToken);
+                else
+                    _complianceRepository.Update(compliance);
+            }
+            catch (Exception ex)
             {
-                compliance.Status = ShariahStatus.Compliant;
-                compliance.UpdatedAt = now;
-                _complianceRepository.Update(compliance);
+                Console.WriteLine($"[Verdict] overall recompute failed for stock {stockId} ({ex.Message}); keeping previous stored value.");
             }
         }
     }

@@ -38,11 +38,10 @@ public class RunCombinedScrapeCommandHandler
         CancellationToken cancellationToken)
     {
         var startedAt = DateTime.UtcNow;
+        var jobKey = request.Bucket == ScrapeDataBucket.LiveDaily ? "LiveDaily" : "SlowQuarterly";
 
-        // Overlap guard — two concurrent runs would interleave the atomic
-        // live-table commit (global DELETE + re-INSERT) and deadlock each other,
-        // leaving zero-filled ScrapeRunLog rows behind. Refuse politely instead.
-        var activeSnapshot = _progress.GetSnapshot();
+        // Overlap guard — check if this job or an overlapping run is in progress
+        var activeSnapshot = _progress.GetSnapshot(jobKey);
         if (activeSnapshot.Status is ScrapeRunStatus.Running or ScrapeRunStatus.Committing)
         {
             var busyMsg = $"Another scrape run ('{activeSnapshot.TriggeredBy}') is already in progress " +
@@ -101,7 +100,7 @@ public class RunCombinedScrapeCommandHandler
         var staleTickers = new List<string>();
 
         // Initialise the live progress tracker so polling starts immediately.
-        _progress.StartRun(request.TriggeredBy, total);
+        _progress.StartRun(jobKey, request.TriggeredBy, total);
 
         try
         {
@@ -115,7 +114,7 @@ public class RunCombinedScrapeCommandHandler
         {
             if (cancellationToken.IsCancellationRequested) break;
 
-            _progress.SetCurrentTicker(stock.Ticker);
+            _progress.SetCurrentItem(jobKey, stock.Ticker);
 
             bool stockSucceeded = false;
             try
@@ -170,7 +169,7 @@ public class RunCombinedScrapeCommandHandler
             }
             finally
             {
-                _progress.RecordStockCompleted(stock.Ticker, stockSucceeded);
+                _progress.RecordItemCompleted(jobKey, stock.Ticker, stockSucceeded);
             }
         }
 
@@ -229,7 +228,7 @@ public class RunCombinedScrapeCommandHandler
 
         // ── Phase 4: atomic commit ── signal Committing status, then write ────
 
-        _progress.SetCommitting();
+        _progress.SetCommitting(jobKey);
 
         if (snapshots.Count > 0)
         {
@@ -245,7 +244,7 @@ public class RunCombinedScrapeCommandHandler
                 }
                 _logger.LogInformation(
                     "Batch commit succeeded. {Count} stocks written atomically.", snapshots.Count);
-                _progress.SetCompleted();
+                _progress.SetCompleted(jobKey);
             }
             catch (Exception ex)
             {
@@ -259,12 +258,12 @@ public class RunCombinedScrapeCommandHandler
                 fatalError = $"Commit failed: {ex.Message}";
                 succeeded = 0;
                 failed = total;
-                _progress.SetFailed(ex.Message);
+                _progress.SetFailed(jobKey, ex.Message);
             }
         }
         else
         {
-            _progress.SetFailed("No stocks were successfully scraped.");
+            _progress.SetFailed(jobKey, "No stocks were successfully scraped.");
             _logger.LogWarning("No stocks were successfully scraped — skipping commit. Live tables unchanged.");
         }
         } // ── end outer try ──
@@ -276,7 +275,7 @@ public class RunCombinedScrapeCommandHandler
             _logger.LogError(fatalEx,
                 "Scrape run '{TriggeredBy}' crashed unexpectedly — persisting partial results.",
                 request.TriggeredBy);
-            _progress.SetFailed(fatalEx.Message);
+            _progress.SetFailed(jobKey, fatalEx.Message);
         }
         finally
         {

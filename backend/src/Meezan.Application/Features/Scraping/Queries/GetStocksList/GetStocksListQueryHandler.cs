@@ -69,7 +69,9 @@ public class GetStocksListQueryHandler
             CategoryEn:      p.CategoryEn,
             SpHaramEarningPercentage: p.SpHaramEarningPercentage,
             LoansPercentage: p.LoansPercentage,
-            PurificationPct: p.PurificationPct
+            PurificationPct: p.PurificationPct,
+            ViaScholarsOnly: p.ViaScholarsOnly,
+            VerdictDetailsJson: p.VerdictDetailsJson
         )).ToList();
 
         return PagedResult<StockListItemDto>.Create(items, page, pageSize, totalCount);

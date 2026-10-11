@@ -27,6 +27,20 @@ public class ShariahComplianceConfiguration : IEntityTypeConfiguration<ShariahCo
             .IsRequired()
             .HasDefaultValue(false);
 
+        builder.Property(e => e.ViaScholarsOnly)
+            .IsRequired()
+            .HasDefaultValue(false);
+
+        builder.Property(e => e.HalalStatus)
+            .HasConversion<string>()
+            .HasMaxLength(50);
+
+        builder.Property(e => e.VerdictSource)
+            .HasMaxLength(50);
+
+        builder.Property(e => e.VerdictDetailsJson)
+            .HasColumnType("nvarchar(max)");
+
         builder.Property(e => e.LastCheckedAt)
             .IsRequired();
 

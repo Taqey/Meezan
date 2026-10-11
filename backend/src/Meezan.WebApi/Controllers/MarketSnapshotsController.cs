@@ -34,9 +34,17 @@ public class MarketSnapshotsController : ControllerBase
     /// </summary>
     [HttpPost("refresh")]
     [ProducesResponseType(typeof(RefreshMarketSnapshotsResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Refresh(CancellationToken cancellationToken)
     {
-        var result = await _sender.Send(new RefreshMarketSnapshotsCommand(), cancellationToken);
-        return Ok(result);
+        try
+        {
+            var result = await _sender.Send(new RefreshMarketSnapshotsCommand(), cancellationToken);
+            return Ok(result);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(new { message = ex.Message });
+        }
     }
 }
