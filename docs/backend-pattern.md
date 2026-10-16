@@ -16,10 +16,11 @@ This document serves as the **single source of truth** for all ongoing and subse
 - **Forbidden in Controllers**:
   - NO ApplicationDbContext or database types.
   - NO Entity Framework Core namespaces or LINQ queries (.ToListAsync(), .Where(), etc.).
-  - NO Repository or IUnitOfWork injections.
+  - NO Repository, IUnitOfWork, or Application service (e.g. IJobSettingsService) injections — ISender only.
   - NO Business rules, domain calculations, or orchestration loops.
   - NO Service locator (HttpContext.RequestServices).
   - NO inline DTO declarations.
+- **Route+body endpoints**: keep [FromRoute]/[FromBody] binding in the action, map to a Command in one line (e.g. `new UpdateJobSettingCommand(jobKey, req.Enabled)`); body DTO lives in its OWN Application file. Single-row upserts use ONE SaveChangesAsync and do NOT need ITransactionalCommand.
 
 ### 1.2 Application Layer (Meezan.Application)
 - **Location**: Use-cases live under Features/<Feature>/Commands/<UseCase>/ or Features/<Feature>/Queries/<UseCase>/.
@@ -115,7 +116,7 @@ public class CreateSectorCommandValidator : AbstractValidator<CreateSectorComman
     public CreateSectorCommandValidator()
     {
         RuleFor(x => x.NameAr)
-            .NotEmpty().WithMessage(Arabic name is required.)
+            .NotEmpty().WithMessage("Arabic name is required.")
             .MaximumLength(100);
     }
 }
@@ -146,7 +147,7 @@ public class CreateSectorCommandHandler : IRequestHandler<CreateSectorCommand, S
         var existing = await _sectorRepository.GetByNameArAsync(request.NameAr, cancellationToken);
         if (existing != null)
         {
-            throw new ConflictException(Sector already exists.);
+            throw new ConflictException("Sector already exists.");
         }
 
         var sector = new Sector
@@ -214,9 +215,9 @@ public class CreateSectorTests : IClassFixture<TestWebApplicationFactory>
     public async Task CreateSector_WithEmptyName_Returns400()
     {
         var client = _factory.CreateClient();
-        var response = await client.PostAsJsonAsync(/api/sectors, new CreateSectorCommand(", Tech));
+        var response = await client.PostAsJsonAsync("/api/sectors", new CreateSectorCommand("", "Tech"));
 
- Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
  }
 }
 `

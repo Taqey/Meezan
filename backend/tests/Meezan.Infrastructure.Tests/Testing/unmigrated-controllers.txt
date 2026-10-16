@@ -8,7 +8,6 @@ AdminFundTypesController
 AdminMarketDataController
 AdminStocksManagementController
 FundsController
-JobSettingsController
 RemovalCandidatesController
 ScrapingController
 ShariahController

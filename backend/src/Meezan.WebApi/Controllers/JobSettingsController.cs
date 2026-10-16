@@ -1,17 +1,21 @@
-using Meezan.Application.Common.Interfaces;
+using MediatR;
+using Meezan.Application.Features.JobSettings.Commands.UpdateJobSetting;
+using Meezan.Application.Features.JobSettings.Queries.GetJobSettings;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Meezan.WebApi.Controllers;
 
 [ApiController]
 [Route("api/job-settings")]
+[Authorize]
 public class JobSettingsController : ControllerBase
 {
-    private readonly IJobSettingsService _jobSettingsService;
+    private readonly ISender _sender;
 
-    public JobSettingsController(IJobSettingsService jobSettingsService)
+    public JobSettingsController(ISender sender)
     {
-        _jobSettingsService = jobSettingsService;
+        _sender = sender;
     }
 
     /// <summary>
@@ -21,25 +25,21 @@ public class JobSettingsController : ControllerBase
     [ProducesResponseType(typeof(Dictionary<string, bool>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll(CancellationToken ct)
     {
-        var settings = await _jobSettingsService.GetAllAsync(ct);
-        var dict = settings.ToDictionary(s => s.JobKey, s => s.Enabled);
-        return Ok(dict);
+        var result = await _sender.Send(new GetJobSettingsQuery(), ct);
+        return Ok(result);
     }
 
     /// <summary>
     /// Updates the enabled state of a job and persists it to the database.
     /// </summary>
     [HttpPut("{jobKey}")]
-    [ProducesResponseType(typeof(JobSettingResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UpdateJobSettingResultDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> UpdateSetting(
         [FromRoute] string jobKey,
         [FromBody] UpdateJobSettingRequest req,
         CancellationToken ct)
     {
-        var updated = await _jobSettingsService.SetEnabledAsync(jobKey, req.Enabled, ct);
-        return Ok(new JobSettingResponse(updated.JobKey, updated.Enabled));
+        var result = await _sender.Send(new UpdateJobSettingCommand(jobKey, req.Enabled), ct);
+        return Ok(result);
     }
 }
-
-public record UpdateJobSettingRequest(bool Enabled);
-public record JobSettingResponse(string JobKey, bool Enabled);
