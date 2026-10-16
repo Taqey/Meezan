@@ -1,0 +1,109 @@
+using System.Text.Json;
+using System.Text.Json.Nodes;
+
+namespace Meezan.Infrastructure.Tests.Testing;
+
+public class EndpointSnapshot
+{
+    public int StatusCode { get; set; }
+    public JsonNode? BodyShape { get; set; }
+
+    public static EndpointSnapshot FromResponse(int statusCode, string content)
+    {
+        JsonNode? shape = null;
+        if (!string.IsNullOrWhiteSpace(content))
+        {
+            try
+            {
+                var parsed = JsonNode.Parse(content);
+                shape = NormalizeShape(parsed);
+            }
+            catch
+            {
+                shape = JsonValue.Create("NON_JSON_CONTENT");
+            }
+        }
+
+        return new EndpointSnapshot
+        {
+            StatusCode = statusCode,
+            BodyShape = shape
+        };
+    }
+
+    private static JsonNode? NormalizeShape(JsonNode? node)
+    {
+        if (node == null) return null;
+
+        if (node is JsonObject obj)
+        {
+            var result = new JsonObject();
+            foreach (var kvp in obj)
+            {
+                // We keep property names and casing, but normalize types and specific string values if needed
+                result[kvp.Key] = NormalizeShape(kvp.Value);
+            }
+            return result;
+        }
+
+        if (node is JsonArray arr)
+        {
+            var result = new JsonArray();
+            if (arr.Count > 0)
+            {
+                // Normalize to the shape of the elements
+                result.Add(NormalizeShape(arr[0]));
+            }
+            return result;
+        }
+
+        if (node is JsonValue val)
+        {
+            if (val.TryGetValue<string>(out var str))
+            {
+                // Keep specific error/status titles or messages, otherwise normalize
+                return JsonValue.Create($"string:{str}");
+            }
+            if (val.TryGetValue<long>(out _) || val.TryGetValue<int>(out _))
+            {
+                return JsonValue.Create("number:int");
+            }
+            if (val.TryGetValue<decimal>(out _) || val.TryGetValue<double>(out _))
+            {
+                return JsonValue.Create("number:decimal");
+            }
+            if (val.TryGetValue<bool>(out var b))
+            {
+                return JsonValue.Create($"bool:{b}");
+            }
+        }
+
+        return JsonValue.Create("value");
+    }
+}
+
+public static class SnapshotAssert
+{
+    private static readonly JsonSerializerOptions Options = new() { WriteIndented = true };
+
+    public static void MatchesStoredSnapshot(string snapshotName, int statusCode, string responseContent, string snapshotDir = "Snapshots")
+    {
+        var current = EndpointSnapshot.FromResponse(statusCode, responseContent);
+        var currentJson = JsonSerializer.Serialize(current, Options);
+
+        var dir = Path.Combine(AppContext.BaseDirectory, snapshotDir);
+        Directory.CreateDirectory(dir);
+        var path = Path.Combine(dir, $"{snapshotName}.json");
+
+        if (!File.Exists(path))
+        {
+            File.WriteAllText(path, currentJson);
+            return;
+        }
+
+        var expectedJson = File.ReadAllText(path);
+        Xunit.Assert.Equal(NormalizeLineEndings(expectedJson), NormalizeLineEndings(currentJson));
+    }
+
+    private static string NormalizeLineEndings(string s) => s.Replace("\r\n", "\n").Trim();
+}

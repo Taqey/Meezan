@@ -17,7 +17,6 @@ public class UploadIndexFileCommandHandler : IRequestHandler<UploadIndexFileComm
     private readonly IStockShariahMetricsRepository _metricsRepository;
     private readonly IShariahSourceOpinionRepository _opinionRepository;
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IValidator<UploadIndexFileCommand> _validator;
 
     public UploadIndexFileCommandHandler(
         IIndexRepository indexRepository,
@@ -27,8 +26,7 @@ public class UploadIndexFileCommandHandler : IRequestHandler<UploadIndexFileComm
         IShariahComplianceRepository complianceRepository,
         IStockShariahMetricsRepository metricsRepository,
         IShariahSourceOpinionRepository opinionRepository,
-        IUnitOfWork unitOfWork,
-        IValidator<UploadIndexFileCommand> validator)
+        IUnitOfWork unitOfWork)
     {
         _indexRepository = indexRepository;
         _stockRepository = stockRepository;
@@ -38,19 +36,11 @@ public class UploadIndexFileCommandHandler : IRequestHandler<UploadIndexFileComm
         _metricsRepository = metricsRepository;
         _opinionRepository = opinionRepository;
         _unitOfWork = unitOfWork;
-        _validator = validator;
     }
 
     public async Task<UploadIndexFileResultDto> Handle(UploadIndexFileCommand request, CancellationToken cancellationToken)
     {
-        // 1. FluentValidation check
-        var validationResult = await _validator.ValidateAsync(request, cancellationToken);
-        if (!validationResult.IsValid)
-        {
-            throw new ValidationException(validationResult.Errors);
-        }
-
-        // 2. Validate Index exists
+        // 1. Validate Index exists
         var index = await _indexRepository.GetByCodeAsync(request.IndexCode, cancellationToken);
         if (index == null)
         {
