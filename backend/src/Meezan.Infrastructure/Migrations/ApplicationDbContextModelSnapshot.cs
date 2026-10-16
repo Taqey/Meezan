@@ -22,6 +22,1258 @@ namespace Meezan.Infrastructure.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("Meezan.Domain.Entities.Fund", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AssetManagerCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<long?>("AssetManagerId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("AssetManagerName")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<string>("AssetManagerNameEn")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<decimal?>("Aum")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<decimal?>("CurrentPrice")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal?>("DailyChange")
+                        .HasPrecision(10, 4)
+                        .HasColumnType("decimal(10,4)");
+
+                    b.Property<string>("DescriptionAr")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("DescriptionEn")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("InceptionDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("InvestmentStrategy")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsFeatured")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsIslamic")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastSyncedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("LocalLogoPath")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("LogoUrl")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<decimal?>("ManagementFee")
+                        .HasPrecision(10, 4)
+                        .HasColumnType("decimal(10,4)");
+
+                    b.Property<string>("MinimumInvestment")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("NameAr")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<string>("NameEn")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<string>("ProspectusUrl")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("PublicId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<decimal?>("Return1M")
+                        .HasPrecision(10, 4)
+                        .HasColumnType("decimal(10,4)");
+
+                    b.Property<decimal?>("Return1Y")
+                        .HasPrecision(10, 4)
+                        .HasColumnType("decimal(10,4)");
+
+                    b.Property<decimal?>("Return3M")
+                        .HasPrecision(10, 4)
+                        .HasColumnType("decimal(10,4)");
+
+                    b.Property<decimal?>("Return3Y")
+                        .HasPrecision(10, 4)
+                        .HasColumnType("decimal(10,4)");
+
+                    b.Property<decimal?>("Return6M")
+                        .HasPrecision(10, 4)
+                        .HasColumnType("decimal(10,4)");
+
+                    b.Property<int>("RiskLevel")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("SndukCreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long>("SndukId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("SndukUpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal?>("TotalScore")
+                        .HasPrecision(10, 4)
+                        .HasColumnType("decimal(10,4)");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TypeNameAr")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("TypeNameEn")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.HasIndex("SndukId")
+                        .IsUnique();
+
+                    b.ToTable("Funds", (string)null);
+                });
+
+            modelBuilder.Entity("Meezan.Domain.Entities.FundAnalysis", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal?>("Alpha")
+                        .HasPrecision(10, 4)
+                        .HasColumnType("decimal(10,4)");
+
+                    b.Property<decimal?>("Cagr")
+                        .HasPrecision(10, 4)
+                        .HasColumnType("decimal(10,4)");
+
+                    b.Property<DateTime>("CalculatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal?>("Consistency")
+                        .HasPrecision(10, 4)
+                        .HasColumnType("decimal(10,4)");
+
+                    b.Property<string>("CostExplanationAr")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("CostExplanationEn")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<decimal?>("CostScore")
+                        .HasPrecision(10, 4)
+                        .HasColumnType("decimal(10,4)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DiversificationExplanationAr")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("DiversificationExplanationEn")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<decimal?>("DiversificationScore")
+                        .HasPrecision(10, 4)
+                        .HasColumnType("decimal(10,4)");
+
+                    b.Property<int>("FundId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal?>("MaxDrawdown")
+                        .HasPrecision(10, 4)
+                        .HasColumnType("decimal(10,4)");
+
+                    b.Property<string>("PerformanceExplanationAr")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("PerformanceExplanationEn")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<decimal?>("PerformanceScore")
+                        .HasPrecision(10, 4)
+                        .HasColumnType("decimal(10,4)");
+
+                    b.Property<string>("RiskExplanationAr")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("RiskExplanationEn")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<decimal?>("RiskScore")
+                        .HasPrecision(10, 4)
+                        .HasColumnType("decimal(10,4)");
+
+                    b.Property<decimal?>("SharpeRatio")
+                        .HasPrecision(10, 4)
+                        .HasColumnType("decimal(10,4)");
+
+                    b.Property<string>("StabilityExplanationAr")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("StabilityExplanationEn")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<decimal?>("StabilityScore")
+                        .HasPrecision(10, 4)
+                        .HasColumnType("decimal(10,4)");
+
+                    b.Property<decimal?>("TotalScore")
+                        .HasPrecision(10, 4)
+                        .HasColumnType("decimal(10,4)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal?>("Volatility")
+                        .HasPrecision(10, 4)
+                        .HasColumnType("decimal(10,4)");
+
+                    b.Property<string>("WeightsJson")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FundId")
+                        .IsUnique();
+
+                    b.ToTable("FundAnalyses", (string)null);
+                });
+
+            modelBuilder.Entity("Meezan.Domain.Entities.FundCategory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AutoRuleJson")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("Color")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DeletedReason")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Icon")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<bool>("IsAutoDerived")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsIndexTracking")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<bool>("IsVisible")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("NameAr")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("NameEn")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Slug")
+                        .IsUnique();
+
+                    b.ToTable("FundCategories", (string)null);
+                });
+
+            modelBuilder.Entity("Meezan.Domain.Entities.FundCategoryChangeLog", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Action")
+                        .HasColumnType("int");
+
+                    b.Property<int>("CategoryId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("FundId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("PerformedBy")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CategoryId");
+
+                    b.HasIndex("FundId");
+
+                    b.ToTable("FundCategoryChangeLogs", (string)null);
+                });
+
+            modelBuilder.Entity("Meezan.Domain.Entities.FundCategoryOverride", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Action")
+                        .HasColumnType("int");
+
+                    b.Property<int>("CategoryId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("FundId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CategoryId");
+
+                    b.HasIndex("FundId", "CategoryId")
+                        .IsUnique();
+
+                    b.ToTable("FundCategoryOverrides", (string)null);
+                });
+
+            modelBuilder.Entity("Meezan.Domain.Entities.FundClassificationBackup", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("BackedUpAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("BackedUpBy")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("FundCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<int>("FundId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("FundNameAr")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<string>("FundNameEn")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<string>("MigrationReason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("NewPath")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("OldCategorySlugs")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("OldManualExcludeSlugs")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("OldManualIncludeSlugs")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<int>("OldType")
+                        .HasColumnType("int");
+
+                    b.Property<string>("OldTypeOverrideSlug")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("OldTypeSlug")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FundCode");
+
+                    b.HasIndex("FundId")
+                        .IsUnique();
+
+                    b.ToTable("FundClassificationBackups", (string)null);
+                });
+
+            modelBuilder.Entity("Meezan.Domain.Entities.FundClassificationChangeLog", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Action")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("FundId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("NodeId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("PerformedBy")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("FundId");
+
+                    b.HasIndex("NodeId");
+
+                    b.ToTable("FundClassificationChangeLogs", (string)null);
+                });
+
+            modelBuilder.Entity("Meezan.Domain.Entities.FundClassificationNode", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("AutoClassificationEnabled")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("AutoRuleJson")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("ChildrenLabelAr")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("ChildrenLabelEn")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Color")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DeletedReason")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Icon")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsVisible")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("Level")
+                        .HasColumnType("int");
+
+                    b.Property<string>("NameAr")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("NameEn")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int?>("ParentId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("RequiresChildSelection")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Level");
+
+                    b.HasIndex("Slug")
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.HasIndex("ParentId", "DisplayOrder");
+
+                    b.ToTable("FundClassificationNodes", (string)null);
+                });
+
+            modelBuilder.Entity("Meezan.Domain.Entities.FundClassificationOverride", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Action")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("FundId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("NodeId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NodeId");
+
+                    b.HasIndex("FundId", "NodeId")
+                        .IsUnique();
+
+                    b.ToTable("FundClassificationOverrides", (string)null);
+                });
+
+            modelBuilder.Entity("Meezan.Domain.Entities.FundPriceHistory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal?>("Change")
+                        .HasPrecision(10, 4)
+                        .HasColumnType("decimal(10,4)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("FundId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal?>("Performance")
+                        .HasPrecision(10, 4)
+                        .HasColumnType("decimal(10,4)");
+
+                    b.Property<decimal>("Price")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FundId", "Date")
+                        .IsUnique();
+
+                    b.ToTable("FundPriceHistory", (string)null);
+                });
+
+            modelBuilder.Entity("Meezan.Domain.Entities.FundSimilar", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("FundId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SimilarFundId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SimilarFundId");
+
+                    b.HasIndex("FundId", "SimilarFundId")
+                        .IsUnique();
+
+                    b.ToTable("FundSimilars", (string)null);
+                });
+
+            modelBuilder.Entity("Meezan.Domain.Entities.FundSyncLog", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("DurationSeconds")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ErrorSummary")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<int>("FailedFunds")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("FinishedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("RunAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("SkippedFunds")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TotalFunds")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TriggeredBy")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<int>("UpdatedFunds")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("FundSyncLogs", (string)null);
+                });
+
+            modelBuilder.Entity("Meezan.Domain.Entities.FundSyncLogDetail", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("AttemptedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("FundCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<int>("FundId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("FundSyncLogId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FundSyncLogId");
+
+                    b.ToTable("FundSyncLogDetails", (string)null);
+                });
+
+            modelBuilder.Entity("Meezan.Domain.Entities.FundSyncSettings", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("AutoClassificationEnabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<bool>("AutoIndexFundTypeEnabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("MaxRetries")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("PreventOverlap")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("RequestDelaySeconds")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RetryBackoffSeconds")
+                        .HasColumnType("int");
+
+                    b.Property<TimeOnly>("RunTimeCairo")
+                        .HasColumnType("time");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("FundSyncSettings", (string)null);
+                });
+
+            modelBuilder.Entity("Meezan.Domain.Entities.FundTypeChangeLog", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Action")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("FundId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("FundTypeDefinitionId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("PerformedBy")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("FundId");
+
+                    b.HasIndex("FundTypeDefinitionId");
+
+                    b.ToTable("FundTypeChangeLogs", (string)null);
+                });
+
+            modelBuilder.Entity("Meezan.Domain.Entities.FundTypeDefinition", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Color")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DeletedReason")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Icon")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsVisible")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("NameAr")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("NameEn")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DisplayOrder");
+
+                    b.HasIndex("Slug")
+                        .IsUnique();
+
+                    b.ToTable("FundTypeDefinitions", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Color = "",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedBy = "Seed",
+                            DeletedReason = "",
+                            DisplayOrder = 1,
+                            Icon = "",
+                            IsDeleted = false,
+                            IsVisible = true,
+                            NameAr = "صندوق أسهم",
+                            NameEn = "Equity Fund",
+                            Slug = "equity",
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            UpdatedBy = "Seed"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Color = "",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedBy = "Seed",
+                            DeletedReason = "",
+                            DisplayOrder = 2,
+                            Icon = "",
+                            IsDeleted = false,
+                            IsVisible = true,
+                            NameAr = "صندوق دخل ثابت",
+                            NameEn = "Fixed Income Fund",
+                            Slug = "fixed_income",
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            UpdatedBy = "Seed"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Color = "",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedBy = "Seed",
+                            DeletedReason = "",
+                            DisplayOrder = 3,
+                            Icon = "",
+                            IsDeleted = false,
+                            IsVisible = true,
+                            NameAr = "صندوق دخل ثابت بالدولار",
+                            NameEn = "USD Fixed Income Fund",
+                            Slug = "fixed_income_usd",
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            UpdatedBy = "Seed"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Color = "",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedBy = "Seed",
+                            DeletedReason = "",
+                            DisplayOrder = 4,
+                            Icon = "",
+                            IsDeleted = false,
+                            IsVisible = true,
+                            NameAr = "صندوق متوازن",
+                            NameEn = "Balanced Fund",
+                            Slug = "balanced",
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            UpdatedBy = "Seed"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Color = "",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedBy = "Seed",
+                            DeletedReason = "",
+                            DisplayOrder = 5,
+                            Icon = "",
+                            IsDeleted = false,
+                            IsVisible = true,
+                            NameAr = "صندوق سوق نقدي",
+                            NameEn = "Money Market Fund",
+                            Slug = "money_market",
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            UpdatedBy = "Seed"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Color = "",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedBy = "Seed",
+                            DeletedReason = "",
+                            DisplayOrder = 6,
+                            Icon = "",
+                            IsDeleted = false,
+                            IsVisible = true,
+                            NameAr = "صندوق مؤشر",
+                            NameEn = "Index Fund",
+                            Slug = "index",
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            UpdatedBy = "Seed"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Color = "",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedBy = "Seed",
+                            DeletedReason = "",
+                            DisplayOrder = 7,
+                            Icon = "",
+                            IsDeleted = false,
+                            IsVisible = true,
+                            NameAr = "صندوق ذهب",
+                            NameEn = "Gold Fund",
+                            Slug = "gold",
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            UpdatedBy = "Seed"
+                        },
+                        new
+                        {
+                            Id = 8,
+                            Color = "",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedBy = "Seed",
+                            DeletedReason = "",
+                            DisplayOrder = 8,
+                            Icon = "",
+                            IsDeleted = false,
+                            IsVisible = true,
+                            NameAr = "صندوق سلع",
+                            NameEn = "Commodities Fund",
+                            Slug = "commodities",
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            UpdatedBy = "Seed"
+                        },
+                        new
+                        {
+                            Id = 9,
+                            Color = "",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedBy = "Seed",
+                            DeletedReason = "",
+                            DisplayOrder = 9,
+                            Icon = "",
+                            IsDeleted = false,
+                            IsVisible = true,
+                            NameAr = "صندوق الحفاظ على رأس المال",
+                            NameEn = "Capital Preservation Fund",
+                            Slug = "capital_preservation",
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            UpdatedBy = "Seed"
+                        },
+                        new
+                        {
+                            Id = 10,
+                            Color = "",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedBy = "Seed",
+                            DeletedReason = "",
+                            DisplayOrder = 99,
+                            Icon = "",
+                            IsDeleted = false,
+                            IsVisible = true,
+                            NameAr = "غير محدد",
+                            NameEn = "Unclassified",
+                            Slug = "unknown",
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            UpdatedBy = "Seed"
+                        });
+                });
+
+            modelBuilder.Entity("Meezan.Domain.Entities.FundTypeOverride", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("FundId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("FundTypeDefinitionId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FundId")
+                        .IsUnique();
+
+                    b.HasIndex("FundTypeDefinitionId");
+
+                    b.ToTable("FundTypeOverrides", (string)null);
+                });
+
             modelBuilder.Entity("Meezan.Domain.Entities.Index", b =>
                 {
                     b.Property<int>("Id")
@@ -819,6 +2071,177 @@ namespace Meezan.Infrastructure.Migrations
                     b.ToTable("UploadHistories", (string)null);
                 });
 
+            modelBuilder.Entity("Meezan.Domain.Entities.FundAnalysis", b =>
+                {
+                    b.HasOne("Meezan.Domain.Entities.Fund", "Fund")
+                        .WithOne("Analysis")
+                        .HasForeignKey("Meezan.Domain.Entities.FundAnalysis", "FundId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Fund");
+                });
+
+            modelBuilder.Entity("Meezan.Domain.Entities.FundCategoryChangeLog", b =>
+                {
+                    b.HasOne("Meezan.Domain.Entities.FundCategory", "Category")
+                        .WithMany()
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Meezan.Domain.Entities.Fund", "Fund")
+                        .WithMany()
+                        .HasForeignKey("FundId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Category");
+
+                    b.Navigation("Fund");
+                });
+
+            modelBuilder.Entity("Meezan.Domain.Entities.FundCategoryOverride", b =>
+                {
+                    b.HasOne("Meezan.Domain.Entities.FundCategory", "Category")
+                        .WithMany("Overrides")
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Meezan.Domain.Entities.Fund", "Fund")
+                        .WithMany("CategoryOverrides")
+                        .HasForeignKey("FundId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Category");
+
+                    b.Navigation("Fund");
+                });
+
+            modelBuilder.Entity("Meezan.Domain.Entities.FundClassificationChangeLog", b =>
+                {
+                    b.HasOne("Meezan.Domain.Entities.Fund", "Fund")
+                        .WithMany()
+                        .HasForeignKey("FundId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Meezan.Domain.Entities.FundClassificationNode", "Node")
+                        .WithMany("ChangeLogs")
+                        .HasForeignKey("NodeId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("Fund");
+
+                    b.Navigation("Node");
+                });
+
+            modelBuilder.Entity("Meezan.Domain.Entities.FundClassificationNode", b =>
+                {
+                    b.HasOne("Meezan.Domain.Entities.FundClassificationNode", "Parent")
+                        .WithMany("Children")
+                        .HasForeignKey("ParentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Parent");
+                });
+
+            modelBuilder.Entity("Meezan.Domain.Entities.FundClassificationOverride", b =>
+                {
+                    b.HasOne("Meezan.Domain.Entities.Fund", "Fund")
+                        .WithMany()
+                        .HasForeignKey("FundId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Meezan.Domain.Entities.FundClassificationNode", "Node")
+                        .WithMany("Overrides")
+                        .HasForeignKey("NodeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Fund");
+
+                    b.Navigation("Node");
+                });
+
+            modelBuilder.Entity("Meezan.Domain.Entities.FundPriceHistory", b =>
+                {
+                    b.HasOne("Meezan.Domain.Entities.Fund", "Fund")
+                        .WithMany("PriceHistory")
+                        .HasForeignKey("FundId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Fund");
+                });
+
+            modelBuilder.Entity("Meezan.Domain.Entities.FundSimilar", b =>
+                {
+                    b.HasOne("Meezan.Domain.Entities.Fund", "Fund")
+                        .WithMany("SimilarFunds")
+                        .HasForeignKey("FundId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Meezan.Domain.Entities.Fund", "SimilarFund")
+                        .WithMany()
+                        .HasForeignKey("SimilarFundId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Fund");
+
+                    b.Navigation("SimilarFund");
+                });
+
+            modelBuilder.Entity("Meezan.Domain.Entities.FundSyncLogDetail", b =>
+                {
+                    b.HasOne("Meezan.Domain.Entities.FundSyncLog", "FundSyncLog")
+                        .WithMany("Details")
+                        .HasForeignKey("FundSyncLogId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("FundSyncLog");
+                });
+
+            modelBuilder.Entity("Meezan.Domain.Entities.FundTypeChangeLog", b =>
+                {
+                    b.HasOne("Meezan.Domain.Entities.Fund", "Fund")
+                        .WithMany()
+                        .HasForeignKey("FundId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Meezan.Domain.Entities.FundTypeDefinition", "Definition")
+                        .WithMany()
+                        .HasForeignKey("FundTypeDefinitionId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Definition");
+
+                    b.Navigation("Fund");
+                });
+
+            modelBuilder.Entity("Meezan.Domain.Entities.FundTypeOverride", b =>
+                {
+                    b.HasOne("Meezan.Domain.Entities.Fund", "Fund")
+                        .WithMany()
+                        .HasForeignKey("FundId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Meezan.Domain.Entities.FundTypeDefinition", "Definition")
+                        .WithMany("Overrides")
+                        .HasForeignKey("FundTypeDefinitionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Definition");
+
+                    b.Navigation("Fund");
+                });
+
             modelBuilder.Entity("Meezan.Domain.Entities.IndexConstituent", b =>
                 {
                     b.HasOne("Meezan.Domain.Entities.Index", "Index")
@@ -934,6 +2357,41 @@ namespace Meezan.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Index");
+                });
+
+            modelBuilder.Entity("Meezan.Domain.Entities.Fund", b =>
+                {
+                    b.Navigation("Analysis");
+
+                    b.Navigation("CategoryOverrides");
+
+                    b.Navigation("PriceHistory");
+
+                    b.Navigation("SimilarFunds");
+                });
+
+            modelBuilder.Entity("Meezan.Domain.Entities.FundCategory", b =>
+                {
+                    b.Navigation("Overrides");
+                });
+
+            modelBuilder.Entity("Meezan.Domain.Entities.FundClassificationNode", b =>
+                {
+                    b.Navigation("ChangeLogs");
+
+                    b.Navigation("Children");
+
+                    b.Navigation("Overrides");
+                });
+
+            modelBuilder.Entity("Meezan.Domain.Entities.FundSyncLog", b =>
+                {
+                    b.Navigation("Details");
+                });
+
+            modelBuilder.Entity("Meezan.Domain.Entities.FundTypeDefinition", b =>
+                {
+                    b.Navigation("Overrides");
                 });
 
             modelBuilder.Entity("Meezan.Domain.Entities.Index", b =>

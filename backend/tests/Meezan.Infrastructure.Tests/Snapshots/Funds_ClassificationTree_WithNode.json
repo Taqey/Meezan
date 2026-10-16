@@ -1,0 +1,19 @@
+{
+  "StatusCode": 200,
+  "BodyShape": [
+    {
+      "id": "number:int",
+      "slug": "string:snap-equity",
+      "nameAr": "string:\u0623\u0633\u0647\u0645",
+      "nameEn": "string:Equity",
+      "level": "number:int",
+      "parentSlug": null,
+      "displayOrder": "number:int",
+      "childrenLabelAr": "string:",
+      "childrenLabelEn": "string:",
+      "directFundCount": "number:int",
+      "totalFundCount": "number:int",
+      "hasAutoRule": "bool:False"
+    }
+  ]
+}

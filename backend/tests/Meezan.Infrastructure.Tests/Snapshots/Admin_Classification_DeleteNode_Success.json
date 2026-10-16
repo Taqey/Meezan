@@ -1,0 +1,8 @@
+{
+  "StatusCode": 200,
+  "BodyShape": {
+    "message": "string:Node deleted",
+    "movedFunds": "number:int",
+    "movedChildren": "number:int"
+  }
+}

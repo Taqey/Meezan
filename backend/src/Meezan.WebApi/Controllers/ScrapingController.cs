@@ -1,12 +1,14 @@
 using MediatR;
 using Meezan.Application.Common.Interfaces;
 using Meezan.Application.Features.Scraping.Commands.RunCombinedScrape;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Meezan.WebApi.Controllers;
 
 [ApiController]
 [Route("api/scraping")]
+[Authorize]
 public class ScrapingController : ControllerBase
 {
     private readonly ISender _sender;

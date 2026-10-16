@@ -1,0 +1,14 @@
+{
+  "StatusCode": 200,
+  "BodyShape": {
+    "node": {
+      "id": "number:int",
+      "slug": "string:equity",
+      "nameAr": "string:\u0623\u0633\u0647\u0645",
+      "nameEn": "string:Equity"
+    },
+    "directFunds": "number:int",
+    "descendantFunds": "number:int",
+    "childNodes": "number:int"
+  }
+}

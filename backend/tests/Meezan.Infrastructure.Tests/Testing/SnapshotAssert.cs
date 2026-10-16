@@ -40,8 +40,16 @@ public class EndpointSnapshot
             var result = new JsonObject();
             foreach (var kvp in obj)
             {
-                // We keep property names and casing, but normalize types and specific string values if needed
-                result[kvp.Key] = NormalizeShape(kvp.Value);
+                // We keep property names and casing, but normalize dynamic trace/request IDs
+                if (kvp.Key.Equals("traceId", StringComparison.OrdinalIgnoreCase) ||
+                    kvp.Key.Equals("requestId", StringComparison.OrdinalIgnoreCase))
+                {
+                    result[kvp.Key] = JsonValue.Create("string:trace-id-normalized");
+                }
+                else
+                {
+                    result[kvp.Key] = NormalizeShape(kvp.Value);
+                }
             }
             return result;
         }
@@ -61,6 +69,10 @@ public class EndpointSnapshot
         {
             if (val.TryGetValue<string>(out var str))
             {
+                if (DateTime.TryParse(str, out _) && (str.Contains('T') || str.Contains('-') && str.Length >= 10))
+                {
+                    return JsonValue.Create("string:date-time-normalized");
+                }
                 // Keep specific error/status titles or messages, otherwise normalize
                 return JsonValue.Create($"string:{str}");
             }

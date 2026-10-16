@@ -1,5 +1,6 @@
 using Meezan.Domain.Entities;
 using Meezan.Infrastructure.Persistence;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,6 +14,7 @@ namespace Meezan.WebApi.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/admin/stocks-management")]
+[Authorize]
 public class AdminStocksManagementController : ControllerBase
 {
     private readonly ApplicationDbContext _context;

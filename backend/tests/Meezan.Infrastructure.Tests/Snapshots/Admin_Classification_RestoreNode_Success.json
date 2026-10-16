@@ -1,0 +1,29 @@
+{
+  "StatusCode": 200,
+  "BodyShape": {
+    "id": "number:int",
+    "parentId": "number:int",
+    "level": "number:int",
+    "slug": "string:active",
+    "nameAr": "string:\u0646\u0634\u0637",
+    "nameEn": "string:Active",
+    "icon": "string:",
+    "color": "string:",
+    "displayOrder": "number:int",
+    "isVisible": "bool:True",
+    "isDeleted": "bool:False",
+    "deletedAt": null,
+    "deletedReason": "string:",
+    "requiresChildSelection": "bool:False",
+    "childrenLabelAr": "string:",
+    "childrenLabelEn": "string:",
+    "autoRuleJson": "string:",
+    "autoClassificationEnabled": "bool:True",
+    "createdAt": "string:date-time-normalized",
+    "updatedAt": "string:date-time-normalized",
+    "createdBy": "string:admin",
+    "updatedBy": "string:admin",
+    "directCount": "number:int",
+    "totalCount": "number:int"
+  }
+}

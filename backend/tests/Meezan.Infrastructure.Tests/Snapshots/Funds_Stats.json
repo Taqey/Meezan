@@ -1,0 +1,10 @@
+{
+  "StatusCode": 200,
+  "BodyShape": {
+    "totalCount": "number:int",
+    "islamicCount": "number:int",
+    "totalAum": "number:int",
+    "bestDailyChange": null,
+    "bestDailyChangeCode": null
+  }
+}

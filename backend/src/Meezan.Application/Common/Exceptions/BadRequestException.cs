@@ -5,7 +5,7 @@ namespace Meezan.Application.Common.Exceptions;
 public class BadRequestException : ApplicationExceptionBase
 {
     public BadRequestException(string message)
-        : base(HttpStatusCode.BadRequest, message, new { status = 400, title = "Invalid Request", message })
+        : base(HttpStatusCode.BadRequest, message, new { message })
     {
     }
 

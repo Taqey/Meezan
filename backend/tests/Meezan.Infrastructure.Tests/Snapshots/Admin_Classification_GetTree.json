@@ -1,0 +1,31 @@
+{
+  "StatusCode": 200,
+  "BodyShape": [
+    {
+      "id": "number:int",
+      "parentId": null,
+      "level": "number:int",
+      "slug": "string:equity",
+      "nameAr": "string:\u0623\u0633\u0647\u0645",
+      "nameEn": "string:Equity",
+      "icon": "string:",
+      "color": "string:",
+      "displayOrder": "number:int",
+      "isVisible": "bool:True",
+      "isDeleted": "bool:False",
+      "deletedAt": null,
+      "deletedReason": "string:",
+      "requiresChildSelection": "bool:True",
+      "childrenLabelAr": "string:\u0627\u0644\u062A\u0635\u0646\u064A\u0641 \u0627\u0644\u0641\u0631\u0639\u064A",
+      "childrenLabelEn": "string:Sub-classification",
+      "autoRuleJson": "string:",
+      "autoClassificationEnabled": "bool:True",
+      "createdAt": "string:date-time-normalized",
+      "updatedAt": "string:date-time-normalized",
+      "createdBy": "string:admin",
+      "updatedBy": "string:admin",
+      "directCount": "number:int",
+      "totalCount": "number:int"
+    }
+  ]
+}

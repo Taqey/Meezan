@@ -1,0 +1,9 @@
+{
+  "StatusCode": 200,
+  "BodyShape": {
+    "moved": "number:int",
+    "reset": "number:int",
+    "failed": "number:int",
+    "errors": []
+  }
+}

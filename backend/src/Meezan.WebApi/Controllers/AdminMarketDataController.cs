@@ -1,8 +1,9 @@
-using Meezan.Application.Common;
+﻿using Meezan.Application.Common;
 using Meezan.Application.Features.Scraping.Services;
 using Meezan.Domain.Entities;
 using Meezan.Domain.Enums;
 using Meezan.Infrastructure.Persistence;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,6 +11,7 @@ namespace Meezan.WebApi.Controllers;
 
 [ApiController]
 [Route("api/admin/market-data")]
+[Authorize]
 public class AdminMarketDataController : ControllerBase
 {
     private readonly ApplicationDbContext _context;

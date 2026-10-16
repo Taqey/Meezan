@@ -1,4 +1,4 @@
-﻿using Meezan.Application.Common.Interfaces;
+using Meezan.Application.Common.Interfaces;
 using Meezan.Infrastructure.Persistence;
 using Meezan.Infrastructure.Persistence.Repositories;
 using Meezan.Infrastructure.Services;
@@ -89,6 +89,7 @@ public static class DependencyInjection
         services.AddScoped<IFundClassificationChangeLogRepository, FundClassificationChangeLogRepository>();
         services.AddScoped<IFundClassificationBackupRepository, FundClassificationBackupRepository>();
         services.AddScoped<IFundClassificationService, FundClassificationService>();
+        services.AddScoped<IFundReadQuery, FundReadQuery>();
 
         // SNDUK Fund Client
         services.AddHttpClient<ISndukFundClient, SndukFundClient>(client =>
@@ -123,6 +124,7 @@ public static class DependencyInjection
         services.AddScoped<IFundSyncService, FundSyncService>();
 
         // Parallel loader for the fund detail page (own scopes: a DbContext is not thread-safe)
+        services.AddScoped<IFundDetailQuery, FundDetailQuery>();
         services.AddScoped<FundDetailQuery>();
 
         return services;

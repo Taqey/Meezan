@@ -1,0 +1,15 @@
+{
+  "StatusCode": 200,
+  "BodyShape": [
+    {
+      "id": "number:int",
+      "nameAr": "string:\u0641\u0626\u0629 \u0627\u0644\u0627\u062E\u062A\u0628\u0627\u0631",
+      "nameEn": "string:Test Category",
+      "slug": "string:test-category",
+      "icon": "string:icon",
+      "color": "string:#fff",
+      "isAutoDerived": "bool:False",
+      "displayOrder": "number:int"
+    }
+  ]
+}

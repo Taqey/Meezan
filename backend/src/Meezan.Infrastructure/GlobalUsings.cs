@@ -1,0 +1,16 @@
+global using ClassificationContext = Meezan.Domain.Models.ClassificationContext;
+global using EffectiveClassification = Meezan.Domain.Models.EffectiveClassification;
+global using ClassificationMigrationReport = Meezan.Domain.Models.ClassificationMigrationReport;
+global using ChangedFund = Meezan.Domain.Models.ChangedFund;
+global using ReviewQueue = Meezan.Domain.Models.ReviewQueue;
+global using ReviewRow = Meezan.Domain.Models.ReviewRow;
+global using ReclassifyResult = Meezan.Domain.Models.ReclassifyResult;
+global using FundDetailBundle = Meezan.Application.Common.Models.FundDetailBundle;
+global using SndukFundListResponse = Meezan.Application.Common.Models.SndukFundListResponse;
+global using SndukFundDto = Meezan.Application.Common.Models.SndukFundDto;
+global using SndukPerformanceResponse = Meezan.Application.Common.Models.SndukPerformanceResponse;
+global using SndukAnalysisResponse = Meezan.Application.Common.Models.SndukAnalysisResponse;
+global using SndukExplanationsDto = Meezan.Application.Common.Models.SndukExplanationsDto;
+global using SndukExplanationDto = Meezan.Application.Common.Models.SndukExplanationDto;
+global using SndukCompetingResponse = Meezan.Application.Common.Models.SndukCompetingResponse;
+global using EffectiveFundTypeResult = Meezan.Domain.Models.EffectiveFundTypeResult;

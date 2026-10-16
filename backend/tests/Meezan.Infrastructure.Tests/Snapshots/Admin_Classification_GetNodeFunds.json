@@ -1,0 +1,24 @@
+{
+  "StatusCode": 200,
+  "BodyShape": {
+    "node": {
+      "id": "number:int",
+      "slug": "string:active",
+      "nameAr": "string:\u0646\u0634\u0637",
+      "nameEn": "string:Active"
+    },
+    "path": [
+      {
+        "id": "number:int",
+        "slug": "string:equity",
+        "nameAr": "string:\u0623\u0633\u0647\u0645",
+        "nameEn": "string:Equity"
+      }
+    ],
+    "items": [],
+    "totalCount": "number:int",
+    "page": "number:int",
+    "pageSize": "number:int",
+    "totalPages": "number:int"
+  }
+}

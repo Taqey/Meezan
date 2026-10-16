@@ -1,0 +1,50 @@
+{
+  "StatusCode": 200,
+  "BodyShape": {
+    "items": [
+      {
+        "id": "number:int",
+        "sndukId": "number:int",
+        "publicId": "string:snap-tst001",
+        "slug": "string:test-fund-one",
+        "nameAr": "string:\u0635\u0646\u062F\u0648\u0642 \u0627\u0644\u0627\u062E\u062A\u0628\u0627\u0631 \u0627\u0644\u0623\u0648\u0644",
+        "nameEn": "string:\u0635\u0646\u062F\u0648\u0642 \u0627\u0644\u0627\u062E\u062A\u0628\u0627\u0631 \u0627\u0644\u0623\u0648\u0644",
+        "code": "string:TST001",
+        "type": "number:int",
+        "typeNameAr": "string:\u0623\u0633\u0647\u0645",
+        "typeNameEn": "string:Equity",
+        "typeId": "number:int",
+        "typeSlug": "string:equity",
+        "typeIsOverridden": "bool:False",
+        "classificationSlug": "string:",
+        "classificationPathAr": "string:",
+        "classificationSource": "string:None",
+        "riskLevel": "number:int",
+        "isIslamic": "bool:True",
+        "isFeatured": "bool:False",
+        "currentPrice": null,
+        "dailyChange": null,
+        "return1M": null,
+        "return3M": null,
+        "return6M": null,
+        "return1Y": null,
+        "return3Y": null,
+        "totalScore": null,
+        "aum": "number:int",
+        "managementFee": "number:decimal",
+        "minimumInvestment": "string:",
+        "currency": "string:EGP",
+        "assetManagerId": null,
+        "assetManagerName": "string:",
+        "assetManagerNameEn": "string:",
+        "logoUrl": "string:",
+        "localLogoPath": "string:",
+        "lastSyncedAt": null
+      }
+    ],
+    "totalCount": "number:int",
+    "page": "number:int",
+    "pageSize": "number:int",
+    "totalPages": "number:int"
+  }
+}

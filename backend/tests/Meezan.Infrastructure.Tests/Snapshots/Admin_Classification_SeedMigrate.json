@@ -1,0 +1,23 @@
+{
+  "StatusCode": 200,
+  "BodyShape": {
+    "seedPerformed": "bool:True",
+    "backupPerformed": "bool:True",
+    "backupRows": "number:int",
+    "changed": [
+      {
+        "code": "string:F001",
+        "name": "string:\u0635\u0646\u062F\u0648\u0642 \u0627\u0644\u0623\u0633\u0647\u0645 \u0627\u0644\u0646\u0634\u0637",
+        "oldPath": "string:equity",
+        "newPath": "string:\u0623\u0633\u0647\u0645 \u203A \u063A\u064A\u0631 \u0645\u062D\u062F\u062F",
+        "reason": "string:Auto: \u0644\u0627 \u062A\u0648\u062C\u062F \u0625\u0634\u0627\u0631\u0629 \u062A\u0635\u0646\u064A\u0641 \u0645\u0648\u062B\u0648\u0642\u0629"
+      }
+    ],
+    "unclassifiedEquity": [
+      "string:F001 \u2014 \u0635\u0646\u062F\u0648\u0642 \u0627\u0644\u0623\u0633\u0647\u0645 \u0627\u0644\u0646\u0634\u0637"
+    ],
+    "commoditiesRenamed": "number:int",
+    "commoditiesFunds": [],
+    "notes": []
+  }
+}

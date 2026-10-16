@@ -1,0 +1,8 @@
+{
+  "StatusCode": 200,
+  "BodyShape": {
+    "message": "string:Fund assigned",
+    "fundId": "number:int",
+    "nodeId": "number:int"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "StatusCode": 200,
+  "BodyShape": {
+    "items": [],
+    "totalCount": "number:int",
+    "page": "number:int",
+    "pageSize": "number:int",
+    "totalPages": "number:int"
+  }
+}

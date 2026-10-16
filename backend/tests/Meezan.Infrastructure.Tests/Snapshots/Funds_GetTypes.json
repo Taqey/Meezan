@@ -1,0 +1,12 @@
+{
+  "StatusCode": 200,
+  "BodyShape": [
+    {
+      "id": "number:int",
+      "slug": "string:equity",
+      "nameAr": "string:\u0623\u0633\u0647\u0645",
+      "nameEn": "string:Equity",
+      "displayOrder": "number:int"
+    }
+  ]
+}
