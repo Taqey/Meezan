@@ -1,0 +1,15 @@
+{
+  "StatusCode": 200,
+  "BodyShape": [
+    {
+      "id": "number:int",
+      "fundSyncLogId": "number:int",
+      "fundId": "number:int",
+      "fundCode": "string:RD001",
+      "status": "number:int",
+      "errorMessage": "string:Successfully synced details",
+      "attemptedAt": "string:date-time-normalized",
+      "fundSyncLog": null
+    }
+  ]
+}

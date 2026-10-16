@@ -1,0 +1,17 @@
+{
+  "StatusCode": 200,
+  "BodyShape": {
+    "id": "number:int",
+    "isEnabled": "bool:True",
+    "runTimeCairo": "string:00:00:00",
+    "preventOverlap": "bool:True",
+    "requestDelaySeconds": "number:int",
+    "maxRetries": "number:int",
+    "retryBackoffSeconds": "number:int",
+    "autoIndexFundTypeEnabled": "bool:True",
+    "autoClassificationEnabled": "bool:True",
+    "createdAt": "string:date-time-normalized",
+    "updatedAt": "string:date-time-normalized",
+    "updatedBy": "string:"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "StatusCode": 200,
+  "BodyShape": {
+    "id": "number:int",
+    "nameAr": "string:\u0635\u0646\u0627\u062F\u064A\u0642 \u0627\u0644\u062A\u0643\u0646\u0648\u0644\u0648\u062C\u064A\u0627 \u0627\u0644\u0645\u062D\u062F\u062B\u0629",
+    "nameEn": "string:Updated Tech Funds",
+    "slug": "string:tech-funds",
+    "icon": "string:cpu",
+    "color": "string:#3B82F6",
+    "isAutoDerived": "bool:False",
+    "autoRuleJson": "string:",
+    "isIndexTracking": "bool:False",
+    "isVisible": "bool:True",
+    "displayOrder": "number:int",
+    "isDeleted": "bool:False",
+    "deletedAt": null,
+    "deletedReason": "string:",
+    "createdAt": "string:date-time-normalized",
+    "updatedAt": "string:date-time-normalized",
+    "createdBy": "string:admin",
+    "updatedBy": "string:admin",
+    "overrides": []
+  }
+}

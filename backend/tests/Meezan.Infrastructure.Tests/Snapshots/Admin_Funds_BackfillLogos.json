@@ -1,0 +1,7 @@
+{
+  "StatusCode": 200,
+  "BodyShape": {
+    "stored": "number:int",
+    "message": "string:Downloaded 0 fund logo(s)."
+  }
+}

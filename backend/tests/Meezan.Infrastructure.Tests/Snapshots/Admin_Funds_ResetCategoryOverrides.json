@@ -1,0 +1,7 @@
+{
+  "StatusCode": 200,
+  "BodyShape": {
+    "message": "string:Category reset to auto",
+    "clearedCount": "number:int"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "StatusCode": 200,
+  "BodyShape": [
+    {
+      "category": {
+        "id": "number:int",
+        "nameAr": "string:\u0646\u0645\u0648 \u0627\u0644\u0623\u0633\u0647\u0645",
+        "nameEn": "string:Equity Growth",
+        "slug": "string:equity-growth",
+        "isAutoDerived": "bool:False"
+      },
+      "isIncluded": "bool:False",
+      "source": "string:None",
+      "overrideId": null
+    }
+  ]
+}

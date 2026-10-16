@@ -1,0 +1,9 @@
+{
+  "StatusCode": 404,
+  "BodyShape": {
+    "type": "string:https://tools.ietf.org/html/rfc9110#section-15.5.5",
+    "title": "string:Not Found",
+    "status": "number:int",
+    "traceId": "string:trace-id-normalized"
+  }
+}

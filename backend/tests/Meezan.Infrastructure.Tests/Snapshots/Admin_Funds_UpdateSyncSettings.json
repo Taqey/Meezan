@@ -1,0 +1,8 @@
+{
+  "StatusCode": 500,
+  "BodyShape": {
+    "status": "number:int",
+    "title": "string:Database Update Error",
+    "message": "string:A database error occurred."
+  }
+}

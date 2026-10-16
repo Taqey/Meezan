@@ -70,4 +70,56 @@ public static class FundAutoClassification
 
         return rule.Keywords.Any(kw => textToSearch.Contains(kw.Trim().ToLowerInvariant()));
     }
+
+    public static bool Evaluate(Fund fund, string? autoRuleJson, out string reason)
+    {
+        reason = string.Empty;
+        AutoCategoryRule? rule = null;
+        if (!string.IsNullOrWhiteSpace(autoRuleJson))
+        {
+            try
+            {
+                rule = JsonSerializer.Deserialize<AutoCategoryRule>(autoRuleJson,
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            }
+            catch (JsonException) { rule = null; }
+        }
+
+        if (rule?.RuleType != null)
+        {
+            switch (rule.RuleType.Trim().ToLowerInvariant())
+            {
+                case "islamic":
+                    if (fund.IsIslamic)
+                    {
+                        reason = "SNDUK isIslamic = true (تصنيف المصدر)";
+                        return true;
+                    }
+                    return false;
+                case "active":
+                    if (fund.Type != FundType.Index)
+                    {
+                        reason = $"النوع {fund.Type} ليس مؤشراً (يُدار بنشاط)";
+                        return true;
+                    }
+                    reason = "صندوق مؤشر (يُدار بشكل سلبي)";
+                    return false;
+            }
+        }
+
+        if (rule == null || rule.Keywords == null || rule.Keywords.Length == 0)
+            return false;
+
+        var searchText = $"{fund.NameAr} {fund.NameEn} {fund.DescriptionAr} {fund.DescriptionEn} {fund.InvestmentStrategy} {fund.TypeNameAr} {fund.TypeNameEn}".ToLowerInvariant();
+        foreach (var keyword in rule.Keywords)
+        {
+            if (!string.IsNullOrWhiteSpace(keyword) && searchText.Contains(keyword.ToLowerInvariant()))
+            {
+                reason = $"طابق '{keyword}' في الاسم/الوصف";
+                return true;
+            }
+        }
+        return false;
+    }
 }
+

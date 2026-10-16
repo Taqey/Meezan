@@ -1,0 +1,25 @@
+{
+  "StatusCode": 200,
+  "BodyShape": {
+    "items": [
+      {
+        "id": "number:int",
+        "runAt": "string:date-time-normalized",
+        "finishedAt": "string:date-time-normalized",
+        "status": "number:int",
+        "totalFunds": "number:int",
+        "updatedFunds": "number:int",
+        "failedFunds": "number:int",
+        "skippedFunds": "number:int",
+        "errorSummary": "string:",
+        "triggeredBy": "string:Manual",
+        "durationSeconds": "number:int",
+        "details": []
+      }
+    ],
+    "totalCount": "number:int",
+    "page": "number:int",
+    "pageSize": "number:int",
+    "totalPages": "number:int"
+  }
+}
