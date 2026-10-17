@@ -1,10 +1,11 @@
 using MediatR;
-using Meezan.Application.Common.Exceptions;
+using Meezan.Application.Common.Results;
 using Meezan.Application.Features.RemovalCandidates.Commands.ConfirmRemovals;
 using Meezan.Application.Features.RemovalCandidates.Commands.ReactivateSelected;
 using Meezan.Application.Features.RemovalCandidates.DTOs;
 using Meezan.Application.Features.RemovalCandidates.Queries.GetRemovalCandidates;
 using Meezan.Application.Features.Scraping.Commands.RefreshSelectedStocks;
+using Meezan.WebApi.Common;
 using Meezan.WebApi.Contracts.RemovalCandidates;
 using Microsoft.AspNetCore.Mvc;
 
@@ -41,7 +42,7 @@ public class RemovalCandidatesController : ControllerBase
     public async Task<IActionResult> GetRemovalCandidates(CancellationToken cancellationToken)
     {
         var result = await _sender.Send(new GetRemovalCandidatesQuery(), cancellationToken);
-        return Ok(result);
+        return result.ToActionResult();
     }
 
     /// <summary>
@@ -58,7 +59,7 @@ public class RemovalCandidatesController : ControllerBase
         var result = await _sender.Send(
             new ConfirmRemovalsCommand(request?.Tickers, request?.Reason),
             cancellationToken);
-        return Ok(result);
+        return result.ToActionResult();
     }
 
     /// <summary>
@@ -81,13 +82,15 @@ public class RemovalCandidatesController : ControllerBase
             .ToList();
 
         if (tickers.Count == 0)
-            throw new BadRequestException("No tickers supplied.");
+        {
+            return Result.Failure(Error.Validation("EmptyTickers", "No tickers supplied.", new { message = "No tickers supplied." })).ToActionResult();
+        }
 
         var result = await _sender.Send(
             new RefreshSelectedStocksCommand(tickers, "Manual-ChecklistRefresh"),
             cancellationToken);
 
-        return Ok(result);
+        return result.ToActionResult();
     }
 
     /// <summary>
@@ -103,6 +106,6 @@ public class RemovalCandidatesController : ControllerBase
         var result = await _sender.Send(
             new ReactivateSelectedCommand(request?.Tickers),
             cancellationToken);
-        return Ok(result);
+        return result.ToActionResult();
     }
 }

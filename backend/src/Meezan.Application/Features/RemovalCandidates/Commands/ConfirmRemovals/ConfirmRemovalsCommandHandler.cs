@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Common.Exceptions;
 using Meezan.Application.Common.Interfaces.Integrations;
@@ -19,7 +20,7 @@ using Meezan.Application.Features.RemovalCandidates.DTOs;
 
 namespace Meezan.Application.Features.RemovalCandidates.Commands.ConfirmRemovals;
 
-public sealed class ConfirmRemovalsCommandHandler : IRequestHandler<ConfirmRemovalsCommand, ConfirmRemovalsResultDto>
+public sealed class ConfirmRemovalsCommandHandler : IRequestHandler<ConfirmRemovalsCommand, Result<ConfirmRemovalsResultDto>>
 {
     private readonly IStockRepository _stockRepository;
 
@@ -28,12 +29,12 @@ public sealed class ConfirmRemovalsCommandHandler : IRequestHandler<ConfirmRemov
         _stockRepository = stockRepository;
     }
 
-    public async Task<ConfirmRemovalsResultDto> Handle(ConfirmRemovalsCommand request, CancellationToken cancellationToken)
+    public async Task<Result<ConfirmRemovalsResultDto>> Handle(ConfirmRemovalsCommand request, CancellationToken cancellationToken)
     {
         var tickers = Normalise(request.Tickers);
         if (tickers.Count == 0)
         {
-            throw new BadRequestException("No tickers supplied.");
+            return Error.Validation("EmptyTickers", "No tickers supplied.", new { message = "No tickers supplied." });
         }
 
         var confirmed = new List<string>();
