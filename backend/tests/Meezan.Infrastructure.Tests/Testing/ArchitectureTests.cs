@@ -210,6 +210,88 @@ public class ArchitectureTests
             string.Join(Environment.NewLine, violations));
     }
 
+    [Fact]
+    public void All_Application_Requests_Must_Return_Result_Or_ResultOfT()
+    {
+        var requestTypes = Types.InAssembly(ApplicationAssembly)
+            .That()
+            .ImplementInterface(typeof(MediatR.IBaseRequest))
+            .GetTypes()
+            .Where(t => t.IsClass && !t.IsAbstract)
+            .ToList();
+
+        var violations = new List<string>();
+
+        foreach (var req in requestTypes)
+        {
+            var irequestInterface = req.GetInterfaces()
+                .FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(MediatR.IRequest<>));
+
+            if (irequestInterface == null)
+            {
+                violations.Add($"{req.FullName} does not implement IRequest<TResponse>");
+                continue;
+            }
+
+            var responseType = irequestInterface.GetGenericArguments()[0];
+            bool isResult = responseType == typeof(Meezan.Application.Common.Results.Result) ||
+                            (responseType.IsGenericType && responseType.GetGenericTypeDefinition() == typeof(Meezan.Application.Common.Results.Result<>));
+
+            if (!isResult)
+            {
+                violations.Add($"{req.FullName} returns {responseType.Name} instead of Result or Result<T>");
+            }
+        }
+
+        Assert.True(violations.Count == 0,
+            $"Found {violations.Count} requests not returning Result/Result<T>:{Environment.NewLine}" +
+            string.Join(Environment.NewLine, violations));
+    }
+
+    [Fact]
+    public void Application_Handlers_Must_Not_Throw_Forbidden_Exceptions()
+    {
+        var solutionDir = FindSolutionDirectory();
+        Assert.NotNull(solutionDir);
+
+        var featuresDir = Path.Combine(solutionDir, "src", "Meezan.Application", "Features");
+        var handlerFiles = Directory.GetFiles(featuresDir, "*Handler.cs", SearchOption.AllDirectories);
+
+        var forbiddenPatterns = new[]
+        {
+            "throw new NotFoundException",
+            "throw new BadRequestException",
+            "throw new ConflictException",
+            "throw new UnauthorizedException",
+            "throw new ForbiddenException",
+            "throw new KeyNotFoundException",
+            "throw new ArgumentException"
+        };
+
+        var violations = new List<string>();
+
+        foreach (var file in handlerFiles)
+        {
+            var lines = File.ReadAllLines(file);
+            for (int i = 0; i < lines.Length; i++)
+            {
+                var line = lines[i].Trim();
+                foreach (var pattern in forbiddenPatterns)
+                {
+                    if (line.Contains(pattern))
+                    {
+                        var relativePath = Path.GetRelativePath(solutionDir, file);
+                        violations.Add($"{relativePath}:{i + 1} uses forbidden '{pattern}'");
+                    }
+                }
+            }
+        }
+
+        Assert.True(violations.Count == 0,
+            $"Found {violations.Count} forbidden exception throws in Application handlers:{Environment.NewLine}" +
+            string.Join(Environment.NewLine, violations));
+    }
+
     private static string? FindSolutionDirectory()
     {
         var current = new DirectoryInfo(AppContext.BaseDirectory);

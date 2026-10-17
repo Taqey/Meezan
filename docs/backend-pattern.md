@@ -12,7 +12,7 @@ This document serves as the **single source of truth** for all ongoing and subse
   2. [Authorize] attribute declarations (preserved exactly as today).
   3. HTTP Model binding ([FromRoute], [FromQuery], [FromBody]).
   4. Dispatching requests via ISender.Send(command/query, cancellationToken).
-  5. Returning standard IActionResult (Ok(result), CreatedAtAction(...), NoContent()).
+  5. Returning standard IActionResult via `result.ToActionResult()` (or `result.ToNoContentResult()`, `result.ToCreatedResult(...)`).
 - **Forbidden in Controllers**:
   - NO ApplicationDbContext or database types.
   - NO Entity Framework Core namespaces or LINQ queries (.ToListAsync(), .Where(), etc.).
@@ -22,7 +22,11 @@ This document serves as the **single source of truth** for all ongoing and subse
   - NO inline DTO declarations.
 - **Route+body endpoints**: keep [FromRoute]/[FromBody] binding in the action, map to a Command in one line (e.g. `new UpdateJobSettingCommand(jobKey, req.Enabled)`); body DTO lives in its OWN Application file. Single-row upserts use ONE SaveChangesAsync and do NOT need ITransactionalCommand.
 
-### 1.2 Application Layer (Meezan.Application)
+### 1.2 Application Layer & Result Pattern (Meezan.Application)
+- **Result Pattern Everywhere**: Every command and query handler returns `Result` or `Result<T>`.
+  - Expected domain/validation/business failures return `Result.Failure(Error...)` or implicit `Error`.
+  - Exceptions are strictly reserved for unexpected system bugs or infrastructure outages (handled by global middleware as 500 Server Error).
+  - Calling `.Value` on a failed `Result<T>` throws an `InvalidOperationException`.
 - **Location**: Use-cases live under Features/<Feature>/Commands/<UseCase>/ or Features/<Feature>/Queries/<UseCase>/.
 - **File Organization**:
   - Every Command/Query, Handler, and Validator must be in its **OWN file**.
@@ -37,10 +41,10 @@ This document serves as the **single source of truth** for all ongoing and subse
 - Writes are committed via IUnitOfWork.SaveChangesAsync(cancellationToken).
 - **One Save Changes**: Exactly ONE SaveChangesAsync call per command execution. **Never** call SaveChangesAsync inside loops.
 - **No SaveChanges in Repositories**: Repository interfaces must **never** expose SaveChangesAsync().
-- **Transactions**: Commands that require an explicit database transaction opt-in by implementing ITransactionalCommand. The pipeline TransactionBehavior automatically opens, commits, or rolls back the transaction. Never apply ITransactionalCommand to long-running operations (scraping, Shariah refresh, sync jobs).
+- **Transactions**: Commands that require an explicit database transaction opt-in by implementing ITransactionalCommand. The pipeline TransactionBehavior automatically opens, commits, or rolls back the transaction when `result.IsSuccess` is true or false. Never apply ITransactionalCommand to long-running operations (scraping, Shariah refresh, sync jobs).
 
 ### 1.4 Reads & Queries
-- Dedicated read query interfaces live in Meezan.Application returning strongly typed DTOs.
+- Dedicated read query interfaces live in Meezan.Application returning strongly typed DTOs wrapped in `Result<T>`.
 - Implementations live in Meezan.Infrastructure using .AsNoTracking() and deterministic, fixed SQL queries (avoiding N+1).
 - Handlers consume the read interfaces and **never** see or reference EF Core.
 
@@ -72,7 +76,8 @@ backend/
 │   ├── Meezan.Application/
 │   │   ├── Common/
 │   │   │   ├── Behaviors/
-│   │   │   ├── Exceptions/
+│   │   │   ├── Results/                    (Result, Result<T>, Error, ErrorType)
+│   │   │   ├── Exceptions/                 (For unhandled/system exceptions only)
 │   │   │   ├── Interfaces/
 │   │   │   │   ├── Integrations/           (Scrapers, clients, progress tracking)
 │   │   │   │   ├── Persistence/            (IUnitOfWork, ITransactionalCommand)
@@ -101,6 +106,7 @@ backend/
 │   │   │   └── Repositories/<Feature>/     (Repositories grouped by feature: Common, Funds, Indices, Market, Scraping, Sectors, Shariah, Stocks, SystemSettings)
 │   │   └── Services/                       (Grouped by feature and role: BackgroundServices, Excel, Funds, Scraping, Shariah, Jobs)
 │   └── Meezan.WebApi/
+│       ├── Common/                         (ResultExtensions mapping ErrorType to IActionResult)
 │       └── Controllers/
 │           ├── Admin/                      (Backoffice administration endpoints)
 │           └── Public/                     (Public-facing catalog & data endpoints)
@@ -117,23 +123,23 @@ backend/
 - **Folder Size Limit**: Reorganized folders must not exceed 15 files per directory (excluding `Migrations` and `Snapshots`).
 - **Single Type Per File**: Exactly one public type per file.
 
-
 ---
 
 ## 3. Worked Example: CreateSector
 
 ### 3.1 Command (CreateSectorCommand.cs)
-`csharp
+```csharp
 namespace Meezan.Application.Features.Sectors.Commands.CreateSector;
 
 using MediatR;
-using Meezan.Application.Common.Interfaces;
+using Meezan.Application.Common.Interfaces.Persistence;
+using Meezan.Application.Common.Results;
 
-public record CreateSectorCommand(string NameAr, string? NameEn) : IRequest<SectorDto>, ITransactionalCommand;
-`
+public record CreateSectorCommand(string NameAr, string? NameEn) : IRequest<Result<SectorDto>>, ITransactionalCommand;
+```
 
 ### 3.2 Validator (CreateSectorCommandValidator.cs)
-`csharp
+```csharp
 namespace Meezan.Application.Features.Sectors.Commands.CreateSector;
 
 using FluentValidation;
@@ -147,18 +153,19 @@ public class CreateSectorCommandValidator : AbstractValidator<CreateSectorComman
             .MaximumLength(100);
     }
 }
-`
+```
 
 ### 3.3 Handler (CreateSectorCommandHandler.cs)
-`csharp
+```csharp
 namespace Meezan.Application.Features.Sectors.Commands.CreateSector;
 
 using MediatR;
-using Meezan.Application.Common.Exceptions;
-using Meezan.Application.Common.Interfaces;
+using Meezan.Application.Common.Interfaces.Persistence;
+using Meezan.Application.Common.Interfaces.Repositories.Sectors;
+using Meezan.Application.Common.Results;
 using Meezan.Domain.Entities;
 
-public class CreateSectorCommandHandler : IRequestHandler<CreateSectorCommand, SectorDto>
+public class CreateSectorCommandHandler : IRequestHandler<CreateSectorCommand, Result<SectorDto>>
 {
     private readonly ISectorRepository _sectorRepository;
     private readonly IUnitOfWork _unitOfWork;
@@ -169,12 +176,12 @@ public class CreateSectorCommandHandler : IRequestHandler<CreateSectorCommand, S
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<SectorDto> Handle(CreateSectorCommand request, CancellationToken cancellationToken)
+    public async Task<Result<SectorDto>> Handle(CreateSectorCommand request, CancellationToken cancellationToken)
     {
         var existing = await _sectorRepository.GetByNameArAsync(request.NameAr, cancellationToken);
         if (existing != null)
         {
-            throw new ConflictException("Sector already exists.");
+            return Error.Conflict("SectorAlreadyExists", "Sector already exists.");
         }
 
         var sector = new Sector
@@ -189,18 +196,19 @@ public class CreateSectorCommandHandler : IRequestHandler<CreateSectorCommand, S
         return new SectorDto(sector.Id, sector.NameAr, sector.NameEn);
     }
 }
-`
+```
 
 ### 3.4 Controller (SectorsController.cs)
-`csharp
-namespace Meezan.WebApi.Controllers;
+```csharp
+namespace Meezan.WebApi.Controllers.Public;
 
 using MediatR;
 using Meezan.Application.Features.Sectors.Commands.CreateSector;
+using Meezan.WebApi.Common;
 using Microsoft.AspNetCore.Mvc;
 
 [ApiController]
-[Route(api/sectors)]
+[Route("api/sectors")]
 public class SectorsController : ControllerBase
 {
     private readonly ISender _sender;
@@ -214,13 +222,13 @@ public class SectorsController : ControllerBase
     public async Task<IActionResult> Create([FromBody] CreateSectorCommand command, CancellationToken ct)
     {
         var result = await _sender.Send(command, ct);
-        return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
+        return result.ToCreatedResult(nameof(GetById), new { id = result.Value.Id });
     }
 }
-`
+```
 
 ### 3.5 Automated Test (CreateSectorTests.cs)
-`csharp
+```csharp
 namespace Meezan.Infrastructure.Tests.Features.Sectors;
 
 using System.Net;
@@ -245,6 +253,6 @@ public class CreateSectorTests : IClassFixture<TestWebApplicationFactory>
         var response = await client.PostAsJsonAsync("/api/sectors", new CreateSectorCommand("", "Tech"));
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
- }
+    }
 }
-`
+```

@@ -76,8 +76,10 @@ public class ResultPatternFoundationTests
         var result = Result.Failure<string>(error);
         var actionResult = result.ToActionResult();
 
-        var badRequest = Assert.IsType<BadRequestObjectResult>(actionResult);
-        Assert.NotNull(badRequest.Value);
+        var content = Assert.IsType<ContentResult>(actionResult);
+        Assert.Equal(400, content.StatusCode);
+        Assert.NotNull(content.Content);
+        Assert.Contains("message", content.Content);
     }
 
     [Fact]
@@ -87,8 +89,10 @@ public class ResultPatternFoundationTests
         var result = Result.Failure<string>(error);
         var actionResult = result.ToActionResult();
 
-        var notFound = Assert.IsType<NotFoundObjectResult>(actionResult);
-        Assert.NotNull(notFound.Value);
+        var content = Assert.IsType<ContentResult>(actionResult);
+        Assert.Equal(404, content.StatusCode);
+        Assert.NotNull(content.Content);
+        Assert.Contains("Not Found", content.Content);
     }
 
     [Fact]
@@ -98,8 +102,10 @@ public class ResultPatternFoundationTests
         var result = Result.Failure<string>(error);
         var actionResult = result.ToActionResult();
 
-        var conflict = Assert.IsType<ConflictObjectResult>(actionResult);
-        Assert.NotNull(conflict.Value);
+        var content = Assert.IsType<ContentResult>(actionResult);
+        Assert.Equal(409, content.StatusCode);
+        Assert.NotNull(content.Content);
+        Assert.Contains("Conflict", content.Content);
     }
 
     [Fact]
@@ -110,8 +116,11 @@ public class ResultPatternFoundationTests
         var result = Result.Failure<string>(error);
         var actionResult = result.ToActionResult();
 
-        var notFound = Assert.IsType<NotFoundObjectResult>(actionResult);
-        Assert.Same(payload, notFound.Value);
+        var content = Assert.IsType<ContentResult>(actionResult);
+        Assert.Equal(404, content.StatusCode);
+        Assert.NotNull(content.Content);
+        Assert.Contains("custom", content.Content);
+        Assert.Contains("5", content.Content);
     }
 
     // ── 3. ValidationBehavior Tests ─────────────────────────────────────────
