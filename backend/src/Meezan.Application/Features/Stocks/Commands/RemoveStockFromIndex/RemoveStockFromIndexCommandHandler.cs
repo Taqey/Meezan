@@ -1,30 +1,17 @@
 using MediatR;
-using Meezan.Application.Common;
-using Meezan.Application.Common.Services.Text;
-using Meezan.Application.Common.Services.Market;
-using Meezan.Application.Common.Services.Shariah;
-using Meezan.Application.Common.Exceptions;
-using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
-using Meezan.Application.Common.Interfaces.Queries.Funds;
-using Meezan.Application.Common.Interfaces.Queries.RemovalCandidates;
-using Meezan.Application.Common.Interfaces.Queries.Stocks;
-using Meezan.Application.Common.Interfaces.Repositories.Funds;
 using Meezan.Application.Common.Interfaces.Repositories.Indices;
-using Meezan.Application.Common.Interfaces.Repositories.Market;
-using Meezan.Application.Common.Interfaces.Repositories.Scraping;
-using Meezan.Application.Common.Interfaces.Repositories.Sectors;
 using Meezan.Application.Common.Interfaces.Repositories.Shariah;
 using Meezan.Application.Common.Interfaces.Repositories.Stocks;
-using Meezan.Application.Common.Interfaces.Repositories.System;
-using Meezan.Application.Common.Interfaces.Security;
-using Meezan.Application.Common.Interfaces.Storage;
+using Meezan.Application.Common.Results;
+using Meezan.Application.Common.Services.Shariah;
+using Meezan.Application.Common.Services.Text;
 using Meezan.Domain.Entities;
 using Meezan.Domain.Enums;
 
 namespace Meezan.Application.Features.Stocks.Commands.RemoveStockFromIndex;
 
-public sealed class RemoveStockFromIndexCommandHandler : IRequestHandler<RemoveStockFromIndexCommand>
+public sealed class RemoveStockFromIndexCommandHandler : IRequestHandler<RemoveStockFromIndexCommand, Result>
 {
     private readonly IStockRepository _stockRepository;
     private readonly IIndexRepository _indexRepository;
@@ -49,11 +36,13 @@ public sealed class RemoveStockFromIndexCommandHandler : IRequestHandler<RemoveS
         _unitOfWork = unitOfWork;
     }
 
-    public async Task Handle(RemoveStockFromIndexCommand request, CancellationToken cancellationToken)
+    public async Task<Result> Handle(RemoveStockFromIndexCommand request, CancellationToken cancellationToken)
     {
         var constituent = await _indexRepository.GetConstituentWithIndexAsync(request.StockId, request.IndexId, cancellationToken);
         if (constituent is null)
-            throw new NotFoundException($"Constituent for stock {request.StockId} and index {request.IndexId} not found.");
+        {
+            return Error.NotFound("ConstituentNotFound", $"Constituent for stock {request.StockId} and index {request.IndexId} not found.");
+        }
 
         var wasShariah = constituent.Index != null
             && ShariahStatusResolver.IsShariahIndexCode(constituent.Index.Code);
@@ -66,6 +55,7 @@ public sealed class RemoveStockFromIndexCommandHandler : IRequestHandler<RemoveS
         }
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+        return Result.Success();
     }
 
     private async Task RecomputeOverallAsync(int stockId, CancellationToken cancellationToken)

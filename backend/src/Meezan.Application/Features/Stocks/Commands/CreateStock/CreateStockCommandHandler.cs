@@ -1,26 +1,14 @@
 using MediatR;
-using Meezan.Application.Common.Exceptions;
-using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
-using Meezan.Application.Common.Interfaces.Queries.Funds;
-using Meezan.Application.Common.Interfaces.Queries.RemovalCandidates;
-using Meezan.Application.Common.Interfaces.Queries.Stocks;
-using Meezan.Application.Common.Interfaces.Repositories.Funds;
-using Meezan.Application.Common.Interfaces.Repositories.Indices;
-using Meezan.Application.Common.Interfaces.Repositories.Market;
-using Meezan.Application.Common.Interfaces.Repositories.Scraping;
 using Meezan.Application.Common.Interfaces.Repositories.Sectors;
-using Meezan.Application.Common.Interfaces.Repositories.Shariah;
 using Meezan.Application.Common.Interfaces.Repositories.Stocks;
-using Meezan.Application.Common.Interfaces.Repositories.System;
-using Meezan.Application.Common.Interfaces.Security;
-using Meezan.Application.Common.Interfaces.Storage;
+using Meezan.Application.Common.Results;
 using Meezan.Application.Features.Stocks.DTOs;
 using Meezan.Domain.Entities;
 
 namespace Meezan.Application.Features.Stocks.Commands.CreateStock;
 
-public sealed class CreateStockCommandHandler : IRequestHandler<CreateStockCommand, StockManagementItemDto>
+public sealed class CreateStockCommandHandler : IRequestHandler<CreateStockCommand, Result<StockManagementItemDto>>
 {
     private readonly IStockRepository _stockRepository;
     private readonly ISectorRepository _sectorRepository;
@@ -36,22 +24,28 @@ public sealed class CreateStockCommandHandler : IRequestHandler<CreateStockComma
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<StockManagementItemDto> Handle(CreateStockCommand request, CancellationToken cancellationToken)
+    public async Task<Result<StockManagementItemDto>> Handle(CreateStockCommand request, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(request.Ticker))
-            throw new BadRequestException("Ticker is required.");
+        {
+            return Error.Validation("EmptyTicker", "Ticker is required.");
+        }
 
         var ticker = request.Ticker.Trim().ToUpperInvariant();
         var existing = await _stockRepository.GetByTickerIncludingInactiveAsync(ticker, cancellationToken);
         if (existing is not null)
-            throw new ConflictException($"A stock with ticker '{ticker}' already exists (Id={existing.Id}).");
+        {
+            return Error.Conflict("DuplicateTicker", $"A stock with ticker '{ticker}' already exists (Id={existing.Id}).");
+        }
 
         Sector? sector = null;
         if (request.SectorId.HasValue)
         {
             sector = await _sectorRepository.GetByIdAsync(request.SectorId.Value, cancellationToken);
             if (sector is null)
-                throw new BadRequestException($"Sector with Id {request.SectorId.Value} does not exist.");
+            {
+                return Error.Validation("InvalidSector", $"Sector with Id {request.SectorId.Value} does not exist.");
+            }
         }
 
         var stock = new Stock

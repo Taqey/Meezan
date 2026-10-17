@@ -8,6 +8,7 @@ using Meezan.Application.Features.Stocks.DTOs;
 using Meezan.Application.Features.Stocks.Queries.GetIndexPickers;
 using Meezan.Application.Features.Stocks.Queries.GetSectorPickers;
 using Meezan.Application.Features.Stocks.Queries.SearchStocks;
+using Meezan.WebApi.Common;
 using Meezan.WebApi.Contracts.AdminStocksManagement;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -42,8 +43,8 @@ public class AdminStocksManagementController : ControllerBase
     [ProducesResponseType(typeof(List<StockManagementItemDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> Search([FromQuery] string? q, CancellationToken cancellationToken)
     {
-        var list = await _sender.Send(new SearchStocksQuery(q), cancellationToken);
-        return Ok(list);
+        var result = await _sender.Send(new SearchStocksQuery(q), cancellationToken);
+        return result.ToActionResult();
     }
 
     // ── Create stock ──────────────────────────────────────────────────────────
@@ -65,8 +66,8 @@ public class AdminStocksManagementController : ControllerBase
             request.NameEn,
             request.SectorId);
 
-        var item = await _sender.Send(cmd, cancellationToken);
-        return CreatedAtAction(nameof(Search), new { q = item.Ticker }, item);
+        var result = await _sender.Send(cmd, cancellationToken);
+        return result.ToCreatedResult(nameof(Search), result.IsSuccess ? new { q = result.Value.Ticker } : null);
     }
 
     // ── Assign / move stock to sector ─────────────────────────────────────────
@@ -84,8 +85,8 @@ public class AdminStocksManagementController : ControllerBase
         [FromBody] AssignSectorRequest request,
         CancellationToken cancellationToken)
     {
-        var item = await _sender.Send(new AssignSectorCommand(stockId, request.SectorId), cancellationToken);
-        return Ok(item);
+        var result = await _sender.Send(new AssignSectorCommand(stockId, request.SectorId), cancellationToken);
+        return result.ToActionResult();
     }
 
     // ── Remove stock from its sector ──────────────────────────────────────────
@@ -101,8 +102,8 @@ public class AdminStocksManagementController : ControllerBase
         [FromRoute] int stockId,
         CancellationToken cancellationToken)
     {
-        var item = await _sender.Send(new RemoveFromSectorCommand(stockId), cancellationToken);
-        return Ok(item);
+        var result = await _sender.Send(new RemoveFromSectorCommand(stockId), cancellationToken);
+        return result.ToActionResult();
     }
 
     // ── Sectors list ──────────────────────────────────────────────────────────
@@ -112,8 +113,8 @@ public class AdminStocksManagementController : ControllerBase
     [ProducesResponseType(typeof(List<SectorPickerItemDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAllSectors(CancellationToken cancellationToken)
     {
-        var sectors = await _sender.Send(new GetSectorPickersQuery(), cancellationToken);
-        return Ok(sectors);
+        var result = await _sender.Send(new GetSectorPickersQuery(), cancellationToken);
+        return result.ToActionResult();
     }
 
     // ── Indices list ──────────────────────────────────────────────────────────
@@ -123,8 +124,8 @@ public class AdminStocksManagementController : ControllerBase
     [ProducesResponseType(typeof(List<IndexPickerItemDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAllIndices(CancellationToken cancellationToken)
     {
-        var indices = await _sender.Send(new GetIndexPickersQuery(), cancellationToken);
-        return Ok(indices);
+        var result = await _sender.Send(new GetIndexPickersQuery(), cancellationToken);
+        return result.ToActionResult();
     }
 
     // ── Index constituent management ──────────────────────────────────────────
@@ -142,11 +143,11 @@ public class AdminStocksManagementController : ControllerBase
         [FromBody] AddToIndexRequest? request,
         CancellationToken cancellationToken)
     {
-        var item = await _sender.Send(
+        var result = await _sender.Send(
             new AddStockToIndexCommand(stockId, indexId, request?.Weight, request?.EffectiveDate),
             cancellationToken);
 
-        return Ok(item);
+        return result.ToActionResult();
     }
 
     /// <summary>Remove a stock from an index's constituents.</summary>
@@ -158,7 +159,7 @@ public class AdminStocksManagementController : ControllerBase
         [FromRoute] int indexId,
         CancellationToken cancellationToken)
     {
-        await _sender.Send(new RemoveStockFromIndexCommand(stockId, indexId), cancellationToken);
-        return NoContent();
+        var result = await _sender.Send(new RemoveStockFromIndexCommand(stockId, indexId), cancellationToken);
+        return result.ToNoContentResult();
     }
 }

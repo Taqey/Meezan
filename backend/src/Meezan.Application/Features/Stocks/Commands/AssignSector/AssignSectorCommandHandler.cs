@@ -1,25 +1,13 @@
-using MediatR;
-using Meezan.Application.Common.Exceptions;
-using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
-using Meezan.Application.Common.Interfaces.Queries.Funds;
-using Meezan.Application.Common.Interfaces.Queries.RemovalCandidates;
-using Meezan.Application.Common.Interfaces.Queries.Stocks;
-using Meezan.Application.Common.Interfaces.Repositories.Funds;
-using Meezan.Application.Common.Interfaces.Repositories.Indices;
-using Meezan.Application.Common.Interfaces.Repositories.Market;
-using Meezan.Application.Common.Interfaces.Repositories.Scraping;
 using Meezan.Application.Common.Interfaces.Repositories.Sectors;
-using Meezan.Application.Common.Interfaces.Repositories.Shariah;
 using Meezan.Application.Common.Interfaces.Repositories.Stocks;
-using Meezan.Application.Common.Interfaces.Repositories.System;
-using Meezan.Application.Common.Interfaces.Security;
-using Meezan.Application.Common.Interfaces.Storage;
+using Meezan.Application.Common.Results;
 using Meezan.Application.Features.Stocks.DTOs;
+using MediatR;
 
 namespace Meezan.Application.Features.Stocks.Commands.AssignSector;
 
-public sealed class AssignSectorCommandHandler : IRequestHandler<AssignSectorCommand, StockManagementItemDto>
+public sealed class AssignSectorCommandHandler : IRequestHandler<AssignSectorCommand, Result<StockManagementItemDto>>
 {
     private readonly IStockRepository _stockRepository;
     private readonly ISectorRepository _sectorRepository;
@@ -35,15 +23,19 @@ public sealed class AssignSectorCommandHandler : IRequestHandler<AssignSectorCom
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<StockManagementItemDto> Handle(AssignSectorCommand request, CancellationToken cancellationToken)
+    public async Task<Result<StockManagementItemDto>> Handle(AssignSectorCommand request, CancellationToken cancellationToken)
     {
         var stock = await _stockRepository.GetByIdWithSectorAsync(request.StockId, cancellationToken);
         if (stock is null)
-            throw new NotFoundException($"Stock with Id {request.StockId} not found.");
+        {
+            return Error.NotFound("StockNotFound", $"Stock with Id {request.StockId} not found.");
+        }
 
         var sector = await _sectorRepository.GetByIdAsync(request.SectorId, cancellationToken);
         if (sector is null)
-            throw new BadRequestException($"Sector with Id {request.SectorId} does not exist.");
+        {
+            return Error.Validation("SectorNotFound", $"Sector with Id {request.SectorId} does not exist.");
+        }
 
         stock.SectorId = sector.Id;
         stock.Sector = sector;

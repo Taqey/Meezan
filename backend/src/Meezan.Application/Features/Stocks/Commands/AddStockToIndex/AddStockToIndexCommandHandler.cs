@@ -1,31 +1,18 @@
 using MediatR;
-using Meezan.Application.Common;
-using Meezan.Application.Common.Services.Text;
-using Meezan.Application.Common.Services.Market;
-using Meezan.Application.Common.Services.Shariah;
-using Meezan.Application.Common.Exceptions;
-using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
-using Meezan.Application.Common.Interfaces.Queries.Funds;
-using Meezan.Application.Common.Interfaces.Queries.RemovalCandidates;
-using Meezan.Application.Common.Interfaces.Queries.Stocks;
-using Meezan.Application.Common.Interfaces.Repositories.Funds;
 using Meezan.Application.Common.Interfaces.Repositories.Indices;
-using Meezan.Application.Common.Interfaces.Repositories.Market;
-using Meezan.Application.Common.Interfaces.Repositories.Scraping;
-using Meezan.Application.Common.Interfaces.Repositories.Sectors;
 using Meezan.Application.Common.Interfaces.Repositories.Shariah;
 using Meezan.Application.Common.Interfaces.Repositories.Stocks;
-using Meezan.Application.Common.Interfaces.Repositories.System;
-using Meezan.Application.Common.Interfaces.Security;
-using Meezan.Application.Common.Interfaces.Storage;
+using Meezan.Application.Common.Results;
+using Meezan.Application.Common.Services.Shariah;
+using Meezan.Application.Common.Services.Text;
 using Meezan.Application.Features.Stocks.DTOs;
 using Meezan.Domain.Entities;
 using Meezan.Domain.Enums;
 
 namespace Meezan.Application.Features.Stocks.Commands.AddStockToIndex;
 
-public sealed class AddStockToIndexCommandHandler : IRequestHandler<AddStockToIndexCommand, ConstituentManagementItemDto>
+public sealed class AddStockToIndexCommandHandler : IRequestHandler<AddStockToIndexCommand, Result<ConstituentManagementItemDto>>
 {
     private readonly IStockRepository _stockRepository;
     private readonly IIndexRepository _indexRepository;
@@ -50,15 +37,19 @@ public sealed class AddStockToIndexCommandHandler : IRequestHandler<AddStockToIn
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<ConstituentManagementItemDto> Handle(AddStockToIndexCommand request, CancellationToken cancellationToken)
+    public async Task<Result<ConstituentManagementItemDto>> Handle(AddStockToIndexCommand request, CancellationToken cancellationToken)
     {
         var stock = await _stockRepository.GetByIdAsync(request.StockId, cancellationToken);
         if (stock is null)
-            throw new NotFoundException("Stock not found.");
+        {
+            return Error.NotFound("StockNotFound", "Stock not found.");
+        }
 
         var index = await _indexRepository.GetByIdAsync(request.IndexId, cancellationToken);
         if (index is null)
-            throw new NotFoundException("Index not found.");
+        {
+            return Error.NotFound("IndexNotFound", "Index not found.");
+        }
 
         var existing = await _indexRepository.GetConstituentAsync(request.StockId, request.IndexId, cancellationToken);
         if (existing is not null)
