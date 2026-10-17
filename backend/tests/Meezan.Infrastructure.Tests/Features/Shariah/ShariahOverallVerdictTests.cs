@@ -1,6 +1,3 @@
-using Meezan.Application.Common;
-using Meezan.Application.Common.Services.Text;
-using Meezan.Application.Common.Services.Market;
 using Meezan.Application.Common.Services.Shariah;
 using Meezan.Domain.Entities;
 using Meezan.Domain.Enums;

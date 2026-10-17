@@ -25,31 +25,31 @@ public static class FundTypeCatalog
 
     public static string SlugFor(FundType type) => type switch
     {
-        FundType.Balanced            => "balanced",
+        FundType.Balanced => "balanced",
         FundType.CapitalPreservation => "capital_preservation",
-        FundType.Commodities         => "silver",
-        FundType.Equity              => "equity",
-        FundType.FixedIncome         => "fixed_income",
-        FundType.FixedIncomeUsd      => "fixed_income_usd",
-        FundType.Gold                => "gold",
-        FundType.Index               => "index",
-        FundType.MoneyMarket         => "money_market",
-        _                            => "unknown"
+        FundType.Commodities => "silver",
+        FundType.Equity => "equity",
+        FundType.FixedIncome => "fixed_income",
+        FundType.FixedIncomeUsd => "fixed_income_usd",
+        FundType.Gold => "gold",
+        FundType.Index => "index",
+        FundType.MoneyMarket => "money_market",
+        _ => "unknown"
     };
 
     public static FundType EnumFor(string slug) => slug switch
     {
-        "balanced"             => FundType.Balanced,
+        "balanced" => FundType.Balanced,
         "capital_preservation" => FundType.CapitalPreservation,
-        "commodities"          => FundType.Commodities,
-        "silver"               => FundType.Commodities,
-        "equity"               => FundType.Equity,
-        "fixed_income"         => FundType.FixedIncome,
-        "fixed_income_usd"     => FundType.FixedIncomeUsd,
-        "gold"                 => FundType.Gold,
-        "index"                => FundType.Index,
-        "money_market"         => FundType.MoneyMarket,
-        "unknown"              => FundType.Unknown,
-        _                      => FundType.Unknown
+        "commodities" => FundType.Commodities,
+        "silver" => FundType.Commodities,
+        "equity" => FundType.Equity,
+        "fixed_income" => FundType.FixedIncome,
+        "fixed_income_usd" => FundType.FixedIncomeUsd,
+        "gold" => FundType.Gold,
+        "index" => FundType.Index,
+        "money_market" => FundType.MoneyMarket,
+        "unknown" => FundType.Unknown,
+        _ => FundType.Unknown
     };
 }

@@ -1,7 +1,3 @@
-using System.Net;
-using System.Net.Http.Headers;
-using System.Net.Http.Json;
-using System.Text.Json;
 using Meezan.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -9,6 +5,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using System.Net;
+using System.Text.Json;
 
 namespace Meezan.Infrastructure.Tests.Admin;
 
@@ -74,12 +72,17 @@ public class AdminFundsMembershipRouteTests : IClassFixture<WebApplicationFactor
             Slug = slug,
             NameAr = "تصنيف اختبار",
             NameEn = "IT Category",
-            Icon = "", Color = "",
-            IsAutoDerived = false, IsVisible = true,
+            Icon = "",
+            Color = "",
+            IsAutoDerived = false,
+            IsVisible = true,
             DisplayOrder = 999,
-            IsDeleted = false, DeletedReason = "",
-            CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow,
-            CreatedBy = "test", UpdatedBy = "test"
+            IsDeleted = false,
+            DeletedReason = "",
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
+            CreatedBy = "test",
+            UpdatedBy = "test"
         };
         db.FundCategories.Add(cat);
 
@@ -91,12 +94,15 @@ public class AdminFundsMembershipRouteTests : IClassFixture<WebApplicationFactor
                 SndukId = DateTime.UtcNow.Ticks,
                 PublicId = "it-" + Guid.NewGuid().ToString("N")[..8],
                 Slug = "it-fund-" + Guid.NewGuid().ToString("N")[..8],
-                NameAr = "صندوق اختبار", NameEn = "IT Fund",
+                NameAr = "صندوق اختبار",
+                NameEn = "IT Fund",
                 Code = "IT001",
                 Type = Domain.Entities.FundType.Equity,
                 IsActive = true,
-                SndukCreatedAt = DateTime.UtcNow, SndukUpdatedAt = DateTime.UtcNow,
-                CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow
+                SndukCreatedAt = DateTime.UtcNow,
+                SndukUpdatedAt = DateTime.UtcNow,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
             };
             db.Funds.Add(fund);
         }

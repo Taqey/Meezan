@@ -1,5 +1,4 @@
 using MediatR;
-using Meezan.Application.Common.Results;
 using Meezan.Application.Features.Scraping.Commands.RunCombinedScrape;
 using Meezan.Application.Features.Scraping.DTOs;
 using Meezan.Application.Features.Scraping.Queries.GetScrapeStatus;

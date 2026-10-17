@@ -1,9 +1,9 @@
+using MediatR;
 using Meezan.Application.Common.Interfaces.Persistence;
 using Meezan.Application.Common.Interfaces.Repositories.Sectors;
 using Meezan.Application.Common.Interfaces.Repositories.Stocks;
 using Meezan.Application.Common.Results;
 using Meezan.Application.Features.Stocks.DTOs;
-using MediatR;
 
 namespace Meezan.Application.Features.Stocks.Commands.AssignSector;
 

@@ -31,7 +31,7 @@ public class FundSyncLogDetail
     public FundSyncDetailStatus Status { get; set; }
     public string? ErrorMessage { get; set; }
     public DateTime AttemptedAt { get; set; } = DateTime.UtcNow;
-    
+
     public FundSyncLog? FundSyncLog { get; set; }
 }
 

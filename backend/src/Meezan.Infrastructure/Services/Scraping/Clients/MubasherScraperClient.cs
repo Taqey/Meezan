@@ -1,20 +1,6 @@
 using AngleSharp;
 using AngleSharp.Html.Dom;
 using Meezan.Application.Common.Interfaces.Integrations;
-using Meezan.Application.Common.Interfaces.Persistence;
-using Meezan.Application.Common.Interfaces.Queries.Funds;
-using Meezan.Application.Common.Interfaces.Queries.RemovalCandidates;
-using Meezan.Application.Common.Interfaces.Queries.Stocks;
-using Meezan.Application.Common.Interfaces.Repositories.Funds;
-using Meezan.Application.Common.Interfaces.Repositories.Indices;
-using Meezan.Application.Common.Interfaces.Repositories.Market;
-using Meezan.Application.Common.Interfaces.Repositories.Scraping;
-using Meezan.Application.Common.Interfaces.Repositories.Sectors;
-using Meezan.Application.Common.Interfaces.Repositories.Shariah;
-using Meezan.Application.Common.Interfaces.Repositories.Stocks;
-using Meezan.Application.Common.Interfaces.Repositories.System;
-using Meezan.Application.Common.Interfaces.Security;
-using Meezan.Application.Common.Interfaces.Storage;
 using Microsoft.Extensions.Logging;
 using System.Globalization;
 using System.Text.RegularExpressions;
@@ -88,7 +74,7 @@ public partial class MubasherScraperClient : IStockScraperClient
     public async Task<ScrapedMarketData?> ScrapeMarketDataAsync(string ticker, CancellationToken ct = default)
     {
         var url = MarketDataUrlTemplate.Replace("{symbol}", ticker.ToUpperInvariant());
-        
+
         // Retries = 2 (meaning 3 total attempts: attempt in range(retries + 1))
         // Delay on retry = 1.5s (matching scraper.py time.sleep(1.5))
         const int retries = 2;
@@ -122,7 +108,7 @@ public partial class MubasherScraperClient : IStockScraperClient
                         ticker, url, retries + 1, ex.Message);
                     return null;
                 }
-                
+
                 await Task.Delay(TimeSpan.FromSeconds(1.5), ct);
             }
         }

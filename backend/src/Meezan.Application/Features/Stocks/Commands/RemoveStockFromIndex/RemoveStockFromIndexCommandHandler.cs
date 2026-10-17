@@ -5,7 +5,6 @@ using Meezan.Application.Common.Interfaces.Repositories.Shariah;
 using Meezan.Application.Common.Interfaces.Repositories.Stocks;
 using Meezan.Application.Common.Results;
 using Meezan.Application.Common.Services.Shariah;
-using Meezan.Application.Common.Services.Text;
 using Meezan.Domain.Entities;
 using Meezan.Domain.Enums;
 

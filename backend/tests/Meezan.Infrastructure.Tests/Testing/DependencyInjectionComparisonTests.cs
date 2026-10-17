@@ -1,9 +1,6 @@
-using System.Reflection;
-using Meezan.Infrastructure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Xunit;
 
 namespace Meezan.Infrastructure.Tests.Testing;
 

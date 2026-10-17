@@ -67,17 +67,17 @@ public static class FundClassificationTreeEngine
         if (newParentId == null) return (true, null); // moving to root
         if (newParentId == nodeId) return (false, "لا يمكن نقل العقدة تحت نفسها.");
         if (!byId.TryGetValue(newParentId.Value, out var parent)) return (false, "الأب الجديد غير موجود.");
-        
+
         // cycle check: new parent must not be a descendant of node
         var desc = DescendantIds(allNodes, nodeId);
         if (desc.Contains(newParentId.Value)) return (false, "لا يمكن نقل العقدة تحت إحدى بناتها (دورة).");
-        
+
         // depth check: newLevel + subtree height must stay < MaxDepth
         int newLevel = parent.Level + 1;
         int height = SubtreeHeight(allNodes, nodeId);
         if (newLevel + height > MaxDepth - 1)
             return (false, $"النقل يتجاوز أقصى عمق ({MaxDepth} مستويات).");
-            
+
         return (true, null);
     }
 

@@ -1,9 +1,5 @@
 using ClosedXML.Excel;
-using Meezan.Application.Common;
 using Meezan.Application.Common.Services.Text;
-using Meezan.Application.Common.Services.Market;
-using Meezan.Application.Common.Services.Shariah;
-using Meezan.Infrastructure.Services;
 
 namespace Meezan.Infrastructure.Tests.Features.Stocks;
 
@@ -20,12 +16,12 @@ public class ExcelParserWeightTests
     // ── ArabicTextNormalizer ─────────────────────────────────────────────────
 
     [Theory]
-    [InlineData("غاز مصر",   "غازمصر")]
+    [InlineData("غاز مصر", "غازمصر")]
     [InlineData("طاقة عربية", "طاقهعربيه")] // ة→ه
-    [InlineData("إيبكو",     "ايبكو")]       // إ→ا
-    [InlineData("آمون",      "امون")]        // آ→ا
-    [InlineData("أوراسكوم",  "اوراسكوم")]   // أ→ا
-    [InlineData("إسكو",      "اسكو")]        // إ→ا
+    [InlineData("إيبكو", "ايبكو")]       // إ→ا
+    [InlineData("آمون", "امون")]        // آ→ا
+    [InlineData("أوراسكوم", "اوراسكوم")]   // أ→ا
+    [InlineData("إسكو", "اسكو")]        // إ→ا
     [InlineData("المصريه للاتصالات", "المصريهللاتصالات")] // spaces stripped
     public void Normalize_MapsVariantsCorrectly(string input, string expected)
     {
@@ -225,12 +221,12 @@ public class ExcelParserWeightTests
     // ── ComputeTicker static helper ──────────────────────────────────────────
 
     [Theory]
-    [InlineData("AMOC.CA", "",      "AMOC")]
-    [InlineData("NDRL.CA", "",      "NDRL")]
-    [InlineData("EGAS",    "",      "EGAS")]
-    [InlineData("",        "EG123", "EG123")]
-    [InlineData(null,      "",      "")]       // both empty → empty
-    [InlineData(null,      null,    "")]       // both null → empty
+    [InlineData("AMOC.CA", "", "AMOC")]
+    [InlineData("NDRL.CA", "", "NDRL")]
+    [InlineData("EGAS", "", "EGAS")]
+    [InlineData("", "EG123", "EG123")]
+    [InlineData(null, "", "")]       // both empty → empty
+    [InlineData(null, null, "")]       // both null → empty
     public void ComputeTicker_Various(string? reuters, string? symbolCode, string expected)
     {
         var result = ExcelParserService.ComputeTicker(reuters, symbolCode ?? string.Empty);
@@ -347,7 +343,7 @@ public class ExcelParserWeightTests
     public void Normalize_IsIdempotent()
     {
         var input = "أوراق ومواد تعبئة وتغليف";
-        var first  = ArabicTextNormalizer.Normalize(input);
+        var first = ArabicTextNormalizer.Normalize(input);
         var second = ArabicTextNormalizer.Normalize(first);
         Assert.Equal(first, second);
     }

@@ -1,19 +1,12 @@
-using System.Net.Http.Json;
-using Meezan.Application.Features.Funds.Categories.Dtos;
 using Meezan.Application.Features.Funds.Classification.Dtos;
-using Meezan.Application.Features.Funds.Details;
-using Meezan.Application.Features.Funds.Details.Dtos;
-using Meezan.Application.Features.Funds.Listing.Dtos;
-using Meezan.Application.Features.Funds.Types.Dtos;
 using Meezan.Domain.Entities;
 using Meezan.Infrastructure.Persistence;
-using Meezan.Infrastructure.Tests.Testing;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Xunit;
+using System.Net.Http.Json;
 
 namespace Meezan.Infrastructure.Tests.Admin;
 

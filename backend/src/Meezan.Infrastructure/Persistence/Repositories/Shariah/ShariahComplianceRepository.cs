@@ -1,18 +1,4 @@
-using Meezan.Application.Common.Interfaces.Integrations;
-using Meezan.Application.Common.Interfaces.Persistence;
-using Meezan.Application.Common.Interfaces.Queries.Funds;
-using Meezan.Application.Common.Interfaces.Queries.RemovalCandidates;
-using Meezan.Application.Common.Interfaces.Queries.Stocks;
-using Meezan.Application.Common.Interfaces.Repositories.Funds;
-using Meezan.Application.Common.Interfaces.Repositories.Indices;
-using Meezan.Application.Common.Interfaces.Repositories.Market;
-using Meezan.Application.Common.Interfaces.Repositories.Scraping;
-using Meezan.Application.Common.Interfaces.Repositories.Sectors;
 using Meezan.Application.Common.Interfaces.Repositories.Shariah;
-using Meezan.Application.Common.Interfaces.Repositories.Stocks;
-using Meezan.Application.Common.Interfaces.Repositories.System;
-using Meezan.Application.Common.Interfaces.Security;
-using Meezan.Application.Common.Interfaces.Storage;
 using Meezan.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -86,11 +72,11 @@ public class ShariahComplianceRepository : IShariahComplianceRepository
             "symbolcode" or "ticker" => desc ? query.OrderByDescending(c => c.Stock != null ? c.Stock.Ticker : string.Empty) : query.OrderBy(c => c.Stock != null ? c.Stock.Ticker : string.Empty),
             "stocknamear" or "namear" => desc ? query.OrderByDescending(c => c.Stock != null ? c.Stock.NameAr : string.Empty) : query.OrderBy(c => c.Stock != null ? c.Stock.NameAr : string.Empty),
             "stocknameen" or "nameen" => desc ? query.OrderByDescending(c => c.Stock != null ? c.Stock.NameEn : string.Empty) : query.OrderBy(c => c.Stock != null ? c.Stock.NameEn : string.Empty),
-            "status"                 => desc ? query.OrderByDescending(c => c.Status)                                          : query.OrderBy(c => c.Status),
-            "pct"                    => desc ? query.OrderByDescending(c => c.Pct)                                             : query.OrderBy(c => c.Pct),
-            "lastcheckedat"          => desc ? query.OrderByDescending(c => c.LastCheckedAt)                                   : query.OrderBy(c => c.LastCheckedAt),
-            "updatedat"              => desc ? query.OrderByDescending(c => c.UpdatedAt)                                       : query.OrderBy(c => c.UpdatedAt),
-            _                        => query.OrderBy(c => c.Stock != null ? c.Stock.Ticker : string.Empty)
+            "status" => desc ? query.OrderByDescending(c => c.Status) : query.OrderBy(c => c.Status),
+            "pct" => desc ? query.OrderByDescending(c => c.Pct) : query.OrderBy(c => c.Pct),
+            "lastcheckedat" => desc ? query.OrderByDescending(c => c.LastCheckedAt) : query.OrderBy(c => c.LastCheckedAt),
+            "updatedat" => desc ? query.OrderByDescending(c => c.UpdatedAt) : query.OrderBy(c => c.UpdatedAt),
+            _ => query.OrderBy(c => c.Stock != null ? c.Stock.Ticker : string.Empty)
         });
 
         // ── Pagination ────────────────────────────────────────────────────────

@@ -1,5 +1,3 @@
-using Meezan.Domain.Models;
-
 namespace Meezan.Infrastructure.Services.Funds.Classification;
 
 public static class FundClassificationTypeAliases

@@ -1,6 +1,3 @@
-using Meezan.Infrastructure.Services;
-using Xunit;
-
 namespace Meezan.Infrastructure.Tests.Features.JobSettings;
 
 public class JobScheduleAndSettingsTests

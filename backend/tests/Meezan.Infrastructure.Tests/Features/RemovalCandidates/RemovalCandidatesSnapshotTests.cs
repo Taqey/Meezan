@@ -1,5 +1,3 @@
-using System.Net;
-using System.Net.Http.Json;
 using Meezan.Domain.Entities;
 using Meezan.Domain.Enums;
 using Meezan.Infrastructure.Persistence;
@@ -9,7 +7,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Xunit;
+using System.Net.Http.Json;
 
 namespace Meezan.Infrastructure.Tests.Features.RemovalCandidates;
 

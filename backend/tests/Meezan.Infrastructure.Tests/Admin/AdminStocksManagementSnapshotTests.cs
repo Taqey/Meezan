@@ -1,5 +1,3 @@
-using System.Net;
-using System.Net.Http.Json;
 using Meezan.Domain.Entities;
 using Meezan.Infrastructure.Persistence;
 using Meezan.Infrastructure.Tests.Testing;
@@ -8,7 +6,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Xunit;
+using System.Net.Http.Json;
 using Index = Meezan.Domain.Entities.Index;
 
 namespace Meezan.Infrastructure.Tests.Admin;

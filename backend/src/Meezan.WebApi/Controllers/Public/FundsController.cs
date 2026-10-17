@@ -1,18 +1,17 @@
-using Meezan.WebApi.Common;
 using MediatR;
 using Meezan.Application.Features.Funds.Categories.Dtos;
+using Meezan.Application.Features.Funds.Categories.Queries.GetFundCategories;
 using Meezan.Application.Features.Funds.Classification.Dtos;
-using Meezan.Application.Features.Funds.Details;
+using Meezan.Application.Features.Funds.Classification.Queries.GetFundClassificationTree;
 using Meezan.Application.Features.Funds.Details.Dtos;
-using Meezan.Application.Features.Funds.Listing.Dtos;
-using Meezan.Application.Features.Funds.Types.Dtos;
 using Meezan.Application.Features.Funds.Details.Queries.GetFundById;
 using Meezan.Application.Features.Funds.Details.Queries.GetFundBySlug;
-using Meezan.Application.Features.Funds.Categories.Queries.GetFundCategories;
-using Meezan.Application.Features.Funds.Classification.Queries.GetFundClassificationTree;
+using Meezan.Application.Features.Funds.Listing.Dtos;
 using Meezan.Application.Features.Funds.Listing.Queries.GetFunds;
 using Meezan.Application.Features.Funds.Listing.Queries.GetFundStats;
+using Meezan.Application.Features.Funds.Types.Dtos;
 using Meezan.Application.Features.Funds.Types.Queries.GetFundTypes;
+using Meezan.WebApi.Common;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Meezan.WebApi.Controllers.Public;

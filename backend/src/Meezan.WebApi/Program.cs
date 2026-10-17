@@ -1,5 +1,3 @@
-using System.Text.Encodings.Web;
-using System.Text.Unicode;
 using Meezan.Application;
 using Meezan.Infrastructure;
 using Meezan.Infrastructure.Persistence;
@@ -10,6 +8,8 @@ using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.OpenApi.Models;
+using System.Text.Encodings.Web;
+using System.Text.Unicode;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -79,7 +79,7 @@ else
             if (pendingMigrations.Any())
             {
                 var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-                logger.LogWarning("Database has {Count} pending migration(s): {Migrations}", 
+                logger.LogWarning("Database has {Count} pending migration(s): {Migrations}",
                     pendingMigrations.Count(), string.Join(", ", pendingMigrations));
                 if (!app.Environment.IsDevelopment())
                 {

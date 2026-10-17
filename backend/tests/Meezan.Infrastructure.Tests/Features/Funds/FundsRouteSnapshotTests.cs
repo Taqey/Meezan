@@ -1,5 +1,3 @@
-using System.Net;
-using System.Text.Json;
 using Meezan.Domain.Entities;
 using Meezan.Infrastructure.Persistence;
 using Meezan.Infrastructure.Tests.Testing;
@@ -8,6 +6,8 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using System.Net;
+using System.Text.Json;
 
 namespace Meezan.Infrastructure.Tests.Features.Funds;
 

@@ -1,20 +1,6 @@
 using AngleSharp;
 using AngleSharp.Html.Dom;
 using Meezan.Application.Common.Interfaces.Integrations;
-using Meezan.Application.Common.Interfaces.Persistence;
-using Meezan.Application.Common.Interfaces.Queries.Funds;
-using Meezan.Application.Common.Interfaces.Queries.RemovalCandidates;
-using Meezan.Application.Common.Interfaces.Queries.Stocks;
-using Meezan.Application.Common.Interfaces.Repositories.Funds;
-using Meezan.Application.Common.Interfaces.Repositories.Indices;
-using Meezan.Application.Common.Interfaces.Repositories.Market;
-using Meezan.Application.Common.Interfaces.Repositories.Scraping;
-using Meezan.Application.Common.Interfaces.Repositories.Sectors;
-using Meezan.Application.Common.Interfaces.Repositories.Shariah;
-using Meezan.Application.Common.Interfaces.Repositories.Stocks;
-using Meezan.Application.Common.Interfaces.Repositories.System;
-using Meezan.Application.Common.Interfaces.Security;
-using Meezan.Application.Common.Interfaces.Storage;
 using Microsoft.Extensions.Logging;
 using System.Globalization;
 using System.Text.RegularExpressions;
@@ -86,21 +72,21 @@ public partial class InvestingScraperClient : IInvestingScraperService
     {
         // If none of the in-scope fields are missing, skip the call entirely
         bool anyMissing =
-            primary.PeRatio      is null ||
-            primary.PbRatio      is null ||
-            primary.Eps          is null ||
-            primary.BookValue    is null ||
-            primary.MarketValue  is null ||
-            primary.High         is null ||
-            primary.Low          is null ||
-            primary.Open         is null ||
+            primary.PeRatio is null ||
+            primary.PbRatio is null ||
+            primary.Eps is null ||
+            primary.BookValue is null ||
+            primary.MarketValue is null ||
+            primary.High is null ||
+            primary.Low is null ||
+            primary.Open is null ||
             primary.ClosingPrice is null;
 
         if (!anyMissing)
             return primary;
 
         var slug = ResolveSlug(primary.Ticker);
-        var url  = BaseUrl + slug;
+        var url = BaseUrl + slug;
 
         _logger.LogInformation(
             "Investing.com fallback: fetching missing fields for {Ticker} from {Url}",
@@ -150,9 +136,9 @@ public partial class InvestingScraperClient : IInvestingScraperService
     private static async Task<ScrapedMarketData> ParseAndFillAsync(
         ScrapedMarketData primary, string html, CancellationToken ct)
     {
-        var config  = Configuration.Default;
+        var config = Configuration.Default;
         var context = BrowsingContext.New(config);
-        var doc     = await context.OpenAsync(req => req.Content(html), ct) as IHtmlDocument;
+        var doc = await context.OpenAsync(req => req.Content(html), ct) as IHtmlDocument;
         if (doc is null) return primary;
 
         // investing.com renders key/value pairs inside elements with data-test attributes
@@ -171,14 +157,14 @@ public partial class InvestingScraperClient : IInvestingScraperService
         // Per-field fallback: only overwrite if Mubasher returned null
         return primary with
         {
-            PeRatio      = primary.PeRatio      ?? parsed.GetValueOrDefault("pe"),
-            PbRatio      = primary.PbRatio      ?? parsed.GetValueOrDefault("pb"),
-            Eps          = primary.Eps          ?? parsed.GetValueOrDefault("eps"),
-            BookValue    = primary.BookValue    ?? parsed.GetValueOrDefault("bookvalue"),
-            MarketValue  = primary.MarketValue  ?? parsed.GetValueOrDefault("marketcap"),
-            High         = primary.High         ?? parsed.GetValueOrDefault("high"),
-            Low          = primary.Low          ?? parsed.GetValueOrDefault("low"),
-            Open         = primary.Open         ?? parsed.GetValueOrDefault("open"),
+            PeRatio = primary.PeRatio ?? parsed.GetValueOrDefault("pe"),
+            PbRatio = primary.PbRatio ?? parsed.GetValueOrDefault("pb"),
+            Eps = primary.Eps ?? parsed.GetValueOrDefault("eps"),
+            BookValue = primary.BookValue ?? parsed.GetValueOrDefault("bookvalue"),
+            MarketValue = primary.MarketValue ?? parsed.GetValueOrDefault("marketcap"),
+            High = primary.High ?? parsed.GetValueOrDefault("high"),
+            Low = primary.Low ?? parsed.GetValueOrDefault("low"),
+            Open = primary.Open ?? parsed.GetValueOrDefault("open"),
             ClosingPrice = primary.ClosingPrice ?? parsed.GetValueOrDefault("price"),
         };
     }
@@ -248,7 +234,7 @@ public partial class InvestingScraperClient : IInvestingScraperService
 
         // Strip known non-numeric suffixes (M, B, T for millions/billions)
         var scaled = 1m;
-        var clean  = raw.Trim().TrimEnd('%');
+        var clean = raw.Trim().TrimEnd('%');
         if (clean.EndsWith("M", StringComparison.OrdinalIgnoreCase)) { clean = clean[..^1]; scaled = 1_000_000m; }
         else if (clean.EndsWith("B", StringComparison.OrdinalIgnoreCase)) { clean = clean[..^1]; scaled = 1_000_000_000m; }
         else if (clean.EndsWith("T", StringComparison.OrdinalIgnoreCase)) { clean = clean[..^1]; scaled = 1_000_000_000_000m; }

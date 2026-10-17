@@ -1,18 +1,4 @@
-using Meezan.Application.Common.Interfaces.Integrations;
-using Meezan.Application.Common.Interfaces.Persistence;
-using Meezan.Application.Common.Interfaces.Queries.Funds;
-using Meezan.Application.Common.Interfaces.Queries.RemovalCandidates;
-using Meezan.Application.Common.Interfaces.Queries.Stocks;
-using Meezan.Application.Common.Interfaces.Repositories.Funds;
 using Meezan.Application.Common.Interfaces.Repositories.Indices;
-using Meezan.Application.Common.Interfaces.Repositories.Market;
-using Meezan.Application.Common.Interfaces.Repositories.Scraping;
-using Meezan.Application.Common.Interfaces.Repositories.Sectors;
-using Meezan.Application.Common.Interfaces.Repositories.Shariah;
-using Meezan.Application.Common.Interfaces.Repositories.Stocks;
-using Meezan.Application.Common.Interfaces.Repositories.System;
-using Meezan.Application.Common.Interfaces.Security;
-using Meezan.Application.Common.Interfaces.Storage;
 using Meezan.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Index = Meezan.Domain.Entities.Index;
@@ -227,17 +213,17 @@ public class IndexRepository : IIndexRepository
             query = (f.SortBy.ToLowerInvariant() switch
             {
 #pragma warning disable CS8602, CS8629 // EF translates the optional navigations in the shariahstatus arm to LEFT JOINs: null-safe in SQL.
-                "weight"                               => desc ? query.OrderByDescending(x => x.Weight)                                            : query.OrderBy(x => x.Weight),
-                "ticker"                               => desc ? query.OrderByDescending(x => x.Stock!.Ticker)                                     : query.OrderBy(x => x.Stock!.Ticker),
-                "namear"                               => desc ? query.OrderByDescending(x => x.Stock!.NameAr)                                     : query.OrderBy(x => x.Stock!.NameAr),
-                "nameen"                               => desc ? query.OrderByDescending(x => x.Stock!.NameEn)                                     : query.OrderBy(x => x.Stock!.NameEn),
-                "closingprice"                         => desc ? query.OrderByDescending(x => x.Stock!.MarketData != null ? x.Stock!.MarketData.ClosingPrice : null) : query.OrderBy(x => x.Stock!.MarketData != null ? x.Stock!.MarketData.ClosingPrice : null),
-                "changepct"                            => desc ? query.OrderByDescending(x => x.Stock!.SupportResistance != null ? x.Stock!.SupportResistance.ChangePct : null) : query.OrderBy(x => x.Stock!.SupportResistance != null ? x.Stock!.SupportResistance.ChangePct : null),
-                "fairvalue"                            => desc ? query.OrderByDescending(x => x.Stock!.FairValue != null ? x.Stock!.FairValue.FairValue : null) : query.OrderBy(x => x.Stock!.FairValue != null ? x.Stock!.FairValue.FairValue : null),
-                "pricecomparison"                      => desc ? query.OrderByDescending(x => x.Stock!.FairValue != null ? (Meezan.Domain.Enums.PriceComparison?)x.Stock!.FairValue.PriceComparison : null) : query.OrderBy(x => x.Stock!.FairValue != null ? (Meezan.Domain.Enums.PriceComparison?)x.Stock!.FairValue.PriceComparison : null),
-                "fairvaluediffpct"                     => desc ? query.OrderByDescending(x => x.Stock!.FairValue != null ? x.Stock!.FairValue.FairValueDiffPct : null) : query.OrderBy(x => x.Stock!.FairValue != null ? x.Stock!.FairValue.FairValueDiffPct : null),
-                "shariahstatus"                        => desc ? query.OrderByDescending(x => x.Stock!.ShariahCompliance != null ? (Meezan.Domain.Enums.ShariahStatus?)x.Stock.ShariahCompliance.Status : null) : query.OrderBy(x => x.Stock!.ShariahCompliance != null ? (Meezan.Domain.Enums.ShariahStatus?)x.Stock.ShariahCompliance.Status : null),
-                _                                      => query.OrderByDescending(x => x.Weight)
+                "weight" => desc ? query.OrderByDescending(x => x.Weight) : query.OrderBy(x => x.Weight),
+                "ticker" => desc ? query.OrderByDescending(x => x.Stock!.Ticker) : query.OrderBy(x => x.Stock!.Ticker),
+                "namear" => desc ? query.OrderByDescending(x => x.Stock!.NameAr) : query.OrderBy(x => x.Stock!.NameAr),
+                "nameen" => desc ? query.OrderByDescending(x => x.Stock!.NameEn) : query.OrderBy(x => x.Stock!.NameEn),
+                "closingprice" => desc ? query.OrderByDescending(x => x.Stock!.MarketData != null ? x.Stock!.MarketData.ClosingPrice : null) : query.OrderBy(x => x.Stock!.MarketData != null ? x.Stock!.MarketData.ClosingPrice : null),
+                "changepct" => desc ? query.OrderByDescending(x => x.Stock!.SupportResistance != null ? x.Stock!.SupportResistance.ChangePct : null) : query.OrderBy(x => x.Stock!.SupportResistance != null ? x.Stock!.SupportResistance.ChangePct : null),
+                "fairvalue" => desc ? query.OrderByDescending(x => x.Stock!.FairValue != null ? x.Stock!.FairValue.FairValue : null) : query.OrderBy(x => x.Stock!.FairValue != null ? x.Stock!.FairValue.FairValue : null),
+                "pricecomparison" => desc ? query.OrderByDescending(x => x.Stock!.FairValue != null ? (Meezan.Domain.Enums.PriceComparison?)x.Stock!.FairValue.PriceComparison : null) : query.OrderBy(x => x.Stock!.FairValue != null ? (Meezan.Domain.Enums.PriceComparison?)x.Stock!.FairValue.PriceComparison : null),
+                "fairvaluediffpct" => desc ? query.OrderByDescending(x => x.Stock!.FairValue != null ? x.Stock!.FairValue.FairValueDiffPct : null) : query.OrderBy(x => x.Stock!.FairValue != null ? x.Stock!.FairValue.FairValueDiffPct : null),
+                "shariahstatus" => desc ? query.OrderByDescending(x => x.Stock!.ShariahCompliance != null ? (Meezan.Domain.Enums.ShariahStatus?)x.Stock.ShariahCompliance.Status : null) : query.OrderBy(x => x.Stock!.ShariahCompliance != null ? (Meezan.Domain.Enums.ShariahStatus?)x.Stock.ShariahCompliance.Status : null),
+                _ => query.OrderByDescending(x => x.Weight)
 #pragma warning restore CS8602, CS8629
             });
         }

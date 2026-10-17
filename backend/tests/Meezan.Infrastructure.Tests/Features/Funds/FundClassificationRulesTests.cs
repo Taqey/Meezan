@@ -1,5 +1,4 @@
 using Meezan.Domain.Entities;
-using Meezan.Infrastructure.Services;
 
 namespace Meezan.Infrastructure.Tests.Features.Funds;
 
@@ -75,11 +74,21 @@ public class FundClassificationRulesTests
         var bySlug = nodes.ToDictionary(n => n.Slug, StringComparer.OrdinalIgnoreCase);
         var parentOf = new Dictionary<string, string?>
         {
-            ["sector"] = "equity", ["index"] = "equity", ["active"] = "equity", ["equity-unclassified"] = "equity",
-            ["index-egx30"] = "index", ["index-egx33"] = "index", ["index-egx70"] = "index",
-            ["index-egx100"] = "index", ["tracks-egx35"] = "index",
-            ["sector-financial"] = "sector", ["sector-real-estate"] = "sector", ["sector-consumer"] = "sector",
-            ["sector-industrial"] = "sector", ["sector-technology"] = "sector", ["sector-ipo"] = "sector",
+            ["sector"] = "equity",
+            ["index"] = "equity",
+            ["active"] = "equity",
+            ["equity-unclassified"] = "equity",
+            ["index-egx30"] = "index",
+            ["index-egx33"] = "index",
+            ["index-egx70"] = "index",
+            ["index-egx100"] = "index",
+            ["tracks-egx35"] = "index",
+            ["sector-financial"] = "sector",
+            ["sector-real-estate"] = "sector",
+            ["sector-consumer"] = "sector",
+            ["sector-industrial"] = "sector",
+            ["sector-technology"] = "sector",
+            ["sector-ipo"] = "sector",
         };
         foreach (var (slug, parent) in parentOf)
         {

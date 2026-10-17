@@ -1,8 +1,5 @@
 using System.Net;
 using System.Net.Http.Headers;
-using System.Text.Json;
-using Meezan.Infrastructure.Tests.Testing;
-using Xunit;
 
 namespace Meezan.Infrastructure.Tests.Testing;
 

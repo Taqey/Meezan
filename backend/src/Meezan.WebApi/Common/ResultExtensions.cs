@@ -1,6 +1,6 @@
-using System.Net;
 using Meezan.Application.Common.Results;
 using Microsoft.AspNetCore.Mvc;
+using System.Net;
 
 namespace Meezan.WebApi.Common;
 

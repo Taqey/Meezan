@@ -1,6 +1,6 @@
-using System.Text.Json;
 using Meezan.Domain.Entities;
 using Meezan.Domain.Models;
+using System.Text.Json;
 
 namespace Meezan.Domain.Services;
 

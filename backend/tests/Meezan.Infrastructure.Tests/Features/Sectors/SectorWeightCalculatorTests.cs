@@ -1,10 +1,4 @@
-using System.Collections.Generic;
-using System.Linq;
-using Meezan.Application.Common;
-using Meezan.Application.Common.Services.Text;
 using Meezan.Application.Common.Services.Market;
-using Meezan.Application.Common.Services.Shariah;
-using Xunit;
 
 namespace Meezan.Infrastructure.Tests.Features.Sectors;
 
@@ -26,7 +20,7 @@ public class SectorWeightCalculatorTests
         // Then QNBE weight = QNBE / new total = (QNBE / uncapped total) * 65%
         // If QNBE is 21.9%, then QNBE / uncapped total = 21.9 / 65 = ~33.7%
         // ADIB weight = (ADIB / uncapped total) * 65% = 10.4% => ADIB / uncapped total = ~16%
-        
+
         var stocks = new List<SectorStockWeightInput>
         {
             new(1, "COMI", 160000m, "EGP"),

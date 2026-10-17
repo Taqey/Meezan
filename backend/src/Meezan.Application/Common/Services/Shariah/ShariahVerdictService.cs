@@ -1,8 +1,8 @@
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using Meezan.Domain.Entities;
 using Meezan.Domain.Enums;
 using Microsoft.Extensions.Logging;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Meezan.Application.Common.Services.Shariah;
 

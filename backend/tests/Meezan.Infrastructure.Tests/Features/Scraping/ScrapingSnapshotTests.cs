@@ -1,12 +1,10 @@
-using System.Net;
-using System.Net.Http.Json;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Domain.Entities;
 using Meezan.Infrastructure.Persistence;
 using Meezan.Infrastructure.Tests.Testing;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
-using Xunit;
+using System.Net;
 
 namespace Meezan.Infrastructure.Tests.Features.Scraping;
 

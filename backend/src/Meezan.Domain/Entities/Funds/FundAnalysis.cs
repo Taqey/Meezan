@@ -1,5 +1,3 @@
-using System.ComponentModel.DataAnnotations.Schema;
-
 namespace Meezan.Domain.Entities;
 
 /// <summary>
@@ -14,7 +12,7 @@ public class FundPriceHistory
     public decimal? Change { get; set; }
     public decimal? Performance { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    
+
     public Fund? Fund { get; set; }
 }
 
@@ -25,7 +23,7 @@ public class FundAnalysis
 {
     public int Id { get; set; }
     public int FundId { get; set; }
-    
+
     // Scores (-1 means not available)
     public decimal? PerformanceScore { get; set; }
     public decimal? RiskScore { get; set; }
@@ -33,7 +31,7 @@ public class FundAnalysis
     public decimal? StabilityScore { get; set; }
     public decimal? DiversificationScore { get; set; }
     public decimal? TotalScore { get; set; }
-    
+
     // Raw metrics
     public decimal? Cagr { get; set; }
     public decimal? Alpha { get; set; }
@@ -41,10 +39,10 @@ public class FundAnalysis
     public decimal? Consistency { get; set; }
     public decimal? MaxDrawdown { get; set; }
     public decimal? SharpeRatio { get; set; }
-    
+
     // Weights (if available)
     public string WeightsJson { get; set; } = string.Empty;
-    
+
     // Explanations
     public string PerformanceExplanationAr { get; set; } = string.Empty;
     public string PerformanceExplanationEn { get; set; } = string.Empty;
@@ -56,11 +54,11 @@ public class FundAnalysis
     public string StabilityExplanationEn { get; set; } = string.Empty;
     public string DiversificationExplanationAr { get; set; } = string.Empty;
     public string DiversificationExplanationEn { get; set; } = string.Empty;
-    
+
     public DateTime CalculatedAt { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
-    
+
     public Fund? Fund { get; set; }
 }
 
@@ -73,7 +71,7 @@ public class FundSimilar
     public int FundId { get; set; }
     public int SimilarFundId { get; set; } // references Fund.Id
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    
+
     public Fund? Fund { get; set; }
     public Fund? SimilarFund { get; set; }
 }

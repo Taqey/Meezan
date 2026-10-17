@@ -1,27 +1,13 @@
+using MediatR;
 using Meezan.Application.Common.Exceptions;
 using Meezan.Application.Common.Interfaces.Integrations;
-using Meezan.Application.Common.Interfaces.Persistence;
-using Meezan.Application.Common.Interfaces.Queries.Funds;
-using Meezan.Application.Common.Interfaces.Queries.RemovalCandidates;
-using Meezan.Application.Common.Interfaces.Queries.Stocks;
-using Meezan.Application.Common.Interfaces.Repositories.Funds;
-using Meezan.Application.Common.Interfaces.Repositories.Indices;
-using Meezan.Application.Common.Interfaces.Repositories.Market;
-using Meezan.Application.Common.Interfaces.Repositories.Scraping;
-using Meezan.Application.Common.Interfaces.Repositories.Sectors;
-using Meezan.Application.Common.Interfaces.Repositories.Shariah;
-using Meezan.Application.Common.Interfaces.Repositories.Stocks;
-using Meezan.Application.Common.Interfaces.Repositories.System;
-using Meezan.Application.Common.Interfaces.Security;
 using Meezan.Application.Common.Interfaces.Storage;
 using Meezan.Application.Common.Models.Funds;
-using Meezan.Application.Common.Models.Stocks;
 using Meezan.Application.Features.Funds.Sync.Commands.BackfillFundLogos;
 using Meezan.Application.Features.Funds.Sync.Commands.RunFundSync;
 using Meezan.Domain.Entities;
 using Meezan.Infrastructure.Persistence;
 using Meezan.Infrastructure.Tests.Testing;
-using MediatR;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
@@ -297,16 +283,22 @@ public class FundSyncCharacterizationTests : IClassFixture<WebApplicationFactory
             db.FundCategoryOverrides.RemoveRange(auto);
             db.FundCategoryOverrides.Add(new FundCategoryOverride
             {
-                FundId = a.Id, CategoryId = sharia.Id, Action = OverrideAction.Exclude,
-                CreatedAt = DateTime.UtcNow, CreatedBy = "admin"
+                FundId = a.Id,
+                CategoryId = sharia.Id,
+                Action = OverrideAction.Exclude,
+                CreatedAt = DateTime.UtcNow,
+                CreatedBy = "admin"
             });
             // Admin includes fund C in a category it would otherwise leave... and renames a category.
             var cOverrides = await db.FundCategoryOverrides.Where(o => o.FundId == c.Id && o.CategoryId == egx.Id).ToListAsync();
             db.FundCategoryOverrides.RemoveRange(cOverrides);
             db.FundCategoryOverrides.Add(new FundCategoryOverride
             {
-                FundId = c.Id, CategoryId = egx.Id, Action = OverrideAction.Include,
-                CreatedAt = DateTime.UtcNow, CreatedBy = "admin"
+                FundId = c.Id,
+                CategoryId = egx.Id,
+                Action = OverrideAction.Include,
+                CreatedAt = DateTime.UtcNow,
+                CreatedBy = "admin"
             });
             egx.NameAr = "اسم معدل يدوياً";
             await db.SaveChangesAsync();

@@ -1,5 +1,5 @@
-using System.Text.Json;
 using Meezan.Domain.Entities;
+using System.Text.Json;
 
 namespace Meezan.Domain.Services;
 
@@ -62,10 +62,10 @@ public static class FundAutoClassification
         var textToSearch = (rule.Field?.ToLowerInvariant() switch
         {
             "description" => $"{fund.DescriptionAr} {fund.DescriptionEn}",
-            "strategy"    => fund.InvestmentStrategy ?? string.Empty,
-            "type"        => $"{fund.TypeNameAr} {fund.TypeNameEn}",
-            "all"         => $"{fund.NameAr} {fund.NameEn} {fund.DescriptionAr} {fund.DescriptionEn} {fund.InvestmentStrategy} {fund.TypeNameAr} {fund.TypeNameEn}",
-            _             => $"{fund.NameAr} {fund.NameEn}" // default to name
+            "strategy" => fund.InvestmentStrategy ?? string.Empty,
+            "type" => $"{fund.TypeNameAr} {fund.TypeNameEn}",
+            "all" => $"{fund.NameAr} {fund.NameEn} {fund.DescriptionAr} {fund.DescriptionEn} {fund.InvestmentStrategy} {fund.TypeNameAr} {fund.TypeNameEn}",
+            _ => $"{fund.NameAr} {fund.NameEn}" // default to name
         }).ToLowerInvariant();
 
         return rule.Keywords.Any(kw => textToSearch.Contains(kw.Trim().ToLowerInvariant()));

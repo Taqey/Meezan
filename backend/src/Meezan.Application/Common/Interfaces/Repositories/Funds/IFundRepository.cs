@@ -1,6 +1,5 @@
-using Meezan.Domain.Entities;
 using Meezan.Application.Common.Models.Funds;
-using Meezan.Application.Common.Models.Stocks;
+using Meezan.Domain.Entities;
 
 namespace Meezan.Application.Common.Interfaces.Repositories.Funds;
 

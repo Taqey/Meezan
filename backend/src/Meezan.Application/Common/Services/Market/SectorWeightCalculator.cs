@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-
 namespace Meezan.Application.Common.Services.Market;
 
 /// <summary>

@@ -1,4 +1,3 @@
-using Meezan.Domain.Entities;
 using Meezan.Domain.Enums;
 
 namespace Meezan.Application.Features.Scraping.Services;
@@ -322,9 +321,9 @@ public static class FairValueCalculator
         var confidence = included.Count switch
         {
             >= 3 => ValuationConfidence.High,
-            2    => ValuationConfidence.Medium,
-            1    => ValuationConfidence.Low,
-            _    => ValuationConfidence.None
+            2 => ValuationConfidence.Medium,
+            1 => ValuationConfidence.Low,
+            _ => ValuationConfidence.None
         };
 
         return new FairValueResult(
@@ -370,8 +369,8 @@ public static class FairValueCalculator
             return lo == hi ? s[lo] : s[lo] + frac * (s[hi] - s[lo]);
         }
 
-        double q1  = Percentile(sorted, 0.25);
-        double q3  = Percentile(sorted, 0.75);
+        double q1 = Percentile(sorted, 0.25);
+        double q3 = Percentile(sorted, 0.75);
         double iqr = q3 - q1;
 
         return (

@@ -2,8 +2,6 @@ namespace Meezan.Application.Features.Funds.Categories.Queries.GetCategoryChange
 
 using MediatR;
 using Meezan.Application.Common.Results;
-using Meezan.Application.Common.Models.Funds;
-using Meezan.Application.Common.Models.Stocks;
 using Meezan.Domain.Entities;
 
 public record GetCategoryChangesQuery(

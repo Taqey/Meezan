@@ -1,5 +1,5 @@
-using Meezan.Domain.Entities;
 using Meezan.Application.Features.Funds.Types.Dtos;
+using Meezan.Domain.Entities;
 
 namespace Meezan.Application.Features.Funds.Listing.Dtos;
 

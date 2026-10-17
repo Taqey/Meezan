@@ -1,9 +1,6 @@
-using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Common;
-using Meezan.Application.Common.Services.Text;
-using Meezan.Application.Common.Services.Market;
-using Meezan.Application.Common.Services.Shariah;
+using Meezan.Application.Common.Results;
 using Meezan.Application.Features.Scraping.DTOs;
 
 namespace Meezan.Application.Features.Scraping.Queries.GetStocksList;

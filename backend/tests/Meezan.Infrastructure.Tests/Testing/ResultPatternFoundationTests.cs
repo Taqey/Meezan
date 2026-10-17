@@ -1,4 +1,3 @@
-using System.Net;
 using FluentValidation;
 using MediatR;
 using Meezan.Application.Common.Behaviors;
@@ -8,7 +7,6 @@ using Meezan.Infrastructure.Persistence;
 using Meezan.WebApi.Common;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Xunit;
 
 namespace Meezan.Infrastructure.Tests.Testing;
 

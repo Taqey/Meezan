@@ -1,5 +1,4 @@
 using MediatR;
-using Meezan.Application.Common.Results;
 using Meezan.Application.Features.Shariah.Commands.ImportFaisalOsoulOpinions;
 using Meezan.Application.Features.Shariah.Commands.RecomputeVerdicts;
 using Meezan.Application.Features.Shariah.Commands.RefreshShariahData;

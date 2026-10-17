@@ -1,18 +1,4 @@
-using Meezan.Application.Common.Interfaces.Integrations;
-using Meezan.Application.Common.Interfaces.Persistence;
-using Meezan.Application.Common.Interfaces.Queries.Funds;
-using Meezan.Application.Common.Interfaces.Queries.RemovalCandidates;
-using Meezan.Application.Common.Interfaces.Queries.Stocks;
-using Meezan.Application.Common.Interfaces.Repositories.Funds;
-using Meezan.Application.Common.Interfaces.Repositories.Indices;
-using Meezan.Application.Common.Interfaces.Repositories.Market;
-using Meezan.Application.Common.Interfaces.Repositories.Scraping;
-using Meezan.Application.Common.Interfaces.Repositories.Sectors;
-using Meezan.Application.Common.Interfaces.Repositories.Shariah;
 using Meezan.Application.Common.Interfaces.Repositories.Stocks;
-using Meezan.Application.Common.Interfaces.Repositories.System;
-using Meezan.Application.Common.Interfaces.Security;
-using Meezan.Application.Common.Interfaces.Storage;
 using Meezan.Application.Features.Sectors.DTOs;
 using Meezan.Domain.Entities;
 using Meezan.Domain.Enums;
@@ -298,26 +284,26 @@ public class StockRepository : IStockRepository
         query = (f.SortBy?.ToLowerInvariant() switch
         {
 #pragma warning disable CS8602, CS8629 // EF translates the optional navigations in the shariahstatus arm to LEFT JOINs: null-safe in SQL.
-            "namear" or "nameAr"                   => desc ? query.OrderByDescending(x => x.NameAr)                                    : query.OrderBy(x => x.NameAr),
-            "nameen" or "nameEn"                   => desc ? query.OrderByDescending(x => x.NameEn)                                    : query.OrderBy(x => x.NameEn),
-            "closingprice" or "closingPrice"       => desc ? query.OrderByDescending(x => x.MarketData != null ? x.MarketData.ClosingPrice : null) : query.OrderBy(x => x.MarketData != null ? x.MarketData.ClosingPrice : null),
-            "changepct" or "changePct"             => desc ? query.OrderByDescending(x => x.SupportResistance != null ? x.SupportResistance.ChangePct : null) : query.OrderBy(x => x.SupportResistance != null ? x.SupportResistance.ChangePct : null),
-            "fairvalue" or "fairValue"             => desc ? query.OrderByDescending(x => x.FairValue != null ? x.FairValue.FairValue : null) : query.OrderBy(x => x.FairValue != null ? x.FairValue.FairValue : null),
+            "namear" or "nameAr" => desc ? query.OrderByDescending(x => x.NameAr) : query.OrderBy(x => x.NameAr),
+            "nameen" or "nameEn" => desc ? query.OrderByDescending(x => x.NameEn) : query.OrderBy(x => x.NameEn),
+            "closingprice" or "closingPrice" => desc ? query.OrderByDescending(x => x.MarketData != null ? x.MarketData.ClosingPrice : null) : query.OrderBy(x => x.MarketData != null ? x.MarketData.ClosingPrice : null),
+            "changepct" or "changePct" => desc ? query.OrderByDescending(x => x.SupportResistance != null ? x.SupportResistance.ChangePct : null) : query.OrderBy(x => x.SupportResistance != null ? x.SupportResistance.ChangePct : null),
+            "fairvalue" or "fairValue" => desc ? query.OrderByDescending(x => x.FairValue != null ? x.FairValue.FairValue : null) : query.OrderBy(x => x.FairValue != null ? x.FairValue.FairValue : null),
             "pricecomparison" or "priceComparison" => desc ? query.OrderByDescending(x => x.FairValue != null ? (PriceComparison?)x.FairValue.PriceComparison : null) : query.OrderBy(x => x.FairValue != null ? (PriceComparison?)x.FairValue.PriceComparison : null),
-            "fairvaluediffpct" or "fairValueDiffPct"=> desc ? query.OrderByDescending(x => x.FairValue != null ? x.FairValue.FairValueDiffPct : null) : query.OrderBy(x => x.FairValue != null ? x.FairValue.FairValueDiffPct : null),
-            "shariahstatus" or "shariahStatus"     => desc ? query.OrderByDescending(x => x.ShariahCompliance != null ? (ShariahStatus?)x.ShariahCompliance.Status : null) : query.OrderBy(x => x.ShariahCompliance != null ? (ShariahStatus?)x.ShariahCompliance.Status : null),
+            "fairvaluediffpct" or "fairValueDiffPct" => desc ? query.OrderByDescending(x => x.FairValue != null ? x.FairValue.FairValueDiffPct : null) : query.OrderBy(x => x.FairValue != null ? x.FairValue.FairValueDiffPct : null),
+            "shariahstatus" or "shariahStatus" => desc ? query.OrderByDescending(x => x.ShariahCompliance != null ? (ShariahStatus?)x.ShariahCompliance.Status : null) : query.OrderBy(x => x.ShariahCompliance != null ? (ShariahStatus?)x.ShariahCompliance.Status : null),
             // Weight in the resolved weightIndexCode.
             // For Sectoral-Indices (or sector views), weights are dynamic and strictly monotonic
             // with effective market cap in EGP (MarketValue * (Currency == 'USD' ? 52.4m : 1.0m)).
             // For other official indices (EGX30, etc.), sort by stored ic.Weight.
-            "weight"                             => isSectoral
+            "weight" => isSectoral
                 ? (desc
                     ? query.OrderByDescending(x => x.MarketData != null ? x.MarketData.MarketValue * (x.MarketData.Currency == "USD" ? 52.4m : 1.0m) : (decimal?)null)
                     : query.OrderBy(x => x.MarketData != null ? x.MarketData.MarketValue * (x.MarketData.Currency == "USD" ? 52.4m : 1.0m) : (decimal?)null))
                 : (desc
                     ? query.OrderByDescending(x => x.IndexConstituents.Where(ic => ic.Index != null && ic.Index.Code.ToUpper() == weightIndexCode).Select(ic => ic.Weight).FirstOrDefault())
                     : query.OrderBy(x => x.IndexConstituents.Where(ic => ic.Index != null && ic.Index.Code.ToUpper() == weightIndexCode).Select(ic => ic.Weight).FirstOrDefault())),
-            _                                      => desc ? query.OrderByDescending(x => x.Ticker)                                    : query.OrderBy(x => x.Ticker)
+            _ => desc ? query.OrderByDescending(x => x.Ticker) : query.OrderBy(x => x.Ticker)
 #pragma warning restore CS8602, CS8629
         });
 
@@ -571,13 +557,13 @@ public class StockRepository : IStockRepository
             .AsNoTracking()
             .Select(s => new Stock
             {
-                Id       = s.Id,
-                Ticker   = s.Ticker,
-                NameAr   = s.NameAr,
-                NameEn   = s.NameEn,
+                Id = s.Id,
+                Ticker = s.Ticker,
+                NameAr = s.NameAr,
+                NameEn = s.NameEn,
                 SectorId = s.SectorId,
                 IsActive = s.IsActive,
-                DeactivatedAt      = s.DeactivatedAt,
+                DeactivatedAt = s.DeactivatedAt,
                 DeactivationReason = s.DeactivationReason
             })
             .ToListAsync(cancellationToken);

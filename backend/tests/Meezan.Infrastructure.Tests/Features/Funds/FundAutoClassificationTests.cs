@@ -1,5 +1,4 @@
 using Meezan.Domain.Entities;
-using Meezan.Infrastructure.Services;
 
 namespace Meezan.Infrastructure.Tests.Features.Funds;
 

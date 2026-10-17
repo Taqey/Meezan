@@ -1,6 +1,6 @@
+using FluentValidation;
 using System.Net;
 using System.Text.Json;
-using FluentValidation;
 
 namespace Meezan.WebApi.Middleware;
 

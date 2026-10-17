@@ -1,22 +1,10 @@
-using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
-using Meezan.Application.Common.Interfaces.Queries.Funds;
-using Meezan.Application.Common.Interfaces.Queries.RemovalCandidates;
-using Meezan.Application.Common.Interfaces.Queries.Stocks;
-using Meezan.Application.Common.Interfaces.Repositories.Funds;
-using Meezan.Application.Common.Interfaces.Repositories.Indices;
-using Meezan.Application.Common.Interfaces.Repositories.Market;
-using Meezan.Application.Common.Interfaces.Repositories.Scraping;
-using Meezan.Application.Common.Interfaces.Repositories.Sectors;
 using Meezan.Application.Common.Interfaces.Repositories.Shariah;
 using Meezan.Application.Common.Interfaces.Repositories.Stocks;
-using Meezan.Application.Common.Interfaces.Repositories.System;
-using Meezan.Application.Common.Interfaces.Security;
-using Meezan.Application.Common.Interfaces.Storage;
-using Meezan.Application.Common.Models.Funds;
 using Meezan.Application.Common.Models.Stocks;
+using Meezan.Application.Common.Results;
 using Meezan.Domain.Entities;
 using Meezan.Domain.Enums;
 using Microsoft.Extensions.Logging;
@@ -291,27 +279,27 @@ public class RefreshShariahDataCommandHandler : IRequestHandler<RefreshShariahDa
                     // No stored row yet: create one with the computed Halal verdict
                     // and the aggregated overall verdict.
                     try
+                    {
+                        var v0 = Common.Services.Shariah.ShariahVerdictService.Compute(newEffRevenue, newEffDebt, null, null, newEffActivity);
+                        compliance = new ShariahCompliance
                         {
-                            var v0 = Common.Services.Shariah.ShariahVerdictService.Compute(newEffRevenue, newEffDebt, null, null, newEffActivity);
-                            compliance = new ShariahCompliance
-                            {
-                                StockId = stock.Id,
-                                Status = ShariahStatus.Pending,
-                                Pct = item.SpHaramEarningPercentage,
-                                Note = null,
-                                HasShariahBoard = false,
-                                ViaScholarsOnly = false,
-                                VerdictDetailsJson = null,
-                                HalalStatus = null,
-                                VerdictSource = null,
-                                LastCheckedAt = now,
-                                UpdatedAt = now
-                            };
-                            Common.Services.Shariah.ShariahVerdictService.TryApplyHalal(compliance, v0, _logger);
-                            bool member0 = await _stockRepository.IsShariahIndexMemberAsync(stock.Id, cancellationToken);
-                            Common.Services.Shariah.ShariahVerdictService.ApplyOverall(compliance, newEffActivity, opinionsDict.Values, member0, _logger);
-                            await _complianceRepository.AddAsync(compliance, cancellationToken);
-                        }
+                            StockId = stock.Id,
+                            Status = ShariahStatus.Pending,
+                            Pct = item.SpHaramEarningPercentage,
+                            Note = null,
+                            HasShariahBoard = false,
+                            ViaScholarsOnly = false,
+                            VerdictDetailsJson = null,
+                            HalalStatus = null,
+                            VerdictSource = null,
+                            LastCheckedAt = now,
+                            UpdatedAt = now
+                        };
+                        Common.Services.Shariah.ShariahVerdictService.TryApplyHalal(compliance, v0, _logger);
+                        bool member0 = await _stockRepository.IsShariahIndexMemberAsync(stock.Id, cancellationToken);
+                        Common.Services.Shariah.ShariahVerdictService.ApplyOverall(compliance, newEffActivity, opinionsDict.Values, member0, _logger);
+                        await _complianceRepository.AddAsync(compliance, cancellationToken);
+                    }
                     catch (Exception vex)
                     {
                         _logger.LogWarning(vex, "Verdict recompute failed for new stock {Symbol}; keeping no row.", symbol);

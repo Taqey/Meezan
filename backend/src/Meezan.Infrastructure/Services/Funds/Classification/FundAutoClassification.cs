@@ -1,5 +1,5 @@
-using System.Text.Json;
 using Meezan.Domain.Entities;
+using System.Text.Json;
 
 namespace Meezan.Infrastructure.Services.Funds.Classification;
 

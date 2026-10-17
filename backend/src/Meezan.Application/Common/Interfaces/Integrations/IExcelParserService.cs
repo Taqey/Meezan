@@ -1,4 +1,3 @@
-using Meezan.Application.Common.Models.Funds;
 using Meezan.Application.Common.Models.Stocks;
 
 namespace Meezan.Application.Common.Interfaces.Integrations;

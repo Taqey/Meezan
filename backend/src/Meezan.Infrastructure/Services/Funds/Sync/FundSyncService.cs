@@ -1,22 +1,11 @@
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
-using Meezan.Application.Common.Interfaces.Queries.Funds;
-using Meezan.Application.Common.Interfaces.Queries.RemovalCandidates;
-using Meezan.Application.Common.Interfaces.Queries.Stocks;
 using Meezan.Application.Common.Interfaces.Repositories.Funds;
-using Meezan.Application.Common.Interfaces.Repositories.Indices;
-using Meezan.Application.Common.Interfaces.Repositories.Market;
-using Meezan.Application.Common.Interfaces.Repositories.Scraping;
-using Meezan.Application.Common.Interfaces.Repositories.Sectors;
-using Meezan.Application.Common.Interfaces.Repositories.Shariah;
-using Meezan.Application.Common.Interfaces.Repositories.Stocks;
-using Meezan.Application.Common.Interfaces.Repositories.System;
-using Meezan.Application.Common.Interfaces.Security;
 using Meezan.Application.Common.Interfaces.Storage;
 using Meezan.Domain.Entities;
+using Meezan.Infrastructure.Services.Funds.Classification;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Meezan.Infrastructure.Services.Funds.Classification;
 
 namespace Meezan.Infrastructure.Services.Funds.Sync;
 
@@ -83,7 +72,7 @@ public class FundSyncService : IFundSyncService
         using var scope = _services.CreateScope();
         var settingsRepo = scope.ServiceProvider.GetRequiredService<IFundSyncSettingsRepository>();
         var settings = await settingsRepo.GetAsync(cancellationToken);
-        
+
         if (settings == null || !settings.IsEnabled)
         {
             throw new InvalidOperationException("Fund sync is disabled");
@@ -112,7 +101,7 @@ public class FundSyncService : IFundSyncService
             // Step 1: Fetch fund list
             var sndukClient = scope.ServiceProvider.GetRequiredService<ISndukFundClient>();
             var fundListResponse = await sndukClient.GetFundListAsync(cancellationToken);
-            
+
             var sndukFunds = (fundListResponse?.Funds ?? [])
                 .GroupBy(f => f.Id)
                 .Select(g => g.First())
@@ -164,13 +153,13 @@ public class FundSyncService : IFundSyncService
 
                     // Step 3: Fetch and store price history
                     await SyncPriceHistoryAsync(fund, priceRepo, sndukClient, settings.RequestDelaySeconds, cancellationToken);
-                    
+
                     // Step 4: Fetch and store analysis
                     await SyncAnalysisAsync(fund, analysisRepo, sndukClient, settings.RequestDelaySeconds, cancellationToken);
-                    
+
                     // Step 5: Fetch and store similar funds
                     await SyncSimilarFundsAsync(fund, similarRepo, fundRepo, sndukClient, settings.RequestDelaySeconds, cancellationToken);
-                    
+
                     // Step 6: Auto-derive categories
                     await AutoDeriveCategoriesAsync(fund, categoryRepo, overrideRepo, cancellationToken);
 
@@ -199,7 +188,7 @@ public class FundSyncService : IFundSyncService
                 finally
                 {
                     details.Add(detail);
-                    
+
                     // Delay between requests
                     if (settings.RequestDelaySeconds > 0)
                     {
@@ -232,7 +221,7 @@ public class FundSyncService : IFundSyncService
             logRepo.Update(syncLog);
             await scope.ServiceProvider.GetRequiredService<IUnitOfWork>().SaveChangesAsync(cancellationToken);
 
-            _logger.LogInformation("Fund sync completed: {Updated} updated, {Failed} failed, duration: {Duration}s", 
+            _logger.LogInformation("Fund sync completed: {Updated} updated, {Failed} failed, duration: {Duration}s",
                 updatedFunds, failedFunds, syncLog.DurationSeconds);
 
             return syncLog;
@@ -243,10 +232,10 @@ public class FundSyncService : IFundSyncService
             syncLog.FinishedAt = DateTime.UtcNow;
             syncLog.DurationSeconds = (int)(DateTime.UtcNow - startTime).TotalSeconds;
             syncLog.ErrorSummary = ex.Message;
-            
+
             logRepo.Update(syncLog);
             await scope.ServiceProvider.GetRequiredService<IUnitOfWork>().SaveChangesAsync(cancellationToken);
-            
+
             _logger.LogError(ex, "Fund sync failed");
             throw;
         }
@@ -255,7 +244,7 @@ public class FundSyncService : IFundSyncService
     private async Task<Fund> UpsertFundAsync(IFundRepository fundRepo, SndukFundDto dto, CancellationToken cancellationToken)
     {
         var existing = await fundRepo.GetBySndukIdAsync(dto.Id, cancellationToken);
-        
+
         var fund = existing ?? new Fund
         {
             SndukId = dto.Id,
@@ -319,12 +308,12 @@ public class FundSyncService : IFundSyncService
     {
         // Try to get longest available history first
         var timeframes = new[] { "3Y", "1Y", "6M", "3M", "1M" };
-        
+
         for (var i = 0; i < timeframes.Length; i++)
         {
             var timeframe = timeframes[i];
             var response = await sndukClient.GetFundPerformanceAsync(fund.SndukId, timeframe, cancellationToken);
-            
+
             if (response != null)
             {
                 var data = response.Data ?? [];
@@ -366,7 +355,7 @@ public class FundSyncService : IFundSyncService
                     break; // Successfully fetched one timeframe, no need to try others
                 }
             }
-            
+
             // Delay between timeframe attempts
             if (i < timeframes.Length - 1)
             {
@@ -378,7 +367,7 @@ public class FundSyncService : IFundSyncService
     private async Task SyncAnalysisAsync(Fund fund, IFundAnalysisRepository analysisRepo, ISndukFundClient sndukClient, int delaySeconds, CancellationToken cancellationToken)
     {
         var response = await sndukClient.GetFundAnalysisAsync(fund.SndukId, cancellationToken);
-        
+
         if (response != null)
         {
             var existing = await analysisRepo.GetByFundIdAsync(fund.Id, cancellationToken);
@@ -433,14 +422,14 @@ public class FundSyncService : IFundSyncService
     private async Task SyncSimilarFundsAsync(Fund fund, IFundSimilarRepository similarRepo, IFundRepository fundRepo, ISndukFundClient sndukClient, int delaySeconds, CancellationToken cancellationToken)
     {
         var response = await sndukClient.GetFundCompetingAsync(fund.SndukId, cancellationToken);
-        
+
         if (response != null)
         {
             var competingFunds = response.Funds ?? [];
-            
+
             // Clear existing similar funds
             similarRepo.ClearByFundId(fund.Id);
-            
+
             // Add new similar funds
             var similars = new List<FundSimilar>();
             foreach (var competing in competingFunds)
@@ -571,7 +560,7 @@ public class FundSyncService : IFundSyncService
         // For now, just ensure deleted auto-categories stay deleted
         var deletedAutoCategories = await categoryRepo.GetAllAsync(true, cancellationToken)
             .ContinueWith(t => t.Result.Where(c => c.IsDeleted && c.IsAutoDerived).ToList(), cancellationToken);
-        
+
         // The sync job should NOT recreate deleted auto-categories
         // They remain deleted unless manually restored
     }

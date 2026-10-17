@@ -1,5 +1,3 @@
-using Meezan.Infrastructure.Services;
-
 namespace Meezan.Infrastructure.Tests.Features.Market;
 
 /// <summary>

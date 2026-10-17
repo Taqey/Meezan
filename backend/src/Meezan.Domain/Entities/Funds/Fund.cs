@@ -1,5 +1,3 @@
-using Meezan.Domain.Enums;
-
 namespace Meezan.Domain.Entities;
 
 /// <summary>
@@ -11,12 +9,12 @@ public class Fund
     public long SndukId { get; set; } // numeric id from SNDUK
     public string PublicId { get; set; } = string.Empty; // publicId from SNDUK
     public string Slug { get; set; } = string.Empty; // slug or customSlug
-    
+
     // Names
     public string NameAr { get; set; } = string.Empty;
     public string NameEn { get; set; } = string.Empty;
     public string Code { get; set; } = string.Empty;
-    
+
     // Type & classification
     public FundType Type { get; set; }
     public string TypeNameAr { get; set; } = string.Empty;
@@ -25,7 +23,7 @@ public class Fund
     public bool IsIslamic { get; set; }
     public bool IsFeatured { get; set; }
     public bool IsActive { get; set; }
-    
+
     // Pricing & returns
     public decimal? CurrentPrice { get; set; }
     public decimal? DailyChange { get; set; }
@@ -35,19 +33,19 @@ public class Fund
     public decimal? Return1Y { get; set; }
     public decimal? Return3Y { get; set; }
     public decimal? TotalScore { get; set; }
-    
+
     // Fund details
     public decimal? Aum { get; set; } // Assets under management
     public decimal? ManagementFee { get; set; }
     public string MinimumInvestment { get; set; } = string.Empty; // free text
     public string Currency { get; set; } = "EGP";
-    
+
     // Asset manager
     public long? AssetManagerId { get; set; }
     public string AssetManagerName { get; set; } = string.Empty;
     public string AssetManagerNameEn { get; set; } = string.Empty;
     public string AssetManagerCode { get; set; } = string.Empty;
-    
+
     // Media & description
     public string LogoUrl { get; set; } = string.Empty;
     public string LocalLogoPath { get; set; } = string.Empty; // downloaded logo
@@ -56,14 +54,14 @@ public class Fund
     public string InvestmentStrategy { get; set; } = string.Empty;
     public DateTime? InceptionDate { get; set; }
     public string ProspectusUrl { get; set; } = string.Empty;
-    
+
     // Timestamps
     public DateTime SndukCreatedAt { get; set; }
     public DateTime SndukUpdatedAt { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? LastSyncedAt { get; set; }
-    
+
     // Navigation
     public ICollection<FundPriceHistory> PriceHistory { get; set; } = new List<FundPriceHistory>();
     public FundAnalysis? Analysis { get; set; }

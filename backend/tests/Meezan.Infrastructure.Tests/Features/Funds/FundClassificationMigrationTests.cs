@@ -1,5 +1,3 @@
-using System.Net;
-using System.Text.Json;
 using Meezan.Domain.Entities;
 using Meezan.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Hosting;
@@ -7,6 +5,8 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using System.Net;
+using System.Text.Json;
 
 namespace Meezan.Infrastructure.Tests.Features.Funds;
 
@@ -102,53 +102,101 @@ public class FundClassificationMigrationTests : IClassFixture<WebApplicationFact
         // Old manual type override: point MIGEQ at a "balanced" type definition.
         var balancedDef = new FundTypeDefinition
         {
-            Slug = "balanced", NameAr = "صندوق متوازن", NameEn = "Balanced Fund",
-            Icon = "", Color = "", DisplayOrder = 1, IsVisible = true,
-            IsDeleted = false, DeletedReason = "",
-            CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow,
-            CreatedBy = "test", UpdatedBy = "test"
+            Slug = "balanced",
+            NameAr = "صندوق متوازن",
+            NameEn = "Balanced Fund",
+            Icon = "",
+            Color = "",
+            DisplayOrder = 1,
+            IsVisible = true,
+            IsDeleted = false,
+            DeletedReason = "",
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
+            CreatedBy = "test",
+            UpdatedBy = "test"
         };
         db.FundTypeDefinitions.Add(balancedDef);
         var commDef = new FundTypeDefinition
         {
-            Slug = "commodities", NameAr = "صندوق سلع", NameEn = "Commodities Fund",
-            Icon = "", Color = "", DisplayOrder = 2, IsVisible = true,
-            IsDeleted = false, DeletedReason = "",
-            CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow,
-            CreatedBy = "test", UpdatedBy = "test"
+            Slug = "commodities",
+            NameAr = "صندوق سلع",
+            NameEn = "Commodities Fund",
+            Icon = "",
+            Color = "",
+            DisplayOrder = 2,
+            IsVisible = true,
+            IsDeleted = false,
+            DeletedReason = "",
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
+            CreatedBy = "test",
+            UpdatedBy = "test"
         };
         db.FundTypeDefinitions.Add(commDef);
         await db.SaveChangesAsync();
         db.FundTypeOverrides.Add(new FundTypeOverride
         {
-            FundId = fEq.Id, FundTypeDefinitionId = balancedDef.Id,
-            CreatedAt = DateTime.UtcNow, CreatedBy = "admin"
+            FundId = fEq.Id,
+            FundTypeDefinitionId = balancedDef.Id,
+            CreatedAt = DateTime.UtcNow,
+            CreatedBy = "admin"
         });
 
         // Old categories: manual index include + manual active include + one AutoSync row.
         var idxCat = new FundCategory
         {
-            Slug = "index-egx30", NameAr = "يتبع مؤشر EGX30", NameEn = "Tracks EGX30",
-            Icon = "", Color = "", IsAutoDerived = true, AutoRuleJson = "{}",
-            IsVisible = true, DisplayOrder = 1, IsDeleted = false, DeletedReason = "",
-            CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow,
-            CreatedBy = "test", UpdatedBy = "test"
+            Slug = "index-egx30",
+            NameAr = "يتبع مؤشر EGX30",
+            NameEn = "Tracks EGX30",
+            Icon = "",
+            Color = "",
+            IsAutoDerived = true,
+            AutoRuleJson = "{}",
+            IsVisible = true,
+            DisplayOrder = 1,
+            IsDeleted = false,
+            DeletedReason = "",
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
+            CreatedBy = "test",
+            UpdatedBy = "test"
         };
         var actCat = new FundCategory
         {
-            Slug = "actively-managed", NameAr = "مدار بنشاط", NameEn = "Actively managed",
-            Icon = "", Color = "", IsAutoDerived = true, AutoRuleJson = "{}",
-            IsVisible = true, DisplayOrder = 2, IsDeleted = false, DeletedReason = "",
-            CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow,
-            CreatedBy = "test", UpdatedBy = "test"
+            Slug = "actively-managed",
+            NameAr = "مدار بنشاط",
+            NameEn = "Actively managed",
+            Icon = "",
+            Color = "",
+            IsAutoDerived = true,
+            AutoRuleJson = "{}",
+            IsVisible = true,
+            DisplayOrder = 2,
+            IsDeleted = false,
+            DeletedReason = "",
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
+            CreatedBy = "test",
+            UpdatedBy = "test"
         };
         var shariaCat = new FundCategory
         {
-            Slug = "sharia-compliant", NameAr = "متوافق مع الشريعة", NameEn = "Sharia",
-            Icon = "", Color = "", IsAutoDerived = true, AutoRuleJson = "{}",
-            IsVisible = true, DisplayOrder = 0, IsDeleted = false, DeletedReason = "",
-            CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow,
-            CreatedBy = "test", UpdatedBy = "test"
+            Slug = "sharia-compliant",
+            NameAr = "متوافق مع الشريعة",
+            NameEn = "Sharia",
+            Icon = "",
+            Color = "",
+            IsAutoDerived = true,
+            AutoRuleJson = "{}",
+            IsVisible = true,
+            DisplayOrder = 0,
+            IsDeleted = false,
+            DeletedReason = "",
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
+            CreatedBy = "test",
+            UpdatedBy = "test"
         };
         db.FundCategories.AddRange(idxCat, actCat, shariaCat);
         await db.SaveChangesAsync();

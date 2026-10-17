@@ -1,24 +1,9 @@
-using Meezan.Application.Common.Results;
 using MediatR;
-using Meezan.Application.Common;
-using Meezan.Application.Common.Services.Text;
-using Meezan.Application.Common.Services.Market;
-using Meezan.Application.Common.Services.Shariah;
 using Meezan.Application.Common.Interfaces.Integrations;
-using Meezan.Application.Common.Interfaces.Persistence;
-using Meezan.Application.Common.Interfaces.Queries.Funds;
-using Meezan.Application.Common.Interfaces.Queries.RemovalCandidates;
-using Meezan.Application.Common.Interfaces.Queries.Stocks;
-using Meezan.Application.Common.Interfaces.Repositories.Funds;
-using Meezan.Application.Common.Interfaces.Repositories.Indices;
-using Meezan.Application.Common.Interfaces.Repositories.Market;
 using Meezan.Application.Common.Interfaces.Repositories.Scraping;
-using Meezan.Application.Common.Interfaces.Repositories.Sectors;
-using Meezan.Application.Common.Interfaces.Repositories.Shariah;
 using Meezan.Application.Common.Interfaces.Repositories.Stocks;
-using Meezan.Application.Common.Interfaces.Repositories.System;
-using Meezan.Application.Common.Interfaces.Security;
-using Meezan.Application.Common.Interfaces.Storage;
+using Meezan.Application.Common.Results;
+using Meezan.Application.Common.Services.Market;
 using Meezan.Application.Features.Scraping.Services;
 using Meezan.Domain.Entities;
 using Microsoft.Extensions.Logging;
@@ -122,168 +107,168 @@ public class RunCombinedScrapeCommandHandler
 
         try
         {
-        // ── Phase 1: scrape raw data for all stocks into memory ──────────────
-        // No fair-value computation yet — we need ALL stocks' PE/PB values
-        // before we can compute sector-peer medians.
+            // ── Phase 1: scrape raw data for all stocks into memory ──────────────
+            // No fair-value computation yet — we need ALL stocks' PE/PB values
+            // before we can compute sector-peer medians.
 
-        var rawScraped = new List<RawStockScrape>(total);
+            var rawScraped = new List<RawStockScrape>(total);
 
-        foreach (var stock in stocks)
-        {
-            if (cancellationToken.IsCancellationRequested) break;
-
-            _progress.SetCurrentItem(jobKey, stock.Ticker);
-
-            bool stockSucceeded = false;
-            try
+            foreach (var stock in stocks)
             {
-                var raw = await ScrapeRawAsync(stock, request.Bucket, cancellationToken);
+                if (cancellationToken.IsCancellationRequested) break;
 
-                // Check 1: 404 Not Found on Mubasher — nothing to stage.
-                // Count as failed for this run; the stock's existing data is left
-                // EXACTLY as-is (no deactivation, no flag change). It surfaces in
-                // the operator review checklist as NotFoundOnSource.
-                if (raw.IsNotFound)
+                _progress.SetCurrentItem(jobKey, stock.Ticker);
+
+                bool stockSucceeded = false;
+                try
                 {
-                    _logger.LogWarning(
-                        "Ticker {Ticker} returned 404 Not Found on Mubasher — leaving existing data untouched.",
-                        stock.Ticker);
+                    var raw = await ScrapeRawAsync(stock, request.Bucket, cancellationToken);
+
+                    // Check 1: 404 Not Found on Mubasher — nothing to stage.
+                    // Count as failed for this run; the stock's existing data is left
+                    // EXACTLY as-is (no deactivation, no flag change). It surfaces in
+                    // the operator review checklist as NotFoundOnSource.
+                    if (raw.IsNotFound)
+                    {
+                        _logger.LogWarning(
+                            "Ticker {Ticker} returned 404 Not Found on Mubasher — leaving existing data untouched.",
+                            stock.Ticker);
+                        failed++;
+                        errors.Add($"{stock.Ticker}: 404 Not Found on Mubasher");
+                        continue;
+                    }
+
+                    // No usable payload at all (every retry failed) — failed for this
+                    // run, no state touched.
+                    if (raw.MarketData is null && raw.SupportResistance is null)
+                    {
+                        _logger.LogWarning(
+                            "No data returned for {Ticker} — leaving existing data untouched.",
+                            stock.Ticker);
+                        failed++;
+                        errors.Add($"{stock.Ticker}: no market data returned");
+                        continue;
+                    }
+
+                    // Check 2: Mubasher last-update shows a historical date.
+                    // The data is STAGED NORMALLY (a date-stamped close is still the
+                    // latest known-good data) and counts as SUCCEEDED. Recorded here
+                    // for the review checklist only — never acted upon automatically.
+                    if (raw.IsStale)
+                    {
+                        staleTickers.Add($"{stock.Ticker} ({raw.MarketData?.SourceLastUpdateText ?? "?"})");
+                    }
+
+                    rawScraped.Add(raw);
+                    succeeded++;
+                    stockSucceeded = true;
+                }
+                catch (Exception ex)
+                {
                     failed++;
-                    errors.Add($"{stock.Ticker}: 404 Not Found on Mubasher");
-                    continue;
+                    var msg = $"{stock.Ticker}: {ex.Message}";
+                    _logger.LogWarning("Scrape failed for {Ticker}: {Error}", stock.Ticker, ex.Message);
+                    if (errors.Count < 20) errors.Add(msg);
                 }
-
-                // No usable payload at all (every retry failed) — failed for this
-                // run, no state touched.
-                if (raw.MarketData is null && raw.SupportResistance is null)
+                finally
                 {
-                    _logger.LogWarning(
-                        "No data returned for {Ticker} — leaving existing data untouched.",
-                        stock.Ticker);
-                    failed++;
-                    errors.Add($"{stock.Ticker}: no market data returned");
-                    continue;
+                    _progress.RecordItemCompleted(jobKey, stock.Ticker, stockSucceeded);
                 }
+            }
 
-                // Check 2: Mubasher last-update shows a historical date.
-                // The data is STAGED NORMALLY (a date-stamped close is still the
-                // latest known-good data) and counts as SUCCEEDED. Recorded here
-                // for the review checklist only — never acted upon automatically.
-                if (raw.IsStale)
+            // ── No automatic state changes, ever ─────────────────────────────────
+            // Stale / 404 / missing-data stocks are NEVER deactivated, flagged, or
+            // otherwise written by the scraper. They only appear in the operator
+            // review checklist (GET /api/scraping/removal-candidates) where a human
+            // explicitly confirms deactivation or triggers a selective refresh.
+
+            // ── Phase 2: compute sector-peer medians from the full scraped batch ──
+
+            var peerSource = request.Bucket == ScrapeDataBucket.LiveDaily
+                ? rawScraped.Where(r => r.MarketData is not null)
+                : rawScraped;
+
+            var peerData = peerSource
+                .Where(r => r.Stock.SectorId.HasValue)
+                .Select(r =>
                 {
-                    staleTickers.Add($"{stock.Ticker} ({raw.MarketData?.SourceLastUpdateText ?? "?"})");
-                }
+                    var values = GetValuationSource(r);
+                    return new FairValueCalculator.SectorPeerData(
+                        StockId: r.Stock.Id,
+                        SectorId: r.Stock.SectorId,
+                        PeRatio: values.PeRatio,
+                        PbRatio: values.PbRatio);
+                })
+                .ToList();
 
-                rawScraped.Add(raw);
-                succeeded++;
-                stockSucceeded = true;
+            var sectorMedians = FairValueCalculator.ComputeSectorMedians(peerData);
+
+            _logger.LogInformation(
+                "Sector medians computed for {Count} sectors from {Peers} scraped stocks.",
+                sectorMedians.Count, peerData.Count);
+
+            // Log sector-median detail at debug level for verification
+            foreach (var (sid, med) in sectorMedians)
+            {
+                var medPe = ComputeListMedian(med.PeValues);
+                var medPb = ComputeListMedian(med.PbValues);
+                _logger.LogDebug(
+                    "Sector {SectorId}: {PeCount} PE peers (median={MedianPE:F2}), " +
+                    "{PbCount} PB peers (median={MedianPB:F2})",
+                    sid, med.PeValues.Count, medPe, med.PbValues.Count, medPb);
             }
-            catch (Exception ex)
+
+            // ── Phase 3: compute fair values and assemble final snapshots ─────────
+
+            var snapshots = new List<StockScrapedSnapshot>(rawScraped.Count);
+
+            foreach (var raw in rawScraped)
             {
-                failed++;
-                var msg = $"{stock.Ticker}: {ex.Message}";
-                _logger.LogWarning("Scrape failed for {Ticker}: {Error}", stock.Ticker, ex.Message);
-                if (errors.Count < 20) errors.Add(msg);
+                sectorMedians.TryGetValue(raw.Stock.SectorId ?? -1, out var medians);
+                var snapshot = BuildSnapshot(raw, medians);
+                snapshots.Add(snapshot);
             }
-            finally
+
+            // ── Phase 4: atomic commit ── signal Committing status, then write ────
+
+            _progress.SetCommitting(jobKey);
+
+            if (snapshots.Count > 0)
             {
-                _progress.RecordItemCompleted(jobKey, stock.Ticker, stockSucceeded);
-            }
-        }
-
-        // ── No automatic state changes, ever ─────────────────────────────────
-        // Stale / 404 / missing-data stocks are NEVER deactivated, flagged, or
-        // otherwise written by the scraper. They only appear in the operator
-        // review checklist (GET /api/scraping/removal-candidates) where a human
-        // explicitly confirms deactivation or triggers a selective refresh.
-
-        // ── Phase 2: compute sector-peer medians from the full scraped batch ──
-
-        var peerSource = request.Bucket == ScrapeDataBucket.LiveDaily
-            ? rawScraped.Where(r => r.MarketData is not null)
-            : rawScraped;
-
-        var peerData = peerSource
-            .Where(r => r.Stock.SectorId.HasValue)
-            .Select(r =>
-            {
-                var values = GetValuationSource(r);
-                return new FairValueCalculator.SectorPeerData(
-                    StockId: r.Stock.Id,
-                    SectorId: r.Stock.SectorId,
-                    PeRatio: values.PeRatio,
-                    PbRatio: values.PbRatio);
-            })
-            .ToList();
-
-        var sectorMedians = FairValueCalculator.ComputeSectorMedians(peerData);
-
-        _logger.LogInformation(
-            "Sector medians computed for {Count} sectors from {Peers} scraped stocks.",
-            sectorMedians.Count, peerData.Count);
-
-        // Log sector-median detail at debug level for verification
-        foreach (var (sid, med) in sectorMedians)
-        {
-            var medPe = ComputeListMedian(med.PeValues);
-            var medPb = ComputeListMedian(med.PbValues);
-            _logger.LogDebug(
-                "Sector {SectorId}: {PeCount} PE peers (median={MedianPE:F2}), " +
-                "{PbCount} PB peers (median={MedianPB:F2})",
-                sid, med.PeValues.Count, medPe, med.PbValues.Count, medPb);
-        }
-
-        // ── Phase 3: compute fair values and assemble final snapshots ─────────
-
-        var snapshots = new List<StockScrapedSnapshot>(rawScraped.Count);
-
-        foreach (var raw in rawScraped)
-        {
-            sectorMedians.TryGetValue(raw.Stock.SectorId ?? -1, out var medians);
-            var snapshot = BuildSnapshot(raw, medians);
-            snapshots.Add(snapshot);
-        }
-
-        // ── Phase 4: atomic commit ── signal Committing status, then write ────
-
-        _progress.SetCommitting(jobKey);
-
-        if (snapshots.Count > 0)
-        {
-            try
-            {
-                if (request.Bucket == ScrapeDataBucket.LiveDaily)
+                try
                 {
-                    await _batchCommitter.CommitLiveAsync(snapshots, cancellationToken);
+                    if (request.Bucket == ScrapeDataBucket.LiveDaily)
+                    {
+                        await _batchCommitter.CommitLiveAsync(snapshots, cancellationToken);
+                    }
+                    else
+                    {
+                        await _batchCommitter.CommitSlowAsync(snapshots, cancellationToken);
+                    }
+                    _logger.LogInformation(
+                        "Batch commit succeeded. {Count} stocks written atomically.", snapshots.Count);
+                    _progress.SetCompleted(jobKey);
                 }
-                else
+                catch (Exception ex)
                 {
-                    await _batchCommitter.CommitSlowAsync(snapshots, cancellationToken);
-                }
-                _logger.LogInformation(
-                    "Batch commit succeeded. {Count} stocks written atomically.", snapshots.Count);
-                _progress.SetCompleted(jobKey);
-            }
-            catch (Exception ex)
-            {
-                // The transaction was rolled back — live tables are unchanged.
-                // Record the failure and fall through to the finally block so the
-                // ScrapeRunLog row is still finalised (Succeeded = 0, Failed = total).
-                _logger.LogError(ex,
-                    "Batch commit FAILED — live tables have NOT been modified. " +
-                    "Scrape run will be logged as failed.");
+                    // The transaction was rolled back — live tables are unchanged.
+                    // Record the failure and fall through to the finally block so the
+                    // ScrapeRunLog row is still finalised (Succeeded = 0, Failed = total).
+                    _logger.LogError(ex,
+                        "Batch commit FAILED — live tables have NOT been modified. " +
+                        "Scrape run will be logged as failed.");
 
-                fatalError = $"Commit failed: {ex.Message}";
-                succeeded = 0;
-                failed = total;
-                _progress.SetFailed(jobKey, ex.Message);
+                    fatalError = $"Commit failed: {ex.Message}";
+                    succeeded = 0;
+                    failed = total;
+                    _progress.SetFailed(jobKey, ex.Message);
+                }
             }
-        }
-        else
-        {
-            _progress.SetFailed(jobKey, "No stocks were successfully scraped.");
-            _logger.LogWarning("No stocks were successfully scraped — skipping commit. Live tables unchanged.");
-        }
+            else
+            {
+                _progress.SetFailed(jobKey, "No stocks were successfully scraped.");
+                _logger.LogWarning("No stocks were successfully scraped — skipping commit. Live tables unchanged.");
+            }
         } // ── end outer try ──
         catch (Exception fatalEx)
         {

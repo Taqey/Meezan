@@ -1,4 +1,3 @@
-using Meezan.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Index = Meezan.Domain.Entities.Index;

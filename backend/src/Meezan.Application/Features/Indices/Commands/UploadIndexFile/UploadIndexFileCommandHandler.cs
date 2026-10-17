@@ -1,27 +1,15 @@
-using Meezan.Application.Common.Results;
-using Meezan.Application.Common;
-using Meezan.Application.Common.Services.Text;
-using Meezan.Application.Common.Services.Market;
-using Meezan.Application.Common.Services.Shariah;
+using FluentValidation;
+using MediatR;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
-using Meezan.Application.Common.Interfaces.Queries.Funds;
-using Meezan.Application.Common.Interfaces.Queries.RemovalCandidates;
-using Meezan.Application.Common.Interfaces.Queries.Stocks;
-using Meezan.Application.Common.Interfaces.Repositories.Funds;
 using Meezan.Application.Common.Interfaces.Repositories.Indices;
-using Meezan.Application.Common.Interfaces.Repositories.Market;
-using Meezan.Application.Common.Interfaces.Repositories.Scraping;
-using Meezan.Application.Common.Interfaces.Repositories.Sectors;
 using Meezan.Application.Common.Interfaces.Repositories.Shariah;
 using Meezan.Application.Common.Interfaces.Repositories.Stocks;
 using Meezan.Application.Common.Interfaces.Repositories.System;
-using Meezan.Application.Common.Interfaces.Security;
-using Meezan.Application.Common.Interfaces.Storage;
+using Meezan.Application.Common.Results;
+using Meezan.Application.Common.Services.Text;
 using Meezan.Domain.Entities;
 using Meezan.Domain.Enums;
-using FluentValidation;
-using MediatR;
 
 namespace Meezan.Application.Features.Indices.Commands.UploadIndexFile;
 
@@ -179,9 +167,9 @@ public class UploadIndexFileCommandHandler : IRequestHandler<UploadIndexFileComm
             }
 
             var constituentsToSave = new List<IndexConstituent>();
-            int insertedStocks  = 0;
-            int updatedStocks   = 0;
-            int skippedStocks   = 0;
+            int insertedStocks = 0;
+            int updatedStocks = 0;
+            int skippedStocks = 0;
 
             // Track in-session newly created stocks by their normalized Arabic name so that
             // if the same Arabic name appears twice in the file we don't create two rows.
@@ -249,9 +237,9 @@ public class UploadIndexFileCommandHandler : IRequestHandler<UploadIndexFileComm
                             skippedStocks++;
                             result.SkippedDetails.Add(new SkippedRowDetail
                             {
-                                RowNumber  = item.RowNumber,
+                                RowNumber = item.RowNumber,
                                 Identifier = item.NameEn ?? item.NameAr ?? item.SymbolCode,
-                                Reason     = "Missing Ticker / SymbolCode and Arabic name"
+                                Reason = "Missing Ticker / SymbolCode and Arabic name"
                             });
                             continue;
                         }
@@ -263,11 +251,11 @@ public class UploadIndexFileCommandHandler : IRequestHandler<UploadIndexFileComm
 
                     existingStock = new Stock
                     {
-                        Ticker    = ticker,
-                        NameAr    = string.IsNullOrWhiteSpace(item.NameAr) ? ticker : item.NameAr!.Trim(),
-                        NameEn    = string.IsNullOrWhiteSpace(item.NameEn) ? null  : item.NameEn!.Trim(),
-                        Sector    = sector,
-                        SectorId  = sector != null && sector.Id > 0 ? sector.Id : null,
+                        Ticker = ticker,
+                        NameAr = string.IsNullOrWhiteSpace(item.NameAr) ? ticker : item.NameAr!.Trim(),
+                        NameEn = string.IsNullOrWhiteSpace(item.NameEn) ? null : item.NameEn!.Trim(),
+                        Sector = sector,
+                        SectorId = sector != null && sector.Id > 0 ? sector.Id : null,
                         CreatedAt = DateTime.UtcNow,
                         UpdatedAt = DateTime.UtcNow
                     };
@@ -285,9 +273,9 @@ public class UploadIndexFileCommandHandler : IRequestHandler<UploadIndexFileComm
                     bool modified = false;
                     if (!existingStock.IsActive)
                     {
-                        existingStock.IsActive         = true;
+                        existingStock.IsActive = true;
                         existingStock.DeactivationReason = null;
-                        existingStock.DeactivatedAt    = null;
+                        existingStock.DeactivatedAt = null;
                         modified = true;
                     }
                     if (!string.IsNullOrWhiteSpace(item.NameAr) && existingStock.NameAr != item.NameAr!.Trim())
@@ -320,9 +308,9 @@ public class UploadIndexFileCommandHandler : IRequestHandler<UploadIndexFileComm
                 var effectiveDate = item.EffectiveDate ?? DateTime.UtcNow.Date;
                 constituentsToSave.Add(new IndexConstituent
                 {
-                    IndexId       = index.Id,
-                    Stock         = existingStock,
-                    Weight        = isSectoralUpload ? null : item.Weight,
+                    IndexId = index.Id,
+                    Stock = existingStock,
+                    Weight = isSectoralUpload ? null : item.Weight,
                     EffectiveDate = effectiveDate
                 });
             }
@@ -455,9 +443,9 @@ public class UploadIndexFileCommandHandler : IRequestHandler<UploadIndexFileComm
     /// historically in the codebase ("EGX33", "EGX 33").
     /// </summary>
     private static bool IsShariahIndex(string indexCode)
-        => string.Equals(indexCode, "Shariah",  StringComparison.OrdinalIgnoreCase)
-        || string.Equals(indexCode, "EGX33",    StringComparison.OrdinalIgnoreCase)
-        || string.Equals(indexCode, "EGX 33",   StringComparison.OrdinalIgnoreCase);
+        => string.Equals(indexCode, "Shariah", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(indexCode, "EGX33", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(indexCode, "EGX 33", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
     /// Recomputes the stored OVERALL verdict for the given stocks (EGX33 members

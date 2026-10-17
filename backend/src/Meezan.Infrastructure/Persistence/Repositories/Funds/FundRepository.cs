@@ -1,22 +1,6 @@
-using Meezan.Application.Common.Interfaces.Integrations;
-using Meezan.Application.Common.Interfaces.Persistence;
-using Meezan.Application.Common.Interfaces.Queries.Funds;
-using Meezan.Application.Common.Interfaces.Queries.RemovalCandidates;
-using Meezan.Application.Common.Interfaces.Queries.Stocks;
 using Meezan.Application.Common.Interfaces.Repositories.Funds;
-using Meezan.Application.Common.Interfaces.Repositories.Indices;
-using Meezan.Application.Common.Interfaces.Repositories.Market;
-using Meezan.Application.Common.Interfaces.Repositories.Scraping;
-using Meezan.Application.Common.Interfaces.Repositories.Sectors;
-using Meezan.Application.Common.Interfaces.Repositories.Shariah;
-using Meezan.Application.Common.Interfaces.Repositories.Stocks;
-using Meezan.Application.Common.Interfaces.Repositories.System;
-using Meezan.Application.Common.Interfaces.Security;
-using Meezan.Application.Common.Interfaces.Storage;
 using Meezan.Application.Common.Models.Funds;
-using Meezan.Application.Common.Models.Stocks;
 using Meezan.Domain.Entities;
-using Meezan.Infrastructure.Services;
 using Meezan.Infrastructure.Services.Funds.Classification;
 using Microsoft.EntityFrameworkCore;
 
@@ -76,9 +60,9 @@ public class FundRepository : IFundRepository
         if (!string.IsNullOrWhiteSpace(filter.Search))
         {
             var s = filter.Search.Trim();
-            query = query.Where(f => 
-                f.NameAr.Contains(s) || 
-                f.NameEn.Contains(s) || 
+            query = query.Where(f =>
+                f.NameAr.Contains(s) ||
+                f.NameEn.Contains(s) ||
                 f.Code.Contains(s));
         }
 
@@ -115,7 +99,7 @@ public class FundRepository : IFundRepository
                 .Where(o => o.CategoryId == filter.CategoryId.Value && o.Action == OverrideAction.Include)
                 .Select(o => o.FundId)
                 .ToListAsync(cancellationToken);
-            
+
             var excludeIds = await _context.FundCategoryOverrides
                 .Where(o => o.CategoryId == filter.CategoryId.Value && o.Action == OverrideAction.Exclude)
                 .Select(o => o.FundId)

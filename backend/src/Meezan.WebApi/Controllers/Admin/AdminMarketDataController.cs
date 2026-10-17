@@ -1,7 +1,3 @@
-using Meezan.Application.Common;
-using Meezan.Application.Common.Services.Text;
-using Meezan.Application.Common.Services.Market;
-using Meezan.Application.Common.Services.Shariah;
 using Meezan.Application.Features.Scraping.Services;
 using Meezan.Domain.Entities;
 using Meezan.Domain.Enums;
@@ -48,20 +44,26 @@ public class AdminMarketDataController : ControllerBase
             return NotFound("No Shariah metrics found for this stock.");
 
         return Ok(new ShariahOverridesDto(
-            Ticker: stock.Ticker,
-            // Feed values
+            Ticker: stock.Ticker,
+
+            // Feed values
+
             FeedCoreActivityCompliant: m.CoreActivityCompliant,
             FeedCategoryAr: m.CategoryAr,
             FeedCategoryEn: m.CategoryEn,
             FeedHaramRevenuePercentage: m.HaramEarningsPercentage,
-            FeedLoansPercentage: m.LoansPercentage,
-            // Override values
+            FeedLoansPercentage: m.LoansPercentage,
+
+            // Override values
+
             OverrideCoreActivityCompliant: m.CoreActivityCompliantOverride,
             OverrideCategoryAr: m.CategoryArOverride,
             OverrideCategoryEn: m.CategoryEnOverride,
             OverrideHaramRevenuePercentage: m.HaramRevenuePercentageOverride,
-            OverrideLoansPercentage: m.LoansPercentageOverride,
-            // Effective values (override wins)
+            OverrideLoansPercentage: m.LoansPercentageOverride,
+
+            // Effective values (override wins)
+
             EffectiveCoreActivityCompliant: m.EffectiveCoreActivityCompliant,
             EffectiveCategoryAr: m.EffectiveCategoryAr,
             EffectiveCategoryEn: m.EffectiveCategoryEn,

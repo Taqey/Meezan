@@ -1,5 +1,4 @@
 using Meezan.Domain.Entities;
-using Meezan.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 

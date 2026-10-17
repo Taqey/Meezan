@@ -1,7 +1,6 @@
+using Microsoft.Extensions.Logging;
 using System.Net;
 using System.Text;
-using Meezan.Infrastructure.Services.Funds.Clients;
-using Microsoft.Extensions.Logging;
 
 namespace Meezan.Infrastructure.Tests.Features.Funds;
 

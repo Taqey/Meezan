@@ -1,6 +1,6 @@
 using Meezan.Application.Common.Interfaces.Persistence;
-using Meezan.Application.Common.Interfaces.Queries.Stocks;
 using Meezan.Application.Common.Interfaces.Queries.RemovalCandidates;
+using Meezan.Application.Common.Interfaces.Queries.Stocks;
 using Meezan.Application.Common.Interfaces.Repositories.Indices;
 using Meezan.Application.Common.Interfaces.Repositories.Sectors;
 using Meezan.Application.Common.Interfaces.Repositories.Stocks;

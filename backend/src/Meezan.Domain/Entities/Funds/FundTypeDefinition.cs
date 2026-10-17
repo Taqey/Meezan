@@ -1,5 +1,3 @@
-using Meezan.Domain.Entities;
-
 namespace Meezan.Domain.Entities;
 
 /// <summary>

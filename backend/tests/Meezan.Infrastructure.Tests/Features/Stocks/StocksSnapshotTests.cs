@@ -1,9 +1,8 @@
-using System.Net;
 using Meezan.Domain.Entities;
 using Meezan.Infrastructure.Persistence;
 using Meezan.Infrastructure.Tests.Testing;
 using Microsoft.Extensions.DependencyInjection;
-using Xunit;
+using System.Net;
 
 namespace Meezan.Infrastructure.Tests.Features.Stocks;
 
