@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
@@ -20,11 +21,11 @@ using Meezan.Domain.Enums;
 
 namespace Meezan.Application.Features.Shariah.Commands.SeedShariahMap;
 
-public record SeedShariahMapCommand(Dictionary<string, ShariahSeedItemDto>? Data = null) : IRequest<SeedShariahMapResult>;
+public record SeedShariahMapCommand(Dictionary<string, ShariahSeedItemDto>? Data = null) : IRequest<Result<SeedShariahMapResult>>;
 
 public record SeedShariahMapResult(int InsertedCount, int UpdatedCount, int TotalProcessed);
 
-public class SeedShariahMapCommandHandler : IRequestHandler<SeedShariahMapCommand, SeedShariahMapResult>
+public class SeedShariahMapCommandHandler : IRequestHandler<SeedShariahMapCommand, Result<SeedShariahMapResult>>
 {
     private readonly IStockRepository _stockRepository;
     private readonly IShariahComplianceRepository _complianceRepository;
@@ -46,7 +47,7 @@ public class SeedShariahMapCommandHandler : IRequestHandler<SeedShariahMapComman
         _mapLoader = mapLoader;
     }
 
-    public async Task<SeedShariahMapResult> Handle(SeedShariahMapCommand request, CancellationToken cancellationToken)
+    public async Task<Result<SeedShariahMapResult>> Handle(SeedShariahMapCommand request, CancellationToken cancellationToken)
     {
         var data = request.Data;
         if (data == null || data.Count == 0)
@@ -56,7 +57,7 @@ public class SeedShariahMapCommandHandler : IRequestHandler<SeedShariahMapComman
 
         if (data == null || data.Count == 0)
         {
-            throw new Common.Exceptions.BadRequestException("No seed data found in request body or bundled shariah_map.json resource.");
+            return Error.Validation("NoSeedData", "No seed data found in request body or bundled shariah_map.json resource.", new { message = "No seed data found in request body or bundled shariah_map.json resource." });
         }
 
         int inserted = 0;

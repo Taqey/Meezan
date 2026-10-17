@@ -1,4 +1,5 @@
 using MediatR;
+using Meezan.Application.Common.Results;
 using Meezan.Application.Features.Shariah.Commands.ImportFaisalOsoulOpinions;
 using Meezan.Application.Features.Shariah.Commands.RecomputeVerdicts;
 using Meezan.Application.Features.Shariah.Commands.RefreshShariahData;
@@ -7,6 +8,7 @@ using Meezan.Application.Features.Shariah.Commands.UploadSourceReportFile;
 using Meezan.Application.Features.Shariah.DTOs;
 using Meezan.Application.Features.Shariah.Queries.GetSourcePdf;
 using Meezan.Application.Features.Shariah.Queries.GetSourcePdfsStatus;
+using Meezan.WebApi.Common;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Meezan.WebApi.Controllers.Public;
@@ -32,7 +34,7 @@ public class ShariahController : ControllerBase
     public async Task<IActionResult> Seed([FromBody] Dictionary<string, ShariahSeedItemDto>? payload, CancellationToken cancellationToken)
     {
         var result = await _sender.Send(new SeedShariahMapCommand(payload), cancellationToken);
-        return Ok(result);
+        return result.ToActionResult();
     }
 
     /// <summary>
@@ -43,7 +45,7 @@ public class ShariahController : ControllerBase
     public async Task<IActionResult> Refresh(CancellationToken cancellationToken)
     {
         var result = await _sender.Send(new RefreshShariahDataCommand(TriggeredBy: "Manual"), cancellationToken);
-        return Ok(result);
+        return result.ToActionResult();
     }
 
     /// <summary>
@@ -55,7 +57,7 @@ public class ShariahController : ControllerBase
     public async Task<IActionResult> RecomputeVerdicts(CancellationToken cancellationToken)
     {
         var result = await _sender.Send(new RecomputeVerdictsCommand(), cancellationToken);
-        return Ok(result);
+        return result.ToActionResult();
     }
 
     /// <summary>
@@ -70,8 +72,7 @@ public class ShariahController : ControllerBase
     public async Task<IActionResult> ImportFaisalOsoul([FromQuery] string? path, CancellationToken cancellationToken)
     {
         var result = await _sender.Send(new ImportFaisalOsoulOpinionsCommand(path), cancellationToken);
-        if (!result.Success) return BadRequest(result);
-        return Ok(result);
+        return result.ToActionResult();
     }
 
     /// <summary>
@@ -86,7 +87,7 @@ public class ShariahController : ControllerBase
     public async Task<IActionResult> GetSourcePdfsStatus(CancellationToken cancellationToken)
     {
         var result = await _sender.Send(new GetSourcePdfsStatusQuery(), cancellationToken);
-        return Ok(result);
+        return result.ToActionResult();
     }
 
     /// <summary>
@@ -100,11 +101,11 @@ public class ShariahController : ControllerBase
     public async Task<IActionResult> GetSourcePdf(string sourceKey, CancellationToken cancellationToken)
     {
         var result = await _sender.Send(new GetSourcePdfQuery(sourceKey), cancellationToken);
-        if (result == null) return NotFound();
+        if (result.IsFailure) return result.ToActionResult();
 
         // No download file name → inline disposition so the PDF opens in the
         // browser tab instead of forcing a download.
-        return File(result.FileStream, result.ContentType);
+        return File(result.Value.FileStream, result.Value.ContentType);
     }
 
     /// <summary>
@@ -131,6 +132,6 @@ public class ShariahController : ControllerBase
             reportDate);
 
         var result = await _sender.Send(command, cancellationToken);
-        return Ok(result);
+        return result.ToActionResult();
     }
 }

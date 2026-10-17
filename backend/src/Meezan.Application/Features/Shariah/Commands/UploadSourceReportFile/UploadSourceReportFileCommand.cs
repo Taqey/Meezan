@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Features.Shariah.DTOs;
 
@@ -9,4 +10,4 @@ public sealed record UploadSourceReportFileCommand(
     string FileName,
     string ContentType,
     long Length,
-    string? ReportDate) : IRequest<UploadSourceReportFileResultDto>;
+    string? ReportDate) : IRequest<Result<UploadSourceReportFileResultDto>>;

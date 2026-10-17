@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using Meezan.Application.Features.Shariah.DTOs;
 
 namespace Meezan.Application.Common.Interfaces.Storage;
@@ -6,7 +7,7 @@ public interface IShariahSourcePdfStorage
 {
     Task<List<SourcePdfStatusDto>> GetSourcePdfsStatusAsync(CancellationToken cancellationToken = default);
     Task<SourcePdfFileResultDto?> GetSourcePdfStreamAsync(string sourceKey, CancellationToken cancellationToken = default);
-    Task<UploadSourceReportFileResultDto> SaveSourceReportFileAsync(
+    Task<Result<UploadSourceReportFileResultDto>> SaveSourceReportFileAsync(
         string sourceKey,
         Stream fileStream,
         string fileName,

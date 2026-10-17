@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
@@ -18,7 +19,7 @@ using Meezan.Application.Features.Shariah.DTOs;
 
 namespace Meezan.Application.Features.Shariah.Queries.GetSourcePdfsStatus;
 
-public sealed class GetSourcePdfsStatusQueryHandler : IRequestHandler<GetSourcePdfsStatusQuery, List<SourcePdfStatusDto>>
+public sealed class GetSourcePdfsStatusQueryHandler : IRequestHandler<GetSourcePdfsStatusQuery, Result<List<SourcePdfStatusDto>>>
 {
     private readonly IShariahSourcePdfStorage _storage;
 
@@ -27,7 +28,7 @@ public sealed class GetSourcePdfsStatusQueryHandler : IRequestHandler<GetSourceP
         _storage = storage;
     }
 
-    public async Task<List<SourcePdfStatusDto>> Handle(GetSourcePdfsStatusQuery request, CancellationToken cancellationToken)
+    public async Task<Result<List<SourcePdfStatusDto>>> Handle(GetSourcePdfsStatusQuery request, CancellationToken cancellationToken)
     {
         return await _storage.GetSourcePdfsStatusAsync(cancellationToken);
     }

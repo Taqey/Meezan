@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Common;
 using Meezan.Application.Common.Services.Text;
@@ -22,7 +23,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Meezan.Application.Features.Shariah.Commands.RecomputeVerdicts;
 
-public record RecomputeVerdictsCommand : IRequest<RecomputeVerdictsResult>;
+public record RecomputeVerdictsCommand : IRequest<Result<RecomputeVerdictsResult>>;
 
 public record RecomputeVerdictsResult(
     bool Success,
@@ -32,7 +33,7 @@ public record RecomputeVerdictsResult(
     int FailedCount,
     string? Message);
 
-public class RecomputeVerdictsCommandHandler : IRequestHandler<RecomputeVerdictsCommand, RecomputeVerdictsResult>
+public class RecomputeVerdictsCommandHandler : IRequestHandler<RecomputeVerdictsCommand, Result<RecomputeVerdictsResult>>
 {
     private readonly IStockRepository _stocks;
     private readonly IShariahComplianceRepository _compliance;
@@ -57,7 +58,7 @@ public class RecomputeVerdictsCommandHandler : IRequestHandler<RecomputeVerdicts
         _logger = logger;
     }
 
-    public async Task<RecomputeVerdictsResult> Handle(RecomputeVerdictsCommand request, CancellationToken ct)
+    public async Task<Result<RecomputeVerdictsResult>> Handle(RecomputeVerdictsCommand request, CancellationToken ct)
     {
         // Idempotent full recompute via the ONE shared verdict service: Halal ratio
         // verdict first, then the aggregated overall verdict (boards + EGX33 +

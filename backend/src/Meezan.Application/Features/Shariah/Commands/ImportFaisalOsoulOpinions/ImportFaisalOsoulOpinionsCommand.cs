@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using MediatR;
 using Meezan.Application.Common;
+using Meezan.Application.Common.Results;
 using Meezan.Application.Common.Services.Text;
 using Meezan.Application.Common.Services.Market;
 using Meezan.Application.Common.Services.Shariah;
@@ -49,7 +50,7 @@ namespace Meezan.Application.Features.Shariah.Commands.ImportFaisalOsoulOpinions
 /// </para>
 /// </summary>
 public record ImportFaisalOsoulOpinionsCommand(string? JsonPath = null)
-    : IRequest<ImportFaisalOsoulOpinionsResult>;
+    : IRequest<Result<ImportFaisalOsoulOpinionsResult>>;
 
 public record ImportSourceOpinionsResult(
     string SourceKey,
@@ -91,7 +92,7 @@ public class FaisalOsoulSourceBlock
 }
 
 public class ImportFaisalOsoulOpinionsCommandHandler
-    : IRequestHandler<ImportFaisalOsoulOpinionsCommand, ImportFaisalOsoulOpinionsResult>
+    : IRequestHandler<ImportFaisalOsoulOpinionsCommand, Result<ImportFaisalOsoulOpinionsResult>>
 {
     private const string FileName = "shariah_opinions_faisal_osoul.json";
     private const string FaisalPdfName = "Faisal compliance-list.pdf";
@@ -118,17 +119,18 @@ public class ImportFaisalOsoulOpinionsCommandHandler
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<ImportFaisalOsoulOpinionsResult> Handle(
+    public async Task<Result<ImportFaisalOsoulOpinionsResult>> Handle(
         ImportFaisalOsoulOpinionsCommand request, CancellationToken cancellationToken)
     {
         var jsonPath = ResolvePath(request.JsonPath);
         if (jsonPath == null)
         {
-            return new ImportFaisalOsoulOpinionsResult(
+            var err = new ImportFaisalOsoulOpinionsResult(
                 false,
                 $"Could not find {FileName}. Pass an explicit path or place the file in the working directory or any parent folder.",
                 request.JsonPath ?? FileName,
                 Array.Empty<ImportSourceOpinionsResult>());
+            return Error.Validation("FileNotFound", err.Message ?? "", err);
         }
 
         // Resolve PDF paths (same directory as JSON)
@@ -150,14 +152,16 @@ public class ImportFaisalOsoulOpinionsCommandHandler
         }
         catch (Exception ex)
         {
-            return new ImportFaisalOsoulOpinionsResult(
+            var err = new ImportFaisalOsoulOpinionsResult(
                 false, $"Failed to read {jsonPath}: {ex.Message}", jsonPath, Array.Empty<ImportSourceOpinionsResult>());
+            return Error.Validation("ReadFailed", err.Message ?? "", err);
         }
 
         if (file == null || (file.FaisalBank == null && file.Ostoul == null))
         {
-            return new ImportFaisalOsoulOpinionsResult(
+            var err = new ImportFaisalOsoulOpinionsResult(
                 false, $"No FaisalBank/Ostoul block found in {jsonPath}.", jsonPath, Array.Empty<ImportSourceOpinionsResult>());
+            return Error.Validation("InvalidStructure", err.Message ?? "", err);
         }
 
         var stocks = await _stockRepository.GetAllAsync(cancellationToken);

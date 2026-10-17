@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
@@ -22,7 +23,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Meezan.Application.Features.Shariah.Commands.RefreshShariahData;
 
-public record RefreshShariahDataCommand(string TriggeredBy = "Manual") : IRequest<RefreshShariahDataResult>;
+public record RefreshShariahDataCommand(string TriggeredBy = "Manual") : IRequest<Result<RefreshShariahDataResult>>;
 
 public record RefreshShariahDataResult(
     bool Success,
@@ -32,7 +33,7 @@ public record RefreshShariahDataResult(
     int SkippedNotFoundCount,
     int StocksFullyRefreshedCount);
 
-public class RefreshShariahDataCommandHandler : IRequestHandler<RefreshShariahDataCommand, RefreshShariahDataResult>
+public class RefreshShariahDataCommandHandler : IRequestHandler<RefreshShariahDataCommand, Result<RefreshShariahDataResult>>
 {
     private readonly IShariahSourceClient _sourceClient;
     private readonly IStockRepository _stockRepository;
@@ -63,7 +64,7 @@ public class RefreshShariahDataCommandHandler : IRequestHandler<RefreshShariahDa
         _logger = logger;
     }
 
-    public async Task<RefreshShariahDataResult> Handle(RefreshShariahDataCommand request, CancellationToken cancellationToken)
+    public async Task<Result<RefreshShariahDataResult>> Handle(RefreshShariahDataCommand request, CancellationToken cancellationToken)
     {
         List<ExternalStockMergedDto> externalData;
         try

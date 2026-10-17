@@ -45,11 +45,18 @@ public class ShariahRefreshBackgroundService : BackgroundService
                 var sender = scope.ServiceProvider.GetRequiredService<ISender>();
 
                 var result = await sender.Send(new RefreshShariahDataCommand(TriggeredBy: "Scheduled"), stoppingToken);
-                _logger.LogInformation(
-                    "Quarterly shariah refresh completed. Success: {Success}, PctUpdated: {PctUpdated}, StocksRefreshed: {Refreshed}",
-                    result.Success,
-                    result.PctUpdatedCount,
-                    result.StocksFullyRefreshedCount);
+                if (result.IsSuccess)
+                {
+                    _logger.LogInformation(
+                        "Quarterly shariah refresh completed. Success: {Success}, PctUpdated: {PctUpdated}, StocksRefreshed: {Refreshed}",
+                        result.Value.Success,
+                        result.Value.PctUpdatedCount,
+                        result.Value.StocksFullyRefreshedCount);
+                }
+                else
+                {
+                    _logger.LogWarning("Quarterly shariah refresh failed: {Error}", result.Error.Message);
+                }
 
                 nextRun = DateTime.UtcNow.Add(Interval);
             }

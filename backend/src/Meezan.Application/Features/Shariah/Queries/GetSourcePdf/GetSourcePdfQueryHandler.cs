@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
@@ -18,7 +19,7 @@ using Meezan.Application.Features.Shariah.DTOs;
 
 namespace Meezan.Application.Features.Shariah.Queries.GetSourcePdf;
 
-public sealed class GetSourcePdfQueryHandler : IRequestHandler<GetSourcePdfQuery, SourcePdfFileResultDto?>
+public sealed class GetSourcePdfQueryHandler : IRequestHandler<GetSourcePdfQuery, Result<SourcePdfFileResultDto>>
 {
     private readonly IShariahSourcePdfStorage _storage;
 
@@ -27,8 +28,10 @@ public sealed class GetSourcePdfQueryHandler : IRequestHandler<GetSourcePdfQuery
         _storage = storage;
     }
 
-    public async Task<SourcePdfFileResultDto?> Handle(GetSourcePdfQuery request, CancellationToken cancellationToken)
+    public async Task<Result<SourcePdfFileResultDto>> Handle(GetSourcePdfQuery request, CancellationToken cancellationToken)
     {
-        return await _storage.GetSourcePdfStreamAsync(request.SourceKey, cancellationToken);
+        var res = await _storage.GetSourcePdfStreamAsync(request.SourceKey, cancellationToken);
+        if (res == null) return Error.NotFound("SourcePdfNotFound", "");
+        return res;
     }
 }

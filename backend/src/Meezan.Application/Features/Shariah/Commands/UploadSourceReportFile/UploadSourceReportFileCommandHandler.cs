@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
@@ -18,7 +19,7 @@ using Meezan.Application.Features.Shariah.DTOs;
 
 namespace Meezan.Application.Features.Shariah.Commands.UploadSourceReportFile;
 
-public sealed class UploadSourceReportFileCommandHandler : IRequestHandler<UploadSourceReportFileCommand, UploadSourceReportFileResultDto>
+public sealed class UploadSourceReportFileCommandHandler : IRequestHandler<UploadSourceReportFileCommand, Result<UploadSourceReportFileResultDto>>
 {
     private readonly IShariahSourcePdfStorage _storage;
 
@@ -27,7 +28,7 @@ public sealed class UploadSourceReportFileCommandHandler : IRequestHandler<Uploa
         _storage = storage;
     }
 
-    public async Task<UploadSourceReportFileResultDto> Handle(UploadSourceReportFileCommand request, CancellationToken cancellationToken)
+    public async Task<Result<UploadSourceReportFileResultDto>> Handle(UploadSourceReportFileCommand request, CancellationToken cancellationToken)
     {
         return await _storage.SaveSourceReportFileAsync(
             request.SourceKey,

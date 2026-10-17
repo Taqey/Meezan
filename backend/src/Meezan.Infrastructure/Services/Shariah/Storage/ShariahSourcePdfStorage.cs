@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using System.Text.Json;
 using Meezan.Application.Common.Exceptions;
 using Meezan.Application.Common.Interfaces.Integrations;
@@ -184,7 +185,7 @@ public class ShariahSourcePdfStorage : IShariahSourcePdfStorage
         return new SourcePdfFileResultDto(stream, "application/pdf");
     }
 
-    public async Task<UploadSourceReportFileResultDto> SaveSourceReportFileAsync(
+    public async Task<Result<UploadSourceReportFileResultDto>> SaveSourceReportFileAsync(
         string sourceKey,
         Stream fileStream,
         string fileName,
@@ -195,21 +196,21 @@ public class ShariahSourcePdfStorage : IShariahSourcePdfStorage
     {
         if (sourceKey != "FaisalBank" && sourceKey != "Ostoul" && sourceKey != "Osoul")
         {
-            throw new BadRequestException("sourceKey must be 'FaisalBank' or 'Ostoul'.");
+            return Error.Validation("InvalidSourceKey", "sourceKey must be 'FaisalBank' or 'Ostoul'.", new { message = "sourceKey must be 'FaisalBank' or 'Ostoul'." });
         }
 
         if (fileStream == null || length == 0)
         {
-            throw new BadRequestException("No file provided.");
+            return Error.Validation("NoFileProvided", "No file provided.", new { message = "No file provided." });
         }
         if (!contentType.Equals("application/pdf", StringComparison.OrdinalIgnoreCase) &&
             !Path.GetExtension(fileName).Equals(".pdf", StringComparison.OrdinalIgnoreCase))
         {
-            throw new BadRequestException("File must be a PDF.");
+            return Error.Validation("NotPdf", "File must be a PDF.", new { message = "File must be a PDF." });
         }
         if (length > 50_000_000)
         {
-            throw new BadRequestException("File size exceeds 50 MB limit.");
+            return Error.Validation("FileTooLarge", "File size exceeds 50 MB limit.", new { message = "File size exceeds 50 MB limit." });
         }
 
         var canonical = CanonicalSourceKey(sourceKey)!;
