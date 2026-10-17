@@ -1,5 +1,6 @@
 using MediatR;
+using Meezan.Application.Common.Results;
 
 namespace Meezan.Application.Features.JobSettings.Commands.UpdateJobSetting;
 
-public record UpdateJobSettingCommand(string JobKey, bool Enabled) : IRequest<UpdateJobSettingResultDto>;
+public record UpdateJobSettingCommand(string JobKey, bool Enabled) : IRequest<Result<UpdateJobSettingResultDto>>;

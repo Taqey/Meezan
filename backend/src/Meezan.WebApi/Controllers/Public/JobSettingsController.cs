@@ -1,6 +1,7 @@
 using MediatR;
 using Meezan.Application.Features.JobSettings.Commands.UpdateJobSetting;
 using Meezan.Application.Features.JobSettings.Queries.GetJobSettings;
+using Meezan.WebApi.Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -26,7 +27,7 @@ public class JobSettingsController : ControllerBase
     public async Task<IActionResult> GetAll(CancellationToken ct)
     {
         var result = await _sender.Send(new GetJobSettingsQuery(), ct);
-        return Ok(result);
+        return result.ToActionResult();
     }
 
     /// <summary>
@@ -40,6 +41,6 @@ public class JobSettingsController : ControllerBase
         CancellationToken ct)
     {
         var result = await _sender.Send(new UpdateJobSettingCommand(jobKey, req.Enabled), ct);
-        return Ok(result);
+        return result.ToActionResult();
     }
 }

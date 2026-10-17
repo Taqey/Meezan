@@ -1,19 +1,6 @@
 using MediatR;
-using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
-using Meezan.Application.Common.Interfaces.Queries.Funds;
-using Meezan.Application.Common.Interfaces.Queries.RemovalCandidates;
-using Meezan.Application.Common.Interfaces.Queries.Stocks;
-using Meezan.Application.Common.Interfaces.Repositories.Funds;
-using Meezan.Application.Common.Interfaces.Repositories.Indices;
-using Meezan.Application.Common.Interfaces.Repositories.Market;
-using Meezan.Application.Common.Interfaces.Repositories.Scraping;
-using Meezan.Application.Common.Interfaces.Repositories.Sectors;
-using Meezan.Application.Common.Interfaces.Repositories.Shariah;
-using Meezan.Application.Common.Interfaces.Repositories.Stocks;
-using Meezan.Application.Common.Interfaces.Repositories.System;
-using Meezan.Application.Common.Interfaces.Security;
-using Meezan.Application.Common.Interfaces.Storage;
+using Meezan.Application.Common.Results;
 
 namespace Meezan.Application.Common.Behaviors;
 
@@ -40,6 +27,13 @@ public class TransactionBehavior<TRequest, TResponse> : IPipelineBehavior<TReque
         try
         {
             var response = await next();
+
+            if (response is IResult result && result.IsFailure)
+            {
+                await _unitOfWork.RollbackTransactionAsync(cancellationToken);
+                return response;
+            }
+
             await _unitOfWork.CommitTransactionAsync(cancellationToken);
             return response;
         }

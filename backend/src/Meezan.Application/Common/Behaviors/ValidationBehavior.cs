@@ -1,5 +1,6 @@
-﻿using FluentValidation;
+using FluentValidation;
 using MediatR;
+using Meezan.Application.Common.Results;
 
 namespace Meezan.Application.Common.Behaviors;
 
@@ -28,6 +29,20 @@ public class ValidationBehavior<TRequest, TResponse> : IPipelineBehavior<TReques
 
             if (failures.Count != 0)
             {
+                if (typeof(IResult).IsAssignableFrom(typeof(TResponse)))
+                {
+                    var payload = new
+                    {
+                        status = 400,
+                        title = "Validation Error",
+                        errors = failures.Select(e => new { field = e.PropertyName, message = e.ErrorMessage }).ToList()
+                    };
+
+                    var firstError = failures[0].ErrorMessage;
+                    var error = Error.Validation("ValidationError", firstError, payload);
+                    return ResultFactory.CreateFailure<TResponse>(error);
+                }
+
                 throw new ValidationException(failures);
             }
         }
