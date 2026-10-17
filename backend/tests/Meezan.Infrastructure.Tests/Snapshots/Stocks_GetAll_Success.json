@@ -1,0 +1,39 @@
+{
+  "StatusCode": 200,
+  "BodyShape": {
+    "items": [
+      {
+        "ticker": "string:ETEL",
+        "nameAr": "string:\u0627\u0644\u0645\u0635\u0631\u064A\u0629 \u0644\u0644\u0627\u062A\u0635\u0627\u0644\u0627\u062A",
+        "nameEn": "string:Telecom Egypt",
+        "indices": [],
+        "shariahStatus": null,
+        "closingPrice": "number:decimal",
+        "changePct": "number:decimal",
+        "fairValue": "number:decimal",
+        "priceComparison": "string:Cheap",
+        "fairValueDiffPct": "number:decimal",
+        "currency": "string:EGP",
+        "sectorNameAr": "string:\u0627\u062A\u0635\u0627\u0644\u0627\u062A",
+        "peRatio": "number:decimal",
+        "pbRatio": "number:decimal",
+        "weight": "number:int",
+        "weightIndexCode": "string:SECTORAL-INDICES",
+        "isCapped": "bool:False",
+        "cappingFactor": "number:decimal",
+        "coreActivityCompliant": null,
+        "categoryAr": null,
+        "categoryEn": null,
+        "spHaramEarningPercentage": null,
+        "loansPercentage": null,
+        "purificationPct": null,
+        "viaScholarsOnly": "bool:False",
+        "verdictDetailsJson": null
+      }
+    ],
+    "page": "number:int",
+    "pageSize": "number:int",
+    "totalCount": "number:int",
+    "totalPages": "number:int"
+  }
+}

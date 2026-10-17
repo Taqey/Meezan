@@ -1,0 +1,16 @@
+{
+  "StatusCode": 200,
+  "BodyShape": {
+    "ticker": "string:ETEL",
+    "nameAr": "string:\u0627\u0644\u0645\u0635\u0631\u064A\u0629 \u0644\u0644\u0627\u062A\u0635\u0627\u0644\u0627\u062A",
+    "nameEn": "string:Telecom Egypt",
+    "lastPrice": "number:decimal",
+    "changePct": "number:decimal",
+    "pivot": "number:decimal",
+    "r1": "number:decimal",
+    "r2": "number:decimal",
+    "s1": "number:decimal",
+    "s2": "number:decimal",
+    "fetchedAt": "string:date-time-normalized"
+  }
+}

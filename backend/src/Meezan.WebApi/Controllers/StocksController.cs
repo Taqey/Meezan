@@ -1,4 +1,5 @@
 using MediatR;
+using Meezan.Application.Features.Scraping.DTOs;
 using Meezan.Application.Features.Scraping.Queries.GetMarketData;
 using Meezan.Application.Features.Scraping.Queries.GetStocksList;
 using Meezan.Application.Features.Scraping.Queries.GetSupportResistance;

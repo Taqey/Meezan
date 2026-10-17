@@ -1,5 +1,6 @@
 using MediatR;
 using Meezan.Application.Common.Interfaces;
+using Meezan.Application.Features.Scraping.DTOs;
 using Meezan.Domain.Enums;
 
 namespace Meezan.Application.Features.Scraping.Queries.GetMarketData;

@@ -1,5 +1,6 @@
 using MediatR;
 using Meezan.Application.Common;
+using Meezan.Application.Features.Scraping.DTOs;
 
 namespace Meezan.Application.Features.Scraping.Queries.GetStocksList;
 
@@ -28,49 +29,3 @@ public record GetStocksListQuery(
     decimal? MinPbRatio,
     decimal? MaxPbRatio
 ) : IRequest<PagedResult<StockListItemDto>>;
-
-/// <summary>
-/// Trimmed summary DTO — only fields needed for the main stocks grid.
-/// Full detail (sector names, indices with weights, shariah %, etc.)
-/// is available on GET /api/stocks/{ticker}/market-data.
-/// </summary>
-public record StockListItemDto(
-    string Ticker,
-    string? NameAr,
-    string? NameEn,
-    /// <summary>Index codes this stock is a constituent of, e.g. ["EGX30","Sectoral-Indices"].</summary>
-    List<string> Indices,
-    /// <summary>Shariah compliance status string, null if no compliance record exists.</summary>
-    string? ShariahStatus,
-    decimal? ClosingPrice,
-    decimal? ChangePct,
-    decimal? FairValue,
-    string? PriceComparison,
-    decimal? FairValueDiffPct,
-    string? Currency,
-    string? SectorNameAr = null,
-    decimal? PeRatio = null,
-    decimal? PbRatio = null,
-    /// <summary>
-    /// Weight within <see cref="WeightIndexCode"/> (null when no such constituent row exists).
-    /// Surfaced for the sector page cards + weight sorting.
-    /// </summary>
-    decimal? Weight = null,
-    /// <summary>
-    /// Index code the <see cref="Weight"/> belongs to: the single selected index
-    /// when the request targets exactly one, else "SECTORAL-INDICES".
-    /// </summary>
-    string? WeightIndexCode = null,
-    /// <summary>True when the stock is capped at 35% in its sector index calculation.</summary>
-    bool? IsCapped = null,
-    /// <summary>The capping factor applied to the stock's market cap if capped.</summary>
-    decimal? CappingFactor = null,
-    bool? CoreActivityCompliant = null,
-    string? CategoryAr = null,
-    string? CategoryEn = null,
-    decimal? SpHaramEarningPercentage = null,
-    decimal? LoansPercentage = null,
-    decimal? PurificationPct = null,
-    bool ViaScholarsOnly = false,
-    string? VerdictDetailsJson = null
-);
