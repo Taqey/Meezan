@@ -1,11 +1,12 @@
 using MediatR;
-using Meezan.Application.Common;
-using Meezan.Application.Common.Interfaces;
+using Meezan.Application.Common.Exceptions;
+using Meezan.Application.Features.RemovalCandidates.Commands.ConfirmRemovals;
+using Meezan.Application.Features.RemovalCandidates.Commands.ReactivateSelected;
+using Meezan.Application.Features.RemovalCandidates.DTOs;
+using Meezan.Application.Features.RemovalCandidates.Queries.GetRemovalCandidates;
 using Meezan.Application.Features.Scraping.Commands.RefreshSelectedStocks;
-using Meezan.Domain.Enums;
-using Meezan.Infrastructure.Persistence;
+using Meezan.WebApi.Contracts.RemovalCandidates;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace Meezan.WebApi.Controllers;
 
@@ -23,17 +24,10 @@ namespace Meezan.WebApi.Controllers;
 [Route("api/scraping/removal-candidates")]
 public class RemovalCandidatesController : ControllerBase
 {
-    private readonly ApplicationDbContext _context;
-    private readonly IStockRepository _stockRepository;
     private readonly ISender _sender;
 
-    public RemovalCandidatesController(
-        ApplicationDbContext context,
-        IStockRepository stockRepository,
-        ISender sender)
+    public RemovalCandidatesController(ISender sender)
     {
-        _context = context;
-        _stockRepository = stockRepository;
         _sender = sender;
     }
 
@@ -43,48 +37,10 @@ public class RemovalCandidatesController : ControllerBase
     /// Mubasher last-update date. Read-only — listing a stock here changes nothing.
     /// </summary>
     [HttpGet]
+    [ProducesResponseType(typeof(List<RemovalCandidateDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetRemovalCandidates(CancellationToken cancellationToken)
     {
-        // 262-ish rows — a single lightweight query, filtered in memory because
-        // staleness detection (Arabic date text) cannot be translated to SQL.
-        var stocks = await _context.Stocks
-            .AsNoTracking()
-            .Include(s => s.Sector)
-            .Include(s => s.MarketData)
-            .OrderBy(s => s.Ticker)
-            .ToListAsync(cancellationToken);
-
-        var result = new List<RemovalCandidateDto>();
-        foreach (var s in stocks)
-        {
-            string? reason = null;
-            if (!s.IsActive)
-                reason = "Deactivated";
-            else if (s.DataStatus != StockDataStatus.Active)
-                reason = "NotFoundOnSource";
-            else if (s.MarketData is null)
-                reason = "NotFoundOnSource";
-            else if (MubasherStaleDetector.IsStale(s.MarketData.SourceLastUpdateText))
-                reason = "StaleData";
-
-            if (reason is null) continue;
-
-            result.Add(new RemovalCandidateDto(
-                StockId: s.Id,
-                Ticker: s.Ticker,
-                NameAr: s.NameAr,
-                NameEn: s.NameEn,
-                LastSuccessfulUpdate: s.MarketData?.FetchedAt,
-                SourceLastUpdateText: s.MarketData?.SourceLastUpdateText,
-                LastClosingPrice: s.MarketData?.ClosingPrice,
-                Reason: reason,
-                CurrentIsActive: s.IsActive,
-                DataStatus: s.DataStatus.ToString(),
-                DeactivatedAt: s.DeactivatedAt,
-                DeactivationReason: s.DeactivationReason,
-                SectorNameAr: s.Sector?.NameAr));
-        }
-
+        var result = await _sender.Send(new GetRemovalCandidatesQuery(), cancellationToken);
         return Ok(result);
     }
 
@@ -93,39 +49,16 @@ public class RemovalCandidatesController : ControllerBase
     /// Rows and all child data are retained and can be reactivated.
     /// </summary>
     [HttpPost("confirm")]
+    [ProducesResponseType(typeof(ConfirmRemovalsResultDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> ConfirmRemovals(
-        [FromBody] RemovalCandidatesSelection request,
+        [FromBody] RemovalCandidatesSelectionRequest request,
         CancellationToken cancellationToken)
     {
-        var tickers = Normalise(request?.Tickers);
-        if (tickers.Count == 0)
-            return BadRequest(new { message = "No tickers supplied." });
-
-        var confirmed = new List<string>();
-        var notFound = new List<string>();
-
-        foreach (var ticker in tickers)
-        {
-            var stock = await _context.Stocks
-                .FirstOrDefaultAsync(s => s.Ticker.ToUpper() == ticker, cancellationToken);
-            if (stock is null)
-            {
-                notFound.Add(ticker);
-                continue;
-            }
-
-            if (stock.IsActive)
-                await _stockRepository.DeactivateAsync(
-                    stock.Id, request?.Reason ?? "Confirmed by operator via removal-candidates checklist", cancellationToken);
-            confirmed.Add(stock.Ticker);
-        }
-
-        return Ok(new
-        {
-            message = $"Deactivated {confirmed.Count} stock(s). Rows retained with IsActive = false.",
-            confirmed,
-            notFound
-        });
+        var result = await _sender.Send(
+            new ConfirmRemovalsCommand(request?.Tickers, request?.Reason),
+            cancellationToken);
+        return Ok(result);
     }
 
     /// <summary>
@@ -135,13 +68,20 @@ public class RemovalCandidatesController : ControllerBase
     /// checklist stocks whose data is old but worth refreshing.
     /// </summary>
     [HttpPost("refresh")]
+    [ProducesResponseType(typeof(RefreshSelectedStocksResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> RefreshSelected(
-        [FromBody] RemovalCandidatesSelection request,
+        [FromBody] RemovalCandidatesSelectionRequest request,
         CancellationToken cancellationToken)
     {
-        var tickers = Normalise(request?.Tickers);
+        var tickers = (request?.Tickers ?? new List<string>())
+            .Where(t => !string.IsNullOrWhiteSpace(t))
+            .Select(t => t.Trim().ToUpperInvariant())
+            .Distinct()
+            .ToList();
+
         if (tickers.Count == 0)
-            return BadRequest(new { message = "No tickers supplied." });
+            throw new BadRequestException("No tickers supplied.");
 
         var result = await _sender.Send(
             new RefreshSelectedStocksCommand(tickers, "Manual-ChecklistRefresh"),
@@ -154,68 +94,15 @@ public class RemovalCandidatesController : ControllerBase
     /// Reactivates previously deactivated stocks (IsActive = true) — explicit undo.
     /// </summary>
     [HttpPost("reactivate")]
+    [ProducesResponseType(typeof(ReactivateSelectedResultDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> ReactivateSelected(
-        [FromBody] RemovalCandidatesSelection request,
+        [FromBody] RemovalCandidatesSelectionRequest request,
         CancellationToken cancellationToken)
     {
-        var tickers = Normalise(request?.Tickers);
-        if (tickers.Count == 0)
-            return BadRequest(new { message = "No tickers supplied." });
-
-        var reactivated = new List<string>();
-        var notFound = new List<string>();
-
-        foreach (var ticker in tickers)
-        {
-            var stock = await _context.Stocks
-                .FirstOrDefaultAsync(s => s.Ticker.ToUpper() == ticker, cancellationToken);
-            if (stock is null)
-            {
-                notFound.Add(ticker);
-                continue;
-            }
-
-            if (!stock.IsActive)
-                await _stockRepository.ReactivateAsync(stock.Id, cancellationToken);
-            reactivated.Add(stock.Ticker);
-        }
-
-        return Ok(new
-        {
-            message = $"Reactivated {reactivated.Count} stock(s) (IsActive = true).",
-            reactivated,
-            notFound
-        });
+        var result = await _sender.Send(
+            new ReactivateSelectedCommand(request?.Tickers),
+            cancellationToken);
+        return Ok(result);
     }
-
-    private static List<string> Normalise(List<string>? tickers) =>
-        (tickers ?? new List<string>())
-            .Where(t => !string.IsNullOrWhiteSpace(t))
-            .Select(t => t.Trim().ToUpperInvariant())
-            .Distinct()
-            .ToList();
-}
-
-/// <summary>One reviewable row in the operator checklist.</summary>
-public sealed record RemovalCandidateDto(
-    int StockId,
-    string Ticker,
-    string? NameAr,
-    string? NameEn,
-    DateTime? LastSuccessfulUpdate,
-    string? SourceLastUpdateText,
-    decimal? LastClosingPrice,
-    /// <summary>StaleData | NotFoundOnSource | Deactivated</summary>
-    string Reason,
-    bool CurrentIsActive,
-    string DataStatus,
-    DateTime? DeactivatedAt,
-    string? DeactivationReason,
-    string? SectorNameAr);
-
-/// <summary>Checkbox selection posted by the frontend.</summary>
-public sealed class RemovalCandidatesSelection
-{
-    public List<string> Tickers { get; set; } = new();
-    public string? Reason { get; set; }
 }

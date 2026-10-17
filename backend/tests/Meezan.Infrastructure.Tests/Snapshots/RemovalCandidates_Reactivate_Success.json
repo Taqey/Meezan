@@ -1,0 +1,8 @@
+{
+  "StatusCode": 500,
+  "BodyShape": {
+    "status": "number:int",
+    "title": "string:Server Error",
+    "message": "string:An unexpected error occurred."
+  }
+}

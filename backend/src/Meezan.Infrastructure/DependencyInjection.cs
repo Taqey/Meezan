@@ -23,6 +23,8 @@ public static class DependencyInjection
         services.AddScoped<IStockRepository, StockRepository>();
         services.AddScoped<ISectorRepository, SectorRepository>();
         services.AddScoped<IStockManagementReadQuery, Persistence.Queries.StockManagementReadQuery>();
+        services.AddScoped<IAdminMarketDataReadQuery, Persistence.Queries.AdminMarketDataReadQuery>();
+        services.AddScoped<IRemovalCandidatesReadQuery, Persistence.Queries.RemovalCandidatesReadQuery>();
         services.AddScoped<IUploadHistoryRepository, UploadHistoryRepository>();
         services.AddScoped<IJobSettingRepository, JobSettingRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();

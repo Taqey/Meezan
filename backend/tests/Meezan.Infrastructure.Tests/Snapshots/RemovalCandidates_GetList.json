@@ -1,0 +1,20 @@
+{
+  "StatusCode": 200,
+  "BodyShape": [
+    {
+      "stockId": "number:int",
+      "ticker": "string:CIB",
+      "nameAr": "string:\u0627\u0644\u0628\u0646\u0643 \u0627\u0644\u062A\u062C\u0627\u0631\u064A \u0627\u0644\u062F\u0648\u0644\u064A",
+      "nameEn": "string:Commercial International Bank",
+      "lastSuccessfulUpdate": "string:date-time-normalized",
+      "sourceLastUpdateText": "string:12:30",
+      "lastClosingPrice": "number:decimal",
+      "reason": "string:Deactivated",
+      "currentIsActive": "bool:False",
+      "dataStatus": "string:Active",
+      "deactivatedAt": "string:date-time-normalized",
+      "deactivationReason": "string:Operator deactivated",
+      "sectorNameAr": "string:\u0628\u0646\u0648\u0643"
+    }
+  ]
+}

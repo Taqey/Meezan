@@ -1,0 +1,6 @@
+{
+  "StatusCode": 400,
+  "BodyShape": {
+    "message": "string:No tickers supplied."
+  }
+}
