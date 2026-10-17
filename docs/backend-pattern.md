@@ -256,3 +256,22 @@ public class CreateSectorTests : IClassFixture<TestWebApplicationFactory>
     }
 }
 ```
+
+---
+
+## 4. Two-Level Caching & Price Sync Architecture
+
+### 4.1 Cache Abstractions & Lifetimes
+- **Application Layer (`Meezan.Application.Common.Interfaces.Caching`)**: Defines `IFundCacheService` and cache invalidation markers (`IInvalidatesFundCatalog`, `IInvalidatesFundPrices`).
+- **Infrastructure Layer (`Meezan.Infrastructure.Services.Caching`)**:
+  - Two-level cache: L1 in-memory (`IMemoryCache`) with 5-minute TTL and 15s version freshness check, and L2 distributed cache (`StackExchange.Redis`) with 7-day TTL.
+  - Fail-open circuit breaker (30s timeout fallback upon 3 consecutive Redis errors) ensures zero 500s or performance degradation when Redis is unreachable.
+  - Invalidation is performed via atomic `INCR` on dataset version keys (`catalog` and `prices`), keeping Redis operations O(1) without `KEYS *` or `FLUSHDB`.
+- **Key Schema**: `{KeyPrefix}:v1:{dataset}:v{version}` where `KeyPrefix` is derived from SHA256 of the database server and catalog name when empty.
+
+### 4.2 Invalidation Pipeline Behavior
+- `CacheInvalidationBehavior<TRequest, TResponse>` intercepts MediatR commands post-execution. If the command implements `IInvalidatesFundCatalog` or `IInvalidatesFundPrices` and returns a successful `Result`, it automatically bumps the respective version in Redis and triggers background cache warming.
+
+### 4.3 Fund Prices Sync
+- `RunFundPriceSyncCommand` performs a targeted, single-request sync to `funds.list` to update price and returns data (`currentPrice`, `dailyChange`, 1M/3M/6M/1Y/3Y returns, `PricesUpdatedAt`) without modifying static fund attributes, descriptions, or classifications. Bumps only the `prices` cache version upon success.
+
