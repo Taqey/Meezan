@@ -1,0 +1,14 @@
+{
+  "StatusCode": 200,
+  "BodyShape": [
+    {
+      "sourceKey": "string:FaisalBank",
+      "dbPdfUrl": "string:/uploads/shariah/Faisal compliance-list.pdf",
+      "status": "string:exists",
+      "fileName": "string:Faisal compliance-list.pdf",
+      "sizeBytes": "number:int",
+      "lastModifiedUtc": "string:date-time-normalized",
+      "viewPath": "string:api/shariah/source-pdf/FaisalBank"
+    }
+  ]
+}

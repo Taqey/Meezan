@@ -16,31 +16,40 @@ public class SeedShariahMapCommandHandler : IRequestHandler<SeedShariahMapComman
     private readonly IShariahComplianceRepository _complianceRepository;
     private readonly IStockShariahMetricsRepository _metricsRepository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IShariahMapLoader _mapLoader;
 
     public SeedShariahMapCommandHandler(
         IStockRepository stockRepository,
         IShariahComplianceRepository complianceRepository,
         IStockShariahMetricsRepository metricsRepository,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IShariahMapLoader mapLoader)
     {
         _stockRepository = stockRepository;
         _complianceRepository = complianceRepository;
         _metricsRepository = metricsRepository;
         _unitOfWork = unitOfWork;
+        _mapLoader = mapLoader;
     }
 
     public async Task<SeedShariahMapResult> Handle(SeedShariahMapCommand request, CancellationToken cancellationToken)
     {
-        if (request.Data == null || request.Data.Count == 0)
+        var data = request.Data;
+        if (data == null || data.Count == 0)
         {
-            return new SeedShariahMapResult(0, 0, 0);
+            data = await _mapLoader.LoadBundledShariahMapAsync(cancellationToken);
+        }
+
+        if (data == null || data.Count == 0)
+        {
+            throw new Common.Exceptions.BadRequestException("No seed data found in request body or bundled shariah_map.json resource.");
         }
 
         int inserted = 0;
         int updated = 0;
         var now = DateTime.UtcNow;
 
-        foreach (var (rawSymbol, item) in request.Data)
+        foreach (var (rawSymbol, item) in data)
         {
             var symbol = rawSymbol.Trim().ToUpperInvariant();
             if (string.IsNullOrWhiteSpace(symbol)) continue;

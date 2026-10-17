@@ -1,0 +1,9 @@
+{
+  "StatusCode": 400,
+  "BodyShape": {
+    "success": "bool:False",
+    "message": "string:Could not find shariah_opinions_faisal_osoul.json. Pass an explicit path or place the file in the working directory or any parent folder.",
+    "filePath": "string:nonexistent_file.json",
+    "sources": []
+  }
+}

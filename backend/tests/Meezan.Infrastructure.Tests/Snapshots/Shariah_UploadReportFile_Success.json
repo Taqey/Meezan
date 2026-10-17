@@ -1,0 +1,12 @@
+{
+  "StatusCode": 200,
+  "BodyShape": {
+    "success": "bool:True",
+    "message": "string:PDF uploaded and replaced for FaisalBank.",
+    "sourceKey": "string:FaisalBank",
+    "fileName": "string:Faisal compliance-list.pdf",
+    "storedAt": "string:/uploads/shariah/Faisal compliance-list.pdf",
+    "reportDate": "string:date-time-normalized",
+    "uploadedAt": "string:date-time-normalized"
+  }
+}

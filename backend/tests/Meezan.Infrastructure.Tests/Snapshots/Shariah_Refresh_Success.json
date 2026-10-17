@@ -1,0 +1,11 @@
+{
+  "StatusCode": 200,
+  "BodyShape": {
+    "success": "bool:True",
+    "message": "string:Shariah data refreshed successfully",
+    "pctUpdatedCount": "number:int",
+    "skippedNoValueCount": "number:int",
+    "skippedNotFoundCount": "number:int",
+    "stocksFullyRefreshedCount": "number:int"
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "StatusCode": 400,
+  "BodyShape": {
+    "message": "string:sourceKey must be \u0027FaisalBank\u0027 or \u0027Ostoul\u0027."
+  }
+}

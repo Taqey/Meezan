@@ -1,0 +1,8 @@
+{
+  "StatusCode": 200,
+  "BodyShape": {
+    "insertedCount": "number:int",
+    "updatedCount": "number:int",
+    "totalProcessed": "number:int"
+  }
+}

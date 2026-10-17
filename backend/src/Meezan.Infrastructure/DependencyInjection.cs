@@ -35,6 +35,8 @@ public static class DependencyInjection
         services.AddScoped<IShariahSourceOpinionRepository, ShariahSourceOpinionRepository>();
         services.AddScoped<IStockShariahMetricsRepository, StockShariahMetricsRepository>();
         services.AddScoped<IShariahRefreshLogRepository, ShariahRefreshLogRepository>();
+        services.AddScoped<IShariahSourcePdfStorage, ShariahSourcePdfStorage>();
+        services.AddScoped<IShariahMapLoader, ShariahMapLoader>();
 
         // Shariah External Client
         services.AddHttpClient<IShariahSourceClient, ShariahSourceClient>();

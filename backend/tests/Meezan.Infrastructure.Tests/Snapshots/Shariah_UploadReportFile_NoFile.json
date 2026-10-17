@@ -1,0 +1,14 @@
+{
+  "StatusCode": 400,
+  "BodyShape": {
+    "type": "string:https://tools.ietf.org/html/rfc9110#section-15.5.1",
+    "title": "string:One or more validation errors occurred.",
+    "status": "number:int",
+    "errors": {
+      "": [
+        "string:Failed to read the request form. Form section has invalid Content-Disposition value: "
+      ]
+    },
+    "traceId": "string:trace-id-normalized"
+  }
+}
