@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Common.Exceptions;
 using Meezan.Application.Common.Interfaces.Integrations;
@@ -25,7 +26,7 @@ using Meezan.Domain.Entities;
 
 namespace Meezan.Application.Features.Funds.Classification.Commands.RestoreClassificationNode;
 
-public sealed class RestoreClassificationNodeCommandHandler : IRequestHandler<RestoreClassificationNodeCommand, AdminClassificationNodeDto>
+public sealed class RestoreClassificationNodeCommandHandler : IRequestHandler<RestoreClassificationNodeCommand, Result<AdminClassificationNodeDto>>
 {
     private readonly IFundClassificationNodeRepository _nodeRepo;
     private readonly IFundClassificationOverrideRepository _overrideRepo;
@@ -47,17 +48,17 @@ public sealed class RestoreClassificationNodeCommandHandler : IRequestHandler<Re
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<AdminClassificationNodeDto> Handle(RestoreClassificationNodeCommand request, CancellationToken cancellationToken)
+    public async Task<Result<AdminClassificationNodeDto>> Handle(RestoreClassificationNodeCommand request, CancellationToken cancellationToken)
     {
         var node = await _nodeRepo.GetByIdAsync(request.Id, includeDeleted: true, cancellationToken);
         if (node == null)
-            throw new NotFoundException("Node not found.");
+            return Error.NotFound("NodeNotFound", "Node not found.");
         if (!node.IsDeleted)
-            throw new BadRequestException("العقدة ليست محذوفة.");
+            return Error.Validation("NodeNotDeleted", "العقدة ليست محذوفة.");
 
         var (ok, err) = await _classification.ValidateSlugAsync(node.Slug, request.Id, cancellationToken);
         if (!ok)
-            throw new BadRequestException($"تعذرت الاستعادة: {err}");
+            return Error.Validation("RestoreFailed", $"تعذرت الاستعادة: {err}");
 
         if (node.ParentId.HasValue)
         {

@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Common.Exceptions;
 using Meezan.Application.Common.Interfaces.Integrations;
@@ -19,7 +20,7 @@ using Meezan.Domain.Entities;
 
 namespace Meezan.Application.Features.Funds.Types.Commands.ClearFundType;
 
-public sealed class ClearFundTypeCommandHandler : IRequestHandler<ClearFundTypeCommand, ClearFundTypeResultDto>
+public sealed class ClearFundTypeCommandHandler : IRequestHandler<ClearFundTypeCommand, Result<ClearFundTypeResultDto>>
 {
     private readonly IFundRepository _fundRepo;
     private readonly IFundTypeOverrideRepository _typeOverrideRepo;
@@ -38,10 +39,10 @@ public sealed class ClearFundTypeCommandHandler : IRequestHandler<ClearFundTypeC
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<ClearFundTypeResultDto> Handle(ClearFundTypeCommand request, CancellationToken cancellationToken)
+    public async Task<Result<ClearFundTypeResultDto>> Handle(ClearFundTypeCommand request, CancellationToken cancellationToken)
     {
         var fund = await _fundRepo.GetByIdAsync(request.FundId, cancellationToken);
-        if (fund == null) throw new NotFoundException(nameof(Fund), request.FundId);
+        if (fund == null) return Error.NotFound("FundNotFound", "");
 
         var existing = await _typeOverrideRepo.GetByFundIdAsync(request.FundId, cancellationToken);
         if (existing != null)

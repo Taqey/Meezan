@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
@@ -18,7 +19,7 @@ using Meezan.Domain.Entities;
 
 namespace Meezan.Application.Features.Funds.Types.Commands.ReorderFundTypes;
 
-public sealed class ReorderFundTypesCommandHandler : IRequestHandler<ReorderFundTypesCommand, ReorderFundTypesResultDto>
+public sealed class ReorderFundTypesCommandHandler : IRequestHandler<ReorderFundTypesCommand, Result<ReorderFundTypesResultDto>>
 {
     private readonly IFundTypeDefinitionRepository _typeDefRepo;
     private readonly IFundTypeChangeLogRepository _changeLogRepo;
@@ -34,7 +35,7 @@ public sealed class ReorderFundTypesCommandHandler : IRequestHandler<ReorderFund
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<ReorderFundTypesResultDto> Handle(ReorderFundTypesCommand request, CancellationToken cancellationToken)
+    public async Task<Result<ReorderFundTypesResultDto>> Handle(ReorderFundTypesCommand request, CancellationToken cancellationToken)
     {
         var ids = request.OrderedIds ?? new List<int>();
         var all = await _typeDefRepo.GetByIdsAsync(ids, cancellationToken);

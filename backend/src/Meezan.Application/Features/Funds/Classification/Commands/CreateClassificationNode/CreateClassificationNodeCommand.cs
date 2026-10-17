@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
@@ -17,7 +18,7 @@ using Meezan.Application.Common.Interfaces.Storage;
 
 namespace Meezan.Application.Features.Funds.Classification.Commands.CreateClassificationNode;
 
-public sealed record CreateClassificationNodeCommand : IRequest<CreateClassificationNodeResultDto>, ITransactionalCommand
+public sealed record CreateClassificationNodeCommand : IRequest<Result<CreateClassificationNodeResultDto>>, ITransactionalCommand
 {
     public int? ParentId { get; init; }
     public string? Slug { get; init; }

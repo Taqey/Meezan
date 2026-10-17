@@ -1,6 +1,7 @@
 namespace Meezan.Application.Features.Funds.Categories.Queries.GetCategoryChanges;
 
 using MediatR;
+using Meezan.Application.Common.Results;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
 using Meezan.Application.Common.Interfaces.Queries.Funds;
@@ -19,7 +20,7 @@ using Meezan.Application.Common.Interfaces.Storage;
 using Meezan.Application.Common.Models.Funds;
 using Meezan.Application.Common.Models.Stocks;
 
-public class GetCategoryChangesQueryHandler : IRequestHandler<GetCategoryChangesQuery, CategoryChangesResultDto>
+public class GetCategoryChangesQueryHandler : IRequestHandler<GetCategoryChangesQuery, Result<CategoryChangesResultDto>>
 {
     private readonly IFundCategoryChangeLogRepository _changeLogRepo;
 
@@ -28,7 +29,7 @@ public class GetCategoryChangesQueryHandler : IRequestHandler<GetCategoryChanges
         _changeLogRepo = changeLogRepo;
     }
 
-    public async Task<CategoryChangesResultDto> Handle(GetCategoryChangesQuery request, CancellationToken cancellationToken)
+    public async Task<Result<CategoryChangesResultDto>> Handle(GetCategoryChangesQuery request, CancellationToken cancellationToken)
     {
         var filter = new FundCategoryChangeLogFilter
         {

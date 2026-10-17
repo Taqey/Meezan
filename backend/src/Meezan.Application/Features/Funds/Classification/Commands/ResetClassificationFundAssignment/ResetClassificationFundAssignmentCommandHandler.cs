@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Common.Exceptions;
 using Meezan.Application.Common.Interfaces.Integrations;
@@ -19,7 +20,7 @@ using Meezan.Domain.Entities;
 
 namespace Meezan.Application.Features.Funds.Classification.Commands.ResetClassificationFundAssignment;
 
-public sealed class ResetClassificationFundAssignmentCommandHandler : IRequestHandler<ResetClassificationFundAssignmentCommand, ResetClassificationFundAssignmentResultDto>
+public sealed class ResetClassificationFundAssignmentCommandHandler : IRequestHandler<ResetClassificationFundAssignmentCommand, Result<ResetClassificationFundAssignmentResultDto>>
 {
     private readonly IFundRepository _fundRepo;
     private readonly IFundClassificationOverrideRepository _overrideRepo;
@@ -38,11 +39,11 @@ public sealed class ResetClassificationFundAssignmentCommandHandler : IRequestHa
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<ResetClassificationFundAssignmentResultDto> Handle(ResetClassificationFundAssignmentCommand request, CancellationToken cancellationToken)
+    public async Task<Result<ResetClassificationFundAssignmentResultDto>> Handle(ResetClassificationFundAssignmentCommand request, CancellationToken cancellationToken)
     {
         var fund = await _fundRepo.GetByIdAsync(request.FundId, cancellationToken);
         if (fund == null)
-            throw new NotFoundException("Fund not found.");
+            return Error.NotFound("FundNotFound", "Fund not found.");
 
         var manual = (await _overrideRepo.GetByFundIdAsync(request.FundId, cancellationToken))
             .Where(o => o.CreatedBy != "AutoSync").ToList();

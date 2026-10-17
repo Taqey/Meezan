@@ -1,6 +1,7 @@
 namespace Meezan.Application.Features.Funds.Listing.Queries.GetAdminFunds;
 
 using MediatR;
+using Meezan.Application.Common.Results;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
 using Meezan.Application.Common.Interfaces.Queries.Funds;
@@ -19,7 +20,7 @@ using Meezan.Application.Common.Interfaces.Storage;
 using Meezan.Application.Common.Models.Funds;
 using Meezan.Application.Common.Models.Stocks;
 
-public class GetAdminFundsQueryHandler : IRequestHandler<GetAdminFundsQuery, AdminFundsResultDto>
+public class GetAdminFundsQueryHandler : IRequestHandler<GetAdminFundsQuery, Result<AdminFundsResultDto>>
 {
     private readonly IFundRepository _fundRepo;
 
@@ -28,7 +29,7 @@ public class GetAdminFundsQueryHandler : IRequestHandler<GetAdminFundsQuery, Adm
         _fundRepo = fundRepo;
     }
 
-    public async Task<AdminFundsResultDto> Handle(GetAdminFundsQuery request, CancellationToken cancellationToken)
+    public async Task<Result<AdminFundsResultDto>> Handle(GetAdminFundsQuery request, CancellationToken cancellationToken)
     {
         var filter = new FundListFilter
         {

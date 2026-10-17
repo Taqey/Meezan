@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
@@ -18,4 +19,4 @@ using Meezan.Domain.Models;
 
 namespace Meezan.Application.Features.Funds.Classification.Commands.SeedMigrateClassification;
 
-public sealed record SeedMigrateClassificationCommand : IRequest<ClassificationMigrationReport>, ITransactionalCommand;
+public sealed record SeedMigrateClassificationCommand : IRequest<Result<ClassificationMigrationReport>>, ITransactionalCommand;

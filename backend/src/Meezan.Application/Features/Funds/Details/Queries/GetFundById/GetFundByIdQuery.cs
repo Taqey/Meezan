@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Features.Funds.Categories.Dtos;
 using Meezan.Application.Features.Funds.Classification.Dtos;
@@ -8,4 +9,4 @@ using Meezan.Application.Features.Funds.Types.Dtos;
 
 namespace Meezan.Application.Features.Funds.Details.Queries.GetFundById;
 
-public sealed record GetFundByIdQuery(int Id) : IRequest<FundDetailDto?>;
+public sealed record GetFundByIdQuery(int Id) : IRequest<Result<FundDetailDto>>;

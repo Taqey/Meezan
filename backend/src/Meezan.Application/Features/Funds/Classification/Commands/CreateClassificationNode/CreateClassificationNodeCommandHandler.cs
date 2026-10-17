@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Common.Exceptions;
 using Meezan.Application.Common.Interfaces.Integrations;
@@ -26,7 +27,7 @@ using Meezan.Domain.Services;
 
 namespace Meezan.Application.Features.Funds.Classification.Commands.CreateClassificationNode;
 
-public sealed class CreateClassificationNodeCommandHandler : IRequestHandler<CreateClassificationNodeCommand, CreateClassificationNodeResultDto>
+public sealed class CreateClassificationNodeCommandHandler : IRequestHandler<CreateClassificationNodeCommand, Result<CreateClassificationNodeResultDto>>
 {
     private readonly IFundClassificationNodeRepository _nodeRepo;
     private readonly IFundRepository _fundRepo;
@@ -51,7 +52,7 @@ public sealed class CreateClassificationNodeCommandHandler : IRequestHandler<Cre
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<CreateClassificationNodeResultDto> Handle(CreateClassificationNodeCommand request, CancellationToken cancellationToken)
+    public async Task<Result<CreateClassificationNodeResultDto>> Handle(CreateClassificationNodeCommand request, CancellationToken cancellationToken)
     {
         var slug = string.IsNullOrWhiteSpace(request.Slug)
             ? FundClassificationTreeEngine.GenerateSlug(request.NameEn)
@@ -59,7 +60,7 @@ public sealed class CreateClassificationNodeCommandHandler : IRequestHandler<Cre
 
         var (slugOk, slugErr) = await _classification.ValidateSlugAsync(slug, null, cancellationToken);
         if (!slugOk)
-            throw new BadRequestException(slugErr ?? "Invalid slug.");
+            return Error.Validation("InvalidSlug", slugErr ?? "Invalid slug.");
 
         FundClassificationNode? parent = null;
         int level = 0;
@@ -67,13 +68,13 @@ public sealed class CreateClassificationNodeCommandHandler : IRequestHandler<Cre
         {
             parent = await _nodeRepo.GetByIdAsync(request.ParentId.Value, includeDeleted: true, cancellationToken);
             if (parent == null)
-                throw new NotFoundException("الأب غير موجود.");
+                return Error.NotFound("ParentNotFound", "الأب غير موجود.");
             if (parent.IsDeleted)
-                throw new BadRequestException("لا يمكن الإضافة تحت عقدة محذوفة.");
+                return Error.Validation("ParentDeleted", "لا يمكن الإضافة تحت عقدة محذوفة.");
 
             level = parent.Level + 1;
             if (level > FundClassificationNode.MaxDepth - 1)
-                throw new BadRequestException($"يتجاوز أقصى عمق ({FundClassificationNode.MaxDepth} مستويات).");
+                return Error.Validation("MaxDepthExceeded", $"يتجاوز أقصى عمق ({FundClassificationNode.MaxDepth} مستويات).");
         }
 
         List<Fund> parentFunds = new();

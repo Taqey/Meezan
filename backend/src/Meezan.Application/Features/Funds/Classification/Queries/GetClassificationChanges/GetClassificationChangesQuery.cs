@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Domain.Entities;
 
@@ -8,4 +9,4 @@ public sealed record GetClassificationChangesQuery(
     int? NodeId = null,
     ClassificationChangeAction? Action = null,
     int Page = 1,
-    int PageSize = 50) : IRequest<ClassificationChangesResultDto>;
+    int PageSize = 50) : IRequest<Result<ClassificationChangesResultDto>>;

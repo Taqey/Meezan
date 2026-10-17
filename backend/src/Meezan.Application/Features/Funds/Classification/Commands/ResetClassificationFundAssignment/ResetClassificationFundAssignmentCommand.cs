@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
@@ -17,4 +18,4 @@ using Meezan.Application.Common.Interfaces.Storage;
 
 namespace Meezan.Application.Features.Funds.Classification.Commands.ResetClassificationFundAssignment;
 
-public sealed record ResetClassificationFundAssignmentCommand(int FundId) : IRequest<ResetClassificationFundAssignmentResultDto>, ITransactionalCommand;
+public sealed record ResetClassificationFundAssignmentCommand(int FundId) : IRequest<Result<ResetClassificationFundAssignmentResultDto>>, ITransactionalCommand;

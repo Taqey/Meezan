@@ -1,6 +1,7 @@
 namespace Meezan.Application.Features.Funds.Sync.Queries.GetLatestSyncRun;
 
 using MediatR;
+using Meezan.Application.Common.Results;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
 using Meezan.Application.Common.Interfaces.Queries.Funds;
@@ -18,7 +19,7 @@ using Meezan.Application.Common.Interfaces.Security;
 using Meezan.Application.Common.Interfaces.Storage;
 using Meezan.Domain.Entities;
 
-public class GetLatestSyncRunQueryHandler : IRequestHandler<GetLatestSyncRunQuery, FundSyncLog?>
+public class GetLatestSyncRunQueryHandler : IRequestHandler<GetLatestSyncRunQuery, Result<FundSyncLog?>>
 {
     private readonly IFundSyncService _syncService;
 
@@ -27,7 +28,7 @@ public class GetLatestSyncRunQueryHandler : IRequestHandler<GetLatestSyncRunQuer
         _syncService = syncService;
     }
 
-    public async Task<FundSyncLog?> Handle(GetLatestSyncRunQuery request, CancellationToken cancellationToken)
+    public async Task<Result<FundSyncLog?>> Handle(GetLatestSyncRunQuery request, CancellationToken cancellationToken)
     {
         return await _syncService.GetLatestRunAsync(cancellationToken);
     }

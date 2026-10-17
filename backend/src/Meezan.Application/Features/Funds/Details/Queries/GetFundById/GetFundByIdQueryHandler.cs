@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
@@ -24,7 +25,7 @@ using Meezan.Domain.Entities;
 
 namespace Meezan.Application.Features.Funds.Details.Queries.GetFundById;
 
-public sealed class GetFundByIdQueryHandler : IRequestHandler<GetFundByIdQuery, FundDetailDto?>
+public sealed class GetFundByIdQueryHandler : IRequestHandler<GetFundByIdQuery, Result<FundDetailDto>>
 {
     private readonly IFundDetailQuery _detailQuery;
 
@@ -33,10 +34,10 @@ public sealed class GetFundByIdQueryHandler : IRequestHandler<GetFundByIdQuery, 
         _detailQuery = detailQuery;
     }
 
-    public async Task<FundDetailDto?> Handle(GetFundByIdQuery request, CancellationToken cancellationToken)
+    public async Task<Result<FundDetailDto>> Handle(GetFundByIdQuery request, CancellationToken cancellationToken)
     {
         var bundle = await _detailQuery.LoadAsync(request.Id, cancellationToken);
-        if (bundle?.Fund == null) return null;
+        if (bundle?.Fund == null) return Error.NotFound("FundNotFound", "");
         var fund = bundle.Fund;
 
         var priceHistory = bundle.PriceHistory;

@@ -1,6 +1,7 @@
 namespace Meezan.Application.Features.Funds.Details.Queries.GetAdminFundById;
 
 using MediatR;
+using Meezan.Application.Common.Results;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
 using Meezan.Application.Common.Interfaces.Queries.Funds;
@@ -18,7 +19,7 @@ using Meezan.Application.Common.Interfaces.Security;
 using Meezan.Application.Common.Interfaces.Storage;
 using Meezan.Domain.Entities;
 
-public class GetAdminFundByIdQueryHandler : IRequestHandler<GetAdminFundByIdQuery, Fund?>
+public class GetAdminFundByIdQueryHandler : IRequestHandler<GetAdminFundByIdQuery, Result<Fund?>>
 {
     private readonly IFundRepository _fundRepo;
 
@@ -27,7 +28,7 @@ public class GetAdminFundByIdQueryHandler : IRequestHandler<GetAdminFundByIdQuer
         _fundRepo = fundRepo;
     }
 
-    public async Task<Fund?> Handle(GetAdminFundByIdQuery request, CancellationToken cancellationToken)
+    public async Task<Result<Fund?>> Handle(GetAdminFundByIdQuery request, CancellationToken cancellationToken)
     {
         return await _fundRepo.GetByIdAsync(request.Id, cancellationToken);
     }

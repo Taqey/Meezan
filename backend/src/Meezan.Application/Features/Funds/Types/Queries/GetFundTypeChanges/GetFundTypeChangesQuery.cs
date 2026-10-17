@@ -1,5 +1,6 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 
 namespace Meezan.Application.Features.Funds.Types.Queries.GetFundTypeChanges;
 
-public sealed record GetFundTypeChangesQuery(int Page = 1, int PageSize = 50) : IRequest<FundTypeChangesResultDto>;
+public sealed record GetFundTypeChangesQuery(int Page = 1, int PageSize = 50) : IRequest<Result<FundTypeChangesResultDto>>;

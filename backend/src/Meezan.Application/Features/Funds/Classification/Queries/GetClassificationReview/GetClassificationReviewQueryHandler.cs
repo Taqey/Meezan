@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
@@ -17,7 +18,7 @@ using Meezan.Application.Common.Interfaces.Storage;
 
 namespace Meezan.Application.Features.Funds.Classification.Queries.GetClassificationReview;
 
-public sealed class GetClassificationReviewQueryHandler : IRequestHandler<GetClassificationReviewQuery, ClassificationReviewDto>
+public sealed class GetClassificationReviewQueryHandler : IRequestHandler<GetClassificationReviewQuery, Result<ClassificationReviewDto>>
 {
     private readonly IFundClassificationService _classification;
 
@@ -26,7 +27,7 @@ public sealed class GetClassificationReviewQueryHandler : IRequestHandler<GetCla
         _classification = classification;
     }
 
-    public async Task<ClassificationReviewDto> Handle(GetClassificationReviewQuery request, CancellationToken cancellationToken)
+    public async Task<Result<ClassificationReviewDto>> Handle(GetClassificationReviewQuery request, CancellationToken cancellationToken)
     {
         var q = await _classification.GetReviewQueueAsync(cancellationToken);
         return new ClassificationReviewDto

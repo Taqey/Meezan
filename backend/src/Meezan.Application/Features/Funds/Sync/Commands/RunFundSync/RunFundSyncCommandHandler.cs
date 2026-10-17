@@ -1,4 +1,5 @@
 using MediatR;
+using Meezan.Application.Common.Results;
 using Meezan.Application.Common.Exceptions;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
@@ -19,7 +20,7 @@ using Meezan.Domain.Entities;
 
 namespace Meezan.Application.Features.Funds.Sync.Commands.RunFundSync;
 
-public sealed class RunFundSyncCommandHandler : IRequestHandler<RunFundSyncCommand, FundSyncLog>
+public sealed class RunFundSyncCommandHandler : IRequestHandler<RunFundSyncCommand, Result<FundSyncLog>>
 {
     private readonly IFundSyncService _syncService;
 
@@ -28,7 +29,7 @@ public sealed class RunFundSyncCommandHandler : IRequestHandler<RunFundSyncComma
         _syncService = syncService;
     }
 
-    public async Task<FundSyncLog> Handle(RunFundSyncCommand request, CancellationToken cancellationToken)
+    public async Task<Result<FundSyncLog>> Handle(RunFundSyncCommand request, CancellationToken cancellationToken)
     {
         try
         {
@@ -36,7 +37,7 @@ public sealed class RunFundSyncCommandHandler : IRequestHandler<RunFundSyncComma
         }
         catch (InvalidOperationException ex)
         {
-            throw new BadRequestException(ex.Message);
+            return Error.Validation("FundSyncError", ex.Message);
         }
     }
 }

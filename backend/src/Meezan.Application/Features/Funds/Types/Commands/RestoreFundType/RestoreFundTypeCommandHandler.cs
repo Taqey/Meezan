@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Common.Exceptions;
 using Meezan.Application.Common.Interfaces.Integrations;
@@ -19,7 +20,7 @@ using Meezan.Domain.Entities;
 
 namespace Meezan.Application.Features.Funds.Types.Commands.RestoreFundType;
 
-public sealed class RestoreFundTypeCommandHandler : IRequestHandler<RestoreFundTypeCommand, FundTypeDefinition>
+public sealed class RestoreFundTypeCommandHandler : IRequestHandler<RestoreFundTypeCommand, Result<FundTypeDefinition>>
 {
     private readonly IFundTypeDefinitionRepository _typeDefRepo;
     private readonly IFundTypeChangeLogRepository _changeLogRepo;
@@ -35,12 +36,12 @@ public sealed class RestoreFundTypeCommandHandler : IRequestHandler<RestoreFundT
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<FundTypeDefinition> Handle(RestoreFundTypeCommand request, CancellationToken cancellationToken)
+    public async Task<Result<FundTypeDefinition>> Handle(RestoreFundTypeCommand request, CancellationToken cancellationToken)
     {
         var t = await _typeDefRepo.GetByIdAsync(request.Id, cancellationToken);
         if (t == null)
         {
-            throw new NotFoundException(nameof(FundTypeDefinition), request.Id);
+            return Error.NotFound("FundTypeDefinitionNotFound", "");
         }
 
         t.IsDeleted = false;

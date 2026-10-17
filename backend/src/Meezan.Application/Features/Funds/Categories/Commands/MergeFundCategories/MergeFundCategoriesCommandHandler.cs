@@ -1,4 +1,5 @@
 using MediatR;
+using Meezan.Application.Common.Results;
 using Meezan.Application.Common.Exceptions;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
@@ -19,7 +20,7 @@ using Meezan.Domain.Entities;
 
 namespace Meezan.Application.Features.Funds.Categories.Commands.MergeFundCategories;
 
-public sealed class MergeFundCategoriesCommandHandler : IRequestHandler<MergeFundCategoriesCommand, MergeFundCategoriesResultDto>
+public sealed class MergeFundCategoriesCommandHandler : IRequestHandler<MergeFundCategoriesCommand, Result<MergeFundCategoriesResultDto>>
 {
     private readonly IFundCategoryRepository _categoryRepo;
     private readonly IFundCategoryOverrideRepository _overrideRepo;
@@ -38,13 +39,13 @@ public sealed class MergeFundCategoriesCommandHandler : IRequestHandler<MergeFun
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<MergeFundCategoriesResultDto> Handle(MergeFundCategoriesCommand request, CancellationToken cancellationToken)
+    public async Task<Result<MergeFundCategoriesResultDto>> Handle(MergeFundCategoriesCommand request, CancellationToken cancellationToken)
     {
         var source = await _categoryRepo.GetByIdAsync(request.SourceCategoryId, cancellationToken);
         var target = await _categoryRepo.GetByIdAsync(request.TargetCategoryId, cancellationToken);
         if (source == null || target == null)
         {
-            throw new NotFoundException("One or both categories not found.");
+            return Error.NotFound("CategoryNotFound", "One or both categories not found.");
         }
 
         var overrides = await _overrideRepo.GetByCategoryIdAsync(source.Id, cancellationToken);

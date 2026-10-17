@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
@@ -18,7 +19,7 @@ using Meezan.Domain.Entities;
 
 namespace Meezan.Application.Features.Funds.Types.Commands.CreateFundType;
 
-public sealed record CreateFundTypeCommand : IRequest<FundTypeDefinition>, ITransactionalCommand
+public sealed record CreateFundTypeCommand : IRequest<Result<FundTypeDefinition>>, ITransactionalCommand
 {
     public string NameAr { get; init; } = string.Empty;
     public string NameEn { get; init; } = string.Empty;

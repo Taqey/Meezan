@@ -1,4 +1,5 @@
 using MediatR;
+using Meezan.Application.Common.Results;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
 using Meezan.Application.Common.Interfaces.Queries.Funds;
@@ -17,7 +18,7 @@ using Meezan.Application.Common.Interfaces.Storage;
 
 namespace Meezan.Application.Features.Funds.Sync.Commands.BackfillFundLogos;
 
-public sealed class BackfillFundLogosCommandHandler : IRequestHandler<BackfillFundLogosCommand, BackfillFundLogosResultDto>
+public sealed class BackfillFundLogosCommandHandler : IRequestHandler<BackfillFundLogosCommand, Result<BackfillFundLogosResultDto>>
 {
     private readonly IFundSyncService _syncService;
 
@@ -26,7 +27,7 @@ public sealed class BackfillFundLogosCommandHandler : IRequestHandler<BackfillFu
         _syncService = syncService;
     }
 
-    public async Task<BackfillFundLogosResultDto> Handle(BackfillFundLogosCommand request, CancellationToken cancellationToken)
+    public async Task<Result<BackfillFundLogosResultDto>> Handle(BackfillFundLogosCommand request, CancellationToken cancellationToken)
     {
         var stored = await _syncService.BackfillLogosAsync(cancellationToken);
         return new BackfillFundLogosResultDto(stored, $"Downloaded {stored} fund logo(s).");

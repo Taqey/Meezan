@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Common.Exceptions;
 using Meezan.Application.Common.Interfaces.Integrations;
@@ -25,7 +26,7 @@ using Meezan.Domain.Entities;
 
 namespace Meezan.Application.Features.Funds.Classification.Commands.BulkAddClassificationFunds;
 
-public sealed class BulkAddClassificationFundsCommandHandler : IRequestHandler<BulkAddClassificationFundsCommand, BulkAddFundsResultDto>
+public sealed class BulkAddClassificationFundsCommandHandler : IRequestHandler<BulkAddClassificationFundsCommand, Result<BulkAddFundsResultDto>>
 {
     private readonly IFundClassificationNodeRepository _nodeRepo;
     private readonly IFundRepository _fundRepo;
@@ -47,13 +48,13 @@ public sealed class BulkAddClassificationFundsCommandHandler : IRequestHandler<B
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<BulkAddFundsResultDto> Handle(BulkAddClassificationFundsCommand request, CancellationToken cancellationToken)
+    public async Task<Result<BulkAddFundsResultDto>> Handle(BulkAddClassificationFundsCommand request, CancellationToken cancellationToken)
     {
         var node = await _nodeRepo.GetByIdAsync(request.NodeId, includeDeleted: true, cancellationToken);
         if (node == null)
-            throw new NotFoundException("Node not found.");
+            return Error.NotFound("NodeNotFound", "Node not found.");
         if (node.IsDeleted)
-            throw new BadRequestException("العقدة محذوفة.");
+            return Error.Validation("NodeDeleted", "العقدة محذوفة.");
 
         int added = 0, failed = 0;
         var errors = new List<string>();

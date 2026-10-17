@@ -71,49 +71,61 @@ public static class ResultExtensions
         return MapError(result.Error);
     }
 
+    private static readonly System.Text.Json.JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase
+    };
+
+    private static IActionResult JsonContent(object payload, int statusCode)
+    {
+        return new ContentResult
+        {
+            Content = System.Text.Json.JsonSerializer.Serialize(payload, JsonOptions),
+            ContentType = "application/json",
+            StatusCode = statusCode
+        };
+    }
+
     private static IActionResult MapError(Error error)
     {
         if (error.ExtraPayload != null)
         {
             return error.Type switch
             {
-                ErrorType.Validation => new BadRequestObjectResult(error.ExtraPayload),
-                ErrorType.NotFound => new NotFoundObjectResult(error.ExtraPayload),
-                ErrorType.Conflict => new ConflictObjectResult(error.ExtraPayload),
-                ErrorType.Unauthorized => new UnauthorizedObjectResult(error.ExtraPayload),
-                ErrorType.Forbidden => new ObjectResult(error.ExtraPayload) { StatusCode = (int)HttpStatusCode.Forbidden },
-                _ => new ObjectResult(error.ExtraPayload) { StatusCode = (int)HttpStatusCode.InternalServerError }
+                ErrorType.Validation => JsonContent(error.ExtraPayload, (int)HttpStatusCode.BadRequest),
+                ErrorType.NotFound => JsonContent(error.ExtraPayload, (int)HttpStatusCode.NotFound),
+                ErrorType.Conflict => JsonContent(error.ExtraPayload, (int)HttpStatusCode.Conflict),
+                ErrorType.Unauthorized => JsonContent(error.ExtraPayload, (int)HttpStatusCode.Unauthorized),
+                ErrorType.Forbidden => JsonContent(error.ExtraPayload, (int)HttpStatusCode.Forbidden),
+                _ => JsonContent(error.ExtraPayload, (int)HttpStatusCode.InternalServerError)
             };
         }
 
         return error.Type switch
         {
-            ErrorType.Validation => new BadRequestObjectResult(new { message = error.Message }),
+            ErrorType.Validation => JsonContent(new { message = error.Message }, (int)HttpStatusCode.BadRequest),
             ErrorType.NotFound => string.IsNullOrWhiteSpace(error.Message)
                 ? new NotFoundResult()
-                : new NotFoundObjectResult(new
+                : JsonContent(new
                 {
                     status = 404,
                     title = "Not Found",
                     message = error.Message
-                }),
-            ErrorType.Conflict => new ConflictObjectResult(new
+                }, (int)HttpStatusCode.NotFound),
+            ErrorType.Conflict => JsonContent(new
             {
                 status = 409,
                 title = "Conflict",
                 message = error.Message
-            }),
+            }, (int)HttpStatusCode.Conflict),
             ErrorType.Unauthorized => new UnauthorizedResult(),
             ErrorType.Forbidden => new ForbidResult(),
-            _ => new ObjectResult(new
+            _ => JsonContent(new
             {
                 status = 500,
                 title = "Server Error",
                 message = "An unexpected error occurred."
-            })
-            {
-                StatusCode = (int)HttpStatusCode.InternalServerError
-            }
+            }, (int)HttpStatusCode.InternalServerError)
         };
     }
 }

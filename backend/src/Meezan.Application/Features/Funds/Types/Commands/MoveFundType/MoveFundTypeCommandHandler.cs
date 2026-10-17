@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Common.Exceptions;
 using Meezan.Application.Common.Interfaces.Integrations;
@@ -19,7 +20,7 @@ using Meezan.Domain.Entities;
 
 namespace Meezan.Application.Features.Funds.Types.Commands.MoveFundType;
 
-public sealed class MoveFundTypeCommandHandler : IRequestHandler<MoveFundTypeCommand, MoveFundTypeResultDto>
+public sealed class MoveFundTypeCommandHandler : IRequestHandler<MoveFundTypeCommand, Result<MoveFundTypeResultDto>>
 {
     private readonly IFundRepository _fundRepo;
     private readonly IFundTypeDefinitionRepository _typeDefRepo;
@@ -41,17 +42,17 @@ public sealed class MoveFundTypeCommandHandler : IRequestHandler<MoveFundTypeCom
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<MoveFundTypeResultDto> Handle(MoveFundTypeCommand request, CancellationToken cancellationToken)
+    public async Task<Result<MoveFundTypeResultDto>> Handle(MoveFundTypeCommand request, CancellationToken cancellationToken)
     {
         var fund = await _fundRepo.GetByIdAsync(request.FundId, cancellationToken);
-        if (fund == null) throw new NotFoundException(nameof(Fund), request.FundId);
+        if (fund == null) return Error.NotFound("FundNotFound", "");
 
         var existing = await _typeOverrideRepo.GetByFundIdAsync(request.FundId, cancellationToken);
 
         if (request.TargetTypeId.HasValue)
         {
             var targetType = await _typeDefRepo.GetByIdAsync(request.TargetTypeId.Value, cancellationToken);
-            if (targetType == null) throw new BadRequestException("Target type not found");
+            if (targetType == null) return Error.Validation("TargetTypeNotFound", "Target type not found");
 
             if (existing == null)
             {

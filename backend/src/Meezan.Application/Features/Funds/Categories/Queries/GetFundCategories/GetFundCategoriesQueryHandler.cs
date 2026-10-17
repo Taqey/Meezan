@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
@@ -23,7 +24,7 @@ using Meezan.Application.Features.Funds.Types.Dtos;
 
 namespace Meezan.Application.Features.Funds.Categories.Queries.GetFundCategories;
 
-public sealed class GetFundCategoriesQueryHandler : IRequestHandler<GetFundCategoriesQuery, List<FundCategoryDto>>
+public sealed class GetFundCategoriesQueryHandler : IRequestHandler<GetFundCategoriesQuery, Result<List<FundCategoryDto>>>
 {
     private readonly IFundCategoryRepository _categoryRepo;
 
@@ -32,7 +33,7 @@ public sealed class GetFundCategoriesQueryHandler : IRequestHandler<GetFundCateg
         _categoryRepo = categoryRepo;
     }
 
-    public async Task<List<FundCategoryDto>> Handle(GetFundCategoriesQuery request, CancellationToken cancellationToken)
+    public async Task<Result<List<FundCategoryDto>>> Handle(GetFundCategoriesQuery request, CancellationToken cancellationToken)
     {
         var categories = await _categoryRepo.GetVisibleAsync(cancellationToken);
         return categories.Select(c => new FundCategoryDto

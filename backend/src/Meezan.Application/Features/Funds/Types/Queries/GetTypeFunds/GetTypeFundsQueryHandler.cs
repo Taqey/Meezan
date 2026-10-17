@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
@@ -19,7 +20,7 @@ using Meezan.Domain.Services;
 
 namespace Meezan.Application.Features.Funds.Types.Queries.GetTypeFunds;
 
-public sealed class GetTypeFundsQueryHandler : IRequestHandler<GetTypeFundsQuery, TypeFundsResultDto?>
+public sealed class GetTypeFundsQueryHandler : IRequestHandler<GetTypeFundsQuery, Result<TypeFundsResultDto>>
 {
     private readonly IFundTypeDefinitionRepository _typeDefRepo;
     private readonly IFundTypeOverrideRepository _typeOverrideRepo;
@@ -44,10 +45,10 @@ public sealed class GetTypeFundsQueryHandler : IRequestHandler<GetTypeFundsQuery
         _syncSettingsRepo = syncSettingsRepo;
     }
 
-    public async Task<TypeFundsResultDto?> Handle(GetTypeFundsQuery request, CancellationToken cancellationToken)
+    public async Task<Result<TypeFundsResultDto>> Handle(GetTypeFundsQuery request, CancellationToken cancellationToken)
     {
         var targetType = await _typeDefRepo.GetByIdAsync(request.Id, cancellationToken);
-        if (targetType == null) return null;
+        if (targetType == null) return Error.NotFound("TypeNotFound", "");
 
         var allTypes = await _typeDefRepo.GetAllAsync(includeDeleted: false, cancellationToken);
         var defsById = allTypes.ToDictionary(t => t.Id);

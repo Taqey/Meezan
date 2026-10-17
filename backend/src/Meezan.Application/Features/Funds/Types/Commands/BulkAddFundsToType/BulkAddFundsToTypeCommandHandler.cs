@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Common.Exceptions;
 using Meezan.Application.Common.Interfaces.Integrations;
@@ -19,7 +20,7 @@ using Meezan.Domain.Entities;
 
 namespace Meezan.Application.Features.Funds.Types.Commands.BulkAddFundsToType;
 
-public sealed class BulkAddFundsToTypeCommandHandler : IRequestHandler<BulkAddFundsToTypeCommand, BulkAddFundsToTypeResultDto>
+public sealed class BulkAddFundsToTypeCommandHandler : IRequestHandler<BulkAddFundsToTypeCommand, Result<BulkAddFundsToTypeResultDto>>
 {
     private readonly IFundTypeDefinitionRepository _typeDefRepo;
     private readonly IFundRepository _fundRepo;
@@ -41,10 +42,10 @@ public sealed class BulkAddFundsToTypeCommandHandler : IRequestHandler<BulkAddFu
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<BulkAddFundsToTypeResultDto> Handle(BulkAddFundsToTypeCommand request, CancellationToken cancellationToken)
+    public async Task<Result<BulkAddFundsToTypeResultDto>> Handle(BulkAddFundsToTypeCommand request, CancellationToken cancellationToken)
     {
         var targetType = await _typeDefRepo.GetByIdAsync(request.TypeId, cancellationToken);
-        if (targetType == null) throw new NotFoundException(nameof(FundTypeDefinition), request.TypeId);
+        if (targetType == null) return Error.NotFound("FundTypeDefinitionNotFound", "");
 
         var fundIds = request.FundIds ?? new List<int>();
         var allFunds = await _fundRepo.GetAllAsync(cancellationToken);

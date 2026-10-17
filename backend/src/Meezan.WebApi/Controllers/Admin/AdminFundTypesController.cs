@@ -14,6 +14,7 @@ using Meezan.Application.Features.Funds.Types.Queries.GetFundTypeById;
 using Meezan.Application.Features.Funds.Types.Queries.GetFundTypeChanges;
 using Meezan.Application.Features.Funds.Types.Queries.GetTypeFunds;
 using Meezan.Domain.Entities;
+using Meezan.WebApi.Common;
 using Meezan.WebApi.Contracts.AdminFundTypes;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -43,7 +44,7 @@ public class AdminFundTypesController : ControllerBase
     public async Task<IActionResult> GetAll([FromQuery] bool includeDeleted = false, CancellationToken ct = default)
     {
         var result = await _sender.Send(new GetAdminFundTypesQuery(includeDeleted), ct);
-        return Ok(result);
+        return result.ToActionResult();
     }
 
     // GET /api/admin/funds/types/{id}
@@ -52,8 +53,9 @@ public class AdminFundTypesController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(int id, CancellationToken ct = default)
     {
-        var t = await _sender.Send(new GetFundTypeByIdQuery(id), ct);
-        return t == null ? NotFound() : Ok(t);
+        var result = await _sender.Send(new GetFundTypeByIdQuery(id), ct);
+        if (result.IsSuccess && result.Value == null) return NotFound();
+        return result.ToActionResult();
     }
 
     // POST /api/admin/funds/types
@@ -72,8 +74,8 @@ public class AdminFundTypesController : ControllerBase
             DisplayOrder = req.DisplayOrder,
             IsVisible = req.IsVisible
         };
-        var entity = await _sender.Send(cmd, ct);
-        return Ok(entity);
+        var result = await _sender.Send(cmd, ct);
+        return result.ToActionResult();
     }
 
     // PATCH /api/admin/funds/types/{id}
@@ -93,7 +95,7 @@ public class AdminFundTypesController : ControllerBase
             IsVisible = req.IsVisible
         };
         var result = await _sender.Send(cmd, ct);
-        return Ok(result);
+        return result.ToActionResult();
     }
 
     // DELETE /api/admin/funds/types/{id}?confirm=true
@@ -104,7 +106,7 @@ public class AdminFundTypesController : ControllerBase
     public async Task<IActionResult> Delete(int id, [FromQuery] bool confirm = false, CancellationToken ct = default)
     {
         var result = await _sender.Send(new DeleteFundTypeCommand(id, confirm), ct);
-        return Ok(result);
+        return result.ToActionResult();
     }
 
     // POST /api/admin/funds/types/{id}/restore
@@ -114,7 +116,7 @@ public class AdminFundTypesController : ControllerBase
     public async Task<IActionResult> Restore(int id, CancellationToken ct = default)
     {
         var result = await _sender.Send(new RestoreFundTypeCommand(id), ct);
-        return Ok(result);
+        return result.ToActionResult();
     }
 
     // POST /api/admin/funds/types/merge
@@ -125,7 +127,7 @@ public class AdminFundTypesController : ControllerBase
     {
         var cmd = new MergeFundTypesCommand(req.SourceId, req.TargetId);
         var result = await _sender.Send(cmd, ct);
-        return Ok(result);
+        return result.ToActionResult();
     }
 
     // POST /api/admin/funds/types/reorder
@@ -135,7 +137,7 @@ public class AdminFundTypesController : ControllerBase
     {
         var cmd = new ReorderFundTypesCommand(req.OrderedIds);
         var result = await _sender.Send(cmd, ct);
-        return Ok(result);
+        return result.ToActionResult();
     }
 
     // GET /api/admin/funds/types/{id}/funds
@@ -150,8 +152,8 @@ public class AdminFundTypesController : ControllerBase
         CancellationToken ct = default)
     {
         var result = await _sender.Send(new GetTypeFundsQuery(id, search, page, pageSize), ct);
-        if (result == null) return NotFound();
-        return Ok(result);
+        if (result.IsSuccess && result.Value == null) return NotFound();
+        return result.ToActionResult();
     }
 
     // POST /api/admin/funds/types/funds/{fundId}/{typeId}
@@ -161,7 +163,7 @@ public class AdminFundTypesController : ControllerBase
     public async Task<IActionResult> SetFundType(int fundId, int typeId, CancellationToken ct = default)
     {
         var result = await _sender.Send(new SetFundTypeCommand(fundId, typeId), ct);
-        return Ok(result);
+        return result.ToActionResult();
     }
 
     // POST /api/admin/funds/types/{typeId}/funds/bulk
@@ -171,7 +173,7 @@ public class AdminFundTypesController : ControllerBase
     public async Task<IActionResult> BulkAddFundsToType(int typeId, [FromBody] BulkTypeFundRequest req, CancellationToken ct = default)
     {
         var result = await _sender.Send(new BulkAddFundsToTypeCommand(typeId, req.FundIds), ct);
-        return Ok(result);
+        return result.ToActionResult();
     }
 
     // POST /api/admin/funds/types/funds/{fundId}/move
@@ -182,7 +184,7 @@ public class AdminFundTypesController : ControllerBase
     public async Task<IActionResult> MoveFundType(int fundId, [FromBody] MoveFundTypeRequest req, CancellationToken ct = default)
     {
         var result = await _sender.Send(new MoveFundTypeCommand(fundId, req.TargetTypeId), ct);
-        return Ok(result);
+        return result.ToActionResult();
     }
 
     // DELETE /api/admin/funds/types/funds/{fundId}
@@ -192,7 +194,7 @@ public class AdminFundTypesController : ControllerBase
     public async Task<IActionResult> ClearFundType(int fundId, CancellationToken ct = default)
     {
         var result = await _sender.Send(new ClearFundTypeCommand(fundId), ct);
-        return Ok(result);
+        return result.ToActionResult();
     }
 
     // GET /api/admin/funds/types/changes
@@ -201,6 +203,6 @@ public class AdminFundTypesController : ControllerBase
     public async Task<IActionResult> GetChanges([FromQuery] int page = 1, [FromQuery] int pageSize = 50, CancellationToken ct = default)
     {
         var result = await _sender.Send(new GetFundTypeChangesQuery(page, pageSize), ct);
-        return Ok(result);
+        return result.ToActionResult();
     }
 }

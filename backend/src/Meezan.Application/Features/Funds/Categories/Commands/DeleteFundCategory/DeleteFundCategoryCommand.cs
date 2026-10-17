@@ -1,4 +1,5 @@
 using MediatR;
+using Meezan.Application.Common.Results;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
 using Meezan.Application.Common.Interfaces.Queries.Funds;
@@ -17,4 +18,4 @@ using Meezan.Application.Common.Interfaces.Storage;
 
 namespace Meezan.Application.Features.Funds.Categories.Commands.DeleteFundCategory;
 
-public sealed record DeleteFundCategoryCommand(int Id, bool Confirm = false) : IRequest<DeleteFundCategoryResultDto>, ITransactionalCommand;
+public sealed record DeleteFundCategoryCommand(int Id, bool Confirm = false) : IRequest<Result<DeleteFundCategoryResultDto>>, ITransactionalCommand;

@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Common.Exceptions;
 using Meezan.Application.Common.Interfaces.Integrations;
@@ -19,7 +20,7 @@ using Meezan.Domain.Entities;
 
 namespace Meezan.Application.Features.Funds.Types.Commands.SetFundType;
 
-public sealed class SetFundTypeCommandHandler : IRequestHandler<SetFundTypeCommand, SetFundTypeResultDto>
+public sealed class SetFundTypeCommandHandler : IRequestHandler<SetFundTypeCommand, Result<SetFundTypeResultDto>>
 {
     private readonly IFundRepository _fundRepo;
     private readonly IFundTypeDefinitionRepository _typeDefRepo;
@@ -41,13 +42,13 @@ public sealed class SetFundTypeCommandHandler : IRequestHandler<SetFundTypeComma
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<SetFundTypeResultDto> Handle(SetFundTypeCommand request, CancellationToken cancellationToken)
+    public async Task<Result<SetFundTypeResultDto>> Handle(SetFundTypeCommand request, CancellationToken cancellationToken)
     {
         var fund = await _fundRepo.GetByIdAsync(request.FundId, cancellationToken);
-        if (fund == null) throw new NotFoundException(nameof(Fund), request.FundId);
+        if (fund == null) return Error.NotFound("FundNotFound", "");
 
         var t = await _typeDefRepo.GetByIdAsync(request.TypeId, cancellationToken);
-        if (t == null) throw new NotFoundException(nameof(FundTypeDefinition), request.TypeId);
+        if (t == null) return Error.NotFound("FundTypeDefinitionNotFound", "");
 
         var existing = await _typeOverrideRepo.GetByFundIdAsync(request.FundId, cancellationToken);
         if (existing == null)

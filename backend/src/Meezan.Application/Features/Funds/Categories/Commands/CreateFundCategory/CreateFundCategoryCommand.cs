@@ -1,4 +1,5 @@
 using MediatR;
+using Meezan.Application.Common.Results;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
 using Meezan.Application.Common.Interfaces.Queries.Funds;
@@ -18,7 +19,7 @@ using Meezan.Domain.Entities;
 
 namespace Meezan.Application.Features.Funds.Categories.Commands.CreateFundCategory;
 
-public sealed record CreateFundCategoryCommand : IRequest<FundCategory>, ITransactionalCommand
+public sealed record CreateFundCategoryCommand : IRequest<Result<FundCategory>>, ITransactionalCommand
 {
     public string NameAr { get; init; } = string.Empty;
     public string NameEn { get; init; } = string.Empty;

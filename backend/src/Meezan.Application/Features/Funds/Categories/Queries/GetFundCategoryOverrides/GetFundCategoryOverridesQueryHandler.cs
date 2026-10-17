@@ -1,6 +1,7 @@
 namespace Meezan.Application.Features.Funds.Categories.Queries.GetFundCategoryOverrides;
 
 using MediatR;
+using Meezan.Application.Common.Results;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
 using Meezan.Application.Common.Interfaces.Queries.Funds;
@@ -18,7 +19,7 @@ using Meezan.Application.Common.Interfaces.Security;
 using Meezan.Application.Common.Interfaces.Storage;
 using Meezan.Domain.Entities;
 
-public class GetFundCategoryOverridesQueryHandler : IRequestHandler<GetFundCategoryOverridesQuery, List<FundCategoryOverride>>
+public class GetFundCategoryOverridesQueryHandler : IRequestHandler<GetFundCategoryOverridesQuery, Result<List<FundCategoryOverride>>>
 {
     private readonly IFundCategoryOverrideRepository _overrideRepo;
 
@@ -27,7 +28,7 @@ public class GetFundCategoryOverridesQueryHandler : IRequestHandler<GetFundCateg
         _overrideRepo = overrideRepo;
     }
 
-    public async Task<List<FundCategoryOverride>> Handle(GetFundCategoryOverridesQuery request, CancellationToken cancellationToken)
+    public async Task<Result<List<FundCategoryOverride>>> Handle(GetFundCategoryOverridesQuery request, CancellationToken cancellationToken)
     {
         return await _overrideRepo.GetByFundIdAsync(request.FundId, cancellationToken);
     }

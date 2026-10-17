@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
@@ -18,7 +19,7 @@ using Meezan.Domain.Models;
 
 namespace Meezan.Application.Features.Funds.Classification.Commands.SeedMigrateClassification;
 
-public sealed class SeedMigrateClassificationCommandHandler : IRequestHandler<SeedMigrateClassificationCommand, ClassificationMigrationReport>
+public sealed class SeedMigrateClassificationCommandHandler : IRequestHandler<SeedMigrateClassificationCommand, Result<ClassificationMigrationReport>>
 {
     private readonly IFundClassificationService _classification;
 
@@ -27,8 +28,8 @@ public sealed class SeedMigrateClassificationCommandHandler : IRequestHandler<Se
         _classification = classification;
     }
 
-    public Task<ClassificationMigrationReport> Handle(SeedMigrateClassificationCommand request, CancellationToken cancellationToken)
+    public async Task<Result<ClassificationMigrationReport>> Handle(SeedMigrateClassificationCommand request, CancellationToken cancellationToken)
     {
-        return _classification.EnsureSeedAndMigrateAsync("admin", cancellationToken);
+        return await _classification.EnsureSeedAndMigrateAsync("admin", cancellationToken);
     }
 }

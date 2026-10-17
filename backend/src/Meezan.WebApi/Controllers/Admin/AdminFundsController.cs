@@ -26,6 +26,7 @@ using Meezan.Application.Features.Funds.Sync.Queries.GetSyncRunDetails;
 using Meezan.Application.Features.Funds.Sync.Queries.GetSyncSettings;
 using Meezan.Domain.Entities;
 using Meezan.WebApi.Contracts.AdminFunds;
+using Meezan.WebApi.Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -49,8 +50,8 @@ public class AdminFundsController : ControllerBase
     [ProducesResponseType(typeof(FundSyncSettings), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetSyncSettings(CancellationToken cancellationToken = default)
     {
-        var settings = await _sender.Send(new GetSyncSettingsQuery(), cancellationToken);
-        return Ok(settings);
+        var result = await _sender.Send(new GetSyncSettingsQuery(), cancellationToken);
+        return result.ToActionResult();
     }
 
     [HttpPatch("sync/settings")]
@@ -68,17 +69,17 @@ public class AdminFundsController : ControllerBase
             AutoIndexFundTypeEnabled = request.AutoIndexFundTypeEnabled,
             AutoClassificationEnabled = request.AutoClassificationEnabled
         };
-        var settings = await _sender.Send(cmd, cancellationToken);
-        return Ok(settings);
+        var result = await _sender.Send(cmd, cancellationToken);
+        return result.ToActionResult();
     }
 
     [HttpGet("sync/latest")]
     [ProducesResponseType(typeof(FundSyncLog), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetLatestSyncRun(CancellationToken cancellationToken = default)
     {
-        var run = await _sender.Send(new GetLatestSyncRunQuery(), cancellationToken);
-        if (run == null) return NotFound();
-        return Ok(run);
+        var result = await _sender.Send(new GetLatestSyncRunQuery(), cancellationToken);
+        if (result.IsSuccess && result.Value == null) return NotFound();
+        return result.ToActionResult();
     }
 
     [HttpGet("sync/history")]
@@ -86,23 +87,23 @@ public class AdminFundsController : ControllerBase
     public async Task<IActionResult> GetSyncHistory([FromQuery] int page = 1, [FromQuery] int pageSize = 20, CancellationToken cancellationToken = default)
     {
         var result = await _sender.Send(new GetSyncHistoryQuery(page, pageSize), cancellationToken);
-        return Ok(result);
+        return result.ToActionResult();
     }
 
     [HttpGet("sync/{id:int}/details")]
     [ProducesResponseType(typeof(List<FundSyncLogDetail>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetSyncRunDetails(int id, CancellationToken cancellationToken = default)
     {
-        var details = await _sender.Send(new GetSyncRunDetailsQuery(id), cancellationToken);
-        return Ok(details);
+        var result = await _sender.Send(new GetSyncRunDetailsQuery(id), cancellationToken);
+        return result.ToActionResult();
     }
 
     [HttpPost("sync/run")]
     [ProducesResponseType(typeof(FundSyncLog), StatusCodes.Status200OK)]
     public async Task<IActionResult> RunSyncNow(CancellationToken cancellationToken = default)
     {
-        var log = await _sender.Send(new RunFundSyncCommand("Manual"), cancellationToken);
-        return Ok(log);
+        var result = await _sender.Send(new RunFundSyncCommand("Manual"), cancellationToken);
+        return result.ToActionResult();
     }
 
     // ========== FUND CATEGORIES ==========
@@ -117,15 +118,15 @@ public class AdminFundsController : ControllerBase
     public async Task<IActionResult> BackfillLogos(CancellationToken cancellationToken = default)
     {
         var result = await _sender.Send(new BackfillFundLogosCommand(), cancellationToken);
-        return Ok(result);
+        return result.ToActionResult();
     }
 
     [HttpGet("categories")]
     [ProducesResponseType(typeof(List<FundCategory>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAllCategories([FromQuery] bool includeDeleted = false, CancellationToken cancellationToken = default)
     {
-        var categories = await _sender.Send(new GetAllCategoriesQuery(includeDeleted), cancellationToken);
-        return Ok(categories);
+        var result = await _sender.Send(new GetAllCategoriesQuery(includeDeleted), cancellationToken);
+        return result.ToActionResult();
     }
 
     [HttpGet("categories/{id:int}")]
@@ -133,9 +134,9 @@ public class AdminFundsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetCategory(int id, CancellationToken cancellationToken = default)
     {
-        var category = await _sender.Send(new GetCategoryByIdQuery(id), cancellationToken);
-        if (category == null) return NotFound();
-        return Ok(category);
+        var result = await _sender.Send(new GetCategoryByIdQuery(id), cancellationToken);
+        if (result.IsSuccess && result.Value == null) return NotFound();
+        return result.ToActionResult();
     }
 
     [HttpPost("categories")]
@@ -156,8 +157,8 @@ public class AdminFundsController : ControllerBase
             IsVisible = request.IsVisible,
             DisplayOrder = request.DisplayOrder
         };
-        var category = await _sender.Send(cmd, cancellationToken);
-        return Ok(category);
+        var result = await _sender.Send(cmd, cancellationToken);
+        return result.ToActionResult();
     }
 
     [HttpPatch("categories/{id:int}")]
@@ -178,8 +179,8 @@ public class AdminFundsController : ControllerBase
             DisplayOrder = request.DisplayOrder,
             AutoRuleJson = request.AutoRuleJson
         };
-        var category = await _sender.Send(cmd, cancellationToken);
-        return Ok(category);
+        var result = await _sender.Send(cmd, cancellationToken);
+        return result.ToActionResult();
     }
 
     [HttpDelete("categories/{id:int}")]
@@ -188,7 +189,7 @@ public class AdminFundsController : ControllerBase
     public async Task<IActionResult> DeleteCategory(int id, [FromQuery] bool confirm = false, CancellationToken cancellationToken = default)
     {
         var result = await _sender.Send(new DeleteFundCategoryCommand(id, confirm), cancellationToken);
-        return Ok(result);
+        return result.ToActionResult();
     }
 
     [HttpPost("categories/{id:int}/restore")]
@@ -196,8 +197,8 @@ public class AdminFundsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> RestoreCategory(int id, CancellationToken cancellationToken = default)
     {
-        var category = await _sender.Send(new RestoreFundCategoryCommand(id), cancellationToken);
-        return Ok(category);
+        var result = await _sender.Send(new RestoreFundCategoryCommand(id), cancellationToken);
+        return result.ToActionResult();
     }
 
     [HttpPost("categories/merge")]
@@ -206,7 +207,7 @@ public class AdminFundsController : ControllerBase
     {
         var cmd = new MergeFundCategoriesCommand(request.SourceCategoryId, request.TargetCategoryId);
         var result = await _sender.Send(cmd, cancellationToken);
-        return Ok(result);
+        return result.ToActionResult();
     }
 
     // ========== FUND CATEGORY OVERRIDES ==========
@@ -216,40 +217,40 @@ public class AdminFundsController : ControllerBase
     public async Task<IActionResult> GetFundCategories(int fundId, CancellationToken cancellationToken = default)
     {
         var result = await _sender.Send(new GetFundCategoryStatusQuery(fundId), cancellationToken);
-        if (result == null) return NotFound();
-        return Ok(result);
+        if (result.IsSuccess && result.Value == null) return NotFound();
+        return result.ToActionResult();
     }
 
     [HttpPost("funds/{fundId:int}/categories/{categoryId:int}/include")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> IncludeFundInCategory(int fundId, int categoryId, CancellationToken cancellationToken = default)
     {
-        await _sender.Send(new IncludeFundInCategoryCommand(fundId, categoryId), cancellationToken);
-        return Ok();
+        var result = await _sender.Send(new IncludeFundInCategoryCommand(fundId, categoryId), cancellationToken);
+        return result.ToActionResult();
     }
 
     [HttpPost("funds/{fundId:int}/categories/{categoryId:int}/exclude")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> ExcludeFundFromCategory(int fundId, int categoryId, CancellationToken cancellationToken = default)
     {
-        await _sender.Send(new ExcludeFundFromCategoryCommand(fundId, categoryId), cancellationToken);
-        return Ok();
+        var result = await _sender.Send(new ExcludeFundFromCategoryCommand(fundId, categoryId), cancellationToken);
+        return result.ToActionResult();
     }
 
     [HttpDelete("funds/{fundId:int}/categories/{categoryId:int}/override")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> ResetFundCategoryOverride(int fundId, int categoryId, CancellationToken cancellationToken = default)
     {
-        await _sender.Send(new ResetFundCategoryOverrideCommand(fundId, categoryId), cancellationToken);
-        return Ok();
+        var result = await _sender.Send(new ResetFundCategoryOverrideCommand(fundId, categoryId), cancellationToken);
+        return result.ToActionResult();
     }
 
     [HttpGet("funds/{fundId:int}/category-overrides")]
     [ProducesResponseType(typeof(List<FundCategoryOverride>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetFundCategoryOverrides(int fundId, CancellationToken cancellationToken = default)
     {
-        var overrides = await _sender.Send(new GetFundCategoryOverridesQuery(fundId), cancellationToken);
-        return Ok(overrides);
+        var result = await _sender.Send(new GetFundCategoryOverridesQuery(fundId), cancellationToken);
+        return result.ToActionResult();
     }
 
     /// <summary>
@@ -269,7 +270,7 @@ public class AdminFundsController : ControllerBase
         CancellationToken cancellationToken = default)
     {
         var result = await _sender.Send(new GetCategoryFundsQuery(id, search, source, page, pageSize), cancellationToken);
-        return Ok(result);
+        return result.ToActionResult();
     }
 
     /// <summary>
@@ -282,7 +283,7 @@ public class AdminFundsController : ControllerBase
     public async Task<IActionResult> ResetFundOverrides(int fundId, CancellationToken cancellationToken = default)
     {
         var result = await _sender.Send(new ResetFundOverridesCommand(fundId), cancellationToken);
-        return Ok(result);
+        return result.ToActionResult();
     }
 
     /// <summary>
@@ -295,7 +296,7 @@ public class AdminFundsController : ControllerBase
     public async Task<IActionResult> ResetCategoryOverrides(int id, CancellationToken cancellationToken = default)
     {
         var result = await _sender.Send(new ResetCategoryOverridesCommand(id), cancellationToken);
-        return Ok(result);
+        return result.ToActionResult();
     }
 
     // ========== CATEGORY CHANGE LOG ==========
@@ -314,7 +315,7 @@ public class AdminFundsController : ControllerBase
     {
         var query = new GetCategoryChangesQuery(fundId, categoryId, action, fromDate, toDate, page, pageSize);
         var result = await _sender.Send(query, cancellationToken);
-        return Ok(result);
+        return result.ToActionResult();
     }
 
     // ========== FUND MANAGEMENT ==========
@@ -330,7 +331,7 @@ public class AdminFundsController : ControllerBase
     {
         var query = new GetAdminFundsQuery(search, type, page, pageSize);
         var result = await _sender.Send(query, cancellationToken);
-        return Ok(result);
+        return result.ToActionResult();
     }
 
     [HttpGet("funds/{id:int}")]
@@ -338,8 +339,8 @@ public class AdminFundsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetFund(int id, CancellationToken cancellationToken = default)
     {
-        var fund = await _sender.Send(new GetAdminFundByIdQuery(id), cancellationToken);
-        if (fund == null) return NotFound();
-        return Ok(fund);
+        var result = await _sender.Send(new GetAdminFundByIdQuery(id), cancellationToken);
+        if (result.IsSuccess && result.Value == null) return NotFound();
+        return result.ToActionResult();
     }
 }

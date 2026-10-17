@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
@@ -18,7 +19,7 @@ using Meezan.Domain.Entities;
 
 namespace Meezan.Application.Features.Funds.Classification.Queries.GetClassificationBackup;
 
-public sealed class GetClassificationBackupQueryHandler : IRequestHandler<GetClassificationBackupQuery, List<FundClassificationBackup>>
+public sealed class GetClassificationBackupQueryHandler : IRequestHandler<GetClassificationBackupQuery, Result<List<FundClassificationBackup>>>
 {
     private readonly IFundClassificationBackupRepository _repo;
 
@@ -27,8 +28,8 @@ public sealed class GetClassificationBackupQueryHandler : IRequestHandler<GetCla
         _repo = repo;
     }
 
-    public Task<List<FundClassificationBackup>> Handle(GetClassificationBackupQuery request, CancellationToken cancellationToken)
+    public async Task<Result<List<FundClassificationBackup>>> Handle(GetClassificationBackupQuery request, CancellationToken cancellationToken)
     {
-        return _repo.GetAllAsync(cancellationToken);
+        return await _repo.GetAllAsync(cancellationToken);
     }
 }

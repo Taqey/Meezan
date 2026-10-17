@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
@@ -18,7 +19,7 @@ using Meezan.Domain.Entities;
 
 namespace Meezan.Application.Features.Funds.Types.Queries.GetFundTypeById;
 
-public sealed class GetFundTypeByIdQueryHandler : IRequestHandler<GetFundTypeByIdQuery, FundTypeDefinition?>
+public sealed class GetFundTypeByIdQueryHandler : IRequestHandler<GetFundTypeByIdQuery, Result<FundTypeDefinition>>
 {
     private readonly IFundTypeDefinitionRepository _typeDefRepo;
 
@@ -27,8 +28,9 @@ public sealed class GetFundTypeByIdQueryHandler : IRequestHandler<GetFundTypeByI
         _typeDefRepo = typeDefRepo;
     }
 
-    public Task<FundTypeDefinition?> Handle(GetFundTypeByIdQuery request, CancellationToken cancellationToken)
+    public async Task<Result<FundTypeDefinition>> Handle(GetFundTypeByIdQuery request, CancellationToken cancellationToken)
     {
-        return _typeDefRepo.GetByIdAsync(request.Id, cancellationToken);
+        var entity = await _typeDefRepo.GetByIdAsync(request.Id, cancellationToken);
+        return entity ?? (Result<FundTypeDefinition>)Error.NotFound("FundTypeDefinitionNotFound", "");
     }
 }

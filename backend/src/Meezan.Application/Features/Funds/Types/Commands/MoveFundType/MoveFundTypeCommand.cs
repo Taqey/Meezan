@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
@@ -17,4 +18,4 @@ using Meezan.Application.Common.Interfaces.Storage;
 
 namespace Meezan.Application.Features.Funds.Types.Commands.MoveFundType;
 
-public sealed record MoveFundTypeCommand(int FundId, int? TargetTypeId) : IRequest<MoveFundTypeResultDto>, ITransactionalCommand;
+public sealed record MoveFundTypeCommand(int FundId, int? TargetTypeId) : IRequest<Result<MoveFundTypeResultDto>>, ITransactionalCommand;

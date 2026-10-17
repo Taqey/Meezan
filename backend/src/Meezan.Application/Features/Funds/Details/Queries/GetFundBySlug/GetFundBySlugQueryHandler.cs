@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
@@ -24,7 +25,7 @@ using Meezan.Application.Features.Funds.Details.Queries.GetFundById;
 
 namespace Meezan.Application.Features.Funds.Details.Queries.GetFundBySlug;
 
-public sealed class GetFundBySlugQueryHandler : IRequestHandler<GetFundBySlugQuery, FundDetailDto?>
+public sealed class GetFundBySlugQueryHandler : IRequestHandler<GetFundBySlugQuery, Result<FundDetailDto>>
 {
     private readonly IFundRepository _fundRepo;
     private readonly IMediator _mediator;
@@ -35,10 +36,10 @@ public sealed class GetFundBySlugQueryHandler : IRequestHandler<GetFundBySlugQue
         _mediator = mediator;
     }
 
-    public async Task<FundDetailDto?> Handle(GetFundBySlugQuery request, CancellationToken cancellationToken)
+    public async Task<Result<FundDetailDto>> Handle(GetFundBySlugQuery request, CancellationToken cancellationToken)
     {
         var fund = await _fundRepo.GetBySlugAsync(request.Slug, cancellationToken);
-        if (fund == null) return null;
+        if (fund == null) return Error.NotFound("FundNotFound", "");
 
         return await _mediator.Send(new GetFundByIdQuery(fund.Id), cancellationToken);
     }

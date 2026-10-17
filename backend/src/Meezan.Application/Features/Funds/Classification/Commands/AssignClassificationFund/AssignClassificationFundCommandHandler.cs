@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Common.Exceptions;
 using Meezan.Application.Common.Interfaces.Integrations;
@@ -19,7 +20,7 @@ using Meezan.Domain.Entities;
 
 namespace Meezan.Application.Features.Funds.Classification.Commands.AssignClassificationFund;
 
-public sealed class AssignClassificationFundCommandHandler : IRequestHandler<AssignClassificationFundCommand, AssignClassificationFundResultDto>
+public sealed class AssignClassificationFundCommandHandler : IRequestHandler<AssignClassificationFundCommand, Result<AssignClassificationFundResultDto>>
 {
     private readonly IFundRepository _fundRepo;
     private readonly IFundClassificationNodeRepository _nodeRepo;
@@ -41,15 +42,15 @@ public sealed class AssignClassificationFundCommandHandler : IRequestHandler<Ass
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<AssignClassificationFundResultDto> Handle(AssignClassificationFundCommand request, CancellationToken cancellationToken)
+    public async Task<Result<AssignClassificationFundResultDto>> Handle(AssignClassificationFundCommand request, CancellationToken cancellationToken)
     {
         var fund = await _fundRepo.GetByIdAsync(request.FundId, cancellationToken);
         if (fund == null)
-            throw new NotFoundException("الصندوق غير موجود.");
+            return Error.NotFound("FundNotFound", "الصندوق غير موجود.");
 
         var node = await _nodeRepo.GetByIdAsync(request.NodeId, includeDeleted: true, cancellationToken);
         if (node == null || node.IsDeleted)
-            throw new BadRequestException("العقدة غير صالحة.");
+            return Error.Validation("InvalidNode", "العقدة غير صالحة.");
 
         var manual = await _overrideRepo.GetByFundIdAsync(request.FundId, cancellationToken);
         foreach (var m in manual.Where(m => m.CreatedBy != "AutoSync" && m.Action == ClassificationOverrideAction.Include && m.NodeId != request.NodeId))

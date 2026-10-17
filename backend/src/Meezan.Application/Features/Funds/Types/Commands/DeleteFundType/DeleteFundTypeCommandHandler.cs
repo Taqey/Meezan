@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Common.Exceptions;
 using Meezan.Application.Common.Interfaces.Integrations;
@@ -20,7 +21,7 @@ using Meezan.Domain.Services;
 
 namespace Meezan.Application.Features.Funds.Types.Commands.DeleteFundType;
 
-public sealed class DeleteFundTypeCommandHandler : IRequestHandler<DeleteFundTypeCommand, DeleteFundTypeResultDto>
+public sealed class DeleteFundTypeCommandHandler : IRequestHandler<DeleteFundTypeCommand, Result<DeleteFundTypeResultDto>>
 {
     private readonly IFundTypeDefinitionRepository _typeDefRepo;
     private readonly IFundTypeOverrideRepository _typeOverrideRepo;
@@ -42,12 +43,12 @@ public sealed class DeleteFundTypeCommandHandler : IRequestHandler<DeleteFundTyp
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<DeleteFundTypeResultDto> Handle(DeleteFundTypeCommand request, CancellationToken cancellationToken)
+    public async Task<Result<DeleteFundTypeResultDto>> Handle(DeleteFundTypeCommand request, CancellationToken cancellationToken)
     {
         var t = await _typeDefRepo.GetByIdAsync(request.Id, cancellationToken);
         if (t == null)
         {
-            throw new NotFoundException(nameof(FundTypeDefinition), request.Id);
+            return Error.NotFound("FundTypeDefinitionNotFound", "");
         }
 
         var fundCount = await _typeOverrideRepo.CountByDefinitionIdAsync(request.Id, cancellationToken);
@@ -57,7 +58,8 @@ public sealed class DeleteFundTypeCommandHandler : IRequestHandler<DeleteFundTyp
 
         if (!request.Confirm && fundCount > 0)
         {
-            throw new BadRequestException(
+            return Error.Validation(
+                "ConfirmRequired",
                 $"Type has {fundCount} fund(s). Pass confirm=true to delete.",
                 new { message = $"Type has {fundCount} fund(s). Pass confirm=true to delete.", fundCount });
         }

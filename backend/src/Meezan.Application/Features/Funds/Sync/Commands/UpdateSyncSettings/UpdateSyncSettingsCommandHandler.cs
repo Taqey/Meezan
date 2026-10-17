@@ -1,4 +1,5 @@
 using MediatR;
+using Meezan.Application.Common.Results;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
 using Meezan.Application.Common.Interfaces.Queries.Funds;
@@ -18,7 +19,7 @@ using Meezan.Domain.Entities;
 
 namespace Meezan.Application.Features.Funds.Sync.Commands.UpdateSyncSettings;
 
-public sealed class UpdateSyncSettingsCommandHandler : IRequestHandler<UpdateSyncSettingsCommand, FundSyncSettings>
+public sealed class UpdateSyncSettingsCommandHandler : IRequestHandler<UpdateSyncSettingsCommand, Result<FundSyncSettings>>
 {
     private readonly IFundSyncSettingsRepository _syncSettingsRepo;
     private readonly IUnitOfWork _unitOfWork;
@@ -31,7 +32,7 @@ public sealed class UpdateSyncSettingsCommandHandler : IRequestHandler<UpdateSyn
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<FundSyncSettings> Handle(UpdateSyncSettingsCommand request, CancellationToken cancellationToken)
+    public async Task<Result<FundSyncSettings>> Handle(UpdateSyncSettingsCommand request, CancellationToken cancellationToken)
     {
         var settings = await _syncSettingsRepo.GetAsync(cancellationToken);
         if (settings == null)

@@ -1,4 +1,5 @@
 using MediatR;
+using Meezan.Application.Common.Results;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
 using Meezan.Application.Common.Interfaces.Queries.Funds;
@@ -18,7 +19,7 @@ using Meezan.Domain.Entities;
 
 namespace Meezan.Application.Features.Funds.Categories.Queries.GetFundCategoryStatus;
 
-public sealed class GetFundCategoryStatusQueryHandler : IRequestHandler<GetFundCategoryStatusQuery, List<FundCategoryStatusDto>?>
+public sealed class GetFundCategoryStatusQueryHandler : IRequestHandler<GetFundCategoryStatusQuery, Result<List<FundCategoryStatusDto>?>>
 {
     private readonly IFundRepository _fundRepo;
     private readonly IFundCategoryRepository _categoryRepo;
@@ -34,7 +35,7 @@ public sealed class GetFundCategoryStatusQueryHandler : IRequestHandler<GetFundC
         _overrideRepo = overrideRepo;
     }
 
-    public async Task<List<FundCategoryStatusDto>?> Handle(GetFundCategoryStatusQuery request, CancellationToken cancellationToken)
+    public async Task<Result<List<FundCategoryStatusDto>?>> Handle(GetFundCategoryStatusQuery request, CancellationToken cancellationToken)
     {
         var fund = await _fundRepo.GetByIdAsync(request.FundId, cancellationToken);
         if (fund == null) return null;

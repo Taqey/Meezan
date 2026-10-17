@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
@@ -23,7 +24,7 @@ using Meezan.Application.Features.Funds.Types.Dtos;
 
 namespace Meezan.Application.Features.Funds.Classification.Commands.UpdateClassificationNode;
 
-public sealed record UpdateClassificationNodeCommand : IRequest<AdminClassificationNodeDto>, ITransactionalCommand
+public sealed record UpdateClassificationNodeCommand : IRequest<Result<AdminClassificationNodeDto>>, ITransactionalCommand
 {
     public int Id { get; init; }
     public string? Slug { get; init; }

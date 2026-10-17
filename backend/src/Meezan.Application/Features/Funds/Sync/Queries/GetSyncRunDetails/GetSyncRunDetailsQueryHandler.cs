@@ -1,6 +1,7 @@
 namespace Meezan.Application.Features.Funds.Sync.Queries.GetSyncRunDetails;
 
 using MediatR;
+using Meezan.Application.Common.Results;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
 using Meezan.Application.Common.Interfaces.Queries.Funds;
@@ -18,7 +19,7 @@ using Meezan.Application.Common.Interfaces.Security;
 using Meezan.Application.Common.Interfaces.Storage;
 using Meezan.Domain.Entities;
 
-public class GetSyncRunDetailsQueryHandler : IRequestHandler<GetSyncRunDetailsQuery, List<FundSyncLogDetail>>
+public class GetSyncRunDetailsQueryHandler : IRequestHandler<GetSyncRunDetailsQuery, Result<List<FundSyncLogDetail>>>
 {
     private readonly IFundSyncLogDetailRepository _detailRepo;
 
@@ -27,7 +28,7 @@ public class GetSyncRunDetailsQueryHandler : IRequestHandler<GetSyncRunDetailsQu
         _detailRepo = detailRepo;
     }
 
-    public async Task<List<FundSyncLogDetail>> Handle(GetSyncRunDetailsQuery request, CancellationToken cancellationToken)
+    public async Task<Result<List<FundSyncLogDetail>>> Handle(GetSyncRunDetailsQuery request, CancellationToken cancellationToken)
     {
         return await _detailRepo.GetByLogIdAsync(request.LogId, cancellationToken);
     }

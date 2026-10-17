@@ -1,3 +1,4 @@
+using Meezan.WebApi.Common;
 using MediatR;
 using Meezan.Application.Features.Funds.Categories.Dtos;
 using Meezan.Application.Features.Funds.Classification.Dtos;
@@ -20,11 +21,11 @@ namespace Meezan.WebApi.Controllers.Public;
 [Route("api/funds")]
 public class FundsController : ControllerBase
 {
-    private readonly IMediator _mediator;
+    private readonly ISender _sender;
 
-    public FundsController(IMediator mediator)
+    public FundsController(ISender sender)
     {
-        _mediator = mediator;
+        _sender = sender;
     }
 
     /// <summary>
@@ -77,8 +78,8 @@ public class FundsController : ControllerBase
             PageSize = pageSize
         };
 
-        var result = await _mediator.Send(query, cancellationToken);
-        return Ok(result);
+        var result = await _sender.Send(query, cancellationToken);
+        return result.ToActionResult();
     }
 
     /// <summary>
@@ -88,8 +89,8 @@ public class FundsController : ControllerBase
     [ProducesResponseType(typeof(List<FundTypeOptionDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetTypes(CancellationToken cancellationToken = default)
     {
-        var result = await _mediator.Send(new GetFundTypesQuery(), cancellationToken);
-        return Ok(result);
+        var result = await _sender.Send(new GetFundTypesQuery(), cancellationToken);
+        return result.ToActionResult();
     }
 
     /// <summary>
@@ -99,8 +100,8 @@ public class FundsController : ControllerBase
     [ProducesResponseType(typeof(List<FundClassificationTreeDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetClassificationTree(CancellationToken cancellationToken = default)
     {
-        var result = await _mediator.Send(new GetFundClassificationTreeQuery(), cancellationToken);
-        return Ok(result);
+        var result = await _sender.Send(new GetFundClassificationTreeQuery(), cancellationToken);
+        return result.ToActionResult();
     }
 
     /// <summary>
@@ -110,8 +111,8 @@ public class FundsController : ControllerBase
     [ProducesResponseType(typeof(FundStatsDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetFundStats(CancellationToken cancellationToken = default)
     {
-        var result = await _mediator.Send(new GetFundStatsQuery(), cancellationToken);
-        return Ok(result);
+        var result = await _sender.Send(new GetFundStatsQuery(), cancellationToken);
+        return result.ToActionResult();
     }
 
     /// <summary>
@@ -121,8 +122,8 @@ public class FundsController : ControllerBase
     [ProducesResponseType(typeof(List<FundCategoryDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetCategories(CancellationToken cancellationToken = default)
     {
-        var result = await _mediator.Send(new GetFundCategoriesQuery(), cancellationToken);
-        return Ok(result);
+        var result = await _sender.Send(new GetFundCategoriesQuery(), cancellationToken);
+        return result.ToActionResult();
     }
 
     /// <summary>
@@ -133,9 +134,8 @@ public class FundsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetFund(int id, CancellationToken cancellationToken = default)
     {
-        var result = await _mediator.Send(new GetFundByIdQuery(id), cancellationToken);
-        if (result == null) return NotFound();
-        return Ok(result);
+        var result = await _sender.Send(new GetFundByIdQuery(id), cancellationToken);
+        return result.ToActionResult();
     }
 
     /// <summary>
@@ -146,8 +146,7 @@ public class FundsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetFundBySlug(string slug, CancellationToken cancellationToken = default)
     {
-        var result = await _mediator.Send(new GetFundBySlugQuery(slug), cancellationToken);
-        if (result == null) return NotFound();
-        return Ok(result);
+        var result = await _sender.Send(new GetFundBySlugQuery(slug), cancellationToken);
+        return result.ToActionResult();
     }
 }

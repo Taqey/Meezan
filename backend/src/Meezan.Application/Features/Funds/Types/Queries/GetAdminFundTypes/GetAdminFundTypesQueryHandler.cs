@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
@@ -19,7 +20,7 @@ using Meezan.Domain.Services;
 
 namespace Meezan.Application.Features.Funds.Types.Queries.GetAdminFundTypes;
 
-public sealed class GetAdminFundTypesQueryHandler : IRequestHandler<GetAdminFundTypesQuery, List<AdminFundTypeItemDto>>
+public sealed class GetAdminFundTypesQueryHandler : IRequestHandler<GetAdminFundTypesQuery, Result<List<AdminFundTypeItemDto>>>
 {
     private readonly IFundTypeDefinitionRepository _typeDefRepo;
     private readonly IFundTypeOverrideRepository _typeOverrideRepo;
@@ -44,7 +45,7 @@ public sealed class GetAdminFundTypesQueryHandler : IRequestHandler<GetAdminFund
         _syncSettingsRepo = syncSettingsRepo;
     }
 
-    public async Task<List<AdminFundTypeItemDto>> Handle(GetAdminFundTypesQuery request, CancellationToken cancellationToken)
+    public async Task<Result<List<AdminFundTypeItemDto>>> Handle(GetAdminFundTypesQuery request, CancellationToken cancellationToken)
     {
         var items = await _typeDefRepo.GetAllAsync(request.IncludeDeleted, cancellationToken);
         var allFunds = await _fundRepo.GetAllAsync(cancellationToken);

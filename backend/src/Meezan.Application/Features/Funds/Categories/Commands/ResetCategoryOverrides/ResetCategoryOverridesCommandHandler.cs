@@ -1,4 +1,5 @@
 using MediatR;
+using Meezan.Application.Common.Results;
 using Meezan.Application.Common.Exceptions;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
@@ -19,7 +20,7 @@ using Meezan.Domain.Entities;
 
 namespace Meezan.Application.Features.Funds.Categories.Commands.ResetCategoryOverrides;
 
-public sealed class ResetCategoryOverridesCommandHandler : IRequestHandler<ResetCategoryOverridesCommand, ResetCategoryOverridesResultDto>
+public sealed class ResetCategoryOverridesCommandHandler : IRequestHandler<ResetCategoryOverridesCommand, Result<ResetCategoryOverridesResultDto>>
 {
     private readonly IFundCategoryRepository _categoryRepo;
     private readonly IFundCategoryOverrideRepository _overrideRepo;
@@ -38,12 +39,12 @@ public sealed class ResetCategoryOverridesCommandHandler : IRequestHandler<Reset
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<ResetCategoryOverridesResultDto> Handle(ResetCategoryOverridesCommand request, CancellationToken cancellationToken)
+    public async Task<Result<ResetCategoryOverridesResultDto>> Handle(ResetCategoryOverridesCommand request, CancellationToken cancellationToken)
     {
         var category = await _categoryRepo.GetByIdAsync(request.CategoryId, cancellationToken);
         if (category == null)
         {
-            throw new NotFoundException(nameof(FundCategory), request.CategoryId);
+            return Error.NotFound("CategoryNotFound", $"{nameof(FundCategory)} with id '{request.CategoryId}' was not found.");
         }
 
         var manual = (await _overrideRepo.GetByCategoryIdAsync(request.CategoryId, cancellationToken))

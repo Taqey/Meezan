@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
@@ -23,7 +24,7 @@ using Meezan.Application.Features.Funds.Types.Dtos;
 
 namespace Meezan.Application.Features.Funds.Types.Queries.GetFundTypes;
 
-public sealed class GetFundTypesQueryHandler : IRequestHandler<GetFundTypesQuery, List<FundTypeOptionDto>>
+public sealed class GetFundTypesQueryHandler : IRequestHandler<GetFundTypesQuery, Result<List<FundTypeOptionDto>>>
 {
     private readonly IFundReadQuery _readQuery;
 
@@ -32,6 +33,6 @@ public sealed class GetFundTypesQueryHandler : IRequestHandler<GetFundTypesQuery
         _readQuery = readQuery;
     }
 
-    public Task<List<FundTypeOptionDto>> Handle(GetFundTypesQuery request, CancellationToken cancellationToken)
-        => _readQuery.GetTypeOptionsAsync(cancellationToken);
+    public async Task<Result<List<FundTypeOptionDto>>> Handle(GetFundTypesQuery request, CancellationToken cancellationToken)
+        => await _readQuery.GetTypeOptionsAsync(cancellationToken);
 }

@@ -1,4 +1,5 @@
 using MediatR;
+using Meezan.Application.Common.Results;
 using Meezan.Application.Common.Exceptions;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
@@ -19,7 +20,7 @@ using Meezan.Domain.Entities;
 
 namespace Meezan.Application.Features.Funds.Categories.Commands.DeleteFundCategory;
 
-public sealed class DeleteFundCategoryCommandHandler : IRequestHandler<DeleteFundCategoryCommand, DeleteFundCategoryResultDto>
+public sealed class DeleteFundCategoryCommandHandler : IRequestHandler<DeleteFundCategoryCommand, Result<DeleteFundCategoryResultDto>>
 {
     private readonly IFundCategoryRepository _categoryRepo;
     private readonly IFundCategoryOverrideRepository _overrideRepo;
@@ -38,12 +39,12 @@ public sealed class DeleteFundCategoryCommandHandler : IRequestHandler<DeleteFun
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<DeleteFundCategoryResultDto> Handle(DeleteFundCategoryCommand request, CancellationToken cancellationToken)
+    public async Task<Result<DeleteFundCategoryResultDto>> Handle(DeleteFundCategoryCommand request, CancellationToken cancellationToken)
     {
         var category = await _categoryRepo.GetByIdAsync(request.Id, cancellationToken);
         if (category == null)
         {
-            throw new NotFoundException(nameof(FundCategory), request.Id);
+            return Error.NotFound("CategoryNotFound", $"{nameof(FundCategory)} with id '{request.Id}' was not found.");
         }
 
         var overrides = await _overrideRepo.GetByCategoryIdAsync(request.Id, cancellationToken);
@@ -51,7 +52,8 @@ public sealed class DeleteFundCategoryCommandHandler : IRequestHandler<DeleteFun
 
         if (!request.Confirm && fundCount > 0)
         {
-            throw new BadRequestException(
+            return Error.Validation(
+                "CategoryHasFunds",
                 $"Category has {fundCount} funds. Pass confirm=true to delete.",
                 new { message = $"Category has {fundCount} funds. Pass confirm=true to delete.", fundCount });
         }

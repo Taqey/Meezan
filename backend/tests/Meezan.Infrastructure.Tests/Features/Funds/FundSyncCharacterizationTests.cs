@@ -117,7 +117,12 @@ public class FundSyncCharacterizationTests : IClassFixture<WebApplicationFactory
     private async Task<FundSyncLog> RunAsync(string by = "Manual")
     {
         using var scope = _factory.Services.CreateScope();
-        return await scope.ServiceProvider.GetRequiredService<ISender>().Send(new RunFundSyncCommand(by));
+        var result = await scope.ServiceProvider.GetRequiredService<ISender>().Send(new RunFundSyncCommand(by));
+        if (result.IsFailure)
+        {
+            throw new BadRequestException(result.Error.Message);
+        }
+        return result.Value;
     }
 
     private void ScriptThreeFunds()
@@ -422,7 +427,7 @@ public class FundSyncCharacterizationTests : IClassFixture<WebApplicationFactory
 
         BackfillFundLogosResultDto result;
         using (var scope = _factory.Services.CreateScope())
-            result = await scope.ServiceProvider.GetRequiredService<ISender>().Send(new BackfillFundLogosCommand());
+            result = (await scope.ServiceProvider.GetRequiredService<ISender>().Send(new BackfillFundLogosCommand())).Value;
 
         Assert.Equal(1, result.Stored);
         await WithDb(async db =>

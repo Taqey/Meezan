@@ -1,6 +1,7 @@
 namespace Meezan.Application.Features.Funds.Sync.Queries.GetSyncSettings;
 
 using MediatR;
+using Meezan.Application.Common.Results;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
 using Meezan.Application.Common.Interfaces.Queries.Funds;
@@ -18,7 +19,7 @@ using Meezan.Application.Common.Interfaces.Security;
 using Meezan.Application.Common.Interfaces.Storage;
 using Meezan.Domain.Entities;
 
-public class GetSyncSettingsQueryHandler : IRequestHandler<GetSyncSettingsQuery, FundSyncSettings>
+public class GetSyncSettingsQueryHandler : IRequestHandler<GetSyncSettingsQuery, Result<FundSyncSettings>>
 {
     private readonly IFundSyncSettingsRepository _settingsRepo;
 
@@ -27,7 +28,7 @@ public class GetSyncSettingsQueryHandler : IRequestHandler<GetSyncSettingsQuery,
         _settingsRepo = settingsRepo;
     }
 
-    public async Task<FundSyncSettings> Handle(GetSyncSettingsQuery request, CancellationToken cancellationToken)
+    public async Task<Result<FundSyncSettings>> Handle(GetSyncSettingsQuery request, CancellationToken cancellationToken)
     {
         return await _settingsRepo.GetAsync(cancellationToken) ?? new FundSyncSettings { Id = 1 };
     }

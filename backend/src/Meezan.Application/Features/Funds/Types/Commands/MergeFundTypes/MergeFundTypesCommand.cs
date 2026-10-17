@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
@@ -17,4 +18,4 @@ using Meezan.Application.Common.Interfaces.Storage;
 
 namespace Meezan.Application.Features.Funds.Types.Commands.MergeFundTypes;
 
-public sealed record MergeFundTypesCommand(int SourceId, int TargetId) : IRequest<MergeFundTypesResultDto>, ITransactionalCommand;
+public sealed record MergeFundTypesCommand(int SourceId, int TargetId) : IRequest<Result<MergeFundTypesResultDto>>, ITransactionalCommand;

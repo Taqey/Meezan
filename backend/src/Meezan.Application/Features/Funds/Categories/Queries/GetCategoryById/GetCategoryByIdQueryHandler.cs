@@ -1,6 +1,7 @@
 namespace Meezan.Application.Features.Funds.Categories.Queries.GetCategoryById;
 
 using MediatR;
+using Meezan.Application.Common.Results;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
 using Meezan.Application.Common.Interfaces.Queries.Funds;
@@ -18,7 +19,7 @@ using Meezan.Application.Common.Interfaces.Security;
 using Meezan.Application.Common.Interfaces.Storage;
 using Meezan.Domain.Entities;
 
-public class GetCategoryByIdQueryHandler : IRequestHandler<GetCategoryByIdQuery, FundCategory?>
+public class GetCategoryByIdQueryHandler : IRequestHandler<GetCategoryByIdQuery, Result<FundCategory?>>
 {
     private readonly IFundCategoryRepository _categoryRepo;
 
@@ -27,7 +28,7 @@ public class GetCategoryByIdQueryHandler : IRequestHandler<GetCategoryByIdQuery,
         _categoryRepo = categoryRepo;
     }
 
-    public async Task<FundCategory?> Handle(GetCategoryByIdQuery request, CancellationToken cancellationToken)
+    public async Task<Result<FundCategory?>> Handle(GetCategoryByIdQuery request, CancellationToken cancellationToken)
     {
         return await _categoryRepo.GetByIdAsync(request.Id, cancellationToken);
     }

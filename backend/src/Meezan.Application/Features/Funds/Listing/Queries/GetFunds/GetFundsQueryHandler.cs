@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
@@ -27,7 +28,7 @@ using Meezan.Domain.Models;
 
 namespace Meezan.Application.Features.Funds.Listing.Queries.GetFunds;
 
-public sealed class GetFundsQueryHandler : IRequestHandler<GetFundsQuery, FundListResultDto>
+public sealed class GetFundsQueryHandler : IRequestHandler<GetFundsQuery, Result<FundListResultDto>>
 {
     private readonly IFundRepository _fundRepo;
     private readonly IFundReadQuery _readQuery;
@@ -60,7 +61,7 @@ public sealed class GetFundsQueryHandler : IRequestHandler<GetFundsQuery, FundLi
         };
     }
 
-    public async Task<FundListResultDto> Handle(GetFundsQuery request, CancellationToken cancellationToken)
+    public async Task<Result<FundListResultDto>> Handle(GetFundsQuery request, CancellationToken cancellationToken)
     {
         var hasClassificationFilter = !string.IsNullOrWhiteSpace(request.Node)
             || !string.IsNullOrWhiteSpace(request.SubType)

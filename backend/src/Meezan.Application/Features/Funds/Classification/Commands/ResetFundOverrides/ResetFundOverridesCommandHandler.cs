@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Common.Exceptions;
 using Meezan.Application.Common.Interfaces.Integrations;
@@ -19,7 +20,7 @@ using Meezan.Domain.Entities;
 
 namespace Meezan.Application.Features.Funds.Classification.Commands.ResetFundOverrides;
 
-public sealed class ResetFundOverridesCommandHandler : IRequestHandler<ResetFundOverridesCommand, ResetFundOverridesResultDto>
+public sealed class ResetFundOverridesCommandHandler : IRequestHandler<ResetFundOverridesCommand, Result<ResetFundOverridesResultDto>>
 {
     private readonly IFundRepository _fundRepo;
     private readonly IFundCategoryOverrideRepository _overrideRepo;
@@ -38,12 +39,12 @@ public sealed class ResetFundOverridesCommandHandler : IRequestHandler<ResetFund
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<ResetFundOverridesResultDto> Handle(ResetFundOverridesCommand request, CancellationToken cancellationToken)
+    public async Task<Result<ResetFundOverridesResultDto>> Handle(ResetFundOverridesCommand request, CancellationToken cancellationToken)
     {
         var fund = await _fundRepo.GetByIdAsync(request.FundId, cancellationToken);
         if (fund == null)
         {
-            throw new NotFoundException(nameof(Fund), request.FundId);
+            return Error.NotFound("FundNotFound", "");
         }
 
         var manual = (await _overrideRepo.GetByFundIdAsync(request.FundId, cancellationToken))

@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Features.Funds.Categories.Dtos;
 using Meezan.Application.Features.Funds.Classification.Dtos;
@@ -8,7 +9,7 @@ using Meezan.Application.Features.Funds.Types.Dtos;
 
 namespace Meezan.Application.Features.Funds.Listing.Queries.GetFunds;
 
-public sealed record GetFundsQuery : IRequest<FundListResultDto>
+public sealed record GetFundsQuery : IRequest<Result<FundListResultDto>>
 {
     public string? Search { get; init; }
     public string? Type { get; init; }

@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Common.Exceptions;
 using Meezan.Application.Common.Interfaces.Integrations;
@@ -19,7 +20,7 @@ using Meezan.Domain.Entities;
 
 namespace Meezan.Application.Features.Funds.Classification.Commands.DeleteClassificationNode;
 
-public sealed class DeleteClassificationNodeCommandHandler : IRequestHandler<DeleteClassificationNodeCommand, DeleteClassificationNodeResultDto>
+public sealed class DeleteClassificationNodeCommandHandler : IRequestHandler<DeleteClassificationNodeCommand, Result<DeleteClassificationNodeResultDto>>
 {
     private readonly IFundClassificationNodeRepository _nodeRepo;
     private readonly IFundRepository _fundRepo;
@@ -44,13 +45,13 @@ public sealed class DeleteClassificationNodeCommandHandler : IRequestHandler<Del
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<DeleteClassificationNodeResultDto> Handle(DeleteClassificationNodeCommand request, CancellationToken cancellationToken)
+    public async Task<Result<DeleteClassificationNodeResultDto>> Handle(DeleteClassificationNodeCommand request, CancellationToken cancellationToken)
     {
         var node = await _nodeRepo.GetByIdAsync(request.Id, includeDeleted: true, cancellationToken);
         if (node == null)
-            throw new NotFoundException("Node not found.");
+            return Error.NotFound("NodeNotFound", "Node not found.");
         if (node.IsDeleted)
-            throw new BadRequestException("العقدة محذوفة بالفعل.");
+            return Error.Validation("NodeAlreadyDeleted", "العقدة محذوفة بالفعل.");
 
         var desc = await _classification.GetDescendantIdsAsync(request.Id, cancellationToken);
         var funds = (await _fundRepo.GetAllAsync(cancellationToken)).Where(f => f.IsActive).ToList();
@@ -64,7 +65,8 @@ public sealed class DeleteClassificationNodeCommandHandler : IRequestHandler<Del
 
         if (!request.Confirm && (affected.Count > 0 || childCount > 0))
         {
-            throw new BadRequestException(
+            return Error.Validation(
+                "ConfirmRequired",
                 $"العقدة تحوي {affected.Count} صندوق و{childCount} عقد بنت. حدد الوجهة وأعد التأكيد.",
                 new { message = $"العقدة تحوي {affected.Count} صندوق و{childCount} عقد بنت. حدد الوجهة وأعد التأكيد.", directFunds = affected.Count, childNodes = childCount });
         }
@@ -96,7 +98,7 @@ public sealed class DeleteClassificationNodeCommandHandler : IRequestHandler<Del
             {
                 var dest = await _nodeRepo.GetByIdAsync(request.MoveFundsToNodeId.Value, includeDeleted: true, cancellationToken);
                 if (dest == null || dest.IsDeleted)
-                    throw new BadRequestException("عقدة الوجهة غير صالحة.");
+                    return Error.Validation("InvalidDestinationNode", "عقدة الوجهة غير صالحة.");
 
                 foreach (var fid in affected)
                 {
@@ -138,7 +140,7 @@ public sealed class DeleteClassificationNodeCommandHandler : IRequestHandler<Del
             }
             else
             {
-                throw new BadRequestException("حدد وجهة الصناديق (moveFundsToNodeId) أو resetFundsToAuto=true.");
+                return Error.Validation("MissingFundResolution", "حدد وجهة الصناديق (moveFundsToNodeId) أو resetFundsToAuto=true.");
             }
         }
 
@@ -147,7 +149,7 @@ public sealed class DeleteClassificationNodeCommandHandler : IRequestHandler<Del
         {
             var (ok, err) = await _classification.ValidateMoveAsync(c.Id, childDest, cancellationToken);
             if (!ok)
-                throw new BadRequestException($"تعذر نقل البنت '{c.NameAr}': {err}");
+                return Error.Validation("ChildMoveFailed", $"تعذر نقل البنت '{c.NameAr}': {err}");
 
             c.ParentId = childDest;
             if (childDest.HasValue)

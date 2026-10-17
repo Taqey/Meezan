@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
@@ -18,4 +19,4 @@ using Meezan.Domain.Entities;
 
 namespace Meezan.Application.Features.Funds.Types.Commands.RestoreFundType;
 
-public sealed record RestoreFundTypeCommand(int Id) : IRequest<FundTypeDefinition>, ITransactionalCommand;
+public sealed record RestoreFundTypeCommand(int Id) : IRequest<Result<FundTypeDefinition>>, ITransactionalCommand;

@@ -1,9 +1,10 @@
 using MediatR;
+using Meezan.Application.Common.Results;
 using Meezan.Domain.Entities;
 
 namespace Meezan.Application.Features.Funds.Sync.Commands.UpdateSyncSettings;
 
-public sealed record UpdateSyncSettingsCommand : IRequest<FundSyncSettings>
+public sealed record UpdateSyncSettingsCommand : IRequest<Result<FundSyncSettings>>
 {
     public bool? IsEnabled { get; init; }
     public TimeOnly? RunTimeCairo { get; init; }

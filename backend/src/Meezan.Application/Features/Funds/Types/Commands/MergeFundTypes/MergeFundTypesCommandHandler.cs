@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Common.Exceptions;
 using Meezan.Application.Common.Interfaces.Integrations;
@@ -19,7 +20,7 @@ using Meezan.Domain.Entities;
 
 namespace Meezan.Application.Features.Funds.Types.Commands.MergeFundTypes;
 
-public sealed class MergeFundTypesCommandHandler : IRequestHandler<MergeFundTypesCommand, MergeFundTypesResultDto>
+public sealed class MergeFundTypesCommandHandler : IRequestHandler<MergeFundTypesCommand, Result<MergeFundTypesResultDto>>
 {
     private readonly IFundTypeDefinitionRepository _typeDefRepo;
     private readonly IFundTypeOverrideRepository _typeOverrideRepo;
@@ -38,13 +39,13 @@ public sealed class MergeFundTypesCommandHandler : IRequestHandler<MergeFundType
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<MergeFundTypesResultDto> Handle(MergeFundTypesCommand request, CancellationToken cancellationToken)
+    public async Task<Result<MergeFundTypesResultDto>> Handle(MergeFundTypesCommand request, CancellationToken cancellationToken)
     {
         var source = await _typeDefRepo.GetByIdAsync(request.SourceId, cancellationToken);
         var target = await _typeDefRepo.GetByIdAsync(request.TargetId, cancellationToken);
         if (source == null || target == null)
         {
-            throw new NotFoundException("One or both fund types not found.");
+            return Error.NotFound("FundTypeNotFound", "One or both fund types not found.");
         }
 
         var moved = await _typeOverrideRepo.GetByDefinitionIdAsync(source.Id, cancellationToken);

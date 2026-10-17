@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
@@ -23,7 +24,7 @@ using Meezan.Application.Features.Funds.Types.Dtos;
 
 namespace Meezan.Application.Features.Funds.Classification.Queries.GetFundClassificationTree;
 
-public sealed class GetFundClassificationTreeQueryHandler : IRequestHandler<GetFundClassificationTreeQuery, List<FundClassificationTreeDto>>
+public sealed class GetFundClassificationTreeQueryHandler : IRequestHandler<GetFundClassificationTreeQuery, Result<List<FundClassificationTreeDto>>>
 {
     private readonly IFundReadQuery _readQuery;
 
@@ -32,8 +33,8 @@ public sealed class GetFundClassificationTreeQueryHandler : IRequestHandler<GetF
         _readQuery = readQuery;
     }
 
-    public Task<List<FundClassificationTreeDto>> Handle(GetFundClassificationTreeQuery request, CancellationToken cancellationToken)
+    public async Task<Result<List<FundClassificationTreeDto>>> Handle(GetFundClassificationTreeQuery request, CancellationToken cancellationToken)
     {
-        return _readQuery.GetClassificationTreeAsync(cancellationToken);
+        return await _readQuery.GetClassificationTreeAsync(cancellationToken);
     }
 }

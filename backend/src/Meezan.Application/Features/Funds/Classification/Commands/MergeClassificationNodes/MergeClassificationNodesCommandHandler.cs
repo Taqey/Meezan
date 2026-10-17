@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Common.Exceptions;
 using Meezan.Application.Common.Interfaces.Integrations;
@@ -19,7 +20,7 @@ using Meezan.Domain.Entities;
 
 namespace Meezan.Application.Features.Funds.Classification.Commands.MergeClassificationNodes;
 
-public sealed class MergeClassificationNodesCommandHandler : IRequestHandler<MergeClassificationNodesCommand, MergeClassificationNodesResultDto>
+public sealed class MergeClassificationNodesCommandHandler : IRequestHandler<MergeClassificationNodesCommand, Result<MergeClassificationNodesResultDto>>
 {
     private readonly IFundClassificationNodeRepository _nodeRepo;
     private readonly IFundClassificationOverrideRepository _overrideRepo;
@@ -41,22 +42,22 @@ public sealed class MergeClassificationNodesCommandHandler : IRequestHandler<Mer
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<MergeClassificationNodesResultDto> Handle(MergeClassificationNodesCommand request, CancellationToken cancellationToken)
+    public async Task<Result<MergeClassificationNodesResultDto>> Handle(MergeClassificationNodesCommand request, CancellationToken cancellationToken)
     {
         if (request.SourceId == request.TargetId)
-            throw new BadRequestException("المصدر والهدف متماثلان.");
+            return Error.Validation("SourceTargetSame", "المصدر والهدف متماثلان.");
 
         var source = await _nodeRepo.GetByIdAsync(request.SourceId, includeDeleted: true, cancellationToken);
         var target = await _nodeRepo.GetByIdAsync(request.TargetId, includeDeleted: true, cancellationToken);
         if (source == null || target == null)
-            throw new NotFoundException("Source or target node not found.");
+            return Error.NotFound("NodeNotFound", "Source or target node not found.");
 
         if (source.IsDeleted || target.IsDeleted)
-            throw new BadRequestException("لا يمكن دمج عقد محذوفة.");
+            return Error.Validation("CannotMergeDeleted", "لا يمكن دمج عقد محذوفة.");
 
         var desc = await _classification.GetDescendantIdsAsync(source.Id, cancellationToken);
         if (desc.Contains(target.Id))
-            throw new BadRequestException("لا يمكن الدمج في عقدة بنت (دورة).");
+            return Error.Validation("CycleDetected", "لا يمكن الدمج في عقدة بنت (دورة).");
 
         var allNodes = await _nodeRepo.GetAllAsync(includeDeleted: true, cancellationToken);
         var byParent = allNodes.Where(n => n.ParentId.HasValue).GroupBy(n => n.ParentId!.Value)

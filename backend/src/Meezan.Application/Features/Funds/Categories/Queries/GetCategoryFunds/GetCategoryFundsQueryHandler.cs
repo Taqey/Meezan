@@ -1,6 +1,7 @@
 namespace Meezan.Application.Features.Funds.Categories.Queries.GetCategoryFunds;
 
 using MediatR;
+using Meezan.Application.Common.Results;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
 using Meezan.Application.Common.Interfaces.Queries.Funds;
@@ -19,7 +20,7 @@ using Meezan.Application.Common.Interfaces.Storage;
 using Meezan.Domain.Entities;
 using Meezan.Domain.Services;
 
-public class GetCategoryFundsQueryHandler : IRequestHandler<GetCategoryFundsQuery, CategoryFundsResultDto?>
+public class GetCategoryFundsQueryHandler : IRequestHandler<GetCategoryFundsQuery, Result<CategoryFundsResultDto?>>
 {
     private readonly IFundCategoryRepository _categoryRepo;
     private readonly IFundRepository _fundRepo;
@@ -35,11 +36,11 @@ public class GetCategoryFundsQueryHandler : IRequestHandler<GetCategoryFundsQuer
         _overrideRepo = overrideRepo;
     }
 
-    public async Task<CategoryFundsResultDto?> Handle(GetCategoryFundsQuery request, CancellationToken cancellationToken)
+    public async Task<Result<CategoryFundsResultDto?>> Handle(GetCategoryFundsQuery request, CancellationToken cancellationToken)
     {
         var category = await _categoryRepo.GetByIdAsync(request.CategoryId, cancellationToken);
-        if (category == null) throw new Meezan.Application.Common.Exceptions.NotFoundException(nameof(FundCategory), request.CategoryId);
-        if (category.IsDeleted) throw new Meezan.Application.Common.Exceptions.BadRequestException("Category is deleted.");
+        if (category == null) return Error.NotFound("CategoryNotFound", $"{nameof(FundCategory)} with id '{request.CategoryId}' was not found.");
+        if (category.IsDeleted) return Error.Validation("CategoryDeleted", "Category is deleted.");
 
         var funds = await _fundRepo.GetAllAsync(cancellationToken);
         var overrides = await _overrideRepo.GetByCategoryIdAsync(request.CategoryId, cancellationToken);

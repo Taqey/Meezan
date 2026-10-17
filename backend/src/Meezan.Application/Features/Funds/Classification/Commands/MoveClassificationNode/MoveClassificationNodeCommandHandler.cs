@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Common.Exceptions;
 using Meezan.Application.Common.Interfaces.Integrations;
@@ -25,7 +26,7 @@ using Meezan.Domain.Entities;
 
 namespace Meezan.Application.Features.Funds.Classification.Commands.MoveClassificationNode;
 
-public sealed class MoveClassificationNodeCommandHandler : IRequestHandler<MoveClassificationNodeCommand, AdminClassificationNodeDto>
+public sealed class MoveClassificationNodeCommandHandler : IRequestHandler<MoveClassificationNodeCommand, Result<AdminClassificationNodeDto>>
 {
     private readonly IFundClassificationNodeRepository _nodeRepo;
     private readonly IFundClassificationOverrideRepository _overrideRepo;
@@ -47,17 +48,17 @@ public sealed class MoveClassificationNodeCommandHandler : IRequestHandler<MoveC
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<AdminClassificationNodeDto> Handle(MoveClassificationNodeCommand request, CancellationToken cancellationToken)
+    public async Task<Result<AdminClassificationNodeDto>> Handle(MoveClassificationNodeCommand request, CancellationToken cancellationToken)
     {
         var node = await _nodeRepo.GetByIdAsync(request.Id, includeDeleted: true, cancellationToken);
         if (node == null)
-            throw new NotFoundException("Node not found.");
+            return Error.NotFound("NodeNotFound", "Node not found.");
         if (node.IsDeleted)
-            throw new BadRequestException("العقدة محذوفة. استعدها أولاً.");
+            return Error.Validation("NodeDeleted", "العقدة محذوفة. استعدها أولاً.");
 
         var (ok, err) = await _classification.ValidateMoveAsync(request.Id, request.NewParentId, cancellationToken);
         if (!ok)
-            throw new BadRequestException(err ?? "Invalid move.");
+            return Error.Validation("InvalidMove", err ?? "Invalid move.");
 
         var oldParent = node.ParentId;
         node.ParentId = request.NewParentId;

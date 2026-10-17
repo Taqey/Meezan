@@ -1,4 +1,5 @@
 using MediatR;
+using Meezan.Application.Common.Results;
 using Meezan.Application.Features.Funds.Classification.Commands.AssignClassificationFund;
 using Meezan.Application.Features.Funds.Classification.Commands.BulkAddClassificationFunds;
 using Meezan.Application.Features.Funds.Classification.Commands.BulkRemoveClassificationFunds;
@@ -11,12 +12,7 @@ using Meezan.Application.Features.Funds.Classification.Commands.ResetClassificat
 using Meezan.Application.Features.Funds.Classification.Commands.RestoreClassificationNode;
 using Meezan.Application.Features.Funds.Classification.Commands.SeedMigrateClassification;
 using Meezan.Application.Features.Funds.Classification.Commands.UpdateClassificationNode;
-using Meezan.Application.Features.Funds.Categories.Dtos;
 using Meezan.Application.Features.Funds.Classification.Dtos;
-using Meezan.Application.Features.Funds.Details;
-using Meezan.Application.Features.Funds.Details.Dtos;
-using Meezan.Application.Features.Funds.Listing.Dtos;
-using Meezan.Application.Features.Funds.Types.Dtos;
 using Meezan.Application.Features.Funds.Classification.Queries.GetAdminClassificationTree;
 using Meezan.Application.Features.Funds.Classification.Queries.GetClassificationBackup;
 using Meezan.Application.Features.Funds.Classification.Queries.GetClassificationChanges;
@@ -25,6 +21,7 @@ using Meezan.Application.Features.Funds.Classification.Queries.GetClassification
 using Meezan.Application.Features.Funds.Classification.Queries.GetNodeFunds;
 using Meezan.Domain.Entities;
 using Meezan.Domain.Models;
+using Meezan.WebApi.Common;
 using Meezan.WebApi.Contracts.Classification;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -51,8 +48,8 @@ public class AdminFundClassificationController : ControllerBase
     [ProducesResponseType(typeof(ClassificationMigrationReport), StatusCodes.Status200OK)]
     public async Task<IActionResult> SeedMigrate(CancellationToken ct = default)
     {
-        var report = await _sender.Send(new SeedMigrateClassificationCommand(), ct);
-        return Ok(report);
+        var result = await _sender.Send(new SeedMigrateClassificationCommand(), ct);
+        return result.ToActionResult();
     }
 
     [HttpGet("tree")]
@@ -60,7 +57,7 @@ public class AdminFundClassificationController : ControllerBase
     public async Task<IActionResult> GetTree([FromQuery] bool includeDeleted = false, CancellationToken ct = default)
     {
         var result = await _sender.Send(new GetAdminClassificationTreeQuery(includeDeleted), ct);
-        return Ok(result);
+        return result.ToActionResult();
     }
 
     [HttpPost("nodes")]
@@ -86,7 +83,7 @@ public class AdminFundClassificationController : ControllerBase
         };
 
         var result = await _sender.Send(cmd, ct);
-        return Ok(result);
+        return result.ToActionResult();
     }
 
     [HttpPatch("nodes/{id:int}")]
@@ -111,7 +108,7 @@ public class AdminFundClassificationController : ControllerBase
         };
 
         var result = await _sender.Send(cmd, ct);
-        return Ok(result);
+        return result.ToActionResult();
     }
 
     [HttpPost("nodes/{id:int}/move")]
@@ -119,7 +116,7 @@ public class AdminFundClassificationController : ControllerBase
     public async Task<IActionResult> MoveNode(int id, [FromBody] MoveNodeRequest req, CancellationToken ct = default)
     {
         var result = await _sender.Send(new MoveClassificationNodeCommand(id, req.NewParentId), ct);
-        return Ok(result);
+        return result.ToActionResult();
     }
 
     [HttpPost("nodes/merge")]
@@ -127,7 +124,7 @@ public class AdminFundClassificationController : ControllerBase
     public async Task<IActionResult> MergeNodes([FromBody] MergeNodesRequest req, CancellationToken ct = default)
     {
         var result = await _sender.Send(new MergeClassificationNodesCommand(req.SourceId, req.TargetId), ct);
-        return Ok(result);
+        return result.ToActionResult();
     }
 
     [HttpGet("nodes/{id:int}/delete-preview")]
@@ -135,8 +132,7 @@ public class AdminFundClassificationController : ControllerBase
     public async Task<IActionResult> DeletePreview(int id, CancellationToken ct = default)
     {
         var result = await _sender.Send(new GetClassificationDeletePreviewQuery(id), ct);
-        if (result == null) return NotFound();
-        return Ok(result);
+        return result.ToActionResult();
     }
 
     [HttpDelete("nodes/{id:int}")]
@@ -151,7 +147,7 @@ public class AdminFundClassificationController : ControllerBase
     {
         var cmd = new DeleteClassificationNodeCommand(id, confirm, moveFundsToNodeId, resetFundsToAuto, moveChildrenToNodeId);
         var result = await _sender.Send(cmd, ct);
-        return Ok(result);
+        return result.ToActionResult();
     }
 
     [HttpPost("nodes/{id:int}/restore")]
@@ -159,7 +155,7 @@ public class AdminFundClassificationController : ControllerBase
     public async Task<IActionResult> RestoreNode(int id, CancellationToken ct = default)
     {
         var result = await _sender.Send(new RestoreClassificationNodeCommand(id), ct);
-        return Ok(result);
+        return result.ToActionResult();
     }
 
     [HttpGet("nodes/{id:int}/funds")]
@@ -173,8 +169,7 @@ public class AdminFundClassificationController : ControllerBase
         CancellationToken ct = default)
     {
         var result = await _sender.Send(new GetNodeFundsQuery(id, search, source, page, pageSize), ct);
-        if (result == null) return NotFound();
-        return Ok(result);
+        return result.ToActionResult();
     }
 
     [HttpPost("nodes/{id:int}/funds/bulk")]
@@ -182,7 +177,7 @@ public class AdminFundClassificationController : ControllerBase
     public async Task<IActionResult> BulkAddFunds(int id, [FromBody] BulkFundIdsRequest req, CancellationToken ct = default)
     {
         var result = await _sender.Send(new BulkAddClassificationFundsCommand(id, req.FundIds), ct);
-        return Ok(result);
+        return result.ToActionResult();
     }
 
     [HttpDelete("nodes/{id:int}/funds/bulk")]
@@ -191,7 +186,7 @@ public class AdminFundClassificationController : ControllerBase
     {
         var cmd = new BulkRemoveClassificationFundsCommand(id, req.FundIds, req.DestinationNodeId, req.ResetToAuto);
         var result = await _sender.Send(cmd, ct);
-        return Ok(result);
+        return result.ToActionResult();
     }
 
     [HttpPost("funds/{fundId:int}/assign")]
@@ -199,7 +194,7 @@ public class AdminFundClassificationController : ControllerBase
     public async Task<IActionResult> AssignFund(int fundId, [FromBody] AssignFundRequest req, CancellationToken ct = default)
     {
         var result = await _sender.Send(new AssignClassificationFundCommand(fundId, req.NodeId, req.Reason), ct);
-        return Ok(result);
+        return result.ToActionResult();
     }
 
     [HttpDelete("funds/{fundId:int}/assign")]
@@ -207,7 +202,7 @@ public class AdminFundClassificationController : ControllerBase
     public async Task<IActionResult> ResetFundAssign(int fundId, CancellationToken ct = default)
     {
         var result = await _sender.Send(new ResetClassificationFundAssignmentCommand(fundId), ct);
-        return Ok(result);
+        return result.ToActionResult();
     }
 
     [HttpGet("review")]
@@ -215,7 +210,7 @@ public class AdminFundClassificationController : ControllerBase
     public async Task<IActionResult> GetReview(CancellationToken ct = default)
     {
         var result = await _sender.Send(new GetClassificationReviewQuery(), ct);
-        return Ok(result);
+        return result.ToActionResult();
     }
 
     [HttpPost("reclassify-unclassified")]
@@ -223,7 +218,7 @@ public class AdminFundClassificationController : ControllerBase
     public async Task<IActionResult> Reclassify(CancellationToken ct = default)
     {
         var result = await _sender.Send(new ReclassifyUnclassifiedCommand(), ct);
-        return Ok(result);
+        return result.ToActionResult();
     }
 
     [HttpGet("changes")]
@@ -237,7 +232,7 @@ public class AdminFundClassificationController : ControllerBase
         CancellationToken ct = default)
     {
         var result = await _sender.Send(new GetClassificationChangesQuery(fundId, nodeId, action, page, pageSize), ct);
-        return Ok(result);
+        return result.ToActionResult();
     }
 
     [HttpGet("backup")]
@@ -245,6 +240,6 @@ public class AdminFundClassificationController : ControllerBase
     public async Task<IActionResult> GetBackup(CancellationToken ct = default)
     {
         var result = await _sender.Send(new GetClassificationBackupQuery(), ct);
-        return Ok(result);
+        return result.ToActionResult();
     }
 }

@@ -1,4 +1,5 @@
 using MediatR;
+using Meezan.Application.Common.Results;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
 using Meezan.Application.Common.Interfaces.Queries.Funds;
@@ -18,7 +19,7 @@ using Meezan.Domain.Entities;
 
 namespace Meezan.Application.Features.Funds.Categories.Commands.ExcludeFundFromCategory;
 
-public sealed class ExcludeFundFromCategoryCommandHandler : IRequestHandler<ExcludeFundFromCategoryCommand, Unit>
+public sealed class ExcludeFundFromCategoryCommandHandler : IRequestHandler<ExcludeFundFromCategoryCommand, Result>
 {
     private readonly IFundCategoryOverrideRepository _overrideRepo;
     private readonly IFundCategoryChangeLogRepository _changeLogRepo;
@@ -34,7 +35,7 @@ public sealed class ExcludeFundFromCategoryCommandHandler : IRequestHandler<Excl
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<Unit> Handle(ExcludeFundFromCategoryCommand request, CancellationToken cancellationToken)
+    public async Task<Result> Handle(ExcludeFundFromCategoryCommand request, CancellationToken cancellationToken)
     {
         var existing = await _overrideRepo.GetAsync(request.FundId, request.CategoryId, cancellationToken);
         if (existing != null)
@@ -69,6 +70,6 @@ public sealed class ExcludeFundFromCategoryCommandHandler : IRequestHandler<Excl
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return Unit.Value;
+        return Result.Success();
     }
 }

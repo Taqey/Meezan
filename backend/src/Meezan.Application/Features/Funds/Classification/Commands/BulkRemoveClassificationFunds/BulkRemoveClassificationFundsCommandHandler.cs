@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Common.Exceptions;
 using Meezan.Application.Common.Interfaces.Integrations;
@@ -25,7 +26,7 @@ using Meezan.Domain.Entities;
 
 namespace Meezan.Application.Features.Funds.Classification.Commands.BulkRemoveClassificationFunds;
 
-public sealed class BulkRemoveClassificationFundsCommandHandler : IRequestHandler<BulkRemoveClassificationFundsCommand, BulkRemoveFundsResultDto>
+public sealed class BulkRemoveClassificationFundsCommandHandler : IRequestHandler<BulkRemoveClassificationFundsCommand, Result<BulkRemoveFundsResultDto>>
 {
     private readonly IFundClassificationNodeRepository _nodeRepo;
     private readonly IFundClassificationOverrideRepository _overrideRepo;
@@ -44,11 +45,11 @@ public sealed class BulkRemoveClassificationFundsCommandHandler : IRequestHandle
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<BulkRemoveFundsResultDto> Handle(BulkRemoveClassificationFundsCommand request, CancellationToken cancellationToken)
+    public async Task<Result<BulkRemoveFundsResultDto>> Handle(BulkRemoveClassificationFundsCommand request, CancellationToken cancellationToken)
     {
         var node = await _nodeRepo.GetByIdAsync(request.NodeId, includeDeleted: true, cancellationToken);
         if (node == null)
-            throw new NotFoundException("Node not found.");
+            return Error.NotFound("NodeNotFound", "Node not found.");
 
         int moved = 0, reset = 0, failed = 0;
         var errors = new List<string>();
@@ -59,7 +60,7 @@ public sealed class BulkRemoveClassificationFundsCommandHandler : IRequestHandle
         {
             destNode = await _nodeRepo.GetByIdAsync(request.DestinationNodeId.Value, includeDeleted: true, cancellationToken);
             if (destNode == null || destNode.IsDeleted)
-                throw new BadRequestException("عقدة الوجهة غير صالحة.");
+                return Error.Validation("InvalidDestinationNode", "عقدة الوجهة غير صالحة.");
         }
 
         foreach (var fid in (request.FundIds ?? new List<int>()).Distinct())

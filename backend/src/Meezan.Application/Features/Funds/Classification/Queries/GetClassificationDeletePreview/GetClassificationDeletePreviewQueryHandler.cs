@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
@@ -23,7 +24,7 @@ using Meezan.Application.Features.Funds.Types.Dtos;
 
 namespace Meezan.Application.Features.Funds.Classification.Queries.GetClassificationDeletePreview;
 
-public sealed class GetClassificationDeletePreviewQueryHandler : IRequestHandler<GetClassificationDeletePreviewQuery, ClassificationDeletePreviewDto?>
+public sealed class GetClassificationDeletePreviewQueryHandler : IRequestHandler<GetClassificationDeletePreviewQuery, Result<ClassificationDeletePreviewDto>>
 {
     private readonly IFundClassificationNodeRepository _nodeRepo;
     private readonly IFundRepository _fundRepo;
@@ -39,10 +40,10 @@ public sealed class GetClassificationDeletePreviewQueryHandler : IRequestHandler
         _classification = classification;
     }
 
-    public async Task<ClassificationDeletePreviewDto?> Handle(GetClassificationDeletePreviewQuery request, CancellationToken cancellationToken)
+    public async Task<Result<ClassificationDeletePreviewDto>> Handle(GetClassificationDeletePreviewQuery request, CancellationToken cancellationToken)
     {
         var node = await _nodeRepo.GetByIdAsync(request.Id, includeDeleted: true, cancellationToken);
-        if (node == null) return null;
+        if (node == null) return Error.NotFound("NodeNotFound", "");
 
         var desc = await _classification.GetDescendantIdsAsync(request.Id, cancellationToken);
         var funds = (await _fundRepo.GetAllAsync(cancellationToken)).Where(f => f.IsActive).ToList();

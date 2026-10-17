@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
@@ -23,7 +24,7 @@ using Meezan.Application.Features.Funds.Types.Dtos;
 
 namespace Meezan.Application.Features.Funds.Classification.Queries.GetAdminClassificationTree;
 
-public sealed class GetAdminClassificationTreeQueryHandler : IRequestHandler<GetAdminClassificationTreeQuery, List<AdminClassificationNodeDto>>
+public sealed class GetAdminClassificationTreeQueryHandler : IRequestHandler<GetAdminClassificationTreeQuery, Result<List<AdminClassificationNodeDto>>>
 {
     private readonly IFundClassificationNodeRepository _nodeRepo;
     private readonly IFundRepository _fundRepo;
@@ -39,7 +40,7 @@ public sealed class GetAdminClassificationTreeQueryHandler : IRequestHandler<Get
         _classification = classification;
     }
 
-    public async Task<List<AdminClassificationNodeDto>> Handle(GetAdminClassificationTreeQuery request, CancellationToken cancellationToken)
+    public async Task<Result<List<AdminClassificationNodeDto>>> Handle(GetAdminClassificationTreeQuery request, CancellationToken cancellationToken)
     {
         var nodes = await _nodeRepo.GetAllAsync(request.IncludeDeleted, cancellationToken);
         var funds = (await _fundRepo.GetAllAsync(cancellationToken)).Where(f => f.IsActive).ToList();

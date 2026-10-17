@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
@@ -23,4 +24,4 @@ using Meezan.Application.Features.Funds.Types.Dtos;
 
 namespace Meezan.Application.Features.Funds.Classification.Commands.BulkAddClassificationFunds;
 
-public sealed record BulkAddClassificationFundsCommand(int NodeId, List<int>? FundIds) : IRequest<BulkAddFundsResultDto>, ITransactionalCommand;
+public sealed record BulkAddClassificationFundsCommand(int NodeId, List<int>? FundIds) : IRequest<Result<BulkAddFundsResultDto>>, ITransactionalCommand;

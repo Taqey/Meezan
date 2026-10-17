@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
@@ -17,7 +18,7 @@ using Meezan.Application.Common.Interfaces.Storage;
 
 namespace Meezan.Application.Features.Funds.Classification.Queries.GetClassificationChanges;
 
-public sealed class GetClassificationChangesQueryHandler : IRequestHandler<GetClassificationChangesQuery, ClassificationChangesResultDto>
+public sealed class GetClassificationChangesQueryHandler : IRequestHandler<GetClassificationChangesQuery, Result<ClassificationChangesResultDto>>
 {
     private readonly IFundClassificationChangeLogRepository _repo;
 
@@ -26,7 +27,7 @@ public sealed class GetClassificationChangesQueryHandler : IRequestHandler<GetCl
         _repo = repo;
     }
 
-    public async Task<ClassificationChangesResultDto> Handle(GetClassificationChangesQuery request, CancellationToken cancellationToken)
+    public async Task<Result<ClassificationChangesResultDto>> Handle(GetClassificationChangesQuery request, CancellationToken cancellationToken)
     {
         var (items, totalCount) = await _repo.QueryPagedAsync(
             request.FundId,

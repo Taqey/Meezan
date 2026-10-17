@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Common.Exceptions;
 using Meezan.Application.Common.Interfaces.Integrations;
@@ -19,7 +20,7 @@ using Meezan.Domain.Entities;
 
 namespace Meezan.Application.Features.Funds.Types.Commands.CreateFundType;
 
-public sealed class CreateFundTypeCommandHandler : IRequestHandler<CreateFundTypeCommand, FundTypeDefinition>
+public sealed class CreateFundTypeCommandHandler : IRequestHandler<CreateFundTypeCommand, Result<FundTypeDefinition>>
 {
     private readonly IFundTypeDefinitionRepository _typeDefRepo;
     private readonly IFundTypeChangeLogRepository _changeLogRepo;
@@ -35,7 +36,7 @@ public sealed class CreateFundTypeCommandHandler : IRequestHandler<CreateFundTyp
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<FundTypeDefinition> Handle(CreateFundTypeCommand request, CancellationToken cancellationToken)
+    public async Task<Result<FundTypeDefinition>> Handle(CreateFundTypeCommand request, CancellationToken cancellationToken)
     {
         var slug = string.IsNullOrWhiteSpace(request.Slug)
             ? GenerateSlug(request.NameEn ?? request.NameAr)
@@ -43,7 +44,7 @@ public sealed class CreateFundTypeCommandHandler : IRequestHandler<CreateFundTyp
 
         if (await _typeDefRepo.ExistsBySlugAsync(slug, cancellationToken))
         {
-            throw new BadRequestException($"Slug '{slug}' already exists.");
+            return Error.Validation("DuplicateSlug", $"Slug '{slug}' already exists.");
         }
 
         var now = DateTime.UtcNow;

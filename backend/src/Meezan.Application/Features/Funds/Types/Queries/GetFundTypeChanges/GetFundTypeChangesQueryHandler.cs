@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
@@ -17,7 +18,7 @@ using Meezan.Application.Common.Interfaces.Storage;
 
 namespace Meezan.Application.Features.Funds.Types.Queries.GetFundTypeChanges;
 
-public sealed class GetFundTypeChangesQueryHandler : IRequestHandler<GetFundTypeChangesQuery, FundTypeChangesResultDto>
+public sealed class GetFundTypeChangesQueryHandler : IRequestHandler<GetFundTypeChangesQuery, Result<FundTypeChangesResultDto>>
 {
     private readonly IFundTypeChangeLogRepository _changeLogRepo;
 
@@ -26,7 +27,7 @@ public sealed class GetFundTypeChangesQueryHandler : IRequestHandler<GetFundType
         _changeLogRepo = changeLogRepo;
     }
 
-    public async Task<FundTypeChangesResultDto> Handle(GetFundTypeChangesQuery request, CancellationToken cancellationToken)
+    public async Task<Result<FundTypeChangesResultDto>> Handle(GetFundTypeChangesQuery request, CancellationToken cancellationToken)
     {
         var (items, total) = await _changeLogRepo.QueryPagedAsync(request.Page, request.PageSize, cancellationToken);
         return new FundTypeChangesResultDto(

@@ -1,6 +1,7 @@
 namespace Meezan.Application.Features.Funds.Sync.Queries.GetSyncHistory;
 
 using MediatR;
+using Meezan.Application.Common.Results;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
 using Meezan.Application.Common.Interfaces.Queries.Funds;
@@ -17,7 +18,7 @@ using Meezan.Application.Common.Interfaces.Repositories.System;
 using Meezan.Application.Common.Interfaces.Security;
 using Meezan.Application.Common.Interfaces.Storage;
 
-public class GetSyncHistoryQueryHandler : IRequestHandler<GetSyncHistoryQuery, SyncHistoryResultDto>
+public class GetSyncHistoryQueryHandler : IRequestHandler<GetSyncHistoryQuery, Result<SyncHistoryResultDto>>
 {
     private readonly IFundSyncService _syncService;
 
@@ -26,7 +27,7 @@ public class GetSyncHistoryQueryHandler : IRequestHandler<GetSyncHistoryQuery, S
         _syncService = syncService;
     }
 
-    public async Task<SyncHistoryResultDto> Handle(GetSyncHistoryQuery request, CancellationToken cancellationToken)
+    public async Task<Result<SyncHistoryResultDto>> Handle(GetSyncHistoryQuery request, CancellationToken cancellationToken)
     {
         var (items, totalCount) = await _syncService.GetRunHistoryAsync(request.Page, request.PageSize, cancellationToken);
         return new SyncHistoryResultDto(

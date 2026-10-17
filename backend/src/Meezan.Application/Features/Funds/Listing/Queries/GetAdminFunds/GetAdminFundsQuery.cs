@@ -1,6 +1,7 @@
 namespace Meezan.Application.Features.Funds.Listing.Queries.GetAdminFunds;
 
 using MediatR;
+using Meezan.Application.Common.Results;
 using Meezan.Application.Common.Models.Funds;
 using Meezan.Application.Common.Models.Stocks;
 using Meezan.Domain.Entities;
@@ -9,7 +10,7 @@ public record GetAdminFundsQuery(
     string? Search,
     string? Type,
     int Page,
-    int PageSize) : IRequest<AdminFundsResultDto>;
+    int PageSize) : IRequest<Result<AdminFundsResultDto>>;
 
 public record AdminFundsResultDto(
     List<Fund> Items,

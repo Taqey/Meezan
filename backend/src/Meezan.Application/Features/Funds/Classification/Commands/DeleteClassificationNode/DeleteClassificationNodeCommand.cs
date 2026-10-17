@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
@@ -22,4 +23,4 @@ public sealed record DeleteClassificationNodeCommand(
     bool Confirm = false,
     int? MoveFundsToNodeId = null,
     bool ResetFundsToAuto = false,
-    int? MoveChildrenToNodeId = null) : IRequest<DeleteClassificationNodeResultDto>, ITransactionalCommand;
+    int? MoveChildrenToNodeId = null) : IRequest<Result<DeleteClassificationNodeResultDto>>, ITransactionalCommand;

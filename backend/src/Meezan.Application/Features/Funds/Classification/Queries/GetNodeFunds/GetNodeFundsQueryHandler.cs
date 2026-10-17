@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
@@ -23,7 +24,7 @@ using Meezan.Application.Features.Funds.Types.Dtos;
 
 namespace Meezan.Application.Features.Funds.Classification.Queries.GetNodeFunds;
 
-public sealed class GetNodeFundsQueryHandler : IRequestHandler<GetNodeFundsQuery, GetNodeFundsResultDto?>
+public sealed class GetNodeFundsQueryHandler : IRequestHandler<GetNodeFundsQuery, Result<GetNodeFundsResultDto>>
 {
     private readonly IFundClassificationNodeRepository _nodeRepo;
     private readonly IFundRepository _fundRepo;
@@ -39,10 +40,10 @@ public sealed class GetNodeFundsQueryHandler : IRequestHandler<GetNodeFundsQuery
         _classification = classification;
     }
 
-    public async Task<GetNodeFundsResultDto?> Handle(GetNodeFundsQuery request, CancellationToken cancellationToken)
+    public async Task<Result<GetNodeFundsResultDto>> Handle(GetNodeFundsQuery request, CancellationToken cancellationToken)
     {
         var node = await _nodeRepo.GetByIdAsync(request.Id, includeDeleted: true, cancellationToken);
-        if (node == null) return null;
+        if (node == null) return Error.NotFound("NodeNotFound", "");
 
         var funds = (await _fundRepo.GetAllAsync(cancellationToken)).Where(f => f.IsActive).ToList();
         var ctx = await _classification.LoadContextAsync(cancellationToken);

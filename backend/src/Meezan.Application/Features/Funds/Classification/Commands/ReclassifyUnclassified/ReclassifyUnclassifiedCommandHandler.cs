@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
@@ -18,7 +19,7 @@ using Meezan.Domain.Models;
 
 namespace Meezan.Application.Features.Funds.Classification.Commands.ReclassifyUnclassified;
 
-public sealed class ReclassifyUnclassifiedCommandHandler : IRequestHandler<ReclassifyUnclassifiedCommand, ReclassifyResult>
+public sealed class ReclassifyUnclassifiedCommandHandler : IRequestHandler<ReclassifyUnclassifiedCommand, Result<ReclassifyResult>>
 {
     private readonly IFundClassificationService _classification;
 
@@ -27,8 +28,8 @@ public sealed class ReclassifyUnclassifiedCommandHandler : IRequestHandler<Recla
         _classification = classification;
     }
 
-    public Task<ReclassifyResult> Handle(ReclassifyUnclassifiedCommand request, CancellationToken cancellationToken)
+    public async Task<Result<ReclassifyResult>> Handle(ReclassifyUnclassifiedCommand request, CancellationToken cancellationToken)
     {
-        return _classification.ReclassifyUnclassifiedAsync("admin", cancellationToken);
+        return await _classification.ReclassifyUnclassifiedAsync("admin", cancellationToken);
     }
 }

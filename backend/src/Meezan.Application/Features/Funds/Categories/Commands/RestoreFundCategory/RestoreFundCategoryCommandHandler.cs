@@ -1,4 +1,5 @@
 using MediatR;
+using Meezan.Application.Common.Results;
 using Meezan.Application.Common.Exceptions;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
@@ -19,7 +20,7 @@ using Meezan.Domain.Entities;
 
 namespace Meezan.Application.Features.Funds.Categories.Commands.RestoreFundCategory;
 
-public sealed class RestoreFundCategoryCommandHandler : IRequestHandler<RestoreFundCategoryCommand, FundCategory>
+public sealed class RestoreFundCategoryCommandHandler : IRequestHandler<RestoreFundCategoryCommand, Result<FundCategory>>
 {
     private readonly IFundCategoryRepository _categoryRepo;
     private readonly IFundCategoryChangeLogRepository _changeLogRepo;
@@ -35,12 +36,12 @@ public sealed class RestoreFundCategoryCommandHandler : IRequestHandler<RestoreF
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<FundCategory> Handle(RestoreFundCategoryCommand request, CancellationToken cancellationToken)
+    public async Task<Result<FundCategory>> Handle(RestoreFundCategoryCommand request, CancellationToken cancellationToken)
     {
         var category = await _categoryRepo.GetByIdAsync(request.Id, cancellationToken);
         if (category == null)
         {
-            throw new NotFoundException(nameof(FundCategory), request.Id);
+            return Error.NotFound("CategoryNotFound", $"{nameof(FundCategory)} with id '{request.Id}' was not found.");
         }
 
         category.IsDeleted = false;
