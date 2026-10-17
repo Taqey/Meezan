@@ -1,4 +1,4 @@
-﻿# Backend Clean Architecture & MediatR Pattern Guidelines
+# Backend Clean Architecture & MediatR Pattern Guidelines
 
 This document serves as the **single source of truth** for all ongoing and subsequent refactoring steps of the Meezan backend to Clean Architecture and CQRS via MediatR.
 
@@ -60,36 +60,62 @@ This document serves as the **single source of truth** for all ongoing and subse
 
 ## 2. Directory Layout & Naming Conventions
 
-`
-Meezan.Application/
-├── Common/
-│   ├── Behaviors/
-│   │   ├── TransactionBehavior.cs
-│   │   └── ValidationBehavior.cs
-│   ├── Exceptions/
-│   │   ├── ApplicationExceptionBase.cs
-│   │   ├── BadRequestException.cs
-│   │   ├── ConflictException.cs
-│   │   └── NotFoundException.cs
-│   └── Interfaces/
-│       ├── ICurrentUser.cs
-│       ├── ITransactionalCommand.cs
-│       └── IUnitOfWork.cs
-└── Features/
-    └── <FeatureName>/
-        ├── Commands/
-        │   └── <UseCase>/
-        │       ├── <UseCase>Command.cs
-        │       ├── <UseCase>CommandHandler.cs
-        │       ├── <UseCase>CommandValidator.cs
-        │       └── <UseCase>ResultDto.cs
-        └── Queries/
-            └── <UseCase>/
-                ├── <UseCase>Query.cs
-                ├── <UseCase>QueryHandler.cs
-                ├── <UseCase>QueryValidator.cs
-                └── <UseCase>Dto.cs
-`
+### 2.1 Solution Directory Structure
+```
+backend/
+├── src/
+│   ├── Meezan.Domain/
+│   │   ├── Entities/<Feature>/             (Funds/, Stocks/, Indices/, Shariah/, Market/, System/ - namespace preserved as Meezan.Domain.Entities)
+│   │   ├── Enums/<Feature>/                (Funds/, Market/, Shariah/, Stocks/ - namespace preserved as Meezan.Domain.Enums)
+│   │   ├── Models/
+│   │   └── Services/
+│   ├── Meezan.Application/
+│   │   ├── Common/
+│   │   │   ├── Behaviors/
+│   │   │   ├── Exceptions/
+│   │   │   ├── Interfaces/
+│   │   │   │   ├── Integrations/           (Scrapers, clients, progress tracking)
+│   │   │   │   ├── Persistence/            (IUnitOfWork, ITransactionalCommand)
+│   │   │   │   ├── Queries/<Feature>/      (Read query interfaces)
+│   │   │   │   ├── Repositories/<Feature>/ (Entity repositories grouped by feature)
+│   │   │   │   ├── Security/               (ICurrentUser)
+│   │   │   │   └── Storage/                (File & PDF storage interfaces)
+│   │   │   ├── Models/<Feature>/           (DTO models by feature)
+│   │   │   └── Services/<Feature>/         (Domain/Application services by domain area)
+│   │   └── Features/<Feature>/
+│   │       ├── Commands/<UseCase>/
+│   │       │   ├── <UseCase>Command.cs
+│   │       │   ├── <UseCase>CommandHandler.cs
+│   │       │   ├── <UseCase>CommandValidator.cs
+│   │       │   └── <UseCase>ResultDto.cs
+│   │       └── Queries/<UseCase>/
+│   │           ├── <UseCase>Query.cs
+│   │           ├── <UseCase>QueryHandler.cs
+│   │           ├── <UseCase>QueryValidator.cs
+│   │           └── <UseCase>Dto.cs
+│   ├── Meezan.Infrastructure/
+│   │   ├── Persistence/
+│   │   │   ├── Configurations/
+│   │   │   ├── Queries/
+│   │   │   └── Repositories/
+│   │   └── Services/
+│   └── Meezan.WebApi/
+│       └── Controllers/
+│           ├── Admin/                      (Backoffice administration endpoints)
+│           └── Public/                     (Public-facing catalog & data endpoints)
+└── tests/
+    └── Meezan.Infrastructure.Tests/
+        ├── Admin/                          (Admin route and snapshot tests)
+        ├── Features/<Feature>/             (Feature-specific unit, route, and snapshot tests)
+        └── Testing/                        (Test harness, fakes, and architecture tests)
+```
+
+### 2.2 Reorganization Rules
+- **Namespaces Match Folders**: In `Meezan.Application`, `Meezan.Infrastructure`, `Meezan.WebApi`, and `Meezan.Infrastructure.Tests`, namespaces strictly mirror the relative folder path.
+- **Domain Namespace Exception**: All types in `Meezan.Domain.Entities` and `Meezan.Domain.Enums` retain their flat namespaces even when placed in subfolders for grouping.
+- **Folder Size Limit**: Reorganized folders must not exceed 15 files per directory (excluding `Migrations` and `Snapshots`).
+- **Single Type Per File**: Exactly one public type per file.
+
 
 ---
 
