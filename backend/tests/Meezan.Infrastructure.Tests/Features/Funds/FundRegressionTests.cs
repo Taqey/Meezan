@@ -91,7 +91,7 @@ public class FundRegressionTests
         // Regression test for Bug 2:
         // SyncSimilarFundsAsync must take IFundRepository directly instead of IServiceProvider
         // to avoid unmanaged IServiceScope leaks.
-        var method = typeof(Meezan.Infrastructure.Services.FundSyncService)
+        var method = typeof(FundSyncService)
             .GetMethod("SyncSimilarFundsAsync", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
 
         Assert.NotNull(method);

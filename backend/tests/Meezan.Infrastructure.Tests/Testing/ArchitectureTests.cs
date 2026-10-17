@@ -170,6 +170,10 @@ public class ArchitectureTests
             Path.Combine(solutionDir, "src", "Meezan.Application", "Common", "Interfaces", "Security"),
             Path.Combine(solutionDir, "src", "Meezan.Application", "Common", "Interfaces", "Storage"),
             Path.Combine(solutionDir, "src", "Meezan.Application", "Features", "Funds"),
+            Path.Combine(solutionDir, "src", "Meezan.Infrastructure", "Services"),
+            Path.Combine(solutionDir, "src", "Meezan.Infrastructure", "Persistence", "Configurations"),
+            Path.Combine(solutionDir, "src", "Meezan.Infrastructure", "Persistence", "Repositories"),
+            Path.Combine(solutionDir, "src", "Meezan.Infrastructure", "Persistence", "Queries"),
             Path.Combine(solutionDir, "tests", "Meezan.Infrastructure.Tests")
         };
 

@@ -3,7 +3,7 @@ using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using Meezan.Infrastructure.Services;
+using Meezan.Infrastructure.Services.Funds.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 

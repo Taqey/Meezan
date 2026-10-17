@@ -94,11 +94,12 @@ backend/
 │   │           ├── <UseCase>QueryValidator.cs
 │   │           └── <UseCase>Dto.cs
 │   ├── Meezan.Infrastructure/
+│   │   ├── Extensions/                     (Modular service collection registration extensions)
 │   │   ├── Persistence/
-│   │   │   ├── Configurations/
-│   │   │   ├── Queries/
-│   │   │   └── Repositories/
-│   │   └── Services/
+│   │   │   ├── Configurations/<Feature>/   (EF configurations grouped by feature: Funds, Indices, Market, Scraping, Sectors, Shariah, Stocks, SystemSettings)
+│   │   │   ├── Queries/<Feature>/          (Read query implementations: Funds, RemovalCandidates, Stocks)
+│   │   │   └── Repositories/<Feature>/     (Repositories grouped by feature: Common, Funds, Indices, Market, Scraping, Sectors, Shariah, Stocks, SystemSettings)
+│   │   └── Services/                       (Grouped by feature and role: BackgroundServices, Excel, Funds, Scraping, Shariah, Jobs)
 │   └── Meezan.WebApi/
 │       └── Controllers/
 │           ├── Admin/                      (Backoffice administration endpoints)
