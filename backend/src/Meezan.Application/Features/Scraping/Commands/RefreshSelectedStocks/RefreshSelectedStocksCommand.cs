@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 
 namespace Meezan.Application.Features.Scraping.Commands.RefreshSelectedStocks;
@@ -9,4 +10,4 @@ namespace Meezan.Application.Features.Scraping.Commands.RefreshSelectedStocks;
 /// </summary>
 public record RefreshSelectedStocksCommand(
     List<string> Tickers,
-    string TriggeredBy = "Manual-RefreshSelected") : IRequest<RefreshSelectedStocksResult>;
+    string TriggeredBy = "Manual-RefreshSelected") : IRequest<Result<RefreshSelectedStocksResult>>;

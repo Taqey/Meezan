@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Common;
 using Meezan.Application.Common.Services.Text;
@@ -25,7 +26,7 @@ using Microsoft.Extensions.Logging;
 namespace Meezan.Application.Features.Scraping.Commands.RunCombinedScrape;
 
 public class RunCombinedScrapeCommandHandler
-    : IRequestHandler<RunCombinedScrapeCommand, RunCombinedScrapeResult>
+    : IRequestHandler<RunCombinedScrapeCommand, Result<RunCombinedScrapeResult>>
 {
     private readonly IStockRepository _stockRepository;
     private readonly IStockScraperClient _scraperClient;
@@ -50,7 +51,7 @@ public class RunCombinedScrapeCommandHandler
         _logger = logger;
     }
 
-    public async Task<RunCombinedScrapeResult> Handle(
+    public async Task<Result<RunCombinedScrapeResult>> Handle(
         RunCombinedScrapeCommand request,
         CancellationToken cancellationToken)
     {

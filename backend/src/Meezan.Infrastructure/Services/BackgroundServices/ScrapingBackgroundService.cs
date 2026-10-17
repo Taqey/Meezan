@@ -84,10 +84,17 @@ public class ScrapingBackgroundService : BackgroundService
                         Bucket: ScrapeDataBucket.LiveDaily),
                     stoppingToken);
 
-                _logger.LogInformation(
-                    "Daily scrape completed. Stocks: {Total}, Succeeded: {Succeeded}, Failed: {Failed}, Duration: {Duration}s",
-                    result.TotalStocks, result.Succeeded, result.Failed,
-                    (int)result.Duration.TotalSeconds);
+                if (result.IsSuccess)
+                {
+                    _logger.LogInformation(
+                        "Daily scrape completed. Stocks: {Total}, Succeeded: {Succeeded}, Failed: {Failed}, Duration: {Duration}s",
+                        result.Value.TotalStocks, result.Value.Succeeded, result.Value.Failed,
+                        (int)result.Value.Duration.TotalSeconds);
+                }
+                else
+                {
+                    _logger.LogWarning("Daily scrape failed: {Error}", result.Error.Message);
+                }
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {

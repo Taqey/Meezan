@@ -98,10 +98,17 @@ public class SlowMarketDataBackgroundService : BackgroundService
                         Bucket: ScrapeDataBucket.SlowQuarterly),
                     stoppingToken);
 
-                _logger.LogInformation(
-                    "Quarterly slow scrape completed. Stocks: {Total}, Succeeded: {Succeeded}, Failed: {Failed}, Duration: {Duration}s",
-                    result.TotalStocks, result.Succeeded, result.Failed,
-                    (int)result.Duration.TotalSeconds);
+                if (result.IsSuccess)
+                {
+                    _logger.LogInformation(
+                        "Quarterly slow scrape completed. Stocks: {Total}, Succeeded: {Succeeded}, Failed: {Failed}, Duration: {Duration}s",
+                        result.Value.TotalStocks, result.Value.Succeeded, result.Value.Failed,
+                        (int)result.Value.Duration.TotalSeconds);
+                }
+                else
+                {
+                    _logger.LogWarning("Quarterly slow scrape failed: {Error}", result.Error.Message);
+                }
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {

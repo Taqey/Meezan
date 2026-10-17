@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
@@ -19,7 +20,7 @@ using Meezan.Application.Features.Scraping.DTOs;
 namespace Meezan.Application.Features.Scraping.Queries.GetSupportResistance;
 
 public class GetSupportResistanceQueryHandler
-    : IRequestHandler<GetSupportResistanceQuery, SupportResistanceDto?>
+    : IRequestHandler<GetSupportResistanceQuery, Result<SupportResistanceDto>>
 {
     private readonly IStockRepository _stockRepo;
     private readonly IStockSupportResistanceRepository _srRepo;
@@ -32,15 +33,15 @@ public class GetSupportResistanceQueryHandler
         _srRepo = srRepo;
     }
 
-    public async Task<SupportResistanceDto?> Handle(
+    public async Task<Result<SupportResistanceDto>> Handle(
         GetSupportResistanceQuery request,
         CancellationToken cancellationToken)
     {
         var stock = await _stockRepo.GetByTickerAsync(request.Ticker.ToUpperInvariant(), cancellationToken);
-        if (stock is null) return null;
+        if (stock is null) return Error.NotFound("StockNotFound", "");
 
         var sr = await _srRepo.GetByStockIdAsync(stock.Id, cancellationToken);
-        if (sr is null) return null;
+        if (sr is null) return Error.NotFound("SupportResistanceNotFound", "");
 
         return new SupportResistanceDto(
             Ticker: stock.Ticker,

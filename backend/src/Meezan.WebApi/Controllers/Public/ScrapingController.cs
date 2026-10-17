@@ -1,7 +1,9 @@
 using MediatR;
+using Meezan.Application.Common.Results;
 using Meezan.Application.Features.Scraping.Commands.RunCombinedScrape;
 using Meezan.Application.Features.Scraping.DTOs;
 using Meezan.Application.Features.Scraping.Queries.GetScrapeStatus;
+using Meezan.WebApi.Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -35,7 +37,7 @@ public class ScrapingController : ControllerBase
                 Bucket: bucket),
             cancellationToken);
 
-        return Ok(result);
+        return result.ToActionResult();
     }
 
     /// <summary>
@@ -51,6 +53,6 @@ public class ScrapingController : ControllerBase
         CancellationToken cancellationToken)
     {
         var result = await _sender.Send(new GetScrapeStatusQuery(jobKey), cancellationToken);
-        return Ok(result);
+        return result.ToActionResult();
     }
 }

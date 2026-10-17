@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
@@ -18,7 +19,7 @@ using Meezan.Application.Features.Scraping.DTOs;
 
 namespace Meezan.Application.Features.Scraping.Queries.GetScrapeStatus;
 
-public class GetScrapeStatusQueryHandler : IRequestHandler<GetScrapeStatusQuery, ScrapeStatusResponseDto>
+public class GetScrapeStatusQueryHandler : IRequestHandler<GetScrapeStatusQuery, Result<ScrapeStatusResponseDto>>
 {
     private readonly IScrapeProgressTracker _progress;
     private readonly IScrapeRunLogRepository _runLogRepo;
@@ -31,7 +32,7 @@ public class GetScrapeStatusQueryHandler : IRequestHandler<GetScrapeStatusQuery,
         _runLogRepo = runLogRepo;
     }
 
-    public async Task<ScrapeStatusResponseDto> Handle(GetScrapeStatusQuery request, CancellationToken cancellationToken)
+    public async Task<Result<ScrapeStatusResponseDto>> Handle(GetScrapeStatusQuery request, CancellationToken cancellationToken)
     {
         var all = _progress.GetAllSnapshots();
 

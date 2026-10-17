@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Common;
 using Meezan.Application.Common.Services.Text;
@@ -25,7 +26,7 @@ using Microsoft.Extensions.Logging;
 namespace Meezan.Application.Features.Scraping.Commands.RefreshSelectedStocks;
 
 public class RefreshSelectedStocksCommandHandler
-    : IRequestHandler<RefreshSelectedStocksCommand, RefreshSelectedStocksResult>
+    : IRequestHandler<RefreshSelectedStocksCommand, Result<RefreshSelectedStocksResult>>
 {
     private const int MaxBatchSize = 50;
 
@@ -52,7 +53,7 @@ public class RefreshSelectedStocksCommandHandler
         _logger = logger;
     }
 
-    public async Task<RefreshSelectedStocksResult> Handle(
+    public async Task<Result<RefreshSelectedStocksResult>> Handle(
         RefreshSelectedStocksCommand request,
         CancellationToken cancellationToken)
     {

@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
@@ -19,7 +20,7 @@ using Meezan.Domain.Enums;
 
 namespace Meezan.Application.Features.Scraping.Queries.GetMarketData;
 
-public class GetMarketDataQueryHandler : IRequestHandler<GetMarketDataQuery, MarketDataDto?>
+public class GetMarketDataQueryHandler : IRequestHandler<GetMarketDataQuery, Result<MarketDataDto>>
 {
     private readonly IStockRepository _stockRepo;
     private readonly IStockMarketDataRepository _mdRepo;
@@ -35,10 +36,10 @@ public class GetMarketDataQueryHandler : IRequestHandler<GetMarketDataQuery, Mar
         _fvRepo = fvRepo;
     }
 
-    public async Task<MarketDataDto?> Handle(GetMarketDataQuery request, CancellationToken cancellationToken)
+    public async Task<Result<MarketDataDto>> Handle(GetMarketDataQuery request, CancellationToken cancellationToken)
     {
         var stock = await _stockRepo.GetByTickerWithFullDetailsAsync(request.Ticker.ToUpperInvariant(), cancellationToken);
-        if (stock is null) return null;
+        if (stock is null) return Error.NotFound("StockNotFound", "");
 
         var md = stock.MarketData ?? await _mdRepo.GetByStockIdAsync(stock.Id, cancellationToken);
 
@@ -73,7 +74,7 @@ public class GetMarketDataQueryHandler : IRequestHandler<GetMarketDataQuery, Mar
         {
             // Only worth returning a partial result if there is Shariah data to show.
             if (stock.ShariahCompliance is null && stock.ShariahSourceOpinions.Count == 0)
-                return null;
+                return Error.NotFound("StockNotFound", "");
 
             DetectShariahBoard(stock, out var hasBoard1, out var boardNote1);
 

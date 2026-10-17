@@ -1,8 +1,10 @@
 using MediatR;
+using Meezan.Application.Common.Results;
 using Meezan.Application.Features.Scraping.DTOs;
 using Meezan.Application.Features.Scraping.Queries.GetMarketData;
 using Meezan.Application.Features.Scraping.Queries.GetStocksList;
 using Meezan.Application.Features.Scraping.Queries.GetSupportResistance;
+using Meezan.WebApi.Common;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Meezan.WebApi.Controllers.Public;
@@ -47,7 +49,7 @@ public class StocksController : ControllerBase
             shariahStatus, shariahStatuses, priceComparison, minCompliantSources,
             minPeRatio, maxPeRatio, minPbRatio, maxPbRatio);
         var result = await _sender.Send(query, cancellationToken);
-        return Ok(result);
+        return result.ToActionResult();
     }
 
     /// <summary>
@@ -61,7 +63,7 @@ public class StocksController : ControllerBase
         CancellationToken cancellationToken)
     {
         var result = await _sender.Send(new GetMarketDataQuery(ticker), cancellationToken);
-        return result is null ? NotFound() : Ok(result);
+        return result.ToActionResult();
     }
 
     /// <summary>
@@ -75,6 +77,6 @@ public class StocksController : ControllerBase
         CancellationToken cancellationToken)
     {
         var result = await _sender.Send(new GetSupportResistanceQuery(ticker), cancellationToken);
-        return result is null ? NotFound() : Ok(result);
+        return result.ToActionResult();
     }
 }

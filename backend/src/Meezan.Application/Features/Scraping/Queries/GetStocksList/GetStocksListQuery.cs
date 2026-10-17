@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Common;
 using Meezan.Application.Common.Services.Text;
@@ -31,4 +32,4 @@ public record GetStocksListQuery(
     decimal? MaxPeRatio,
     decimal? MinPbRatio,
     decimal? MaxPbRatio
-) : IRequest<PagedResult<StockListItemDto>>;
+) : IRequest<Result<PagedResult<StockListItemDto>>>;

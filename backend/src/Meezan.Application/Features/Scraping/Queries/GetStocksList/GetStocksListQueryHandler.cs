@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Common;
 using Meezan.Application.Common.Services.Text;
@@ -23,7 +24,7 @@ using Meezan.Application.Features.Scraping.DTOs;
 namespace Meezan.Application.Features.Scraping.Queries.GetStocksList;
 
 public class GetStocksListQueryHandler
-    : IRequestHandler<GetStocksListQuery, PagedResult<StockListItemDto>>
+    : IRequestHandler<GetStocksListQuery, Result<PagedResult<StockListItemDto>>>
 {
     private readonly IStockRepository _stockRepo;
 
@@ -32,7 +33,7 @@ public class GetStocksListQueryHandler
         _stockRepo = stockRepo;
     }
 
-    public async Task<PagedResult<StockListItemDto>> Handle(
+    public async Task<Result<PagedResult<StockListItemDto>>> Handle(
         GetStocksListQuery request,
         CancellationToken cancellationToken)
     {
