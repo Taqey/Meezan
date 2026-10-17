@@ -1,4 +1,5 @@
 using MediatR;
+using Meezan.Application.Features.Market.DTOs;
 
 namespace Meezan.Application.Features.Market.Commands.RefreshMarketSnapshots;
 
@@ -7,10 +8,4 @@ namespace Meezan.Application.Features.Market.Commands.RefreshMarketSnapshots;
 /// mapped index/sector page). Only successful parses overwrite the stored
 /// rows, so readers always see the last good values.
 /// </summary>
-public record RefreshMarketSnapshotsCommand(string TriggeredBy = "Manual-MarketSnapshots") : IRequest<RefreshMarketSnapshotsResult>;
-
-public record RefreshMarketSnapshotsResult(
-    int Succeeded,
-    int Failed,
-    int TotalTargets,
-    TimeSpan Duration);
+public record RefreshMarketSnapshotsCommand(string TriggeredBy = "Manual-MarketSnapshots") : IRequest<RefreshMarketSnapshotsResultDto>;

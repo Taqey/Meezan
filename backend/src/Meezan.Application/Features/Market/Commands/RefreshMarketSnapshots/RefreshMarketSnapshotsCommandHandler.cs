@@ -1,13 +1,14 @@
 using MediatR;
 using Meezan.Application.Common;
 using Meezan.Application.Common.Interfaces;
+using Meezan.Application.Features.Market.DTOs;
 using Meezan.Domain.Entities;
 using Microsoft.Extensions.Logging;
 
 namespace Meezan.Application.Features.Market.Commands.RefreshMarketSnapshots;
 
 public class RefreshMarketSnapshotsCommandHandler
-    : IRequestHandler<RefreshMarketSnapshotsCommand, RefreshMarketSnapshotsResult>
+    : IRequestHandler<RefreshMarketSnapshotsCommand, RefreshMarketSnapshotsResultDto>
 {
     /// <summary>Politeness gap between page fetches (robots.txt asks crawl-delay 5).</summary>
     private static readonly TimeSpan PolitenessDelay = TimeSpan.FromSeconds(5);
@@ -33,7 +34,7 @@ public class RefreshMarketSnapshotsCommandHandler
         _logger = logger;
     }
 
-    public async Task<RefreshMarketSnapshotsResult> Handle(
+    public async Task<RefreshMarketSnapshotsResultDto> Handle(
         RefreshMarketSnapshotsCommand request, CancellationToken cancellationToken)
     {
         if (!await RunLock.WaitAsync(0, cancellationToken))
@@ -126,7 +127,7 @@ public class RefreshMarketSnapshotsCommandHandler
             _progress.SetCompleted("MarketSnapshots");
         }
 
-        return new RefreshMarketSnapshotsResult(succeeded, failed, targets.Count, DateTime.UtcNow - started);
+        return new RefreshMarketSnapshotsResultDto(succeeded, failed, targets.Count, DateTime.UtcNow - started);
         }
         catch (Exception ex) when (ex is not InvalidOperationException)
         {

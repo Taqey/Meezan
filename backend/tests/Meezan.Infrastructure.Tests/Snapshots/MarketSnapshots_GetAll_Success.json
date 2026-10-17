@@ -1,0 +1,16 @@
+{
+  "StatusCode": 200,
+  "BodyShape": [
+    {
+      "kind": "string:Index",
+      "code": "string:EGX30",
+      "mubasherCode": "string:EGX30",
+      "value": "number:int",
+      "change": "number:int",
+      "changePct": "number:decimal",
+      "sourceDateText": "string:17/10/2026",
+      "source": "string:Mubasher",
+      "fetchedAt": "string:date-time-normalized"
+    }
+  ]
+}

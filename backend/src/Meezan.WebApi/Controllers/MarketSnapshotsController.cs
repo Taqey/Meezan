@@ -1,5 +1,6 @@
 using MediatR;
 using Meezan.Application.Features.Market.Commands.RefreshMarketSnapshots;
+using Meezan.Application.Features.Market.DTOs;
 using Meezan.Application.Features.Market.Queries.GetMarketSnapshots;
 using Microsoft.AspNetCore.Mvc;
 
@@ -33,7 +34,7 @@ public class MarketSnapshotsController : ControllerBase
     /// Triggers a snapshots refresh on demand (same job the scheduler runs).
     /// </summary>
     [HttpPost("refresh")]
-    [ProducesResponseType(typeof(RefreshMarketSnapshotsResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(RefreshMarketSnapshotsResultDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Refresh(CancellationToken cancellationToken)
     {
