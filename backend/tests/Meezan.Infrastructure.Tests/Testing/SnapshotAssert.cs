@@ -46,6 +46,14 @@ public class EndpointSnapshot
                 {
                     result[kvp.Key] = JsonValue.Create("string:trace-id-normalized");
                 }
+                else if (kvp.Key.Equals("duration", StringComparison.OrdinalIgnoreCase))
+                {
+                    result[kvp.Key] = JsonValue.Create("string:duration-normalized");
+                }
+                else if (kvp.Key.Equals("elapsedSeconds", StringComparison.OrdinalIgnoreCase))
+                {
+                    result[kvp.Key] = JsonValue.Create("number:seconds-normalized");
+                }
                 else
                 {
                     result[kvp.Key] = NormalizeShape(kvp.Value);

@@ -1,0 +1,11 @@
+{
+  "StatusCode": 200,
+  "BodyShape": {
+    "success": "bool:False",
+    "totalStocks": "number:int",
+    "succeeded": "number:int",
+    "failed": "number:int",
+    "duration": "string:duration-normalized",
+    "errorSummary": "string:Commit failed: The methods \u0027ExecuteDelete\u0027 and \u0027ExecuteDeleteAsync\u0027 are not supported by the current database provider. Please contact the publisher of the database provider for more information. ; Scrape errors: Stale Mubasher date staged as-is for 1 stock(s) (review via removal-candidates checklist, no auto-action taken): TEST (17/10/2026 14:30:00)"
+  }
+}

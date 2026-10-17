@@ -1,0 +1,64 @@
+{
+  "StatusCode": 200,
+  "BodyShape": {
+    "status": "string:Failed",
+    "live": {
+      "triggeredBy": "string:Manual-LiveDaily",
+      "totalStocks": "number:int",
+      "processedCount": "number:int",
+      "succeededCount": "number:int",
+      "failedCount": "number:int",
+      "percentComplete": "number:int",
+      "currentStockTicker": null,
+      "startedAt": "string:date-time-normalized",
+      "elapsedSeconds": "number:seconds-normalized",
+      "estimatedSecondsRemaining": null,
+      "jobKey": "string:LiveDaily"
+    },
+    "lastRun": {
+      "runAt": "string:date-time-normalized",
+      "finishedAt": "string:date-time-normalized",
+      "durationSeconds": "number:int",
+      "totalStocks": "number:int",
+      "succeededStocks": "number:int",
+      "failedStocks": "number:int",
+      "triggeredBy": "string:Manual-LiveDaily",
+      "hadErrors": "bool:True"
+    },
+    "jobs": {
+      "LiveDaily": {
+        "jobKey": "string:LiveDaily",
+        "status": "string:Failed",
+        "live": {
+          "triggeredBy": "string:Manual-LiveDaily",
+          "totalStocks": "number:int",
+          "processedCount": "number:int",
+          "succeededCount": "number:int",
+          "failedCount": "number:int",
+          "percentComplete": "number:int",
+          "currentStockTicker": null,
+          "startedAt": "string:date-time-normalized",
+          "elapsedSeconds": "number:seconds-normalized",
+          "estimatedSecondsRemaining": null,
+          "jobKey": "string:LiveDaily"
+        },
+        "finishedAt": "string:date-time-normalized",
+        "errorReason": "string:The methods \u0027ExecuteDelete\u0027 and \u0027ExecuteDeleteAsync\u0027 are not supported by the current database provider. Please contact the publisher of the database provider for more information. "
+      },
+      "SlowQuarterly": {
+        "jobKey": "string:SlowQuarterly",
+        "status": "string:NotRunning",
+        "live": null,
+        "finishedAt": null,
+        "errorReason": null
+      },
+      "MarketSnapshots": {
+        "jobKey": "string:MarketSnapshots",
+        "status": "string:NotRunning",
+        "live": null,
+        "finishedAt": null,
+        "errorReason": null
+      }
+    }
+  }
+}
