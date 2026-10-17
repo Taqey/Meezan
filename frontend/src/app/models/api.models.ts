@@ -721,6 +721,25 @@ export interface FundListItemDto {
   logoUrl: string;
   localLogoPath: string;
   lastSyncedAt: string | null;
+  effectiveClassification?: EffectiveClassificationDto | null;
+}
+
+export interface EffectiveClassificationDto {
+  nodeId?: number | null;
+  slug: string;
+  nameAr: string;
+  nameEn: string;
+  path: string;
+  rootSlug: string;
+  rootNameAr: string;
+  rootNameEn: string;
+  leafSlug: string;
+  leafNameAr: string;
+  leafNameEn: string;
+  source: string;
+  pathSlugs: string[];
+  pathNamesAr: string[];
+  pathNamesEn: string[];
 }
 
 export interface FundDetailDto extends FundListItemDto {
@@ -777,6 +796,11 @@ export interface FundSimilarDto {
   localLogoPath?: string | null;
   /** Original SNDUK/Supabase logo URL used as fallback. */
   logoUrl?: string | null;
+  typeNameAr?: string | null;
+  typeNameEn?: string | null;
+  typeSlug?: string | null;
+  classificationPathAr?: string | null;
+  effectiveClassification?: EffectiveClassificationDto | null;
 }
 
 /** One row of the editable fund-type catalog (powers the public type dropdown). */

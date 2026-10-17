@@ -147,7 +147,7 @@ import { KpiStripComponent, KpiData } from '../../components/kpi-strip/kpi-strip
           [accent]="getFundAccent(normFundType(fund.type)).accent"
           [tint]="getFundAccent(normFundType(fund.type)).tint"
           [ink]="getFundAccent(normFundType(fund.type)).ink"
-          [pill]="fund.typeNameAr"
+          [pill]="getClassificationBadge(fund)"
           [stats]="cardStats(fund)"
           [footerText]="footerFor(fund)"
           [link]="['/funds', fund.slug]"
@@ -481,12 +481,25 @@ export class FundsListComponent implements OnInit {
     return stats;
   }
 
+  getClassificationBadge(fund: FundListItemDto): string {
+    if (fund.effectiveClassification?.rootNameAr) {
+      return fund.effectiveClassification.rootNameAr;
+    }
+    if (fund.classificationPathAr) {
+      const parts = fund.classificationPathAr.split(' › ');
+      if (parts.length > 0 && parts[0].trim()) return parts[0].trim();
+    }
+    return fund.typeNameAr || 'صندوق استثمار';
+  }
+
   footerFor(fund: FundListItemDto): string {
     const parts = [];
-    // Full classification path as a small breadcrumb, built dynamically from the tree.
-    if (fund.classificationPathAr) parts.push(fund.classificationPathAr);
+    const path = fund.effectiveClassification?.path || fund.classificationPathAr;
+    if (path) parts.push(path);
     if (fund.assetManagerName) parts.push(fund.assetManagerName);
-    if (!fund.classificationPathAr && fund.typeNameAr) parts.push(fund.typeNameAr);
+    if (!path && (fund.effectiveClassification?.rootNameAr || fund.typeNameAr)) {
+      parts.push(fund.effectiveClassification?.rootNameAr || fund.typeNameAr);
+    }
     if (fund.minimumInvestment) parts.push('الحد الأدنى: ' + fund.minimumInvestment);
     return parts.join(' • ');
   }

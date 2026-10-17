@@ -47,6 +47,7 @@ public sealed class FundDetailDto : IFundTypeFields
     public string ClassificationSlug { get; set; } = string.Empty;
     public string ClassificationPathAr { get; set; } = string.Empty;
     public string ClassificationSource { get; set; } = string.Empty;
+    public Meezan.Application.Features.Funds.Classification.Dtos.EffectiveClassificationDto? EffectiveClassification { get; set; }
 
     // Detail-specific fields
     public string DescriptionAr { get; set; } = string.Empty;
@@ -105,6 +106,11 @@ public sealed class FundSimilarDto
     public string LocalLogoPath { get; set; } = string.Empty;
     /// <summary>Original SNDUK logo URL, used when no local file exists.</summary>
     public string LogoUrl { get; set; } = string.Empty;
+    public string TypeNameAr { get; set; } = string.Empty;
+    public string TypeNameEn { get; set; } = string.Empty;
+    public string TypeSlug { get; set; } = string.Empty;
+    public string ClassificationPathAr { get; set; } = string.Empty;
+    public Meezan.Application.Features.Funds.Classification.Dtos.EffectiveClassificationDto? EffectiveClassification { get; set; }
 }
 
 public sealed class FundCategoryMembershipDto

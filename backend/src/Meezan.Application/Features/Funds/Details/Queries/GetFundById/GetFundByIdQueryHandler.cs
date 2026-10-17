@@ -152,9 +152,51 @@ public sealed class GetFundByIdQueryHandler : IRequestHandler<GetFundByIdQuery, 
 
         FundMappingExtensions.ApplyType(result, bundle.Fund, detailOverrides, detailDefs);
 
+        var allFundsToClassify = new List<Fund> { bundle.Fund };
+        foreach (var s in similarFunds)
+        {
+            if (s.SimilarFund != null) allFundsToClassify.Add(s.SimilarFund);
+        }
+
         var detailCtx = await _detailQuery.LoadContextAsync(cancellationToken);
-        var detailEff = await _detailQuery.ResolveEffectiveManyAsync(new[] { bundle.Fund }, detailCtx);
+        var detailEff = await _detailQuery.ResolveEffectiveManyAsync(allFundsToClassify, detailCtx);
         FundMappingExtensions.ApplyClassification(result, bundle.Fund, detailEff);
+
+        foreach (var simDto in result.SimilarFunds)
+        {
+            if (detailEff.TryGetValue(simDto.Id, out var se) && se.NodeId.HasValue)
+            {
+                var sRootSlug = se.PathSlugs.Count > 0 ? se.PathSlugs[0] : se.Slug;
+                var sRootNameAr = se.PathNamesAr.Count > 0 ? se.PathNamesAr[0] : string.Empty;
+                var sRootNameEn = se.PathNamesEn.Count > 0 ? se.PathNamesEn[0] : string.Empty;
+                var sLeafSlug = se.PathSlugs.Count > 0 ? se.PathSlugs[^1] : se.Slug;
+                var sLeafNameAr = se.PathNamesAr.Count > 0 ? se.PathNamesAr[^1] : string.Empty;
+                var sLeafNameEn = se.PathNamesEn.Count > 0 ? se.PathNamesEn[^1] : string.Empty;
+
+                simDto.ClassificationPathAr = se.DisplayPathAr;
+                simDto.TypeNameAr = sRootNameAr;
+                simDto.TypeNameEn = sRootNameEn;
+                simDto.TypeSlug = sRootSlug;
+                simDto.EffectiveClassification = new Meezan.Application.Features.Funds.Classification.Dtos.EffectiveClassificationDto
+                {
+                    NodeId = se.NodeId,
+                    Slug = se.Slug,
+                    NameAr = sLeafNameAr,
+                    NameEn = sLeafNameEn,
+                    Path = se.DisplayPathAr,
+                    RootSlug = sRootSlug,
+                    RootNameAr = sRootNameAr,
+                    RootNameEn = sRootNameEn,
+                    LeafSlug = sLeafSlug,
+                    LeafNameAr = sLeafNameAr,
+                    LeafNameEn = sLeafNameEn,
+                    Source = se.Source,
+                    PathSlugs = new List<string>(se.PathSlugs),
+                    PathNamesAr = new List<string>(se.PathNamesAr),
+                    PathNamesEn = new List<string>(se.PathNamesEn)
+                };
+            }
+        }
 
         return result;
     }

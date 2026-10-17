@@ -1,4 +1,4 @@
-﻿import { Component, OnInit, OnDestroy, AfterViewInit, AfterViewChecked, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, AfterViewChecked, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink, Router } from '@angular/router';
 import { LucideAngularModule, ArrowLeft, TrendingUp, TrendingDown, AlertCircle, DollarSign, ShieldCheck, Star, Building2, Calendar, PieChart, BarChart3, FileText, ExternalLink, Loader2 } from 'lucide-angular';
@@ -66,7 +66,7 @@ async function ensureChartJs(): Promise<typeof import('chart.js') | null> {
                 {{ fund.classificationPathAr }}
               </span>
               <span class="fund-type" [style.background]="getFundAccent(fund.type).tint" [style.color]="getFundAccent(fund.type).accent">
-                {{ fund.typeNameAr }}
+                {{ fund.effectiveClassification?.rootNameAr || fund.typeNameAr }}
               </span>
               <span *ngIf="fund.assetManagerName" style="font-size: 12px; background: var(--muted); padding: 2px 8px; border-radius: 6px; border: 1px solid var(--border);">
                 {{ fund.assetManagerName }}
@@ -194,6 +194,9 @@ async function ensureChartJs(): Promise<typeof import('chart.js') | null> {
               <div style="font-weight: 600; font-size: 14px;">{{ sim.code }}</div>
               <div style="font-size: 12px; color: var(--muted-foreground); margin-top: 4px;">{{ sim.nameAr }}</div>
               <div style="font-size: 11px; color: var(--muted-foreground); margin-top: 4px;">{{ sim.nameEn }}</div>
+              <div *ngIf="sim.effectiveClassification?.rootNameAr || sim.typeNameAr" style="font-size: 11px; color: var(--primary); font-weight: 600; margin-top: 6px;">
+                {{ sim.effectiveClassification?.rootNameAr || sim.typeNameAr }}
+              </div>
             </a>
           </div>
         </div>

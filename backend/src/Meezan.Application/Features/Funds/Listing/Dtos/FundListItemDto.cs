@@ -24,6 +24,7 @@ public sealed class FundListItemDto : IFundTypeFields
     public string ClassificationSlug { get; set; } = string.Empty;
     public string ClassificationPathAr { get; set; } = string.Empty;
     public string ClassificationSource { get; set; } = string.Empty;
+    public Meezan.Application.Features.Funds.Classification.Dtos.EffectiveClassificationDto? EffectiveClassification { get; set; }
     public FundRiskLevel RiskLevel { get; set; }
     public bool IsIslamic { get; set; }
     public bool IsFeatured { get; set; }

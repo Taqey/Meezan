@@ -17,4 +17,6 @@ public interface IFundTypeFields
     string ClassificationPathAr { get; set; }
     /// <summary>Assignment source: Manual | Auto | SNDUK | None.</summary>
     string ClassificationSource { get; set; }
+    /// <summary>Effective classification details (nodeId, slug, names, full path, root and leaf).</summary>
+    Meezan.Application.Features.Funds.Classification.Dtos.EffectiveClassificationDto? EffectiveClassification { get; set; }
 }

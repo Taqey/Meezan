@@ -39,6 +39,7 @@
     "classificationSlug": "string:",
     "classificationPathAr": "string:",
     "classificationSource": "string:None",
+    "effectiveClassification": null,
     "descriptionAr": "string:",
     "descriptionEn": "string:",
     "investmentStrategy": "string:",
