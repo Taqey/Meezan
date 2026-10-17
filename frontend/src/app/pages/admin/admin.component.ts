@@ -53,7 +53,8 @@ import {
   FundSyncSettings,
   FundSyncLog,
   FundSyncSettingsUpdateRequest,
-  FundSyncLogDetail
+  FundSyncLogDetail,
+  FundPriceSyncResultDto
 } from '../../models/api.models';
 import {
   SHARIAH_STANDARDS,
@@ -292,15 +293,9 @@ interface EditableMarketForm {
                     style="border: 1px solid var(--border); border-radius: 6px; padding: 2px 6px; font-size: 12px; font-family: inherit; background: #fbfcfb;" />
                   <span>بتوقيت القاهرة</span>
                 </div>
-                <div><strong>آخر تشغيل مسجل:</strong> {{ getFundSyncLastRunText() }}</div>
-                <div *ngIf="fundSyncHistory[0]"><strong>نتيجة آخر تشغيل:</strong>
-                  <span [style.color]="getFundSyncStatusColor(fundSyncHistory[0].status)">
-                    {{ getFundSyncStatusLabel(fundSyncHistory[0].status) }}
-                  </span>
-                  <span *ngIf="fundSyncHistory[0].totalFunds"> — تم تحديث {{ fundSyncHistory[0].updatedFunds }} من {{ fundSyncHistory[0].totalFunds }} صندوق</span>
-                </div>
+                <div><strong>آخر تحديث أسعار:</strong> {{ getFundPriceSyncLastRunText() }}</div>
+                <div><strong>آخر مزامنة كاملة:</strong> {{ getFundFullSyncLastRunText() }}</div>
               </div>
-
               <!-- Automation Toggle -->
               <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: #f5f3ff; border: 1px solid #ddd6fe; border-radius: 8px; margin-bottom: 16px;"
                    [style.background]="fundSyncSettings?.isEnabled ? '#f5f3ff' : '#fef2f2'"
@@ -326,10 +321,23 @@ interface EditableMarketForm {
               </div>
 
               <div style="display: flex; flex-direction: column; gap: 8px;">
-                <button class="btn btn-primary" (click)="runFundSyncNow()" [disabled]="fundSyncRunning" style="width: 100%; justify-content: center; background: #7c3aed; border-color: #7c3aed;">
-                  <lucide-icon [img]="PlayIcon" size="16"></lucide-icon>
-                  {{ fundSyncRunning ? 'جارٍ سحب الصناديق...' : 'تشغيل سحب الصناديق الآن (Run Funds)' }}
-                </button>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                  <button class="btn btn-primary" (click)="runFundPriceSyncNow()" [disabled]="fundPriceSyncRunning || fundSyncRunning" style="justify-content: center; background: #059669; border-color: #059669;">
+                    <lucide-icon [img]="PlayIcon" size="15"></lucide-icon>
+                    {{ fundPriceSyncRunning ? 'جارٍ التحديث...' : 'تحديث الأسعار الآن' }}
+                  </button>
+                  <button class="btn btn-primary" (click)="runFundSyncNow()" [disabled]="fundSyncRunning || fundPriceSyncRunning" style="justify-content: center; background: #7c3aed; border-color: #7c3aed;">
+                    <lucide-icon [img]="PlayIcon" size="15"></lucide-icon>
+                    {{ fundSyncRunning ? 'جارٍ المزامنة...' : 'مزامنة كاملة' }}
+                  </button>
+                </div>
+                <div *ngIf="fundPriceSyncResult" style="font-size: 11px; text-align: center; color: #059669;">
+                  تم تحديث أسعار {{ fundPriceSyncResult.updatedFunds }} صندوق في {{ fundPriceSyncResult.durationSeconds }} ثانية
+                  <span *ngIf="fundPriceSyncResult.newInSndukCount > 0"> ({{ fundPriceSyncResult.newInSndukCount }} صندوق جديد مكتشف)</span>
+                </div>
+                <div *ngIf="fundPriceSyncError" style="font-size: 11px; text-align: center; color: var(--bad);">
+                  {{ fundPriceSyncError }}
+                </div>
                 <div *ngIf="fundSyncRunResult" style="font-size: 11px; text-align: center;" [style.color]="getFundSyncStatusColor(fundSyncRunResult.status)">
                   {{ fundSyncRunResultText() }}
                 </div>
@@ -1748,6 +1756,9 @@ export class AdminComponent implements OnInit, OnDestroy {
   fundSyncSettings?: FundSyncSettings;
   fundSyncLoading = false;
   fundSyncRunning = false;
+  fundPriceSyncRunning = false;
+  fundPriceSyncResult?: FundPriceSyncResultDto | null;
+  fundPriceSyncError: string | null = null;
   fundSyncRunResult?: FundSyncLog | null;
   fundSyncRunError: string | null = null;
   fundSyncHistory: FundSyncLog[] = [];
@@ -1994,6 +2005,40 @@ export class AdminComponent implements OnInit, OnDestroy {
         this.toast.show('فشل حفظ الإعدادات: ' + (err.error?.message || err.message || 'خطأ غير متوقع'));
       }
     });
+  }
+
+  runFundPriceSyncNow(): void {
+    if (this.fundPriceSyncRunning) return;
+    this.fundPriceSyncRunning = true;
+    this.fundPriceSyncError = null;
+    this.api.runFundPriceSyncNow().subscribe({
+      next: (res) => {
+        this.fundPriceSyncResult = res;
+        this.fundPriceSyncRunning = false;
+        this.loadFundSyncHistory();
+        this.toast.show(`تم تحديث أسعار ${res.updatedFunds} صندوق في ${res.durationSeconds} ثانية`);
+      },
+      error: (err) => {
+        this.fundPriceSyncRunning = false;
+        this.fundPriceSyncError = err.error?.message || err.message || 'فشل تحديث أسعار الصناديق';
+      }
+    });
+  }
+
+  getFundPriceSyncLastRunText(): string {
+    const latest = this.fundSyncHistory.find(h => h.mode === 'Prices');
+    if (latest) {
+      return `${new Date(latest.runAt).toLocaleString('ar-EG')} (${fundSyncStatusLabelAr(normFundSyncStatus(latest.status))}) - ${latest.updatedFunds} صندوق`;
+    }
+    return 'لا يوجد تشغيل سابق';
+  }
+
+  getFundFullSyncLastRunText(): string {
+    const latest = this.fundSyncHistory.find(h => h.mode === 'Full' || !h.mode);
+    if (latest) {
+      return `${new Date(latest.runAt).toLocaleString('ar-EG')} (${fundSyncStatusLabelAr(normFundSyncStatus(latest.status))}) - ${latest.updatedFunds} صندوق`;
+    }
+    return 'لا يوجد تشغيل سابق';
   }
 
   runFundSyncNow(): void {

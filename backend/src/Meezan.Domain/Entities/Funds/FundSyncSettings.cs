@@ -9,6 +9,8 @@ public class FundSyncSettings
 
     public bool IsEnabled { get; set; } = true;
     public TimeOnly RunTimeCairo { get; set; } = new TimeOnly(0, 0); // 00:00 Cairo
+    public bool FullSyncScheduleEnabled { get; set; } = false; // OFF by default
+    public TimeOnly FullSyncRunTimeCairo { get; set; } = new TimeOnly(2, 0); // optional 02:00 Cairo
     public bool PreventOverlap { get; set; } = true;
     public int RequestDelaySeconds { get; set; } = 2; // delay between fund requests
     public int MaxRetries { get; set; } = 3;

@@ -248,6 +248,7 @@ interface FundCategoryRow {
             <thead>
               <tr>
                 <th>التاريخ</th>
+                <th>النوع</th>
                 <th>الحالة</th>
                 <th>الإجمالي</th>
                 <th>تم تحديثه</th>
@@ -259,6 +260,7 @@ interface FundCategoryRow {
             <tbody>
               <tr *ngFor="let run of syncRuns" (click)="toggleRunDetails(run.id)" style="cursor: pointer;" [style.background]="selectedRunId === run.id ? 'var(--muted)' : 'transparent'">
                 <td>{{ run.runAt | date:'yyyy-MM-dd HH:mm' }}</td>
+                <td><span class="chip" [style.background]="run.mode === 'Prices' ? '#ecfdf5' : '#f5f3ff'" [style.color]="run.mode === 'Prices' ? '#059669' : '#7c3aed'">{{ run.mode === 'Prices' ? 'أسعار' : 'شامل' }}</span></td>
                 <td><span [style.color]="syncStatusColor(run.status)" style="font-weight: 600;">{{ syncStatusLabel(run.status) }}</span></td>
                 <td>{{ run.totalFunds }}</td>
                 <td style="color: var(--good);">{{ run.updatedFunds }}</td>

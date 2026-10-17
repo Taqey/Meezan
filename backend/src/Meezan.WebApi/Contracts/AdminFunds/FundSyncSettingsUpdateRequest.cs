@@ -10,4 +10,6 @@ public sealed class FundSyncSettingsUpdateRequest
     public int? RetryBackoffSeconds { get; set; }
     public bool? AutoIndexFundTypeEnabled { get; set; }
     public bool? AutoClassificationEnabled { get; set; }
+    public bool? FullSyncScheduleEnabled { get; set; }
+    public TimeOnly? FullSyncRunTimeCairo { get; set; }
 }

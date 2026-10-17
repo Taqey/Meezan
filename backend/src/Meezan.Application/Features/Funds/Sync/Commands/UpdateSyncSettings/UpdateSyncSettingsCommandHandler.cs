@@ -35,6 +35,8 @@ public sealed class UpdateSyncSettingsCommandHandler : IRequestHandler<UpdateSyn
         settings.RetryBackoffSeconds = request.RetryBackoffSeconds ?? settings.RetryBackoffSeconds;
         if (request.AutoIndexFundTypeEnabled.HasValue) settings.AutoIndexFundTypeEnabled = request.AutoIndexFundTypeEnabled.Value;
         if (request.AutoClassificationEnabled.HasValue) settings.AutoClassificationEnabled = request.AutoClassificationEnabled.Value;
+        if (request.FullSyncScheduleEnabled.HasValue) settings.FullSyncScheduleEnabled = request.FullSyncScheduleEnabled.Value;
+        if (request.FullSyncRunTimeCairo.HasValue) settings.FullSyncRunTimeCairo = request.FullSyncRunTimeCairo.Value;
         settings.UpdatedAt = DateTime.UtcNow;
         settings.UpdatedBy = "admin";
 

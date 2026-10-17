@@ -1103,6 +1103,7 @@ export interface FundSyncLog {
   runAt: string;
   finishedAt: string | null;
   status: 'running' | 'success' | 'partial' | 'failed';
+  mode?: 'Prices' | 'Full' | string;
   totalFunds: number;
   updatedFunds: number;
   failedFunds: number;
@@ -1110,6 +1111,16 @@ export interface FundSyncLog {
   errorSummary: string | null;
   triggeredBy: string;
   durationSeconds: number;
+}
+
+export interface FundPriceSyncResultDto {
+  totalSndukFunds: number;
+  updatedFunds: number;
+  missingFromSndukCount: number;
+  newInSndukCount: number;
+  durationSeconds: number;
+  syncedAtUtc: string;
+  message?: string | null;
 }
 
 export interface FundSyncLogDetail {
@@ -1134,6 +1145,8 @@ export interface FundSyncSettingsUpdateRequest {
   maxRetries?: number;
   retryBackoffSeconds?: number;
   autoClassificationEnabled?: boolean;
+  fullSyncScheduleEnabled?: boolean;
+  fullSyncRunTimeCairo?: string;
 }
 
 export interface FundCategory {

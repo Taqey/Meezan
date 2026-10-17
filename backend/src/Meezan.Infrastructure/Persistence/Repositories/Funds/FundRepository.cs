@@ -215,6 +215,12 @@ public class FundPriceHistoryRepository : IFundPriceHistoryRepository
             .FirstOrDefaultAsync(cancellationToken);
     }
 
+    public async Task<FundPriceHistory?> GetByFundIdAndDateAsync(int fundId, DateTime date, CancellationToken cancellationToken = default)
+    {
+        return await _context.FundPriceHistories
+            .FirstOrDefaultAsync(p => p.FundId == fundId && p.Date.Date == date.Date, cancellationToken);
+    }
+
     public async Task<DateTime?> GetMaxDateAsync(int fundId, CancellationToken cancellationToken = default)
     {
         return await _context.FundPriceHistories

@@ -50,6 +50,7 @@ import {
   FundSyncSettings,
   FundSyncSettingsUpdateRequest,
   FundSyncLog,
+  FundPriceSyncResultDto,
   FundSyncLogDetail,
   FundCategory,
   FundCategoryOverride,
@@ -592,6 +593,10 @@ export class ApiService {
 
   runFundSyncNow(): Observable<FundSyncLog> {
     return this.http.post<FundSyncLog>(`${this.baseUrl}/api/admin/funds/sync/run`, {});
+  }
+
+  runFundPriceSyncNow(): Observable<FundPriceSyncResultDto> {
+    return this.http.post<FundPriceSyncResultDto>(`${this.baseUrl}/api/admin/funds/sync/prices`, {});
   }
 
   getFundSyncRunDetails(runId: number): Observable<FundSyncLogDetail[]> {

@@ -15,6 +15,7 @@ public class FundSyncLog
     public int SkippedFunds { get; set; }
     public string? ErrorSummary { get; set; }
     public string TriggeredBy { get; set; } = "Scheduled"; // "Scheduled" or "Manual"
+    public string Mode { get; set; } = "Full"; // "Prices" or "Full"
     public int DurationSeconds { get; set; }
     public ICollection<FundSyncLogDetail> Details { get; set; } = new List<FundSyncLogDetail>();
 }

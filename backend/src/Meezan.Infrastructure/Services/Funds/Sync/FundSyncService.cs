@@ -1,7 +1,9 @@
+using Meezan.Application.Common.Interfaces.Caching;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
 using Meezan.Application.Common.Interfaces.Repositories.Funds;
 using Meezan.Application.Common.Interfaces.Storage;
+using Meezan.Application.Features.Funds.Sync.Dtos;
 using Meezan.Domain.Entities;
 using Meezan.Infrastructure.Services.Funds.Classification;
 using Microsoft.Extensions.DependencyInjection;
@@ -31,7 +33,7 @@ public class FundSyncService : IFundSyncService
     /// Returns false when another live run holds it.
     /// </summary>
     private async Task<bool> TryAcquireRunAsync(
-        IFundSyncLogRepository logRepo, string triggeredBy, CancellationToken ct)
+        IFundSyncLogRepository logRepo, string triggeredBy, string mode, CancellationToken ct)
     {
         var now = DateTime.UtcNow;
         var latest = await logRepo.GetLatestAsync(ct);
@@ -61,6 +63,7 @@ public class FundSyncService : IFundSyncService
         {
             Status = FundSyncStatus.Running,
             TriggeredBy = triggeredBy,
+            Mode = mode,
             RunAt = now
         };
         await logRepo.AddAsync(log, ct);
@@ -81,7 +84,7 @@ public class FundSyncService : IFundSyncService
         var logRepo = scope.ServiceProvider.GetRequiredService<IFundSyncLogRepository>();
 
         // Overlap guard: lease-based so a crashed run cannot block future runs.
-        if (settings.PreventOverlap && !await TryAcquireRunAsync(logRepo, triggeredBy, cancellationToken))
+        if (settings.PreventOverlap && !await TryAcquireRunAsync(logRepo, triggeredBy, "Full", cancellationToken))
         {
             throw new InvalidOperationException(
                 $"Another sync run is already in progress (lease {RunLeaseMinutes} min).");
@@ -680,6 +683,227 @@ public class FundSyncService : IFundSyncService
         using var scope = _services.CreateScope();
         var logRepo = scope.ServiceProvider.GetRequiredService<IFundSyncLogRepository>();
         return await logRepo.GetLatestAsync(cancellationToken);
+    }
+
+    public async Task<FundPriceSyncResultDto> RunPriceSyncAsync(string triggeredBy, CancellationToken cancellationToken = default)
+    {
+        using var scope = _services.CreateScope();
+        var settingsRepo = scope.ServiceProvider.GetRequiredService<IFundSyncSettingsRepository>();
+        var settings = await settingsRepo.GetAsync(cancellationToken);
+
+        if (settings == null || !settings.IsEnabled)
+        {
+            throw new InvalidOperationException("Fund sync is disabled");
+        }
+
+        var logRepo = scope.ServiceProvider.GetRequiredService<IFundSyncLogRepository>();
+
+        if (settings.PreventOverlap && !await TryAcquireRunAsync(logRepo, triggeredBy, "Prices", cancellationToken))
+        {
+            throw new InvalidOperationException(
+                $"Another sync run is already in progress (lease {RunLeaseMinutes} min).");
+        }
+
+        var syncLog = logRepo.LastAdded!;
+        await scope.ServiceProvider.GetRequiredService<IUnitOfWork>().SaveChangesAsync(cancellationToken);
+
+        var startTime = DateTime.UtcNow;
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        int updatedFunds = 0;
+        int failedFunds = 0;
+        int newFundsDetected = 0;
+        int missingFundsReported = 0;
+        var details = new List<FundSyncLogDetail>();
+
+        try
+        {
+            var sndukClient = scope.ServiceProvider.GetRequiredService<ISndukFundClient>();
+            var fundListResponse = await sndukClient.GetFundListAsync(cancellationToken);
+
+            var sndukFunds = (fundListResponse?.Funds ?? [])
+                .GroupBy(f => f.Id)
+                .Select(g => g.First())
+                .ToArray();
+
+            if (sndukFunds.Length == 0)
+            {
+                throw new InvalidOperationException("No funds returned from SNDUK");
+            }
+
+            syncLog.TotalFunds = sndukFunds.Length;
+            _logger.LogInformation("Price sync: Fetched {Count} funds from SNDUK", sndukFunds.Length);
+
+            var fundRepo = scope.ServiceProvider.GetRequiredService<IFundRepository>();
+            var priceRepo = scope.ServiceProvider.GetRequiredService<IFundPriceHistoryRepository>();
+            var detailRepo = scope.ServiceProvider.GetRequiredService<IFundSyncLogDetailRepository>();
+            var allDbFunds = await fundRepo.GetAllAsync(cancellationToken);
+            var dbFundsBySndukId = allDbFunds.ToDictionary(f => f.SndukId);
+            var dbFundsByCode = allDbFunds.ToDictionary(f => f.Code.Trim().ToUpperInvariant());
+            var matchedSndukIds = new HashSet<long>();
+
+            var tz = Meezan.Infrastructure.Services.BackgroundServices.FundSyncBackgroundService.ResolveCairoTimeZone();
+            var nowCairoDate = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, tz).Date;
+
+            foreach (var sndukFund in sndukFunds)
+            {
+                if (cancellationToken.IsCancellationRequested) break;
+
+                // Match with our DB
+                Fund? existingFund = null;
+                if (dbFundsBySndukId.TryGetValue(sndukFund.Id, out var fById))
+                {
+                    existingFund = fById;
+                }
+                else if (!string.IsNullOrWhiteSpace(sndukFund.Code) && dbFundsByCode.TryGetValue(sndukFund.Code.Trim().ToUpperInvariant(), out var fByCode))
+                {
+                    existingFund = fByCode;
+                }
+
+                if (existingFund == null)
+                {
+                    newFundsDetected++;
+                    continue;
+                }
+
+                matchedSndukIds.Add(existingFund.SndukId);
+
+                var detail = new FundSyncLogDetail
+                {
+                    FundSyncLogId = syncLog.Id,
+                    FundId = existingFund.Id,
+                    FundCode = existingFund.Code,
+                    AttemptedAt = DateTime.UtcNow
+                };
+
+                try
+                {
+                    var price = ParseDecimal(sndukFund.CurrentPrice);
+                    if (price.HasValue && price.Value > 0)
+                    {
+                        existingFund.CurrentPrice = price.Value;
+                    }
+                    if (sndukFund.DailyChange != null)
+                    {
+                        existingFund.DailyChange = ParseDecimal(sndukFund.DailyChange);
+                    }
+                    if (sndukFund.Returns != null)
+                    {
+                        existingFund.Return1M = ParseDecimal(sndukFund.Returns.M1);
+                        existingFund.Return3M = ParseDecimal(sndukFund.Returns.M3);
+                        existingFund.Return6M = ParseDecimal(sndukFund.Returns.M6);
+                        existingFund.Return1Y = ParseDecimal(sndukFund.Returns.Y1);
+                        existingFund.Return3Y = ParseDecimal(sndukFund.Returns.Y3);
+                    }
+
+                    existingFund.PricesUpdatedAt = DateTime.UtcNow;
+                    fundRepo.Update(existingFund);
+
+                    // Upsert today's point in FundPriceHistory
+                    if (price.HasValue && price.Value > 0)
+                    {
+                        var pointDate = ParseDateTime(sndukFund.UpdatedAt)?.Date ?? nowCairoDate;
+                        var existingPoint = await priceRepo.GetByFundIdAndDateAsync(existingFund.Id, pointDate, cancellationToken);
+                        if (existingPoint == null)
+                        {
+                            await priceRepo.AddRangeAsync(new[]
+                            {
+                                new FundPriceHistory
+                                {
+                                    FundId = existingFund.Id,
+                                    Date = pointDate,
+                                    Price = price.Value,
+                                    Change = existingFund.DailyChange,
+                                    CreatedAt = DateTime.UtcNow
+                                }
+                            }, cancellationToken);
+                        }
+                        else
+                        {
+                            existingPoint.Price = price.Value;
+                            existingPoint.Change = existingFund.DailyChange;
+                            priceRepo.UpdateRange(new[] { existingPoint });
+                        }
+                    }
+
+                    updatedFunds++;
+                    detail.Status = FundSyncDetailStatus.Success;
+                }
+                catch (Exception ex)
+                {
+                    failedFunds++;
+                    detail.Status = FundSyncDetailStatus.Failed;
+                    detail.ErrorMessage = ex.Message;
+                    _logger.LogError(ex, "Price sync: Failed to update price for fund {Code}", sndukFund.Code);
+                }
+                finally
+                {
+                    details.Add(detail);
+                }
+            }
+
+            missingFundsReported = allDbFunds.Count(f => !matchedSndukIds.Contains(f.SndukId));
+
+            if (details.Any())
+            {
+                await detailRepo.AddRangeAsync(details, cancellationToken);
+            }
+
+            stopwatch.Stop();
+            var durationSeconds = Math.Round(stopwatch.Elapsed.TotalSeconds, 2);
+
+            syncLog.UpdatedFunds = updatedFunds;
+            syncLog.FailedFunds = failedFunds;
+            syncLog.SkippedFunds = newFundsDetected;
+            syncLog.Status = failedFunds > 0 ? FundSyncStatus.Partial : FundSyncStatus.Success;
+            syncLog.FinishedAt = DateTime.UtcNow;
+            syncLog.DurationSeconds = (int)stopwatch.Elapsed.TotalSeconds;
+
+            var summaryParts = new List<string>();
+            if (failedFunds > 0) summaryParts.Add($"{failedFunds} fund(s) failed");
+            if (newFundsDetected > 0) summaryParts.Add($"{newFundsDetected} new funds detected, run a full sync");
+            if (missingFundsReported > 0) summaryParts.Add($"{missingFundsReported} DB fund(s) missing from SNDUK list");
+            syncLog.ErrorSummary = summaryParts.Count > 0 ? string.Join("; ", summaryParts) : null;
+
+            logRepo.Update(syncLog);
+            await scope.ServiceProvider.GetRequiredService<IUnitOfWork>().SaveChangesAsync(cancellationToken);
+
+            // Task 3 Hook: Invalidate Price Cache
+            var priceCacheInvalidator = scope.ServiceProvider.GetService<IFundPriceCacheInvalidator>();
+            if (priceCacheInvalidator != null)
+            {
+                await priceCacheInvalidator.InvalidatePriceCacheAsync(cancellationToken);
+            }
+
+            _logger.LogInformation("Fund price sync completed: {Updated} updated, {Failed} failed, {New} new, {Missing} missing, duration: {Duration}s",
+                updatedFunds, failedFunds, newFundsDetected, missingFundsReported, durationSeconds);
+
+            return new FundPriceSyncResultDto(
+                TotalSndukFunds: sndukFunds.Length,
+                UpdatedFunds: updatedFunds,
+                MissingFromSndukCount: missingFundsReported,
+                NewInSndukCount: newFundsDetected,
+                DurationSeconds: durationSeconds,
+                SyncedAtUtc: DateTime.UtcNow,
+                Message: syncLog.ErrorSummary);
+        }
+        catch (Exception ex)
+        {
+            stopwatch.Stop();
+            syncLog.Status = FundSyncStatus.Failed;
+            syncLog.FinishedAt = DateTime.UtcNow;
+            syncLog.DurationSeconds = (int)stopwatch.Elapsed.TotalSeconds;
+            syncLog.ErrorSummary = ex.Message;
+
+            logRepo.Update(syncLog);
+            try
+            {
+                await scope.ServiceProvider.GetRequiredService<IUnitOfWork>().SaveChangesAsync(cancellationToken);
+            }
+            catch { }
+
+            _logger.LogError(ex, "Fund price sync job failed");
+            throw;
+        }
     }
 
     public async Task<(List<FundSyncLog> Items, int TotalCount)> GetRunHistoryAsync(int page, int pageSize, CancellationToken cancellationToken = default)

@@ -18,8 +18,10 @@ using Meezan.Application.Features.Funds.Classification.Commands.ResetFundOverrid
 using Meezan.Application.Features.Funds.Details.Queries.GetAdminFundById;
 using Meezan.Application.Features.Funds.Listing.Queries.GetAdminFunds;
 using Meezan.Application.Features.Funds.Sync.Commands.BackfillFundLogos;
+using Meezan.Application.Features.Funds.Sync.Commands.RunFundPriceSync;
 using Meezan.Application.Features.Funds.Sync.Commands.RunFundSync;
 using Meezan.Application.Features.Funds.Sync.Commands.UpdateSyncSettings;
+using Meezan.Application.Features.Funds.Sync.Dtos;
 using Meezan.Application.Features.Funds.Sync.Queries.GetLatestSyncRun;
 using Meezan.Application.Features.Funds.Sync.Queries.GetSyncHistory;
 using Meezan.Application.Features.Funds.Sync.Queries.GetSyncRunDetails;
@@ -67,7 +69,9 @@ public class AdminFundsController : ControllerBase
             MaxRetries = request.MaxRetries,
             RetryBackoffSeconds = request.RetryBackoffSeconds,
             AutoIndexFundTypeEnabled = request.AutoIndexFundTypeEnabled,
-            AutoClassificationEnabled = request.AutoClassificationEnabled
+            AutoClassificationEnabled = request.AutoClassificationEnabled,
+            FullSyncScheduleEnabled = request.FullSyncScheduleEnabled,
+            FullSyncRunTimeCairo = request.FullSyncRunTimeCairo
         };
         var result = await _sender.Send(cmd, cancellationToken);
         return result.ToActionResult();
@@ -103,6 +107,14 @@ public class AdminFundsController : ControllerBase
     public async Task<IActionResult> RunSyncNow(CancellationToken cancellationToken = default)
     {
         var result = await _sender.Send(new RunFundSyncCommand("Manual"), cancellationToken);
+        return result.ToActionResult();
+    }
+
+    [HttpPost("sync/prices")]
+    [ProducesResponseType(typeof(FundPriceSyncResultDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> RunPriceSyncNow(CancellationToken cancellationToken = default)
+    {
+        var result = await _sender.Send(new RunFundPriceSyncCommand("Manual"), cancellationToken);
         return result.ToActionResult();
     }
 
