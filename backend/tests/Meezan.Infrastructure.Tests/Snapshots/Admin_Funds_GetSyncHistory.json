@@ -13,6 +13,7 @@
         "skippedFunds": "number:int",
         "errorSummary": "string:",
         "triggeredBy": "string:Manual",
+        "mode": "string:Full",
         "durationSeconds": "number:int",
         "details": []
       }

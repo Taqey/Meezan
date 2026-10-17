@@ -4,6 +4,8 @@
     "id": "number:int",
     "isEnabled": "bool:True",
     "runTimeCairo": "string:00:00:00",
+    "fullSyncScheduleEnabled": "bool:False",
+    "fullSyncRunTimeCairo": "string:02:00:00",
     "preventOverlap": "bool:True",
     "requestDelaySeconds": "number:int",
     "maxRetries": "number:int",
