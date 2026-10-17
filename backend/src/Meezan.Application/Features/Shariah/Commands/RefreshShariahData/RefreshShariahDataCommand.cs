@@ -1,6 +1,21 @@
 using MediatR;
-using Meezan.Application.Common.Interfaces;
-using Meezan.Application.Common.Models;
+using Meezan.Application.Common.Interfaces.Integrations;
+using Meezan.Application.Common.Interfaces.Persistence;
+using Meezan.Application.Common.Interfaces.Queries.Funds;
+using Meezan.Application.Common.Interfaces.Queries.RemovalCandidates;
+using Meezan.Application.Common.Interfaces.Queries.Stocks;
+using Meezan.Application.Common.Interfaces.Repositories.Funds;
+using Meezan.Application.Common.Interfaces.Repositories.Indices;
+using Meezan.Application.Common.Interfaces.Repositories.Market;
+using Meezan.Application.Common.Interfaces.Repositories.Scraping;
+using Meezan.Application.Common.Interfaces.Repositories.Sectors;
+using Meezan.Application.Common.Interfaces.Repositories.Shariah;
+using Meezan.Application.Common.Interfaces.Repositories.Stocks;
+using Meezan.Application.Common.Interfaces.Repositories.System;
+using Meezan.Application.Common.Interfaces.Security;
+using Meezan.Application.Common.Interfaces.Storage;
+using Meezan.Application.Common.Models.Funds;
+using Meezan.Application.Common.Models.Stocks;
 using Meezan.Domain.Entities;
 using Meezan.Domain.Enums;
 using Microsoft.Extensions.Logging;
@@ -243,7 +258,7 @@ public class RefreshShariahDataCommandHandler : IRequestHandler<RefreshShariahDa
                 // changes alone never trigger it (Halal follows the stored ratio verdict).
                 var oldVotes = existingOpinions
                     .Where(o => o.SourceKey != ShariahSourceKey.HalalBourse)
-                    .ToDictionary(o => o.SourceKey, o => (Common.ShariahVerdictService.SanitizeOpinionStatus(o.Status), o.Percentage));
+                    .ToDictionary(o => o.SourceKey, o => (Common.Services.Shariah.ShariahVerdictService.SanitizeOpinionStatus(o.Status), o.Percentage));
                 var opinionsDict = existingOpinions.ToDictionary(o => o.SourceKey);
 
                 await UpdateOrAddOpinionAsync(opinionsDict, stock.Id, ShariahSourceKey.HalalBourse, item.HalalBourse, now, cancellationToken);
@@ -264,19 +279,19 @@ public class RefreshShariahDataCommandHandler : IRequestHandler<RefreshShariahDa
                 decimal? newEffRevenue = metrics.EffectiveHaramRevenuePercentage ?? metrics.SpHaramEarningPercentage;
                 decimal? newEffDebt = metrics.EffectiveLoansPercentage;
                 bool? newEffActivity = metrics.EffectiveCoreActivityCompliant;
-                bool ratiosChanged = Common.ShariahVerdictService.HalalInputsChanged(
+                bool ratiosChanged = Common.Services.Shariah.ShariahVerdictService.HalalInputsChanged(
                     oldEffRevenue, oldEffDebt, oldEffActivity, newEffRevenue, newEffDebt, newEffActivity);
                 var newVotes = opinionsDict.Values
                     .Where(o => o.SourceKey != ShariahSourceKey.HalalBourse)
-                    .ToDictionary(o => o.SourceKey, o => (Common.ShariahVerdictService.SanitizeOpinionStatus(o.Status), o.Percentage));
-                bool opinionsChanged = Common.ShariahVerdictService.OpinionInputsChanged(oldVotes, newVotes);
+                    .ToDictionary(o => o.SourceKey, o => (Common.Services.Shariah.ShariahVerdictService.SanitizeOpinionStatus(o.Status), o.Percentage));
+                bool opinionsChanged = Common.Services.Shariah.ShariahVerdictService.OpinionInputsChanged(oldVotes, newVotes);
                 if (compliance == null)
                 {
                     // No stored row yet: create one with the computed Halal verdict
                     // and the aggregated overall verdict.
                     try
                         {
-                            var v0 = Common.ShariahVerdictService.Compute(newEffRevenue, newEffDebt, null, null, newEffActivity);
+                            var v0 = Common.Services.Shariah.ShariahVerdictService.Compute(newEffRevenue, newEffDebt, null, null, newEffActivity);
                             compliance = new ShariahCompliance
                             {
                                 StockId = stock.Id,
@@ -291,9 +306,9 @@ public class RefreshShariahDataCommandHandler : IRequestHandler<RefreshShariahDa
                                 LastCheckedAt = now,
                                 UpdatedAt = now
                             };
-                            Common.ShariahVerdictService.TryApplyHalal(compliance, v0, _logger);
+                            Common.Services.Shariah.ShariahVerdictService.TryApplyHalal(compliance, v0, _logger);
                             bool member0 = await _stockRepository.IsShariahIndexMemberAsync(stock.Id, cancellationToken);
-                            Common.ShariahVerdictService.ApplyOverall(compliance, newEffActivity, opinionsDict.Values, member0, _logger);
+                            Common.Services.Shariah.ShariahVerdictService.ApplyOverall(compliance, newEffActivity, opinionsDict.Values, member0, _logger);
                             await _complianceRepository.AddAsync(compliance, cancellationToken);
                         }
                     catch (Exception vex)
@@ -306,8 +321,8 @@ public class RefreshShariahDataCommandHandler : IRequestHandler<RefreshShariahDa
                 {
                     bool dirty = false;
 
-                    bool hasBoardNow = Common.ShariahBoardDetector.IsBoardNote(compliance.Note)
-                        || opinionsDict.Values.Any(o => Common.ShariahBoardDetector.IsBoardNote(o.Note));
+                    bool hasBoardNow = Common.Services.Shariah.ShariahBoardDetector.IsBoardNote(compliance.Note)
+                        || opinionsDict.Values.Any(o => Common.Services.Shariah.ShariahBoardDetector.IsBoardNote(o.Note));
                     if (compliance.HasShariahBoard != hasBoardNow)
                     {
                         compliance.HasShariahBoard = hasBoardNow;
@@ -318,8 +333,8 @@ public class RefreshShariahDataCommandHandler : IRequestHandler<RefreshShariahDa
                     {
                         try
                         {
-                            var v = Common.ShariahVerdictService.Compute(newEffRevenue, newEffDebt, null, null, newEffActivity);
-                            Common.ShariahVerdictService.TryApplyHalal(compliance, v, _logger);
+                            var v = Common.Services.Shariah.ShariahVerdictService.Compute(newEffRevenue, newEffDebt, null, null, newEffActivity);
+                            Common.Services.Shariah.ShariahVerdictService.TryApplyHalal(compliance, v, _logger);
                             dirty = true;
                         }
                         catch (Exception vex)
@@ -333,7 +348,7 @@ public class RefreshShariahDataCommandHandler : IRequestHandler<RefreshShariahDa
                         try
                         {
                             bool member = await _stockRepository.IsShariahIndexMemberAsync(stock.Id, cancellationToken);
-                            if (Common.ShariahVerdictService.ApplyOverall(compliance, newEffActivity, opinionsDict.Values, member, _logger))
+                            if (Common.Services.Shariah.ShariahVerdictService.ApplyOverall(compliance, newEffActivity, opinionsDict.Values, member, _logger))
                                 dirty = true;
                         }
                         catch (Exception vex)
@@ -406,10 +421,10 @@ public class RefreshShariahDataCommandHandler : IRequestHandler<RefreshShariahDa
 
         if (existingDict.TryGetValue(key, out var existing))
         {
-            existing.Status = Common.ShariahVerdictService.SanitizeOpinionStatus(dto.Status);
+            existing.Status = Common.Services.Shariah.ShariahVerdictService.SanitizeOpinionStatus(dto.Status);
             existing.Percentage = dto.Percentage;
             existing.Note = dto.Note;
-            existing.PdfUrl = Common.ShariahPdfUrlNormalizer.Normalize(dto.PdfUrl);
+            existing.PdfUrl = Common.Services.Shariah.ShariahPdfUrlNormalizer.Normalize(dto.PdfUrl);
             existing.SourceLastUpdated = dto.LastUpdated;
             existing.FetchedAt = fetchedAt;
             if (!string.IsNullOrEmpty(dto.ExtraDataJson))
@@ -424,10 +439,10 @@ public class RefreshShariahDataCommandHandler : IRequestHandler<RefreshShariahDa
             {
                 StockId = stockId,
                 SourceKey = key,
-                Status = Common.ShariahVerdictService.SanitizeOpinionStatus(dto.Status),
+                Status = Common.Services.Shariah.ShariahVerdictService.SanitizeOpinionStatus(dto.Status),
                 Percentage = dto.Percentage,
                 Note = dto.Note,
-                PdfUrl = Common.ShariahPdfUrlNormalizer.Normalize(dto.PdfUrl),
+                PdfUrl = Common.Services.Shariah.ShariahPdfUrlNormalizer.Normalize(dto.PdfUrl),
                 SourceLastUpdated = dto.LastUpdated,
                 FetchedAt = fetchedAt,
                 ExtraData = dto.ExtraDataJson

@@ -3,7 +3,24 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using MediatR;
 using Meezan.Application.Common;
-using Meezan.Application.Common.Interfaces;
+using Meezan.Application.Common.Services.Text;
+using Meezan.Application.Common.Services.Market;
+using Meezan.Application.Common.Services.Shariah;
+using Meezan.Application.Common.Interfaces.Integrations;
+using Meezan.Application.Common.Interfaces.Persistence;
+using Meezan.Application.Common.Interfaces.Queries.Funds;
+using Meezan.Application.Common.Interfaces.Queries.RemovalCandidates;
+using Meezan.Application.Common.Interfaces.Queries.Stocks;
+using Meezan.Application.Common.Interfaces.Repositories.Funds;
+using Meezan.Application.Common.Interfaces.Repositories.Indices;
+using Meezan.Application.Common.Interfaces.Repositories.Market;
+using Meezan.Application.Common.Interfaces.Repositories.Scraping;
+using Meezan.Application.Common.Interfaces.Repositories.Sectors;
+using Meezan.Application.Common.Interfaces.Repositories.Shariah;
+using Meezan.Application.Common.Interfaces.Repositories.Stocks;
+using Meezan.Application.Common.Interfaces.Repositories.System;
+using Meezan.Application.Common.Interfaces.Security;
+using Meezan.Application.Common.Interfaces.Storage;
 using Meezan.Domain.Entities;
 using Meezan.Domain.Enums;
 
@@ -216,8 +233,8 @@ public class ImportFaisalOsoulOpinionsCommandHandler
                 bool dirty = false;
 
                 // Clear stale HasShariahBoard flag if stock receives standard opinions and has no board notes
-                bool hasBoardNow = Common.ShariahBoardDetector.IsBoardNote(compliance.Note)
-                    || opinions.Any(o => Common.ShariahBoardDetector.IsBoardNote(o.Note));
+                bool hasBoardNow = Common.Services.Shariah.ShariahBoardDetector.IsBoardNote(compliance.Note)
+                    || opinions.Any(o => Common.Services.Shariah.ShariahBoardDetector.IsBoardNote(o.Note));
                 if (compliance.HasShariahBoard != hasBoardNow)
                 {
                     compliance.HasShariahBoard = hasBoardNow;
@@ -228,13 +245,13 @@ public class ImportFaisalOsoulOpinionsCommandHandler
                 // from ratios here — ratios are untouched by this import).
                 if (compliance.HalalStatus == null && metrics != null)
                 {
-                    var halal = Common.ShariahVerdictService.ComputeForStock(metrics, compliance);
-                    if (Common.ShariahVerdictService.TryApplyHalal(compliance, halal))
+                    var halal = Common.Services.Shariah.ShariahVerdictService.ComputeForStock(metrics, compliance);
+                    if (Common.Services.Shariah.ShariahVerdictService.TryApplyHalal(compliance, halal))
                         dirty = true;
                 }
 
                 bool member = await _stockRepository.IsShariahIndexMemberAsync(stockId, cancellationToken);
-                if (Common.ShariahVerdictService.ApplyOverall(
+                if (Common.Services.Shariah.ShariahVerdictService.ApplyOverall(
                         compliance, metrics?.EffectiveCoreActivityCompliant, opinions, member))
                 {
                     dirty = true;

@@ -1,5 +1,10 @@
 using System.Net.Http.Json;
-using Meezan.Application.Features.Funds.Common;
+using Meezan.Application.Features.Funds.Categories.Dtos;
+using Meezan.Application.Features.Funds.Classification.Dtos;
+using Meezan.Application.Features.Funds.Details;
+using Meezan.Application.Features.Funds.Details.Dtos;
+using Meezan.Application.Features.Funds.Listing.Dtos;
+using Meezan.Application.Features.Funds.Types.Dtos;
 using Meezan.Domain.Entities;
 using Meezan.Infrastructure.Persistence;
 using Meezan.Infrastructure.Tests.Testing;

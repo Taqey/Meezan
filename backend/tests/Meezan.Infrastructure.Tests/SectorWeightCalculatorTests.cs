@@ -1,6 +1,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using Meezan.Application.Common;
+using Meezan.Application.Common.Services.Text;
+using Meezan.Application.Common.Services.Market;
+using Meezan.Application.Common.Services.Shariah;
 using Xunit;
 
 namespace Meezan.Infrastructure.Tests;

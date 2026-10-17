@@ -1,4 +1,18 @@
-using Meezan.Application.Common.Interfaces;
+using Meezan.Application.Common.Interfaces.Integrations;
+using Meezan.Application.Common.Interfaces.Persistence;
+using Meezan.Application.Common.Interfaces.Queries.Funds;
+using Meezan.Application.Common.Interfaces.Queries.RemovalCandidates;
+using Meezan.Application.Common.Interfaces.Queries.Stocks;
+using Meezan.Application.Common.Interfaces.Repositories.Funds;
+using Meezan.Application.Common.Interfaces.Repositories.Indices;
+using Meezan.Application.Common.Interfaces.Repositories.Market;
+using Meezan.Application.Common.Interfaces.Repositories.Scraping;
+using Meezan.Application.Common.Interfaces.Repositories.Sectors;
+using Meezan.Application.Common.Interfaces.Repositories.Shariah;
+using Meezan.Application.Common.Interfaces.Repositories.Stocks;
+using Meezan.Application.Common.Interfaces.Repositories.System;
+using Meezan.Application.Common.Interfaces.Security;
+using Meezan.Application.Common.Interfaces.Storage;
 using Meezan.Application.Features.Sectors.DTOs;
 using Meezan.Domain.Entities;
 using Meezan.Domain.Enums;
@@ -394,14 +408,14 @@ public class StockRepository : IStockRepository
                 foreach (var secId in distinctSectorIds)
                 {
                     var sectorStocks = allSectorStocks.Where(s => s.SectorId == secId).ToList();
-                    var inputs = sectorStocks.Select(s => new Meezan.Application.Common.SectorStockWeightInput(
+                    var inputs = sectorStocks.Select(s => new Meezan.Application.Common.Services.Market.SectorStockWeightInput(
                         s.Id,
                         s.Ticker,
                         s.MarketValue,
                         s.Currency
                     ));
 
-                    var calcResult = Meezan.Application.Common.SectorWeightCalculator.Calculate(secId, inputs);
+                    var calcResult = Meezan.Application.Common.Services.Market.SectorWeightCalculator.Calculate(secId, inputs);
                     foreach (var w in calcResult.StockWeights)
                     {
                         sectorWeightsByTicker[w.Ticker] = (w.FinalWeight, w.IsCapped, w.CappingFactor);
@@ -695,7 +709,7 @@ public class StockRepository : IStockRepository
                 var peN = 0;
                 foreach (var st in list)
                 {
-                    var effective = Meezan.Application.Common.ShariahStatusResolver.EffectiveStatus(
+                    var effective = Meezan.Application.Common.Services.Shariah.ShariahStatusResolver.EffectiveStatus(
                         st.ShariahCompliance, st.ShariahMetrics, st.ShariahSourceOpinions);
                     var isCompliant = effective == Meezan.Domain.Enums.ShariahStatus.Compliant;
                     if (isCompliant) compliantCount++;

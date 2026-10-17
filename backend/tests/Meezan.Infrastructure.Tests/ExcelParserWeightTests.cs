@@ -1,5 +1,8 @@
 using ClosedXML.Excel;
 using Meezan.Application.Common;
+using Meezan.Application.Common.Services.Text;
+using Meezan.Application.Common.Services.Market;
+using Meezan.Application.Common.Services.Shariah;
 using Meezan.Infrastructure.Services;
 
 namespace Meezan.Infrastructure.Tests;

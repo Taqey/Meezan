@@ -1,5 +1,19 @@
 using MediatR;
-using Meezan.Application.Common.Interfaces;
+using Meezan.Application.Common.Interfaces.Integrations;
+using Meezan.Application.Common.Interfaces.Persistence;
+using Meezan.Application.Common.Interfaces.Queries.Funds;
+using Meezan.Application.Common.Interfaces.Queries.RemovalCandidates;
+using Meezan.Application.Common.Interfaces.Queries.Stocks;
+using Meezan.Application.Common.Interfaces.Repositories.Funds;
+using Meezan.Application.Common.Interfaces.Repositories.Indices;
+using Meezan.Application.Common.Interfaces.Repositories.Market;
+using Meezan.Application.Common.Interfaces.Repositories.Scraping;
+using Meezan.Application.Common.Interfaces.Repositories.Sectors;
+using Meezan.Application.Common.Interfaces.Repositories.Shariah;
+using Meezan.Application.Common.Interfaces.Repositories.Stocks;
+using Meezan.Application.Common.Interfaces.Repositories.System;
+using Meezan.Application.Common.Interfaces.Security;
+using Meezan.Application.Common.Interfaces.Storage;
 using Meezan.Application.Features.Shariah.DTOs;
 using Meezan.Domain.Entities;
 using Meezan.Domain.Enums;
@@ -89,7 +103,7 @@ public class SeedShariahMapCommandHandler : IRequestHandler<SeedShariahMapComman
 
             // Board governance indicated by the seed note (plain "لجنة شرعية" and accredited
             // "هيئة رقابة شرعية داخلية معتمدة" are the same case).
-            bool hasBoard = Common.ShariahBoardDetector.IsBoardNote(item.Note);
+            bool hasBoard = Common.Services.Shariah.ShariahBoardDetector.IsBoardNote(item.Note);
 
             // 3. Upsert ShariahCompliance.
             // NOTE: seed writes the map's Status verbatim; the Halal ratio verdict and
@@ -110,7 +124,7 @@ public class SeedShariahMapCommandHandler : IRequestHandler<SeedShariahMapComman
                     ViaScholarsOnly = false,
                     VerdictDetailsJson = null,
                     HalalStatus = null,
-                    VerdictSource = Common.ShariahVerdictService.OverallSource.Stored,
+                    VerdictSource = Common.Services.Shariah.ShariahVerdictService.OverallSource.Stored,
                     LastCheckedAt = now,
                     UpdatedAt = now
                 };
@@ -126,7 +140,7 @@ public class SeedShariahMapCommandHandler : IRequestHandler<SeedShariahMapComman
                 compliance.ViaScholarsOnly = false;
                 compliance.VerdictDetailsJson = null;
                 compliance.HalalStatus = null;
-                compliance.VerdictSource = Common.ShariahVerdictService.OverallSource.Stored;
+                compliance.VerdictSource = Common.Services.Shariah.ShariahVerdictService.OverallSource.Stored;
                 compliance.LastCheckedAt = now;
                 compliance.UpdatedAt = now;
                 _complianceRepository.Update(compliance);

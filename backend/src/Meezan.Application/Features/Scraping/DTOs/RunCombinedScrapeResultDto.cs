@@ -1,4 +1,4 @@
-namespace Meezan.Application.Features.Scraping.Commands.RunCombinedScrape;
+namespace Meezan.Application.Features.Scraping.DTOs;
 
 public record RunCombinedScrapeResultDto(
     bool Success,

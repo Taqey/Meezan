@@ -1,5 +1,19 @@
 using MediatR;
-using Meezan.Application.Common.Interfaces;
+using Meezan.Application.Common.Interfaces.Integrations;
+using Meezan.Application.Common.Interfaces.Persistence;
+using Meezan.Application.Common.Interfaces.Queries.Funds;
+using Meezan.Application.Common.Interfaces.Queries.RemovalCandidates;
+using Meezan.Application.Common.Interfaces.Queries.Stocks;
+using Meezan.Application.Common.Interfaces.Repositories.Funds;
+using Meezan.Application.Common.Interfaces.Repositories.Indices;
+using Meezan.Application.Common.Interfaces.Repositories.Market;
+using Meezan.Application.Common.Interfaces.Repositories.Scraping;
+using Meezan.Application.Common.Interfaces.Repositories.Sectors;
+using Meezan.Application.Common.Interfaces.Repositories.Shariah;
+using Meezan.Application.Common.Interfaces.Repositories.Stocks;
+using Meezan.Application.Common.Interfaces.Repositories.System;
+using Meezan.Application.Common.Interfaces.Security;
+using Meezan.Application.Common.Interfaces.Storage;
 using Meezan.Application.Features.Scraping.DTOs;
 using Meezan.Domain.Enums;
 
@@ -43,10 +57,10 @@ public class GetMarketDataQueryHandler : IRequestHandler<GetMarketDataQuery, Mar
         // so list, index-constituent and detail views always report the same value for
         // the same stock. The verdict is never derived from, or copied from, any other
         // stock — least of all from the sector/industry this stock belongs to.
-        var effectiveStatus = Common.ShariahStatusResolver.EffectiveStatus(
+        var effectiveStatus = Common.Services.Shariah.ShariahStatusResolver.EffectiveStatus(
             stock.ShariahCompliance, stock.ShariahMetrics, stock.ShariahSourceOpinions,
             isShariahIndexMember: stock.IndexConstituents.Any(ic =>
-                ic.Index != null && Common.ShariahStatusResolver.IsShariahIndexCode(ic.Index.Code)));
+                ic.Index != null && Common.Services.Shariah.ShariahStatusResolver.IsShariahIndexCode(ic.Index.Code)));
 
         // ── Fix 3: "Board exists only" stocks ────────────────────────────────────
         // Stocks imported via the Shariah source (stocks_merged.json) that are not
@@ -73,7 +87,7 @@ public class GetMarketDataQueryHandler : IRequestHandler<GetMarketDataQuery, Mar
                     Id = o.Id,
                     StockId = o.StockId,
                     SourceKey = o.SourceKey,
-                    Status = Common.ShariahVerdictService.SanitizeOpinionStatus(o.Status),
+                    Status = Common.Services.Shariah.ShariahVerdictService.SanitizeOpinionStatus(o.Status),
                     Percentage = o.Percentage,
                     Note = o.Note,
                     PdfUrl = o.PdfUrl,
@@ -152,14 +166,14 @@ public class GetMarketDataQueryHandler : IRequestHandler<GetMarketDataQuery, Mar
         if (stock.SectorId.HasValue)
         {
             var sectorStocks = await _stockRepo.GetStocksBySectorIdAsync(stock.SectorId.Value, cancellationToken);
-            var inputs = sectorStocks.Select(s => new Meezan.Application.Common.SectorStockWeightInput(
+            var inputs = sectorStocks.Select(s => new Meezan.Application.Common.Services.Market.SectorStockWeightInput(
                 s.Id,
                 s.Ticker,
                 s.MarketData?.MarketValue,
                 s.MarketData?.Currency
             ));
 
-            var calcResult = Meezan.Application.Common.SectorWeightCalculator.Calculate(stock.SectorId.Value, inputs);
+            var calcResult = Meezan.Application.Common.Services.Market.SectorWeightCalculator.Calculate(stock.SectorId.Value, inputs);
             var stockWeightResult = calcResult.StockWeights.FirstOrDefault(w => w.Ticker.Equals(stock.Ticker, StringComparison.OrdinalIgnoreCase));
             if (stockWeightResult != null)
             {
@@ -197,7 +211,7 @@ public class GetMarketDataQueryHandler : IRequestHandler<GetMarketDataQuery, Mar
                 Id = o.Id,
                 StockId = o.StockId,
                 SourceKey = o.SourceKey,
-                Status = Common.ShariahVerdictService.SanitizeOpinionStatus(o.Status),
+                Status = Common.Services.Shariah.ShariahVerdictService.SanitizeOpinionStatus(o.Status),
                 Percentage = o.Percentage,
                 Note = o.Note,
                 PdfUrl = o.PdfUrl,
@@ -285,7 +299,7 @@ public class GetMarketDataQueryHandler : IRequestHandler<GetMarketDataQuery, Mar
     /// Stocks supervised by their own Shariah board/committee are handled as a single case,
     /// whether the source calls it a plain "لجنة شرعية" or an accredited
     /// "هيئة رقابة شرعية داخلية معتمدة". Detection lives in
-    /// <see cref="Common.ShariahBoardDetector"/>; the flag itself is persisted on
+    /// <see cref="Common.Services.Shariah.ShariahBoardDetector"/>; the flag itself is persisted on
     /// ShariahCompliance.HasShariahBoard (populated from seed/source data).
     /// </summary>
     private static void DetectShariahBoard(
@@ -293,9 +307,9 @@ public class GetMarketDataQueryHandler : IRequestHandler<GetMarketDataQuery, Mar
         out bool hasBoard,
         out string? boardNote)
     {
-        hasBoard = Common.ShariahBoardDetector.IsBoardGoverned(
+        hasBoard = Common.Services.Shariah.ShariahBoardDetector.IsBoardGoverned(
             stock.ShariahCompliance, stock.ShariahSourceOpinions);
-        boardNote = Common.ShariahBoardDetector.NoteFor(hasBoard);
+        boardNote = Common.Services.Shariah.ShariahBoardDetector.NoteFor(hasBoard);
     }
 
     /// <summary>

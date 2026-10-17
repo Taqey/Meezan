@@ -1,6 +1,23 @@
 using MediatR;
 using Meezan.Application.Common;
-using Meezan.Application.Common.Interfaces;
+using Meezan.Application.Common.Services.Text;
+using Meezan.Application.Common.Services.Market;
+using Meezan.Application.Common.Services.Shariah;
+using Meezan.Application.Common.Interfaces.Integrations;
+using Meezan.Application.Common.Interfaces.Persistence;
+using Meezan.Application.Common.Interfaces.Queries.Funds;
+using Meezan.Application.Common.Interfaces.Queries.RemovalCandidates;
+using Meezan.Application.Common.Interfaces.Queries.Stocks;
+using Meezan.Application.Common.Interfaces.Repositories.Funds;
+using Meezan.Application.Common.Interfaces.Repositories.Indices;
+using Meezan.Application.Common.Interfaces.Repositories.Market;
+using Meezan.Application.Common.Interfaces.Repositories.Scraping;
+using Meezan.Application.Common.Interfaces.Repositories.Sectors;
+using Meezan.Application.Common.Interfaces.Repositories.Shariah;
+using Meezan.Application.Common.Interfaces.Repositories.Stocks;
+using Meezan.Application.Common.Interfaces.Repositories.System;
+using Meezan.Application.Common.Interfaces.Security;
+using Meezan.Application.Common.Interfaces.Storage;
 using Meezan.Application.Features.Indices.DTOs;
 
 namespace Meezan.Application.Features.Indices.Queries.GetIndexConstituents;
@@ -44,7 +61,7 @@ public class GetIndexConstituentsQueryHandler : IRequestHandler<GetIndexConstitu
 
         var items = projections.Select(p =>
         {
-            bool hasBoard = Common.ShariahBoardDetector.IsBoardGoverned(
+            bool hasBoard = Common.Services.Shariah.ShariahBoardDetector.IsBoardGoverned(
                 p.HasShariahBoard, p.ShariahOpinions.Select(o => o.Note));
 
             return new ConstituentItemDto(
@@ -57,7 +74,7 @@ public class GetIndexConstituentsQueryHandler : IRequestHandler<GetIndexConstitu
                 ShariahStatus: p.ShariahStatus,
                 ShariahOpinions: hasBoard
                     ? new List<Meezan.Application.Features.Shariah.DTOs.ShariahSourceOpinionDto>()
-                    : p.ShariahOpinions.Select(o => { o.Status = Common.ShariahVerdictService.SanitizeOpinionStatus(o.Status); return o; }).ToList(),
+                    : p.ShariahOpinions.Select(o => { o.Status = Common.Services.Shariah.ShariahVerdictService.SanitizeOpinionStatus(o.Status); return o; }).ToList(),
                 ClosingPrice: p.ClosingPrice,
                 ChangePct: p.ChangePct,
                 FairValue: p.FairValue,
@@ -67,7 +84,7 @@ public class GetIndexConstituentsQueryHandler : IRequestHandler<GetIndexConstitu
                 Currency: p.Currency,
                 SectorNameAr: p.SectorNameAr,
                 HasShariahBoard: hasBoard,
-                ShariahBoardNote: Common.ShariahBoardDetector.NoteFor(hasBoard)
+                ShariahBoardNote: Common.Services.Shariah.ShariahBoardDetector.NoteFor(hasBoard)
             );
         }).ToList();
 

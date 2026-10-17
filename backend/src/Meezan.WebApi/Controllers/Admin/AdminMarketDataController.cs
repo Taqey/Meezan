@@ -1,4 +1,7 @@
 using Meezan.Application.Common;
+using Meezan.Application.Common.Services.Text;
+using Meezan.Application.Common.Services.Market;
+using Meezan.Application.Common.Services.Shariah;
 using Meezan.Application.Features.Scraping.Services;
 using Meezan.Domain.Entities;
 using Meezan.Domain.Enums;
@@ -123,14 +126,14 @@ public class AdminMarketDataController : ControllerBase
         // service, so the change shows immediately. Safety: a failed recompute keeps
         // the previous stored value and never breaks the admin save.
         if (stock.ShariahCompliance != null
-            && Meezan.Application.Common.ShariahVerdictService.HalalInputsChanged(
+            && Meezan.Application.Common.Services.Shariah.ShariahVerdictService.HalalInputsChanged(
                 oldRevenue, oldDebt, oldActivity,
                 metrics.EffectiveHaramRevenuePercentage, metrics.EffectiveLoansPercentage, metrics.EffectiveCoreActivityCompliant))
         {
             try
             {
-                var verdict = Meezan.Application.Common.ShariahVerdictService.ComputeForStock(metrics, stock.ShariahCompliance);
-                Meezan.Application.Common.ShariahVerdictService.TryApplyHalal(stock.ShariahCompliance, verdict);
+                var verdict = Meezan.Application.Common.Services.Shariah.ShariahVerdictService.ComputeForStock(metrics, stock.ShariahCompliance);
+                Meezan.Application.Common.Services.Shariah.ShariahVerdictService.TryApplyHalal(stock.ShariahCompliance, verdict);
                 var opinions = await _context.ShariahSourceOpinions
                     .Where(o => o.StockId == stock.Id)
                     .ToListAsync(cancellationToken);
@@ -138,7 +141,7 @@ public class AdminMarketDataController : ControllerBase
                     ic => ic.StockId == stock.Id && ic.Index != null
                         && (ic.Index.Code.ToUpper() == "EGX 33" || ic.Index.Code.ToUpper() == "EGX33" || ic.Index.Code.ToUpper() == "SHARIAH"),
                     cancellationToken);
-                Meezan.Application.Common.ShariahVerdictService.ApplyOverall(
+                Meezan.Application.Common.Services.Shariah.ShariahVerdictService.ApplyOverall(
                     stock.ShariahCompliance, metrics.EffectiveCoreActivityCompliant, opinions, member);
                 _context.ShariahCompliances.Update(stock.ShariahCompliance);
             }
@@ -229,14 +232,14 @@ public class AdminMarketDataController : ControllerBase
         // Clearing an override changes the effective ratios: recompute that stock
         // (same operation), but only when the inputs actually changed.
         if (stock.ShariahCompliance != null
-            && Meezan.Application.Common.ShariahVerdictService.HalalInputsChanged(
+            && Meezan.Application.Common.Services.Shariah.ShariahVerdictService.HalalInputsChanged(
                 oldRevenue, oldDebt, oldActivity,
                 metrics.EffectiveHaramRevenuePercentage, metrics.EffectiveLoansPercentage, metrics.EffectiveCoreActivityCompliant))
         {
             try
             {
-                var verdict = Meezan.Application.Common.ShariahVerdictService.ComputeForStock(metrics, stock.ShariahCompliance);
-                Meezan.Application.Common.ShariahVerdictService.TryApplyHalal(stock.ShariahCompliance, verdict);
+                var verdict = Meezan.Application.Common.Services.Shariah.ShariahVerdictService.ComputeForStock(metrics, stock.ShariahCompliance);
+                Meezan.Application.Common.Services.Shariah.ShariahVerdictService.TryApplyHalal(stock.ShariahCompliance, verdict);
                 var opinions = await _context.ShariahSourceOpinions
                     .Where(o => o.StockId == stock.Id)
                     .ToListAsync(cancellationToken);
@@ -244,7 +247,7 @@ public class AdminMarketDataController : ControllerBase
                     ic => ic.StockId == stock.Id && ic.Index != null
                         && (ic.Index.Code.ToUpper() == "EGX 33" || ic.Index.Code.ToUpper() == "EGX33" || ic.Index.Code.ToUpper() == "SHARIAH"),
                     cancellationToken);
-                Meezan.Application.Common.ShariahVerdictService.ApplyOverall(
+                Meezan.Application.Common.Services.Shariah.ShariahVerdictService.ApplyOverall(
                     stock.ShariahCompliance, metrics.EffectiveCoreActivityCompliant, opinions, member);
                 _context.ShariahCompliances.Update(stock.ShariahCompliance);
             }

@@ -1,5 +1,22 @@
 using Meezan.Application.Common;
-using Meezan.Application.Common.Interfaces;
+using Meezan.Application.Common.Services.Text;
+using Meezan.Application.Common.Services.Market;
+using Meezan.Application.Common.Services.Shariah;
+using Meezan.Application.Common.Interfaces.Integrations;
+using Meezan.Application.Common.Interfaces.Persistence;
+using Meezan.Application.Common.Interfaces.Queries.Funds;
+using Meezan.Application.Common.Interfaces.Queries.RemovalCandidates;
+using Meezan.Application.Common.Interfaces.Queries.Stocks;
+using Meezan.Application.Common.Interfaces.Repositories.Funds;
+using Meezan.Application.Common.Interfaces.Repositories.Indices;
+using Meezan.Application.Common.Interfaces.Repositories.Market;
+using Meezan.Application.Common.Interfaces.Repositories.Scraping;
+using Meezan.Application.Common.Interfaces.Repositories.Sectors;
+using Meezan.Application.Common.Interfaces.Repositories.Shariah;
+using Meezan.Application.Common.Interfaces.Repositories.Stocks;
+using Meezan.Application.Common.Interfaces.Repositories.System;
+using Meezan.Application.Common.Interfaces.Security;
+using Meezan.Application.Common.Interfaces.Storage;
 using Meezan.Domain.Entities;
 using Meezan.Domain.Enums;
 using FluentValidation;
@@ -483,12 +500,12 @@ public class UploadIndexFileCommandHandler : IRequestHandler<UploadIndexFileComm
 
                 if (compliance.HalalStatus == null && metrics != null)
                 {
-                    var halal = Common.ShariahVerdictService.ComputeForStock(metrics, compliance);
-                    Common.ShariahVerdictService.TryApplyHalal(compliance, halal);
+                    var halal = Common.Services.Shariah.ShariahVerdictService.ComputeForStock(metrics, compliance);
+                    Common.Services.Shariah.ShariahVerdictService.TryApplyHalal(compliance, halal);
                 }
 
                 var opinions = await _opinionRepository.GetByStockIdAsync(stockId, cancellationToken);
-                Common.ShariahVerdictService.ApplyOverall(
+                Common.Services.Shariah.ShariahVerdictService.ApplyOverall(
                     compliance, metrics?.EffectiveCoreActivityCompliant, opinions, member);
                 if (isNewRow)
                     await _complianceRepository.AddAsync(compliance, cancellationToken);
