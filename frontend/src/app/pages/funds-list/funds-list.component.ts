@@ -268,17 +268,30 @@ export class FundsListComponent implements OnInit {
       this.loadFunds();
     });
 
-    // Deep-link support: ?path=a,b,c (new) or legacy ?node=X / ?type=X (single slug).
+    // Deep-link support: node=<slug> as primary, supporting legacy params (type, subType, leaf, old slugs, path).
     this.route.queryParamMap.subscribe(params => {
+      const nodeSlug = params.get('node');
+      const leafSlug = params.get('leaf');
+      const subTypeSlug = params.get('subType');
+      const typeSlug = params.get('type');
       const rawPath = params.get('path');
-      const single = params.get('node') || params.get('type');
-      if (rawPath) {
+
+      const targetSlug = nodeSlug || leafSlug || subTypeSlug || typeSlug;
+      if (targetSlug) {
+        this.pendingLegacySlug = targetSlug.trim().toLowerCase();
+        if (this.classTree.length) {
+          const full = this.pathForSlug(this.pendingLegacySlug);
+          if (full.length) this.classPath = full;
+          this.pendingLegacySlug = null;
+          this.applyClassPathToFilter();
+        }
+      } else if (rawPath) {
         this.classPath = rawPath.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
-      } else if (single) {
+        this.applyClassPathToFilter();
+      } else {
         this.classPath = [];
-        this.pendingLegacySlug = single.trim().toLowerCase();
+        this.applyClassPathToFilter();
       }
-      this.applyClassPathToFilter();
     });
 
     this.loadClassTree();
@@ -350,9 +363,16 @@ export class FundsListComponent implements OnInit {
   }
 
   private syncClassPathToUrl(): void {
+    const deepest = this.classPath.length ? this.classPath[this.classPath.length - 1] : null;
     this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: this.classPath.length ? { path: this.classPath.join(',') } : { path: null, node: null, type: null },
+      queryParams: {
+        node: deepest,
+        path: null,
+        type: null,
+        subType: null,
+        leaf: null
+      },
       queryParamsHandling: 'merge'
     });
   }

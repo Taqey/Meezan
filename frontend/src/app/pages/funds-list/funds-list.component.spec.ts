@@ -43,6 +43,7 @@ describe('FundsListComponent classification wiring', () => {
         ? { items: REAL_FUNDS, totalCount: 3, page: 1, pageSize: 1000, totalPages: 1 }
         : { items: [fund('AA'), fund('BB')], totalCount: 2, page: 1, pageSize: 20, totalPages: 1 }),
       getClassificationTree: () => of(tree),
+      getFundStats: () => of({ totalCount: 2, islamicCount: 1, totalAum: 1000000, bestDailyChange: 1.5, bestDailyChangeCode: 'AA' })
     };
     const route = { queryParamMap: of(new Map() as never) };
     await TestBed.configureTestingModule({

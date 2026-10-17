@@ -71,8 +71,9 @@ export class ClassificationCascadeComponent implements OnChanges {
   }
 
   private buildLevels(): void {
+    const rootChildren = (this.childrenMap.get(null) ?? []).filter(c => c.totalFundCount > 0);
     const out: CascadeLevel[] = [
-      { node: null, children: this.childrenMap.get(null) ?? [], label: this.rootLabel }
+      { node: null, children: rootChildren, label: this.rootLabel }
     ];
     const seen = new Set<string>(); // حماية من التكرار
     for (const slug of this.path) {
@@ -80,7 +81,7 @@ export class ClassificationCascadeComponent implements OnChanges {
       if (!node || seen.has(slug)) break;
       seen.add(slug);
       out[out.length - 1].node = node;
-      const kids = this.childrenMap.get(node.slug) ?? [];
+      const kids = (this.childrenMap.get(node.slug) ?? []).filter(c => c.totalFundCount > 0);
       if (kids.length === 0) break;
       out.push({ node: null, children: kids, label: node.childrenLabelAr || 'التصنيف الفرعي' });
     }
@@ -89,6 +90,10 @@ export class ClassificationCascadeComponent implements OnChanges {
 
   trackLevel = (i: number) => i;
   trackNode = (_: number, n: FundClassificationTreeNode) => n.slug;
+
+  levelOptions(levelIndex: number): FundClassificationTreeNode[] {
+    return this.levels[levelIndex]?.children ?? [];
+  }
 
   pick(levelIndex: number, slug: string): void {
     const next = this.path.slice(0, levelIndex);
