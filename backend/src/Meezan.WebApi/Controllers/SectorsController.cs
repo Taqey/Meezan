@@ -1,4 +1,5 @@
 using MediatR;
+using Meezan.Application.Features.Sectors.DTOs;
 using Meezan.Application.Features.Sectors.Queries.GetSectorsList;
 using Microsoft.AspNetCore.Mvc;
 

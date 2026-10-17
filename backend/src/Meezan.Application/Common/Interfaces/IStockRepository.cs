@@ -1,4 +1,4 @@
-using Meezan.Application.Features.Sectors.Queries.GetSectorsList;
+using Meezan.Application.Features.Sectors.DTOs;
 using Meezan.Domain.Entities;
 
 namespace Meezan.Application.Common.Interfaces;
@@ -24,6 +24,9 @@ public interface IStockRepository
 
     /// <summary>Loads all active stocks belonging to a sector with MarketData.</summary>
     Task<List<Stock>> GetStocksBySectorIdAsync(int sectorId, CancellationToken cancellationToken = default);
+
+    Task<Stock?> GetByTickerWithMarketDataAsync(string ticker, CancellationToken cancellationToken = default);
+    Task<List<Meezan.Application.Features.Scraping.Services.FairValueCalculator.SectorPeerData>> GetSectorPeerDataAsync(int sectorId, int excludeStockId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Loads one stock with Sector, IndexConstituents→Index, and ShariahCompliance eager-loaded.

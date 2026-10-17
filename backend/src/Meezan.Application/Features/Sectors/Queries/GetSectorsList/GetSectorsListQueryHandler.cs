@@ -1,5 +1,6 @@
 using MediatR;
 using Meezan.Application.Common.Interfaces;
+using Meezan.Application.Features.Sectors.DTOs;
 
 namespace Meezan.Application.Features.Sectors.Queries.GetSectorsList;
 

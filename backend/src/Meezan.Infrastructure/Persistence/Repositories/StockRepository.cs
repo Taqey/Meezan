@@ -1,5 +1,5 @@
 using Meezan.Application.Common.Interfaces;
-using Meezan.Application.Features.Sectors.Queries.GetSectorsList;
+using Meezan.Application.Features.Sectors.DTOs;
 using Meezan.Domain.Entities;
 using Meezan.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
@@ -80,6 +80,27 @@ public class StockRepository : IStockRepository
             .AsNoTracking()
             .Where(s => s.IsActive && s.SectorId == sectorId)
             .Include(s => s.MarketData)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<Stock?> GetByTickerWithMarketDataAsync(string ticker, CancellationToken cancellationToken = default)
+    {
+        return await _context.Stocks
+            .Include(s => s.MarketData)
+            .FirstOrDefaultAsync(s => s.Ticker.ToUpper() == ticker.Trim().ToUpper(), cancellationToken);
+    }
+
+    public async Task<List<Meezan.Application.Features.Scraping.Services.FairValueCalculator.SectorPeerData>> GetSectorPeerDataAsync(
+        int sectorId, int excludeStockId, CancellationToken cancellationToken = default)
+    {
+        return await _context.Stocks
+            .Where(s => s.SectorId == sectorId && s.Id != excludeStockId && s.MarketData != null)
+            .Select(s => new Meezan.Application.Features.Scraping.Services.FairValueCalculator.SectorPeerData(
+                s.Id,
+                s.SectorId,
+                s.MarketData!.PeRatio,
+                s.MarketData!.PbRatio
+            ))
             .ToListAsync(cancellationToken);
     }
 
