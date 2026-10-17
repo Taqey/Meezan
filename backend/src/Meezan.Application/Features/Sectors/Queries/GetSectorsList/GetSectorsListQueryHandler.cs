@@ -1,25 +1,12 @@
 using MediatR;
-using Meezan.Application.Common.Interfaces.Integrations;
-using Meezan.Application.Common.Interfaces.Persistence;
-using Meezan.Application.Common.Interfaces.Queries.Funds;
-using Meezan.Application.Common.Interfaces.Queries.RemovalCandidates;
-using Meezan.Application.Common.Interfaces.Queries.Stocks;
-using Meezan.Application.Common.Interfaces.Repositories.Funds;
-using Meezan.Application.Common.Interfaces.Repositories.Indices;
-using Meezan.Application.Common.Interfaces.Repositories.Market;
-using Meezan.Application.Common.Interfaces.Repositories.Scraping;
-using Meezan.Application.Common.Interfaces.Repositories.Sectors;
-using Meezan.Application.Common.Interfaces.Repositories.Shariah;
 using Meezan.Application.Common.Interfaces.Repositories.Stocks;
-using Meezan.Application.Common.Interfaces.Repositories.System;
-using Meezan.Application.Common.Interfaces.Security;
-using Meezan.Application.Common.Interfaces.Storage;
+using Meezan.Application.Common.Results;
 using Meezan.Application.Features.Sectors.DTOs;
 
 namespace Meezan.Application.Features.Sectors.Queries.GetSectorsList;
 
 public class GetSectorsListQueryHandler
-    : IRequestHandler<GetSectorsListQuery, List<SectorSummaryDto>>
+    : IRequestHandler<GetSectorsListQuery, Result<List<SectorSummaryDto>>>
 {
     private readonly IStockRepository _stockRepo;
 
@@ -28,7 +15,7 @@ public class GetSectorsListQueryHandler
         _stockRepo = stockRepo;
     }
 
-    public async Task<List<SectorSummaryDto>> Handle(
+    public async Task<Result<List<SectorSummaryDto>>> Handle(
         GetSectorsListQuery request,
         CancellationToken cancellationToken)
     {

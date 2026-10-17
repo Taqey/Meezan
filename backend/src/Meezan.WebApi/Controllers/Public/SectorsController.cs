@@ -1,6 +1,7 @@
 using MediatR;
 using Meezan.Application.Features.Sectors.DTOs;
 using Meezan.Application.Features.Sectors.Queries.GetSectorsList;
+using Meezan.WebApi.Common;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Meezan.WebApi.Controllers.Public;
@@ -24,6 +25,6 @@ public class SectorsController : ControllerBase
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
         var result = await _sender.Send(new GetSectorsListQuery(), cancellationToken);
-        return Ok(result);
+        return result.ToActionResult();
     }
 }
