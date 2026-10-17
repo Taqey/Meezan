@@ -18,7 +18,7 @@ builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<Meezan.Application.Common.Interfaces.ICurrentUser, CurrentUser>();
+builder.Services.AddScoped<Meezan.Application.Common.Interfaces.Security.ICurrentUser, CurrentUser>();
 
 // Add Controllers with Unicode-safe JSON (Arabic chars must NOT be escaped to \uXXXX)
 builder.Services.AddControllers()
