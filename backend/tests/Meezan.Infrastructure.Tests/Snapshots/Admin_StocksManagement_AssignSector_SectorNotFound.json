@@ -1,0 +1,6 @@
+{
+  "StatusCode": 400,
+  "BodyShape": {
+    "message": "string:Sector with Id 99999 does not exist."
+  }
+}

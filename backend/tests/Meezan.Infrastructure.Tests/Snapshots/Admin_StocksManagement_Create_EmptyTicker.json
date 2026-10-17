@@ -1,0 +1,13 @@
+{
+  "StatusCode": 400,
+  "BodyShape": {
+    "status": "number:int",
+    "title": "string:Validation Error",
+    "errors": [
+      {
+        "field": "string:Ticker",
+        "message": "string:Ticker is required."
+      }
+    ]
+  }
+}

@@ -21,6 +21,8 @@ public static class DependencyInjection
 
         services.AddScoped<IIndexRepository, IndexRepository>();
         services.AddScoped<IStockRepository, StockRepository>();
+        services.AddScoped<ISectorRepository, SectorRepository>();
+        services.AddScoped<IStockManagementReadQuery, Persistence.Queries.StockManagementReadQuery>();
         services.AddScoped<IUploadHistoryRepository, UploadHistoryRepository>();
         services.AddScoped<IJobSettingRepository, JobSettingRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
@@ -100,31 +102,25 @@ public static class DependencyInjection
             client.Timeout = TimeSpan.FromSeconds(30);
         });
 
-        // Fund logo downloader. Opt-in via Funds:Logos:RootPath; when unset the
-        // service is not registered and Fund.LocalLogoPath stays empty.
-        var logoRoot = configuration["Funds:Logos:RootPath"];
-        if (!string.IsNullOrWhiteSpace(logoRoot))
+        // Fund logo downloader. Opt-in via Funds:Logos:RootPath; when unset the storage
+        // reports IsEnabled = false and Fund.LocalLogoPath stays empty (logos stay remote-only).
+        services.Configure<FundLogoStorageOptions>(o =>
         {
-            services.Configure<FundLogoStorageOptions>(o =>
-            {
-                o.RootPath = logoRoot;
-                o.PublicBaseUrl = configuration["Funds:Logos:PublicBaseUrl"] ?? string.Empty;
-                var max = configuration.GetValue<int?>("Funds:Logos:MaxBytes");
-                if (max.HasValue && max.Value > 0) o.MaxBytes = max.Value;
-            });
-            services.AddHttpClient<IFundLogoStorage, FundLogoStorage>(client =>
-            {
-                client.Timeout = TimeSpan.FromSeconds(30);
-            });
-        }
-        else
+            o.RootPath = configuration["Funds:Logos:RootPath"] ?? string.Empty;
+            o.PublicBaseUrl = configuration["Funds:Logos:PublicBaseUrl"] ?? string.Empty;
+            var max = configuration.GetValue<int?>("Funds:Logos:MaxBytes");
+            if (max.HasValue && max.Value > 0) o.MaxBytes = max.Value;
+        });
+        services.AddHttpClient<IFundLogoStorage, FundLogoStorage>(client =>
         {
-            // Funds:Logos:RootPath is intentionally empty here — logos stay remote-only.
-        }
+            client.Timeout = TimeSpan.FromSeconds(30);
+        });
 
-        // Fund Sync Background Service
+        services.AddSingleton<IFundAutoClassifier, FundAutoClassifier>();
+
+        // Fund Sync Background Service (the sync itself is RunFundSyncCommand in Application)
+        services.Configure<FundSyncOptions>(configuration.GetSection(FundSyncOptions.SectionName));
         services.AddHostedService<FundSyncBackgroundService>();
-        services.AddScoped<IFundSyncService, FundSyncService>();
 
         // Parallel loader for the fund detail page (own scopes: a DbContext is not thread-safe)
         services.AddScoped<IFundDetailQuery, FundDetailQuery>();

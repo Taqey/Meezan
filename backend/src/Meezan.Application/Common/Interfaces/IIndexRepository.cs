@@ -5,9 +5,15 @@ namespace Meezan.Application.Common.Interfaces;
 
 public interface IIndexRepository
 {
+    Task<Index?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
     Task<Index?> GetByCodeAsync(string code, CancellationToken cancellationToken = default);
+    Task<List<Index>> GetAllAsync(CancellationToken cancellationToken = default);
     Task<bool> ExistsAsync(string code, CancellationToken cancellationToken = default);
     Task UpdateAsync(Index index, CancellationToken cancellationToken = default);
+    Task<IndexConstituent?> GetConstituentAsync(int stockId, int indexId, CancellationToken cancellationToken = default);
+    Task<IndexConstituent?> GetConstituentWithIndexAsync(int stockId, int indexId, CancellationToken cancellationToken = default);
+    Task AddConstituentAsync(IndexConstituent constituent, CancellationToken cancellationToken = default);
+    void RemoveConstituent(IndexConstituent constituent);
     Task ReplaceConstituentsAsync(int indexId, IEnumerable<IndexConstituent> constituents, CancellationToken cancellationToken = default);
 
     /// <summary>

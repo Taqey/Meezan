@@ -1,0 +1,10 @@
+{
+  "StatusCode": 200,
+  "BodyShape": [
+    {
+      "id": "number:int",
+      "nameAr": "string:\u0628\u0646\u0648\u0643",
+      "nameEn": "string:Banks"
+    }
+  ]
+}

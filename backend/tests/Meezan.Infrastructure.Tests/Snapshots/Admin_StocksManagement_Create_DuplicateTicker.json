@@ -1,0 +1,8 @@
+{
+  "StatusCode": 409,
+  "BodyShape": {
+    "status": "number:int",
+    "title": "string:Conflict",
+    "message": "string:A stock with ticker \u0027COMI\u0027 already exists (Id=1)."
+  }
+}

@@ -3,7 +3,6 @@
 # At the end of the refactor series, this file MUST be completely empty.
 
 AdminMarketDataController
-AdminStocksManagementController
 RemovalCandidatesController
 ScrapingController
 ShariahController

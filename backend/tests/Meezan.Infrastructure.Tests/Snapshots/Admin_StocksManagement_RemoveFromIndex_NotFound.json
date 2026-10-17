@@ -1,0 +1,8 @@
+{
+  "StatusCode": 404,
+  "BodyShape": {
+    "status": "number:int",
+    "title": "string:Not Found",
+    "message": "string:Constituent for stock 1 and index 99999 not found."
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "StatusCode": 201,
+  "BodyShape": {
+    "id": "number:int",
+    "ticker": "string:FAWRY",
+    "nameAr": "string:\u0641\u0648\u0631\u064A",
+    "nameEn": "string:Fawry",
+    "sectorId": "number:int",
+    "sectorNameAr": "string:\u0628\u0646\u0648\u0643",
+    "sectorNameEn": "string:Banks",
+    "isManual": "bool:True",
+    "isActive": "bool:True"
+  }
+}

@@ -5,6 +5,8 @@ namespace Meezan.Application.Common.Interfaces;
 
 public interface IStockRepository
 {
+    Task<Stock?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
+    Task<Stock?> GetByIdWithSectorAsync(int id, CancellationToken cancellationToken = default);
     Task<Stock?> GetByTickerAsync(string ticker, CancellationToken cancellationToken = default);
 
     /// <summary>

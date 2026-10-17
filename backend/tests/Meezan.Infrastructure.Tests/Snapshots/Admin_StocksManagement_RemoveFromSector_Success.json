@@ -1,0 +1,14 @@
+{
+  "StatusCode": 200,
+  "BodyShape": {
+    "id": "number:int",
+    "ticker": "string:COMI",
+    "nameAr": "string:\u0627\u0644\u0628\u0646\u0643 \u0627\u0644\u062A\u062C\u0627\u0631\u064A \u0627\u0644\u062F\u0648\u0644\u064A",
+    "nameEn": "string:Commercial International Bank",
+    "sectorId": null,
+    "sectorNameAr": null,
+    "sectorNameEn": null,
+    "isManual": "bool:False",
+    "isActive": "bool:True"
+  }
+}

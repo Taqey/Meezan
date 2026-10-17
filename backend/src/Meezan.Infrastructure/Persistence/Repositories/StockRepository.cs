@@ -15,6 +15,18 @@ public class StockRepository : IStockRepository
         _context = context;
     }
 
+    public async Task<Stock?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+    {
+        return await _context.Stocks.FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
+    }
+
+    public async Task<Stock?> GetByIdWithSectorAsync(int id, CancellationToken cancellationToken = default)
+    {
+        return await _context.Stocks
+            .Include(s => s.Sector)
+            .FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
+    }
+
     public async Task<Stock?> GetByTickerAsync(string ticker, CancellationToken cancellationToken = default)
     {
         return await _context.Stocks

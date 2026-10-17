@@ -14,10 +14,23 @@ public class IndexRepository : IIndexRepository
         _context = context;
     }
 
+    public async Task<Index?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+    {
+        return await _context.Indices.FindAsync([id], cancellationToken);
+    }
+
     public async Task<Index?> GetByCodeAsync(string code, CancellationToken cancellationToken = default)
     {
         return await _context.Indices
             .FirstOrDefaultAsync(i => i.Code.ToUpper() == code.Trim().ToUpper(), cancellationToken);
+    }
+
+    public async Task<List<Index>> GetAllAsync(CancellationToken cancellationToken = default)
+    {
+        return await _context.Indices
+            .AsNoTracking()
+            .OrderBy(i => i.Code)
+            .ToListAsync(cancellationToken);
     }
 
     public async Task<bool> ExistsAsync(string code, CancellationToken cancellationToken = default)
@@ -30,6 +43,29 @@ public class IndexRepository : IIndexRepository
     {
         _context.Indices.Update(index);
         return Task.CompletedTask;
+    }
+
+    public async Task<IndexConstituent?> GetConstituentAsync(int stockId, int indexId, CancellationToken cancellationToken = default)
+    {
+        return await _context.IndexConstituents
+            .FirstOrDefaultAsync(ic => ic.StockId == stockId && ic.IndexId == indexId, cancellationToken);
+    }
+
+    public async Task<IndexConstituent?> GetConstituentWithIndexAsync(int stockId, int indexId, CancellationToken cancellationToken = default)
+    {
+        return await _context.IndexConstituents
+            .Include(ic => ic.Index)
+            .FirstOrDefaultAsync(ic => ic.StockId == stockId && ic.IndexId == indexId, cancellationToken);
+    }
+
+    public async Task AddConstituentAsync(IndexConstituent constituent, CancellationToken cancellationToken = default)
+    {
+        await _context.IndexConstituents.AddAsync(constituent, cancellationToken);
+    }
+
+    public void RemoveConstituent(IndexConstituent constituent)
+    {
+        _context.IndexConstituents.Remove(constituent);
     }
 
     public async Task ReplaceConstituentsAsync(int indexId, IEnumerable<IndexConstituent> constituents, CancellationToken cancellationToken = default)
