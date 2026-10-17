@@ -1,4 +1,4 @@
-﻿using MediatR;
+using MediatR;
 using Meezan.Application.Features.Funds.Common;
 using Meezan.Application.Features.Funds.Queries.GetFundById;
 using Meezan.Application.Features.Funds.Queries.GetFundBySlug;
@@ -9,7 +9,7 @@ using Meezan.Application.Features.Funds.Queries.GetFundStats;
 using Meezan.Application.Features.Funds.Queries.GetFundTypes;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Meezan.WebApi.Controllers;
+namespace Meezan.WebApi.Controllers.Public;
 
 [ApiController]
 [Route("api/funds")]

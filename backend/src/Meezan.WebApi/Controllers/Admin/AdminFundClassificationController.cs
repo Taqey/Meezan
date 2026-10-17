@@ -1,4 +1,4 @@
-﻿using MediatR;
+using MediatR;
 using Meezan.Application.Features.Funds.Commands.AssignClassificationFund;
 using Meezan.Application.Features.Funds.Commands.BulkAddClassificationFunds;
 using Meezan.Application.Features.Funds.Commands.BulkRemoveClassificationFunds;
@@ -24,7 +24,7 @@ using Meezan.WebApi.Contracts.Classification;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Meezan.WebApi.Controllers;
+namespace Meezan.WebApi.Controllers.Admin;
 
 /// <summary>
 /// Admin API for the flexible fund classification tree.

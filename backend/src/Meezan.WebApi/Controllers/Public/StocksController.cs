@@ -5,7 +5,7 @@ using Meezan.Application.Features.Scraping.Queries.GetStocksList;
 using Meezan.Application.Features.Scraping.Queries.GetSupportResistance;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Meezan.WebApi.Controllers;
+namespace Meezan.WebApi.Controllers.Public;
 
 [ApiController]
 [Route("api/stocks")]

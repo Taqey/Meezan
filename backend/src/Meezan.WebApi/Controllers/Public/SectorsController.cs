@@ -3,7 +3,7 @@ using Meezan.Application.Features.Sectors.DTOs;
 using Meezan.Application.Features.Sectors.Queries.GetSectorsList;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Meezan.WebApi.Controllers;
+namespace Meezan.WebApi.Controllers.Public;
 
 [ApiController]
 [Route("api/sectors")]

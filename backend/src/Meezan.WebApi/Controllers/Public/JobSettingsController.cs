@@ -4,7 +4,7 @@ using Meezan.Application.Features.JobSettings.Queries.GetJobSettings;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Meezan.WebApi.Controllers;
+namespace Meezan.WebApi.Controllers.Public;
 
 [ApiController]
 [Route("api/job-settings")]

@@ -29,7 +29,7 @@ using Meezan.WebApi.Contracts.AdminFunds;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Meezan.WebApi.Controllers;
+namespace Meezan.WebApi.Controllers.Admin;
 
 [ApiController]
 [Authorize]

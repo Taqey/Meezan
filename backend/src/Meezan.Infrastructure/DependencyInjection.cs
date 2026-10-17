@@ -23,7 +23,6 @@ public static class DependencyInjection
         services.AddScoped<IStockRepository, StockRepository>();
         services.AddScoped<ISectorRepository, SectorRepository>();
         services.AddScoped<IStockManagementReadQuery, Persistence.Queries.StockManagementReadQuery>();
-        services.AddScoped<IAdminMarketDataReadQuery, Persistence.Queries.AdminMarketDataReadQuery>();
         services.AddScoped<IRemovalCandidatesReadQuery, Persistence.Queries.RemovalCandidatesReadQuery>();
         services.AddScoped<IUploadHistoryRepository, UploadHistoryRepository>();
         services.AddScoped<IJobSettingRepository, JobSettingRepository>();
@@ -120,11 +119,9 @@ public static class DependencyInjection
             client.Timeout = TimeSpan.FromSeconds(30);
         });
 
-        services.AddSingleton<IFundAutoClassifier, FundAutoClassifier>();
-
-        // Fund Sync Background Service (the sync itself is RunFundSyncCommand in Application)
-        services.Configure<FundSyncOptions>(configuration.GetSection(FundSyncOptions.SectionName));
+        // Fund Sync Background Service
         services.AddHostedService<FundSyncBackgroundService>();
+        services.AddScoped<IFundSyncService, FundSyncService>();
 
         // Parallel loader for the fund detail page (own scopes: a DbContext is not thread-safe)
         services.AddScoped<IFundDetailQuery, FundDetailQuery>();

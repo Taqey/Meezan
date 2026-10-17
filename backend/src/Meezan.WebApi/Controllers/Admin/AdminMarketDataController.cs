@@ -1,4 +1,4 @@
-﻿using Meezan.Application.Common;
+using Meezan.Application.Common;
 using Meezan.Application.Features.Scraping.Services;
 using Meezan.Domain.Entities;
 using Meezan.Domain.Enums;
@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace Meezan.WebApi.Controllers;
+namespace Meezan.WebApi.Controllers.Admin;
 
 [ApiController]
 [Route("api/admin/market-data")]
@@ -21,7 +21,7 @@ public class AdminMarketDataController : ControllerBase
         _context = context;
     }
 
-    // ── Shariah Manual Overrides ──────────────────────────────────────────────
+    // -- Shariah Manual Overrides ----------------------------------------------
 
     /// <summary>
     /// Gets the current Shariah metrics for a stock, including any manual overrides.
@@ -105,7 +105,7 @@ public class AdminMarketDataController : ControllerBase
             return NotFound("No Shariah metrics found for this stock.");
 
         // Snapshot the Halal inputs BEFORE mutating, so we recompute that stock
-        // only when its ratios actually changed — in the same save operation.
+        // only when its ratios actually changed � in the same save operation.
         decimal? oldRevenue = metrics.EffectiveHaramRevenuePercentage;
         decimal? oldDebt = metrics.EffectiveLoansPercentage;
         bool? oldActivity = metrics.EffectiveCoreActivityCompliant;
@@ -276,7 +276,7 @@ public class AdminMarketDataController : ControllerBase
         ));
     }
 
-    // ── Existing endpoints ─────────────────────────────────────────────────────
+    // -- Existing endpoints -----------------------------------------------------
 
     [HttpGet("stocks")]
     [ProducesResponseType(typeof(List<AdminStockLookupItem>), StatusCodes.Status200OK)]
@@ -534,7 +534,7 @@ public sealed record StockDataStatusItem(
 /// <summary>Request body for the manual DataStatus override endpoint.</summary>
 public sealed record UpdateDataStatusRequest(string DataStatus);
 
-// ── Shariah Override DTOs ────────────────────────────────────────────────────
+// -- Shariah Override DTOs ----------------------------------------------------
 
 /// <summary>Response DTO for Shariah manual overrides (feed, override, and effective values).</summary>
 public sealed record ShariahOverridesDto(

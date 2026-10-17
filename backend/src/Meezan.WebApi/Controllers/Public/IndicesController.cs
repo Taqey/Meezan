@@ -5,7 +5,7 @@ using Meezan.Application.Features.Indices.Queries.GetIndexConstituents;
 using Meezan.Application.Features.Indices.Queries.GetIndicesList;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Meezan.WebApi.Controllers;
+namespace Meezan.WebApi.Controllers.Public;
 
 [ApiController]
 [Route("api/indices")]

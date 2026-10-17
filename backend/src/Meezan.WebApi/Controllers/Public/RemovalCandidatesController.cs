@@ -8,7 +8,7 @@ using Meezan.Application.Features.Scraping.Commands.RefreshSelectedStocks;
 using Meezan.WebApi.Contracts.RemovalCandidates;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Meezan.WebApi.Controllers;
+namespace Meezan.WebApi.Controllers.Public;
 
 /// <summary>
 /// Operator review checklist for stale / missing / deactivated stocks.

@@ -9,7 +9,7 @@ using Meezan.Application.Features.Shariah.Queries.GetSourcePdf;
 using Meezan.Application.Features.Shariah.Queries.GetSourcePdfsStatus;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Meezan.WebApi.Controllers;
+namespace Meezan.WebApi.Controllers.Public;
 
 [ApiController]
 [Route("api/shariah")]

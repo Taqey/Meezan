@@ -12,7 +12,7 @@ using Meezan.WebApi.Contracts.AdminStocksManagement;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Meezan.WebApi.Controllers;
+namespace Meezan.WebApi.Controllers.Admin;
 
 /// <summary>
 /// Admin endpoints for managing stocks, their sector assignments, and index memberships.

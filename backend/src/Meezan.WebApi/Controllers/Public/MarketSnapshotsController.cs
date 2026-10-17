@@ -4,7 +4,7 @@ using Meezan.Application.Features.Market.DTOs;
 using Meezan.Application.Features.Market.Queries.GetMarketSnapshots;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Meezan.WebApi.Controllers;
+namespace Meezan.WebApi.Controllers.Public;
 
 [ApiController]
 [Route("api/market-snapshots")]

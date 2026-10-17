@@ -18,7 +18,7 @@ using Meezan.WebApi.Contracts.AdminFundTypes;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Meezan.WebApi.Controllers;
+namespace Meezan.WebApi.Controllers.Admin;
 
 /// <summary>
 /// Editable fund types (الأنواع). Distinct from /categories: a type is the

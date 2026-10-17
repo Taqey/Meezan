@@ -5,7 +5,7 @@ using Meezan.Application.Features.Scraping.Queries.GetScrapeStatus;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Meezan.WebApi.Controllers;
+namespace Meezan.WebApi.Controllers.Public;
 
 [ApiController]
 [Route("api/scraping")]
