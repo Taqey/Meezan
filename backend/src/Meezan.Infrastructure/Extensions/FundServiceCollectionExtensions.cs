@@ -35,7 +35,6 @@ public static class FundServiceCollectionExtensions
         services.AddScoped<IFundClassificationChangeLogRepository, FundClassificationChangeLogRepository>();
         services.AddScoped<IFundClassificationBackupRepository, FundClassificationBackupRepository>();
         services.AddScoped<IFundClassificationService, FundClassificationService>();
-        services.AddScoped<IFundReadQuery, FundReadQuery>();
         services.AddScoped<IFundTypeDefinitionRepository, FundTypeDefinitionRepository>();
         services.AddScoped<IFundTypeOverrideRepository, FundTypeOverrideRepository>();
         services.AddScoped<IFundTypeChangeLogRepository, FundTypeChangeLogRepository>();
@@ -63,11 +62,6 @@ public static class FundServiceCollectionExtensions
         // Fund Sync Background Service
         services.AddHostedService<FundSyncBackgroundService>();
         services.AddScoped<IFundSyncService, FundSyncService>();
-        services.AddScoped<Meezan.Application.Common.Interfaces.Caching.IFundPriceCacheInvalidator, Meezan.Infrastructure.Services.Caching.NoOpFundPriceCacheInvalidator>();
-
-        // Parallel loader for the fund detail page (own scopes: a DbContext is not thread-safe)
-        services.AddScoped<IFundDetailQuery, FundDetailQuery>();
-        services.AddScoped<FundDetailQuery>();
 
         return services;
     }

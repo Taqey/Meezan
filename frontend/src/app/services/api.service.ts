@@ -692,5 +692,18 @@ export class ApiService {
   getFundAdmin(id: number): Observable<FundListItemDto> {
     return this.http.get<FundListItemDto>(`${this.baseUrl}/api/admin/funds/funds/${id}`);
   }
+
+  // Cache management
+  getFundCacheStatus(): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/api/admin/funds/cache/status`);
+  }
+
+  clearFundCache(): Observable<string> {
+    return this.http.post<string>(`${this.baseUrl}/api/admin/funds/cache/clear`, {});
+  }
+
+  rebuildFundCache(): Observable<string> {
+    return this.http.post<string>(`${this.baseUrl}/api/admin/funds/cache/rebuild`, {});
+  }
 }
 

@@ -1,4 +1,8 @@
 using MediatR;
+using Meezan.Application.Common.Models.Caching;
+using Meezan.Application.Features.Funds.Caching.Commands.ClearFundCache;
+using Meezan.Application.Features.Funds.Caching.Commands.RebuildFundCache;
+using Meezan.Application.Features.Funds.Caching.Queries.GetCacheStatus;
 using Meezan.Application.Features.Funds.Categories.Commands.CreateFundCategory;
 using Meezan.Application.Features.Funds.Categories.Commands.DeleteFundCategory;
 using Meezan.Application.Features.Funds.Categories.Commands.ExcludeFundFromCategory;
@@ -353,6 +357,32 @@ public class AdminFundsController : ControllerBase
     {
         var result = await _sender.Send(new GetAdminFundByIdQuery(id), cancellationToken);
         if (result.IsSuccess && result.Value == null) return NotFound();
+        return result.ToActionResult();
+    }
+
+    // ========== FUND CACHE MANAGEMENT ==========
+
+    [HttpGet("cache/status")]
+    [ProducesResponseType(typeof(CacheStatusDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetCacheStatus(CancellationToken cancellationToken = default)
+    {
+        var result = await _sender.Send(new GetCacheStatusQuery(), cancellationToken);
+        return result.ToActionResult();
+    }
+
+    [HttpPost("cache/clear")]
+    [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+    public async Task<IActionResult> ClearCache(CancellationToken cancellationToken = default)
+    {
+        var result = await _sender.Send(new ClearFundCacheCommand(), cancellationToken);
+        return result.ToActionResult();
+    }
+
+    [HttpPost("cache/rebuild")]
+    [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+    public async Task<IActionResult> RebuildCache(CancellationToken cancellationToken = default)
+    {
+        var result = await _sender.Send(new RebuildFundCacheCommand(), cancellationToken);
         return result.ToActionResult();
     }
 }

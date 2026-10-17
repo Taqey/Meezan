@@ -350,6 +350,45 @@ interface EditableMarketForm {
                 </a>
               </div>
             </div>
+
+            <!-- Fund Cache Status & Control Card -->
+            <div class="admin-card" style="border-top: 4px solid #3b82f6; display: flex; flex-direction: column; justify-content: space-between;">
+              <div>
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                  <h3 style="margin: 0; font-size: 16px; display: flex; align-items: center; gap: 8px;">
+                    <lucide-icon [img]="DatabaseIcon" size="18" style="color: #3b82f6;"></lucide-icon>
+                    ذاكرة الصناديق المؤقتة (L1/L2)
+                  </h3>
+                  <span class="badge" [style.background]="fundCacheStatus?.redisConnected ? '#dcfce7' : '#fee2e2'" [style.color]="fundCacheStatus?.redisConnected ? '#15803d' : '#b91c1c'" style="font-size: 11px;">
+                    {{ fundCacheStatus?.redisConnected ? 'Redis متصل' : 'ذاكرة محلية (L1)' }}
+                  </span>
+                </div>
+                <p class="muted" style="font-size: 13px; margin-bottom: 12px;">
+                  إصدار الكتالوج: <strong>v{{ fundCacheStatus?.catalogVersion || 1 }}</strong> | الأسعار: <strong>v{{ fundCacheStatus?.pricesVersion || 1 }}</strong>
+                  <br>
+                  المفاتيح في Redis: <strong>{{ fundCacheStatus?.keyCount || 0 }}</strong> | الحجم: <strong>{{ fundCacheStatus?.approximateSizeBytes || 0 }} بايت</strong>
+                </p>
+                <div *ngIf="fundCacheStatus" style="font-size: 12px; margin-bottom: 12px; background: #f8fafc; padding: 8px 12px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                  <div>نجاح L1: <strong>{{ fundCacheStatus.l1Hits }}</strong> | إخفاق L1: <strong>{{ fundCacheStatus.l1Misses }}</strong></div>
+                  <div>نجاح L2: <strong>{{ fundCacheStatus.l2Hits }}</strong> | إخفاق L2: <strong>{{ fundCacheStatus.l2Misses }}</strong></div>
+                  <div *ngIf="fundCacheStatus.lastRebuildUtc" style="color: #64748b; font-size: 11px; margin-top: 4px;">آخر إعادة بناء: {{ fundCacheStatus.lastRebuildUtc | date:'short' }}</div>
+                </div>
+              </div>
+
+              <div style="display: flex; flex-direction: column; gap: 8px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                  <button class="btn btn-outline" (click)="clearFundCacheNow()" [disabled]="fundCacheActionRunning" style="justify-content: center; border-color: #cbd5e1; font-size: 12px;">
+                    {{ fundCacheActionRunning ? 'جارٍ التنفيذ...' : 'تفريغ الذاكرة' }}
+                  </button>
+                  <button class="btn btn-primary" (click)="rebuildFundCacheNow()" [disabled]="fundCacheActionRunning" style="justify-content: center; background: #3b82f6; border-color: #3b82f6; font-size: 12px;">
+                    {{ fundCacheActionRunning ? 'جارٍ البناء...' : 'إعادة بناء الآن' }}
+                  </button>
+                </div>
+                <div *ngIf="fundCacheMessage" style="font-size: 11px; text-align: center; color: #15803d;">
+                  {{ fundCacheMessage }}
+                </div>
+              </div>
+            </div>
           </div>  <!-- closes the grid container -->
 
         <div *ngIf="jobToggleError" class="admin-result error" style="margin-top: 12px; margin-bottom: 12px;">
@@ -1768,6 +1807,11 @@ export class AdminComponent implements OnInit, OnDestroy {
   fundSyncHistoryTotalPages = 0;
   fundSyncHistoryTotalCount = 0;
 
+  // Fund Cache state
+  fundCacheStatus: any = null;
+  fundCacheActionRunning = false;
+  fundCacheMessage: string | null = null;
+
   // Shariah tab
   shariahRefreshing = false;
   shariahSeeding = false;
@@ -1846,6 +1890,7 @@ export class AdminComponent implements OnInit, OnDestroy {
         if (tab === 'scraping') {
           this.loadFundSyncSettings();
           this.loadFundSyncHistory();
+          this.loadFundCacheStatus();
         }
       }
     });
@@ -2102,6 +2147,51 @@ export class AdminComponent implements OnInit, OnDestroy {
     const label = fundSyncStatusLabelAr(normFundSyncStatus(r.status));
     const head = label === 'نجح' ? 'اكتمل بنجاح' : label;
     return `${head}: تم تحديث ${r.updatedFunds} من ${r.totalFunds} صندوق`;
+  }
+
+  loadFundCacheStatus(): void {
+    this.api.getFundCacheStatus().subscribe({
+      next: (status) => {
+        this.fundCacheStatus = status;
+      },
+      error: () => {}
+    });
+  }
+
+  clearFundCacheNow(): void {
+    if (this.fundCacheActionRunning) return;
+    this.fundCacheActionRunning = true;
+    this.fundCacheMessage = null;
+    this.api.clearFundCache().subscribe({
+      next: (res) => {
+        this.fundCacheActionRunning = false;
+        this.fundCacheMessage = typeof res === 'string' ? res : 'تم تفريغ ذاكرة الصناديق بنجاح';
+        this.loadFundCacheStatus();
+        this.toast.show('تم تفريغ ذاكرة الصناديق بنجاح');
+      },
+      error: (err) => {
+        this.fundCacheActionRunning = false;
+        this.toast.show('فشل تفريغ الذاكرة: ' + (err.error?.message || err.message));
+      }
+    });
+  }
+
+  rebuildFundCacheNow(): void {
+    if (this.fundCacheActionRunning) return;
+    this.fundCacheActionRunning = true;
+    this.fundCacheMessage = null;
+    this.api.rebuildFundCache().subscribe({
+      next: (res) => {
+        this.fundCacheActionRunning = false;
+        this.fundCacheMessage = typeof res === 'string' ? res : 'تم إعادة بناء ذاكرة الصناديق بنجاح';
+        this.loadFundCacheStatus();
+        this.toast.show('تم إعادة بناء ذاكرة الصناديق بنجاح');
+      },
+      error: (err) => {
+        this.fundCacheActionRunning = false;
+        this.toast.show('فشل إعادة بناء الذاكرة: ' + (err.error?.message || err.message));
+      }
+    });
   }
 
   logout(): void {

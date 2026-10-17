@@ -1,11 +1,12 @@
 using MediatR;
+using Meezan.Application.Common.Interfaces.Caching;
 using Meezan.Application.Common.Interfaces.Persistence;
 using Meezan.Application.Common.Results;
 using Meezan.Application.Features.Funds.Classification.Dtos;
 
 namespace Meezan.Application.Features.Funds.Classification.Commands.UpdateClassificationNode;
 
-public sealed record UpdateClassificationNodeCommand : IRequest<Result<AdminClassificationNodeDto>>, ITransactionalCommand
+public sealed record UpdateClassificationNodeCommand : IRequest<Result<AdminClassificationNodeDto>>, ITransactionalCommand, IInvalidatesFundCatalog
 {
     public int Id { get; init; }
     public string? Slug { get; init; }
