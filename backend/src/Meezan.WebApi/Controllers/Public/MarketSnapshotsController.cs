@@ -1,7 +1,9 @@
 using MediatR;
+using Meezan.Application.Common.Results;
 using Meezan.Application.Features.Market.Commands.RefreshMarketSnapshots;
 using Meezan.Application.Features.Market.DTOs;
 using Meezan.Application.Features.Market.Queries.GetMarketSnapshots;
+using Meezan.WebApi.Common;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Meezan.WebApi.Controllers.Public;
@@ -27,7 +29,7 @@ public class MarketSnapshotsController : ControllerBase
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
         var result = await _sender.Send(new GetMarketSnapshotsQuery(), cancellationToken);
-        return Ok(result);
+        return result.ToActionResult();
     }
 
     /// <summary>
@@ -38,14 +40,7 @@ public class MarketSnapshotsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Refresh(CancellationToken cancellationToken)
     {
-        try
-        {
-            var result = await _sender.Send(new RefreshMarketSnapshotsCommand(), cancellationToken);
-            return Ok(result);
-        }
-        catch (InvalidOperationException ex)
-        {
-            return Conflict(new { message = ex.Message });
-        }
+        var result = await _sender.Send(new RefreshMarketSnapshotsCommand(), cancellationToken);
+        return result.ToActionResult();
     }
 }

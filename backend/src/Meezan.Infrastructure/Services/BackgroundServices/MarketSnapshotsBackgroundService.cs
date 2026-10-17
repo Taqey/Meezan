@@ -82,10 +82,17 @@ public class MarketSnapshotsBackgroundService : BackgroundService
                 var sender = scope.ServiceProvider.GetRequiredService<ISender>();
                 var result = await sender.Send(new RefreshMarketSnapshotsCommand(), stoppingToken);
 
-                _logger.LogInformation(
-                    "Daily market snapshots refresh completed. Succeeded: {Succeeded}, Failed: {Failed}, Total: {Total}, Duration: {Duration}s",
-                    result.Succeeded, result.Failed, result.TotalTargets,
-                    (int)result.Duration.TotalSeconds);
+                if (result.IsSuccess)
+                {
+                    _logger.LogInformation(
+                        "Daily market snapshots refresh completed. Succeeded: {Succeeded}, Failed: {Failed}, Total: {Total}, Duration: {Duration}s",
+                        result.Value.Succeeded, result.Value.Failed, result.Value.TotalTargets,
+                        (int)result.Value.Duration.TotalSeconds);
+                }
+                else
+                {
+                    _logger.LogWarning("Daily market snapshots refresh failed: {Error}", result.Error.Message);
+                }
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {

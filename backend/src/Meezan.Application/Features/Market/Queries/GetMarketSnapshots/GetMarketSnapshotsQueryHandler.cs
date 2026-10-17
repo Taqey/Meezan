@@ -14,11 +14,12 @@ using Meezan.Application.Common.Interfaces.Repositories.Stocks;
 using Meezan.Application.Common.Interfaces.Repositories.System;
 using Meezan.Application.Common.Interfaces.Security;
 using Meezan.Application.Common.Interfaces.Storage;
+using Meezan.Application.Common.Results;
 using Meezan.Application.Features.Market.DTOs;
 
 namespace Meezan.Application.Features.Market.Queries.GetMarketSnapshots;
 
-public class GetMarketSnapshotsQueryHandler : IRequestHandler<GetMarketSnapshotsQuery, List<MarketSnapshotDto>>
+public class GetMarketSnapshotsQueryHandler : IRequestHandler<GetMarketSnapshotsQuery, Result<List<MarketSnapshotDto>>>
 {
     private readonly IMarketSnapshotRepository _snapshots;
 
@@ -27,7 +28,7 @@ public class GetMarketSnapshotsQueryHandler : IRequestHandler<GetMarketSnapshots
         _snapshots = snapshots;
     }
 
-    public async Task<List<MarketSnapshotDto>> Handle(
+    public async Task<Result<List<MarketSnapshotDto>>> Handle(
         GetMarketSnapshotsQuery request, CancellationToken cancellationToken)
     {
         var rows = await _snapshots.GetLatestAsync(cancellationToken);

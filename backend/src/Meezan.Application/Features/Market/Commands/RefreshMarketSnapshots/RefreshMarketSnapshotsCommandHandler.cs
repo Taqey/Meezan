@@ -18,6 +18,7 @@ using Meezan.Application.Common.Interfaces.Repositories.Stocks;
 using Meezan.Application.Common.Interfaces.Repositories.System;
 using Meezan.Application.Common.Interfaces.Security;
 using Meezan.Application.Common.Interfaces.Storage;
+using Meezan.Application.Common.Results;
 using Meezan.Application.Features.Market.DTOs;
 using Meezan.Domain.Entities;
 using Microsoft.Extensions.Logging;
@@ -25,7 +26,7 @@ using Microsoft.Extensions.Logging;
 namespace Meezan.Application.Features.Market.Commands.RefreshMarketSnapshots;
 
 public class RefreshMarketSnapshotsCommandHandler
-    : IRequestHandler<RefreshMarketSnapshotsCommand, RefreshMarketSnapshotsResultDto>
+    : IRequestHandler<RefreshMarketSnapshotsCommand, Result<RefreshMarketSnapshotsResultDto>>
 {
     /// <summary>Politeness gap between page fetches (robots.txt asks crawl-delay 5).</summary>
     private static readonly TimeSpan PolitenessDelay = TimeSpan.FromSeconds(5);
@@ -51,102 +52,102 @@ public class RefreshMarketSnapshotsCommandHandler
         _logger = logger;
     }
 
-    public async Task<RefreshMarketSnapshotsResultDto> Handle(
+    public async Task<Result<RefreshMarketSnapshotsResultDto>> Handle(
         RefreshMarketSnapshotsCommand request, CancellationToken cancellationToken)
     {
         if (!await RunLock.WaitAsync(0, cancellationToken))
         {
             _logger.LogWarning("RefreshMarketSnapshotsCommand rejected: another refresh is already running.");
-            throw new InvalidOperationException("Another market snapshot refresh is already in progress.");
+            return Error.Conflict("AlreadyRunning", "Another market snapshot refresh is already in progress.", new { message = "Another market snapshot refresh is already in progress." });
         }
 
         try
         {
             var started = DateTime.UtcNow;
-        var targets = new List<(string Kind, string Code, string MubasherCode, int? SectorId)>();
+            var targets = new List<(string Kind, string Code, string MubasherCode, int? SectorId)>();
 
-        // Indices: every DB index code that has a Mubasher slug.
-        var indices = await _indexRepository.GetAllSummariesAsync(cancellationToken);
-        foreach (var idx in indices)
-        {
-            var slug = MubasherMarketMap.IndexSlugs.TryGetValue(
-                (idx.Code ?? string.Empty).Trim(), out var s) ? s : null;
-            if (slug != null) targets.Add(("Index", idx.Code, slug, null));
-        }
-
-        // Sectors: every sector ID present in the map.
-        // (Sector rows are resolved by ID at upsert time; unknown IDs skipped.)
-        foreach (var (sectorId, slug) in MubasherMarketMap.SectorSlugs)
-        {
-            targets.Add(("Sector", sectorId.ToString(), slug, sectorId));
-        }
-
-        _progress.StartRun("MarketSnapshots", request.TriggeredBy, targets.Count);
-
-        var succeeded = 0;
-        var failed = 0;
-        var first = true;
-        foreach (var (kind, code, slug, _) in targets)
-        {
-            _progress.SetCurrentItem("MarketSnapshots", $"{kind}:{code}");
-
-            if (!first)
+            // Indices: every DB index code that has a Mubasher slug.
+            var indices = await _indexRepository.GetAllSummariesAsync(cancellationToken);
+            foreach (var idx in indices)
             {
-                try { await Task.Delay(PolitenessDelay, cancellationToken); }
-                catch (OperationCanceledException) { break; }
+                var slug = MubasherMarketMap.IndexSlugs.TryGetValue(
+                    (idx.Code ?? string.Empty).Trim(), out var s) ? s : null;
+                if (slug != null) targets.Add(("Index", idx.Code, slug, null));
             }
-            first = false;
 
-            var itemSuccess = false;
-            try
+            // Sectors: every sector ID present in the map.
+            // (Sector rows are resolved by ID at upsert time; unknown IDs skipped.)
+            foreach (var (sectorId, slug) in MubasherMarketMap.SectorSlugs)
             {
-                // One retry on transient failure; a failed target keeps its last good row.
-                var quote = await _snapshotClient.ScrapeIndexSummaryAsync(slug, cancellationToken)
-                    ?? await _snapshotClient.ScrapeIndexSummaryAsync(slug, cancellationToken);
-                if (quote?.Value == null || quote?.ChangePct == null)
+                targets.Add(("Sector", sectorId.ToString(), slug, sectorId));
+            }
+
+            _progress.StartRun("MarketSnapshots", request.TriggeredBy, targets.Count);
+
+            var succeeded = 0;
+            var failed = 0;
+            var first = true;
+            foreach (var (kind, code, slug, _) in targets)
+            {
+                _progress.SetCurrentItem("MarketSnapshots", $"{kind}:{code}");
+
+                if (!first)
                 {
-                    failed++;
-                    continue;
+                    try { await Task.Delay(PolitenessDelay, cancellationToken); }
+                    catch (OperationCanceledException) { break; }
                 }
-                await _snapshotRepository.UpsertAsync(new MarketIndexSnapshot
+                first = false;
+
+                var itemSuccess = false;
+                try
                 {
-                    Kind = kind,
-                    Code = code,
-                    MubasherCode = slug,
-                    Value = quote.Value,
-                    Change = quote.Change,
-                    ChangePct = quote.ChangePct,
-                    SourceDateText = quote.SourceDateText,
-                    Source = "Mubasher",
-                    FetchedAt = DateTime.UtcNow
-                }, cancellationToken);
-                succeeded++;
-                itemSuccess = true;
+                    // One retry on transient failure; a failed target keeps its last good row.
+                    var quote = await _snapshotClient.ScrapeIndexSummaryAsync(slug, cancellationToken)
+                        ?? await _snapshotClient.ScrapeIndexSummaryAsync(slug, cancellationToken);
+                    if (quote?.Value == null || quote?.ChangePct == null)
+                    {
+                        failed++;
+                        continue;
+                    }
+                    await _snapshotRepository.UpsertAsync(new MarketIndexSnapshot
+                    {
+                        Kind = kind,
+                        Code = code,
+                        MubasherCode = slug,
+                        Value = quote.Value,
+                        Change = quote.Change,
+                        ChangePct = quote.ChangePct,
+                        SourceDateText = quote.SourceDateText,
+                        Source = "Mubasher",
+                        FetchedAt = DateTime.UtcNow
+                    }, cancellationToken);
+                    succeeded++;
+                    itemSuccess = true;
+                }
+                catch (OperationCanceledException) { throw; }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Market snapshot refresh failed for {Kind}/{Code}", kind, code);
+                    failed++;
+                }
+                finally
+                {
+                    _progress.RecordItemCompleted("MarketSnapshots", $"{kind}:{code}", itemSuccess);
+                }
             }
-            catch (OperationCanceledException) { throw; }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Market snapshot refresh failed for {Kind}/{Code}", kind, code);
-                failed++;
-            }
-            finally
-            {
-                _progress.RecordItemCompleted("MarketSnapshots", $"{kind}:{code}", itemSuccess);
-            }
-        }
 
-        if (failed == targets.Count && targets.Count > 0)
-        {
-            _progress.SetFailed("MarketSnapshots", "All market snapshot requests failed.");
-        }
-        else
-        {
-            _progress.SetCompleted("MarketSnapshots");
-        }
+            if (failed == targets.Count && targets.Count > 0)
+            {
+                _progress.SetFailed("MarketSnapshots", "All market snapshot requests failed.");
+            }
+            else
+            {
+                _progress.SetCompleted("MarketSnapshots");
+            }
 
-        return new RefreshMarketSnapshotsResultDto(succeeded, failed, targets.Count, DateTime.UtcNow - started);
+            return new RefreshMarketSnapshotsResultDto(succeeded, failed, targets.Count, DateTime.UtcNow - started);
         }
-        catch (Exception ex) when (ex is not InvalidOperationException)
+        catch (Exception ex)
         {
             _progress.SetFailed("MarketSnapshots", ex.Message);
             throw;
