@@ -6,6 +6,6 @@ global using ReviewQueue = Meezan.Domain.Models.ReviewQueue;
 global using ReviewRow = Meezan.Domain.Models.ReviewRow;
 global using ReclassifyResult = Meezan.Domain.Models.ReclassifyResult;
 global using EffectiveFundTypeResult = Meezan.Domain.Models.EffectiveFundTypeResult;
-global using FundListFilter = Meezan.Application.Common.Models.FundListFilter;
-global using FundCategoryChangeLogFilter = Meezan.Application.Common.Models.FundCategoryChangeLogFilter;
+global using FundListFilter = Meezan.Application.Common.Models.Funds.FundListFilter;
+global using FundCategoryChangeLogFilter = Meezan.Application.Common.Models.Funds.FundCategoryChangeLogFilter;
 

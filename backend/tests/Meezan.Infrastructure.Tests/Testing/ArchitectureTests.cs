@@ -14,7 +14,8 @@ using Meezan.Application.Common.Interfaces.Repositories.Stocks;
 using Meezan.Application.Common.Interfaces.Repositories.System;
 using Meezan.Application.Common.Interfaces.Security;
 using Meezan.Application.Common.Interfaces.Storage;
-using Meezan.WebApi.Controllers;
+using Meezan.WebApi.Controllers.Admin;
+using Meezan.WebApi.Controllers.Public;
 using NetArchTest.Rules;
 using Xunit;
 
@@ -90,5 +91,139 @@ public class ArchitectureTests
                 $"Migrated controller {controller.Name} has forbidden dependencies: " +
                 string.Join(", ", dependencies.FailingTypeNames ?? Array.Empty<string>()));
         }
+    }
+
+    [Fact]
+    public void Namespaces_In_Application_Infrastructure_WebApi_Should_Match_Folder_Path()
+    {
+        var assemblies = new[]
+        {
+            (Assembly: ApplicationAssembly, ProjectFolder: "Meezan.Application"),
+            (Assembly: InfrastructureAssembly, ProjectFolder: "Meezan.Infrastructure"),
+            (Assembly: WebApiAssembly, ProjectFolder: "Meezan.WebApi")
+        };
+
+        var solutionDir = FindSolutionDirectory();
+        Assert.NotNull(solutionDir);
+
+        var violations = new List<string>();
+
+        foreach (var (assembly, projectName) in assemblies)
+        {
+            var projectDir = Path.Combine(solutionDir, "src", projectName);
+            var csFiles = Directory.GetFiles(projectDir, "*.cs", SearchOption.AllDirectories)
+                .Where(f => !f.Contains(Path.DirectorySeparatorChar + "bin" + Path.DirectorySeparatorChar) &&
+                            !f.Contains(Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar) &&
+                            !f.EndsWith("AssemblyInfo.cs") &&
+                            !f.EndsWith(".AssemblyAttributes.cs"))
+                .ToList();
+
+            foreach (var file in csFiles)
+            {
+                var relativePath = Path.GetRelativePath(projectDir, file);
+                var folderName = Path.GetDirectoryName(relativePath);
+
+                // Skip special folders like Migrations or Snapshots if any in Infrastructure
+                if (folderName != null && (folderName.StartsWith("Migrations") || folderName.StartsWith("Snapshots")))
+                    continue;
+
+                var expectedNamespace = string.IsNullOrEmpty(folderName)
+                    ? projectName
+                    : projectName + "." + folderName.Replace(Path.DirectorySeparatorChar, '.');
+
+                var lines = File.ReadAllLines(file);
+                var namespaceLine = lines.FirstOrDefault(l =>
+                    l.TrimStart().StartsWith("namespace ") && !l.TrimStart().StartsWith("namespace ;"));
+
+                if (namespaceLine == null) continue;
+
+                var actualNamespace = namespaceLine.Trim().Substring("namespace ".Length).TrimEnd(';').Trim();
+                if (actualNamespace != expectedNamespace)
+                {
+                    violations.Add($"{relativePath}: expected '{expectedNamespace}', got '{actualNamespace}'");
+                }
+            }
+        }
+
+        Assert.True(violations.Count == 0,
+            $"Found {violations.Count} namespace/folder mismatches:{Environment.NewLine}" +
+            string.Join(Environment.NewLine, violations));
+    }
+
+    [Fact]
+    public void No_Reorganized_Folder_Directly_Contains_More_Than_15_Files()
+    {
+        var solutionDir = FindSolutionDirectory();
+        Assert.NotNull(solutionDir);
+
+        // Folders targeted and reorganized by the reorganization specification
+        var targetFoldersToCheck = new[]
+        {
+            Path.Combine(solutionDir, "src", "Meezan.Domain", "Entities"),
+            Path.Combine(solutionDir, "src", "Meezan.Domain", "Enums"),
+            Path.Combine(solutionDir, "src", "Meezan.WebApi", "Controllers"),
+            Path.Combine(solutionDir, "src", "Meezan.Application", "Common", "Services"),
+            Path.Combine(solutionDir, "src", "Meezan.Application", "Common", "Models"),
+            Path.Combine(solutionDir, "src", "Meezan.Application", "Common", "Interfaces", "Integrations"),
+            Path.Combine(solutionDir, "src", "Meezan.Application", "Common", "Interfaces", "Persistence"),
+            Path.Combine(solutionDir, "src", "Meezan.Application", "Common", "Interfaces", "Queries"),
+            Path.Combine(solutionDir, "src", "Meezan.Application", "Common", "Interfaces", "Security"),
+            Path.Combine(solutionDir, "src", "Meezan.Application", "Common", "Interfaces", "Storage"),
+            Path.Combine(solutionDir, "src", "Meezan.Application", "Features", "Funds"),
+            Path.Combine(solutionDir, "tests", "Meezan.Infrastructure.Tests")
+        };
+
+        var violations = new List<string>();
+
+        foreach (var targetRoot in targetFoldersToCheck)
+        {
+            if (!Directory.Exists(targetRoot)) continue;
+
+            var allDirs = Directory.GetDirectories(targetRoot, "*", SearchOption.AllDirectories)
+                .Append(targetRoot)
+                .Where(d => !d.Contains(Path.DirectorySeparatorChar + "bin") &&
+                            !d.Contains(Path.DirectorySeparatorChar + "obj") &&
+                            !d.Contains(Path.DirectorySeparatorChar + ".git") &&
+                            !d.Contains(Path.DirectorySeparatorChar + "Migrations") &&
+                            !d.Contains(Path.DirectorySeparatorChar + "Snapshots"))
+                .ToList();
+
+            foreach (var dir in allDirs)
+            {
+                var fileCount = Directory.GetFiles(dir, "*.*", SearchOption.TopDirectoryOnly)
+                    .Count(f => !f.EndsWith(".csproj") && !f.EndsWith(".user") && !f.EndsWith(".slnx"));
+
+                if (fileCount > 15)
+                {
+                    var relativeDir = Path.GetRelativePath(solutionDir, dir);
+                    violations.Add($"{relativeDir} contains {fileCount} files (max 15 allowed)");
+                }
+            }
+        }
+
+        Assert.True(violations.Count == 0,
+            $"Folders exceeding 15 files limit:{Environment.NewLine}" +
+            string.Join(Environment.NewLine, violations));
+    }
+
+    private static string? FindSolutionDirectory()
+    {
+        var current = new DirectoryInfo(AppContext.BaseDirectory);
+        while (current != null)
+        {
+            if (File.Exists(Path.Combine(current.FullName, "Meezan.slnx")) ||
+                File.Exists(Path.Combine(current.FullName, "Meezan.sln")))
+            {
+                return current.FullName;
+            }
+            if (Directory.Exists(Path.Combine(current.FullName, "backend")) &&
+                (File.Exists(Path.Combine(current.FullName, "backend", "Meezan.slnx")) ||
+                 File.Exists(Path.Combine(current.FullName, "backend", "Meezan.sln"))))
+            {
+                return Path.Combine(current.FullName, "backend");
+            }
+            current = current.Parent;
+        }
+        return null;
     }
 }
