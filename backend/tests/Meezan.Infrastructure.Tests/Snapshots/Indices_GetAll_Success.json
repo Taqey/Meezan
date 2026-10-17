@@ -1,0 +1,13 @@
+{
+  "StatusCode": 200,
+  "BodyShape": [
+    {
+      "code": "string:EGX30",
+      "nameAr": "string:\u0645\u0624\u0634\u0631 \u0625\u064A\u062C\u064A \u0625\u0643\u0633 30",
+      "nameEn": "string:EGX 30 Index",
+      "description": "string:Main benchmark",
+      "constituentsCount": "number:int",
+      "lastUpdated": "string:date-time-normalized"
+    }
+  ]
+}
