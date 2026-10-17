@@ -1,7 +1,8 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ToastService } from '../../services/toast.service';
 import {
   LucideAngularModule,
   Upload,
@@ -48,7 +49,11 @@ import {
   SectorPickerItem,
   IndexPickerItem,
   ShariahOverridesDto,
-  SaveShariahOverridesRequest
+  SaveShariahOverridesRequest,
+  FundSyncSettings,
+  FundSyncLog,
+  FundSyncSettingsUpdateRequest,
+  FundSyncLogDetail
 } from '../../models/api.models';
 import {
   SHARIAH_STANDARDS,
@@ -59,6 +64,11 @@ import {
   resolveVerdictWithScholars,
   isViaScholarsOnly
 } from '../../models/shariah-standards';
+import {
+  normFundSyncStatus,
+  fundSyncStatusLabelAr,
+  fundSyncStatusColor
+} from '../../models/fund-display';
 
 interface EditableMarketForm {
   closingPrice: number | null;
@@ -79,7 +89,7 @@ interface EditableMarketForm {
 @Component({
   selector: 'app-admin',
   standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule],
+  imports: [CommonModule, FormsModule, LucideAngularModule, RouterLink],
   template: `
     <div class="admin-page">
       <div class="admin-heading">
@@ -255,6 +265,84 @@ interface EditableMarketForm {
             </div>
           </div>
         </div>
+
+          <!-- Bucket 4: Funds Sync -->
+          <div style="background: #fbfcfb; border: 1px solid var(--border); border-radius: 14px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                <strong style="font-size: 16px; color: #7c3aed; display: flex; align-items: center; gap: 8px;">
+                  <lucide-icon [img]="DatabaseIcon" size="18"></lucide-icon>
+                  سحب بيانات الصناديق الاستثمارية (Funds Sync)
+                </strong>
+                <span class="live-dot" *ngIf="fundSyncRunning"></span>
+              </div>
+              <p style="font-size: 13px; color: var(--muted-foreground); margin: 0 0 14px; line-height: 1.5;">
+                يسحب قائمة الصناديق، تاريخ الأسعار، التحليل، والصناديق المشابهة من SNDUK، ويعيد حساب تصنيفات الصناديق.
+              </p>
+              <div style="font-size: 12px; background: white; border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; margin-bottom: 16px;">
+                <div style="margin-bottom: 6px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                  <strong>الجدول التلقائي:</strong>
+                  <span>يومياً في تمام</span>
+                  <input
+                    type="time"
+                    [ngModel]="fundSyncSettings?.runTimeCairo || '00:00'"
+                    (ngModelChange)="onFundSyncTimeChange($event)"
+                    [disabled]="fundSyncLoading || !fundSyncSettings"
+                    aria-label="وقت التشغيل التلقائي بتوقيت القاهرة"
+                    style="border: 1px solid var(--border); border-radius: 6px; padding: 2px 6px; font-size: 12px; font-family: inherit; background: #fbfcfb;" />
+                  <span>بتوقيت القاهرة</span>
+                </div>
+                <div><strong>آخر تشغيل مسجل:</strong> {{ getFundSyncLastRunText() }}</div>
+                <div *ngIf="fundSyncHistory[0]"><strong>نتيجة آخر تشغيل:</strong>
+                  <span [style.color]="getFundSyncStatusColor(fundSyncHistory[0].status)">
+                    {{ getFundSyncStatusLabel(fundSyncHistory[0].status) }}
+                  </span>
+                  <span *ngIf="fundSyncHistory[0].totalFunds"> — تم تحديث {{ fundSyncHistory[0].updatedFunds }} من {{ fundSyncHistory[0].totalFunds }} صندوق</span>
+                </div>
+              </div>
+
+              <!-- Automation Toggle -->
+              <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: #f5f3ff; border: 1px solid #ddd6fe; border-radius: 8px; margin-bottom: 16px;"
+                   [style.background]="fundSyncSettings?.isEnabled ? '#f5f3ff' : '#fef2f2'"
+                   [style.borderColor]="fundSyncSettings?.isEnabled ? '#ddd6fe' : '#fecaca'">
+                <div>
+                  <div style="font-size: 13px; font-weight: 600;" [style.color]="fundSyncSettings?.isEnabled ? '#7c3aed' : '#991b1b'">
+                    {{ fundSyncSettings?.isEnabled ? 'التشغيل التلقائي مُفعَّل' : 'التشغيل التلقائي مُعطَّل' }}
+                  </div>
+                  <div style="font-size: 11px; color: var(--muted-foreground);">
+                    {{ fundSyncSettings?.isEnabled ? ('يعمل مجدولاً في الساعة ' + (fundSyncSettings?.runTimeCairo || '00:00') + ' بتوقيت القاهرة') : 'لن يتم تنفيذ الجدول التلقائي' }}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  (click)="toggleFundSync()"
+                  [disabled]="fundSyncLoading || !fundSyncSettings"
+                  class="btn btn-outline"
+                  style="font-size: 12px; padding: 4px 10px; border-radius: 6px;"
+                  [style.borderColor]="fundSyncSettings?.isEnabled ? '#7c3aed' : '#dc2626'"
+                  [style.color]="fundSyncSettings?.isEnabled ? '#7c3aed' : '#dc2626'">
+                  {{ fundSyncLoading ? 'جارٍ الحفظ...' : (fundSyncSettings?.isEnabled ? 'تعطيل الآلي' : 'تفعيل الآلي') }}
+                </button>
+              </div>
+
+              <div style="display: flex; flex-direction: column; gap: 8px;">
+                <button class="btn btn-primary" (click)="runFundSyncNow()" [disabled]="fundSyncRunning" style="width: 100%; justify-content: center; background: #7c3aed; border-color: #7c3aed;">
+                  <lucide-icon [img]="PlayIcon" size="16"></lucide-icon>
+                  {{ fundSyncRunning ? 'جارٍ سحب الصناديق...' : 'تشغيل سحب الصناديق الآن (Run Funds)' }}
+                </button>
+                <div *ngIf="fundSyncRunResult" style="font-size: 11px; text-align: center;" [style.color]="getFundSyncStatusColor(fundSyncRunResult.status)">
+                  {{ fundSyncRunResultText() }}
+                </div>
+                <div *ngIf="fundSyncRunError" style="font-size: 11px; text-align: center; color: var(--bad);">
+                  {{ fundSyncRunError }}
+                </div>
+                <a routerLink="/admin/funds" class="btn btn-outline" style="width: 100%; justify-content: center; border-color: #ddd6fe; color: #7c3aed; text-decoration: none; box-sizing: border-box;">
+                  <lucide-icon [img]="HistoryIcon" size="14"></lucide-icon>
+                  إدارة الصناديق وسجل المزامنة
+                </a>
+              </div>
+            </div>
+          </div>  <!-- closes the grid container -->
 
         <div *ngIf="jobToggleError" class="admin-result error" style="margin-top: 12px; margin-bottom: 12px;">
           {{ jobToggleError }}
@@ -816,54 +904,54 @@ interface EditableMarketForm {
                 </span>
               </div>
 
-              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px;">
                 <!-- Core Activity Compliant -->
                 <div style="background: white; border: 1px solid var(--border); border-radius: 10px; padding: 14px;">
-                  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
-                    <label style="font-size: 12px; font-weight: 600; margin: 0;">تصنيف النشاط + مطابقة النشاط الأساسي</label>
+                  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+                    <label style="font-size: 12px; font-weight: 600; margin: 0;">النشاط الأساسي</label>
                     <span *ngIf="shariahOverrides.overrideCoreActivityCompliant !== null" style="font-size: 10px; background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 999px; border: 1px solid #fcd34d;">
                       معدّل يدويًا
                     </span>
                   </div>
-                  <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-                    <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer;">
+                  
+                  <!-- Checkbox row: show EFFECTIVE value (override if set, else feed) -->
+                  <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; flex: 1;">
                       <input
                         type="checkbox"
-                        [(ngModel)]="shariahOverrideForm.coreActivityCompliantOverride"
+                        [(ngModel)]="coreActivityCheckboxValue"
                         name="coreActivityCompliantOverride"
-                        style="width: 18px; height: 18px; accent-color: var(--primary);" />
-                      <span>مطابق للنشاط الأساسي (CoreActivityCompliant)</span>
+                        style="width: 20px; height: 20px; accent-color: var(--primary);" />
+                      <span>مطابق للنشاط الأساسي</span>
+                      <small style="color: var(--muted-foreground); font-size: 11px;">(CoreActivityCompliant)</small>
                     </label>
+                    <span *ngIf="shariahOverrides.coreActivityCompliantSource === 'override'" style="font-size: 10px; background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 999px; border: 1px solid #fcd34d;">
+                      مصدر: تعديل يدوي
+                    </span>
+                    <span *ngIf="shariahOverrides.coreActivityCompliantSource === 'feed'" style="font-size: 10px; background: #e0e7ff; color: #3730a3; padding: 2px 8px; border-radius: 999px; border: 1px solid #c7d2fe;">
+                      مصدر: التغذية
+                    </span>
                   </div>
-                  <div style="margin-top: 8px; display: flex; gap: 8px; flex-wrap: wrap;">
-                    <div style="flex: 1; min-width: 120px;">
-                      <label style="font-size: 11px; color: var(--muted-foreground); display: block; margin-bottom: 2px;">التصنيف (عربي)</label>
-                      <input
-                        type="text"
-                        [(ngModel)]="shariahOverrideForm.categoryArOverride"
-                        name="categoryArOverride"
-                        class="admin-form input"
-                        placeholder="من المصدر"
-                        style="font-size: 12px;" />
-                      <div *ngIf="shariahOverrides.overrideCategoryAr" style="font-size: 10px; color: #92400e; margin-top: 2px;">
-                        التغذية: {{ shariahOverrides.feedCategoryAr }}
+
+                  <!-- Read-only classification display -->
+                  <div style="padding-top: 10px; border-top: 1px solid var(--border);">
+                    <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 8px;">
+                      <div style="flex: 1; min-width: 140px;">
+                        <label style="font-size: 11px; color: var(--muted-foreground); display: block; margin-bottom: 2px;">التصنيف (عربي)</label>
+                        <div style="font-size: 13px; color: var(--foreground); min-height: 20px;">
+                          {{ shariahOverrides.effectiveCategoryAr || 'غير متوفر' }}
+                        </div>
                       </div>
-                    </div>
-                    <div style="flex: 1; min-width: 120px;">
-                      <label style="font-size: 11px; color: var(--muted-foreground); display: block; margin-bottom: 2px;">التصنيف (إنجليزي)</label>
-                      <input
-                        type="text"
-                        [(ngModel)]="shariahOverrideForm.categoryEnOverride"
-                        name="categoryEnOverride"
-                        class="admin-form input"
-                        placeholder="من المصدر"
-                        style="font-size: 12px;" />
-                      <div *ngIf="shariahOverrides.overrideCategoryEn" style="font-size: 10px; color: #92400e; margin-top: 2px;">
-                        التغذية: {{ shariahOverrides.feedCategoryEn }}
+                      <div style="flex: 1; min-width: 140px;">
+                        <label style="font-size: 11px; color: var(--muted-foreground); display: block; margin-bottom: 2px;">التصنيف (إنجليزي)</label>
+                        <div style="font-size: 13px; color: var(--foreground); min-height: 20px;">
+                          {{ shariahOverrides.effectiveCategoryEn || 'غير متوفر' }}
+                        </div>
                       </div>
                     </div>
                   </div>
-                  <div style="margin-top: 10px; display: flex; gap: 8px;">
+
+                  <div style="margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap;">
                     <button
                       type="button"
                       class="btn btn-primary"
@@ -883,58 +971,53 @@ interface EditableMarketForm {
                       <lucide-icon [img]="RotateCcwIcon" size="13"></lucide-icon>
                       استعادة النشاط
                     </button>
-                    <button
-                      type="button"
-                      class="btn btn-outline"
-                      style="font-size: 11px; padding: 4px 10px; border-color: #fecaca; color: var(--bad);"
-                      (click)="resetShariahOverride('CategoryAr')"
-                      [disabled]="savingShariahOverrides || shariahOverrides.overrideCategoryAr === null"
-                      title="استعادة قيمة التغذية للتصنيف العربي">
-                      <lucide-icon [img]="RotateCcwIcon" size="13"></lucide-icon>
-                      استعادة التصنيف (عربي)
-                    </button>
-                    <button
-                      type="button"
-                      class="btn btn-outline"
-                      style="font-size: 11px; padding: 4px 10px; border-color: #fecaca; color: var(--bad);"
-                      (click)="resetShariahOverride('CategoryEn')"
-                      [disabled]="savingShariahOverrides || shariahOverrides.overrideCategoryEn === null"
-                      title="استعادة قيمة التغذية للتصنيف الإنجليزي">
-                      <lucide-icon [img]="RotateCcwIcon" size="13"></lucide-icon>
-                      استعادة التصنيف (إنجليزي)
-                    </button>
                   </div>
                 </div>
 
                 <!-- Haram Revenue Percentage -->
                 <div style="background: white; border: 1px solid var(--border); border-radius: 10px; padding: 14px;">
-                  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
                     <label style="font-size: 12px; font-weight: 600; margin: 0;">نسبة الإيراد المحرم (%)</label>
                     <span *ngIf="shariahOverrides.overrideHaramRevenuePercentage !== null" style="font-size: 10px; background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 999px; border: 1px solid #fcd34d;">
                       معدّل يدويًا
                     </span>
                   </div>
-                  <div style="display: flex; gap: 10px; align-items: end; flex-wrap: wrap;">
-                    <div style="flex: 1; min-width: 140px;">
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        max="100"
-                        [(ngModel)]="shariahOverrideForm.haramRevenuePercentageOverride"
-                        name="haramRevenuePercentageOverride"
-                        class="admin-form input"
-                        placeholder="من المصدر"
-                        style="font-size: 13px; font-weight: 600;" />
-                      <div *ngIf="shariahOverrides.overrideHaramRevenuePercentage !== null" style="font-size: 10px; color: #92400e; margin-top: 2px;">
+                  <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <!-- Override input with % suffix -->
+                    <div style="position: relative;">
+                      <label style="font-size: 11px; color: var(--muted-foreground); display: block; margin-bottom: 4px;">التعديل اليدوي</label>
+                      <div style="position: relative;">
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          max="100"
+                          [(ngModel)]="shariahOverrideForm.haramRevenuePercentageOverride"
+                          name="haramRevenuePercentageOverride"
+                          class="admin-form input"
+                          placeholder="من المصدر"
+                          style="font-size: 13px; font-weight: 600; padding-inline-end: 40px;" />
+                        <span style="position: absolute; inset-inline-end: 12px; top: 50%; transform: translateY(-50%); color: var(--muted-foreground); font-size: 13px; font-weight: 600; pointer-events: none;">%</span>
+                      </div>
+                      <div *ngIf="shariahOverrides.overrideHaramRevenuePercentage !== null" style="font-size: 10px; color: #92400e; margin-top: 4px;">
                         التغذية: {{ shariahOverrides.feedHaramRevenuePercentage !== null ? (shariahOverrides.feedHaramRevenuePercentage | number:'1.2-2') + '%' : '—' }}
                       </div>
                     </div>
-                    <div style="flex: 1; min-width: 140px;">
-                      <strong style="font-size: 13px; color: var(--primary);">فعال: </strong>
-                      <span style="font-size: 13px; font-weight: 600;">
-                        {{ shariahOverrides.effectiveHaramRevenuePercentage !== null ? (shariahOverrides.effectiveHaramRevenuePercentage | number:'1.2-2') + '%' : '—' }}
-                      </span>
+                    
+                    <!-- Effective and feed values display - never overlaps input -->
+                    <div style="display: flex; gap: 16px; flex-wrap: wrap; padding-top: 4px;">
+                      <div style="flex: 1; min-width: 140px;">
+                        <label style="font-size: 11px; color: var(--muted-foreground); display: block; margin-bottom: 2px;">القيمة الفعّالة</label>
+                        <div style="font-size: 13px; font-weight: 600; color: var(--primary);">
+                          {{ shariahOverrides.effectiveHaramRevenuePercentage !== null ? (shariahOverrides.effectiveHaramRevenuePercentage | number:'1.2-2') + '%' : '—' }}
+                        </div>
+                      </div>
+                      <div style="flex: 1; min-width: 140px;">
+                        <label style="font-size: 11px; color: var(--muted-foreground); display: block; margin-bottom: 2px;">قيمة المصدر</label>
+                        <div style="font-size: 13px; font-weight: 500;">
+                          {{ shariahOverrides.feedHaramRevenuePercentage !== null ? (shariahOverrides.feedHaramRevenuePercentage | number:'1.2-2') + '%' : '—' }}
+                        </div>
+                      </div>
                     </div>
                   </div>
                   <div style="margin-top: 10px; display: flex; gap: 8px;">
@@ -953,33 +1036,48 @@ interface EditableMarketForm {
 
                 <!-- Loans Percentage -->
                 <div style="background: white; border: 1px solid var(--border); border-radius: 10px; padding: 14px;">
-                  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
                     <label style="font-size: 12px; font-weight: 600; margin: 0;">نسبة القروض والفوائد (%)</label>
                     <span *ngIf="shariahOverrides.overrideLoansPercentage !== null" style="font-size: 10px; background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 999px; border: 1px solid #fcd34d;">
                       معدّل يدويًا
                     </span>
                   </div>
-                  <div style="display: flex; gap: 10px; align-items: end; flex-wrap: wrap;">
-                    <div style="flex: 1; min-width: 140px;">
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        max="100"
-                        [(ngModel)]="shariahOverrideForm.loansPercentageOverride"
-                        name="loansPercentageOverride"
-                        class="admin-form input"
-                        placeholder="من المصدر"
-                        style="font-size: 13px; font-weight: 600;" />
-                      <div *ngIf="shariahOverrides.overrideLoansPercentage !== null" style="font-size: 10px; color: #92400e; margin-top: 2px;">
+                  <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <!-- Override input with % suffix -->
+                    <div style="position: relative;">
+                      <label style="font-size: 11px; color: var(--muted-foreground); display: block; margin-bottom: 4px;">التعديل اليدوي</label>
+                      <div style="position: relative;">
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          max="100"
+                          [(ngModel)]="shariahOverrideForm.loansPercentageOverride"
+                          name="loansPercentageOverride"
+                          class="admin-form input"
+                          placeholder="من المصدر"
+                          style="font-size: 13px; font-weight: 600; padding-inline-end: 40px;" />
+                        <span style="position: absolute; inset-inline-end: 12px; top: 50%; transform: translateY(-50%); color: var(--muted-foreground); font-size: 13px; font-weight: 600; pointer-events: none;">%</span>
+                      </div>
+                      <div *ngIf="shariahOverrides.overrideLoansPercentage !== null" style="font-size: 10px; color: #92400e; margin-top: 4px;">
                         التغذية: {{ shariahOverrides.feedLoansPercentage !== null ? (shariahOverrides.feedLoansPercentage | number:'1.2-2') + '%' : '—' }}
                       </div>
                     </div>
-                    <div style="flex: 1; min-width: 140px;">
-                      <strong style="font-size: 13px; color: var(--primary);">فعال: </strong>
-                      <span style="font-size: 13px; font-weight: 600;">
-                        {{ shariahOverrides.effectiveLoansPercentage !== null ? (shariahOverrides.effectiveLoansPercentage | number:'1.2-2') + '%' : '—' }}
-                      </span>
+                    
+                    <!-- Effective and feed values display - never overlaps input -->
+                    <div style="display: flex; gap: 16px; flex-wrap: wrap; padding-top: 4px;">
+                      <div style="flex: 1; min-width: 140px;">
+                        <label style="font-size: 11px; color: var(--muted-foreground); display: block; margin-bottom: 2px;">القيمة الفعّالة</label>
+                        <div style="font-size: 13px; font-weight: 600; color: var(--primary);">
+                          {{ shariahOverrides.effectiveLoansPercentage !== null ? (shariahOverrides.effectiveLoansPercentage | number:'1.2-2') + '%' : '—' }}
+                        </div>
+                      </div>
+                      <div style="flex: 1; min-width: 140px;">
+                        <label style="font-size: 11px; color: var(--muted-foreground); display: block; margin-bottom: 2x;">قيمة المصدر</label>
+                        <div style="font-size: 13px; font-weight: 500;">
+                          {{ shariahOverrides.feedLoansPercentage !== null ? (shariahOverrides.feedLoansPercentage | number:'1.2-2') + '%' : '—' }}
+                        </div>
+                      </div>
                     </div>
                   </div>
                   <div style="margin-top: 10px; display: flex; gap: 8px;">
@@ -1159,6 +1257,11 @@ interface EditableMarketForm {
           <button class="btn btn-outline" (click)="triggerShariahSeed()" [disabled]="shariahSeeding">
             <lucide-icon [img]="DatabaseIcon" size="16"></lucide-icon>
             {{ shariahSeeding ? 'جارٍ البذر...' : 'بذر خريطة الشريعة الافتراضية (Seed Shariah Map)' }}
+          </button>
+
+          <button class="btn btn-outline" (click)="backfillCoreActivityCompliant()" [disabled]="backfillingActivity" style="border-color: #22c55e; color: #16a34a;">
+            <lucide-icon [img]="CheckCircleIcon" size="16"></lucide-icon>
+            {{ backfillingActivity ? 'جارٍ تنفيذ البذر...' : 'بذر نشاط أساسي للمتطابقين (Backfill CoreActivity)' }}
           </button>
         </div>
 
@@ -1641,10 +1744,24 @@ export class AdminComponent implements OnInit, OnDestroy {
   snapshotsRunError: string | null = null;
   snapshotsLastRunText = 'لا يوجد سجل سابق';
 
+  // Funds Sync state
+  fundSyncSettings?: FundSyncSettings;
+  fundSyncLoading = false;
+  fundSyncRunning = false;
+  fundSyncRunResult?: FundSyncLog | null;
+  fundSyncRunError: string | null = null;
+  fundSyncHistory: FundSyncLog[] = [];
+  fundSyncHistoryLoading = false;
+  fundSyncHistoryPage = 1;
+  fundSyncHistoryPageSize = 20;
+  fundSyncHistoryTotalPages = 0;
+  fundSyncHistoryTotalCount = 0;
+
   // Shariah tab
   shariahRefreshing = false;
   shariahSeeding = false;
   verdictRecomputing = false;
+  backfillingActivity = false;
   recomputeResult?: { message?: string | null; recomputedCount: number; changedCount: number } | null;
   refreshResult?: RefreshShariahDataResult;
   seedResult?: SeedShariahResultDto;
@@ -1688,7 +1805,8 @@ export class AdminComponent implements OnInit, OnDestroy {
   constructor(
     private api: ApiService,
     private auth: AdminAuthService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -1713,6 +1831,10 @@ export class AdminComponent implements OnInit, OnDestroy {
         }
         if (tab === 'stocks') {
           this.loadMgmtData();
+        }
+        if (tab === 'scraping') {
+          this.loadFundSyncSettings();
+          this.loadFundSyncHistory();
         }
       }
     });
@@ -1810,6 +1932,132 @@ export class AdminComponent implements OnInit, OnDestroy {
     return this.jobSettings[jobKey] !== false;
   }
 
+  // Funds Sync methods
+  loadFundSyncSettings(): void {
+    this.fundSyncLoading = true;
+    this.api.getFundSyncSettings().subscribe({
+      next: (settings) => {
+        this.fundSyncSettings = this.normalizeSyncSettings(settings);
+        this.fundSyncLoading = false;
+      },
+      error: () => {
+        this.fundSyncLoading = false;
+      }
+    });
+  }
+
+  /** The API returns runTimeCairo as "HH:mm:ss"; the time input needs "HH:mm". */
+  private normalizeSyncSettings(settings: FundSyncSettings): FundSyncSettings {
+    return {
+      ...settings,
+      runTimeCairo: (settings.runTimeCairo || '00:00').slice(0, 5)
+    };
+  }
+
+  /** Enable/disable toggle: flips locally, saves, then syncs state from the server response. */
+  toggleFundSync(): void {
+    if (!this.fundSyncSettings || this.fundSyncLoading) return;
+    const previous = this.fundSyncSettings.isEnabled;
+    this.fundSyncSettings = { ...this.fundSyncSettings, isEnabled: !previous };
+    this.saveFundSyncSettings(previous);
+  }
+
+  /** Run-time picker: saves immediately (no popup), updates from the server response. */
+  onFundSyncTimeChange(value: string): void {
+    if (!this.fundSyncSettings || this.fundSyncLoading) return;
+    this.fundSyncSettings = { ...this.fundSyncSettings, runTimeCairo: value };
+    this.saveFundSyncSettings();
+  }
+
+  private saveFundSyncSettings(revertEnabled?: boolean): void {
+    if (!this.fundSyncSettings) return;
+    const request: FundSyncSettingsUpdateRequest = {
+      isEnabled: this.fundSyncSettings.isEnabled,
+      runTimeCairo: this.fundSyncSettings.runTimeCairo,
+      preventOverlap: this.fundSyncSettings.preventOverlap,
+      requestDelaySeconds: this.fundSyncSettings.requestDelaySeconds,
+      maxRetries: this.fundSyncSettings.maxRetries,
+      retryBackoffSeconds: this.fundSyncSettings.retryBackoffSeconds
+    };
+    this.fundSyncLoading = true;
+    this.api.updateFundSyncSettings(request).subscribe({
+      next: (settings) => {
+        this.fundSyncSettings = this.normalizeSyncSettings(settings);
+        this.fundSyncLoading = false;
+        this.toast.show('تم حفظ إعدادات مزامنة الصناديق');
+      },
+      error: (err) => {
+        if (revertEnabled !== undefined && this.fundSyncSettings) {
+          this.fundSyncSettings = { ...this.fundSyncSettings, isEnabled: revertEnabled };
+        }
+        this.fundSyncLoading = false;
+        this.toast.show('فشل حفظ الإعدادات: ' + (err.error?.message || err.message || 'خطأ غير متوقع'));
+      }
+    });
+  }
+
+  runFundSyncNow(): void {
+    if (this.fundSyncRunning) return;
+    this.fundSyncRunning = true;
+    this.fundSyncRunError = null;
+    this.api.runFundSyncNow().subscribe({
+      next: (log) => {
+        this.fundSyncRunResult = log;
+        this.fundSyncRunning = false;
+        this.loadFundSyncHistory();
+        const status = normFundSyncStatus(log.status);
+        this.toast.show(
+          status === 'success'
+            ? 'اكتملت مزامنة الصناديق بنجاح'
+            : `اكتملت المزامنة (${fundSyncStatusLabelAr(status)}): تم تحديث ${log.updatedFunds} من ${log.totalFunds}`
+        );
+      },
+      error: (err) => {
+        this.fundSyncRunning = false;
+        this.fundSyncRunError = err.error?.message || err.message || 'فشل تشغيل المزامنة';
+      }
+    });
+  }
+
+  loadFundSyncHistory(page = 1): void {
+    this.fundSyncHistoryLoading = true;
+    this.fundSyncHistoryPage = page;
+    this.api.getFundSyncHistory(page, this.fundSyncHistoryPageSize).subscribe({
+      next: (res) => {
+        this.fundSyncHistory = res.items;
+        this.fundSyncHistoryTotalCount = res.totalCount;
+        this.fundSyncHistoryTotalPages = res.totalPages;
+        this.fundSyncHistoryLoading = false;
+      },
+      error: () => {
+        this.fundSyncHistoryLoading = false;
+      }
+    });
+  }
+
+  getFundSyncLastRunText(): string {
+    const latest = this.fundSyncHistory[0];
+    if (latest) {
+      return `${new Date(latest.runAt).toLocaleString('ar-EG')} (${fundSyncStatusLabelAr(normFundSyncStatus(latest.status))})`;
+    }
+    return this.fundSyncSettings ? 'لا يوجد تشغيل سابق' : 'لا يوجد سجل سابق';
+  }
+
+  getFundSyncStatusLabel(status: unknown): string {
+    return fundSyncStatusLabelAr(normFundSyncStatus(status));
+  }
+
+  getFundSyncStatusColor(status: unknown): string {
+    return fundSyncStatusColor(normFundSyncStatus(status));
+  }
+
+  fundSyncRunResultText(): string {
+    const r = this.fundSyncRunResult;
+    if (!r) return '';
+    const label = fundSyncStatusLabelAr(normFundSyncStatus(r.status));
+    const head = label === 'نجح' ? 'اكتمل بنجاح' : label;
+    return `${head}: تم تحديث ${r.updatedFunds} من ${r.totalFunds} صندوق`;
+  }
 
   logout(): void {
     this.auth.logout();
@@ -1835,12 +2083,16 @@ export class AdminComponent implements OnInit, OnDestroy {
     return this.isSnapshotsRunning;
   }
 
+  get isFundSyncRunning(): boolean {
+    return this.fundSyncRunning;
+  }
+
   get isScrapingRunning(): boolean {
     return this.isDailyRunning || this.isQuarterlyRunning;
   }
 
   get isAnyJobRunning(): boolean {
-    return this.isDailyRunning || this.isQuarterlyRunning || this.isMarketSnapshotsRunning;
+    return this.isDailyRunning || this.isQuarterlyRunning || this.isMarketSnapshotsRunning || this.isFundSyncRunning;
   }
 
   get runningJobs(): { jobKey: string; nameAr: string; nameEn: string; status: string; live?: LiveProgressInfo | null }[] {
@@ -2060,6 +2312,21 @@ export class AdminComponent implements OnInit, OnDestroy {
       haramRevenuePercentageOverride: data.overrideHaramRevenuePercentage ?? null,
       loansPercentageOverride: data.overrideLoansPercentage ?? null
     };
+    
+    // Set the checkbox to show the effective value initially
+    // The checkbox will write to the override field when toggled
+    this._coreActivityCheckboxValue = data.effectiveCoreActivityCompliant ?? false;
+  }
+
+  // Helper for the checkbox: shows effective value, writes override on change
+  private _coreActivityCheckboxValue = false;
+  get coreActivityCheckboxValue(): boolean {
+    return this._coreActivityCheckboxValue;
+  }
+  set coreActivityCheckboxValue(val: boolean) {
+    this._coreActivityCheckboxValue = val;
+    // When user toggles, write to the override field
+    this.shariahOverrideForm.coreActivityCompliantOverride = val;
   }
 
   adminEvaluation?: ReturnType<typeof evaluateStandards>;
@@ -2131,10 +2398,7 @@ export class AdminComponent implements OnInit, OnDestroy {
       next: (data) => {
         this.shariahSelectedStockMarketData = data;
         this.shariahLoadingStock = false;
-        // Load Shariah overrides if the stock has Shariah metrics
-        if (data.shariahMetrics) {
-          this.loadShariahOverrides(ticker);
-        }
+        this.loadShariahOverrides(ticker);
       },
       error: (err) => {
         if (err.status === 404) {
@@ -2231,7 +2495,7 @@ export class AdminComponent implements OnInit, OnDestroy {
   // ── Shariah Manual Overrides ────────────────────────────────────────────────
 
   saveShariahOverrides(): void {
-    if (!this.selectedTicker) return;
+    if (!this.shariahSelectedTicker) return;
 
     // Validate percentage ranges
     const haramRev = this.shariahOverrideForm.haramRevenuePercentageOverride;
@@ -2251,7 +2515,8 @@ export class AdminComponent implements OnInit, OnDestroy {
     this.shariahOverridesError = '';
     this.shariahOverridesSuccess = '';
 
-    this.api.saveShariahOverrides(this.selectedTicker, this.shariahOverrideForm).subscribe({
+    const ticker = this.shariahSelectedTicker;
+    this.api.saveShariahOverrides(ticker, this.shariahOverrideForm).subscribe({
       next: (data) => {
         this.shariahOverrides = data;
         this.populateShariahOverrideForm(data);
@@ -2259,17 +2524,21 @@ export class AdminComponent implements OnInit, OnDestroy {
         this.shariahOverridesSuccess = 'تم حفظ التعديلات الشرعية بنجاح. تم إعادة احتساب حالة الامتثال.';
         this.savingShariahOverrides = false;
         // Refresh the stock market data to reflect updated compliance status
-        this.loadStockMarketData(this.selectedTicker);
+        this.loadShariahStockMarketData(ticker);
       },
       error: (err) => {
-        this.shariahOverridesError = err.error?.message || err.message || 'حدث خطأ أثناء حفظ التعديلات الشرعية.';
+        // Clean Arabic error: prefer server-provided message, fallback to generic
+        const serverMsg = err.error?.message || err.error?.title || '';
+        this.shariahOverridesError = serverMsg
+          ? `فشل الحفظ: ${serverMsg}`
+          : 'حدث خطأ أثناء حفظ التعديلات الشرعية. يرجى المحاولة مرة أخرى.';
         this.savingShariahOverrides = false;
       }
     });
   }
 
   resetShariahOverride(fieldName: string): void {
-    if (!this.selectedTicker) return;
+    if (!this.shariahSelectedTicker) return;
 
     const confirmMsg = `هل أنت متأكد من استعادة قيمة التغذية لـ ${this.getFieldLabel(fieldName)}؟ سيتم إلغاء التعديل اليدوي.`;
     if (!confirm(confirmMsg)) {
@@ -2280,7 +2549,8 @@ export class AdminComponent implements OnInit, OnDestroy {
     this.shariahOverridesError = '';
     this.shariahOverridesSuccess = '';
 
-    this.api.resetShariahOverride(this.selectedTicker, fieldName).subscribe({
+    const ticker = this.shariahSelectedTicker;
+    this.api.resetShariahOverride(ticker, fieldName).subscribe({
       next: (data) => {
         this.shariahOverrides = data;
         this.populateShariahOverrideForm(data);
@@ -2288,10 +2558,14 @@ export class AdminComponent implements OnInit, OnDestroy {
         this.shariahOverridesSuccess = `تم استعادة قيمة التغذية لـ ${this.getFieldLabel(fieldName)}.`;
         this.savingShariahOverrides = false;
         // Refresh the stock market data to reflect updated compliance status
-        this.loadStockMarketData(this.selectedTicker);
+        this.loadShariahStockMarketData(ticker);
       },
       error: (err) => {
-        this.shariahOverridesError = err.error?.message || err.message || 'حدث خطأ أثناء استعادة قيمة التغذية.';
+        // Clean Arabic error: prefer server-provided message, fallback to generic
+        const serverMsg = err.error?.message || err.error?.title || '';
+        this.shariahOverridesError = serverMsg
+          ? `فشل الاستعادة: ${serverMsg}`
+          : 'حدث خطأ أثناء استعادة قيمة التغذية. يرجى المحاولة مرة أخرى.';
         this.savingShariahOverrides = false;
       }
     });
@@ -2390,6 +2664,15 @@ export class AdminComponent implements OnInit, OnDestroy {
       next: (res) => {
         this.recomputeResult = res;
         this.verdictRecomputing = false;
+        // Also run the core activity backfill as part of recompute
+        this.api.backfillCoreActivityCompliant().subscribe({
+          next: (backfillRes) => {
+            console.log('CoreActivity backfill:', backfillRes.message);
+          },
+          error: () => {
+            // Silent fail for backfill
+          }
+        });
       },
       error: (err) => {
         this.recomputeResult = { message: err.error?.message || err.message || 'فشل إعادة الحساب', recomputedCount: 0, changedCount: 0 };
@@ -2433,6 +2716,24 @@ export class AdminComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.shariahSeeding = false;
+      }
+    });
+  }
+
+  backfillCoreActivityCompliant(): void {
+    this.backfillingActivity = true;
+    this.api.backfillCoreActivityCompliant().subscribe({
+      next: (res) => {
+        this.backfillingActivity = false;
+        alert(res.message);
+        // Refresh the shariah tab if we're on it
+        if (this.activeTab === 'shariah-edit' && this.shariahSelectedTicker) {
+          this.loadShariahOverrides(this.shariahSelectedTicker);
+        }
+      },
+      error: (err) => {
+        this.backfillingActivity = false;
+        alert('فشل تنفيذ البذر: ' + (err.error?.message || err.message || 'خطأ غير متوقع'));
       }
     });
   }

@@ -7,6 +7,8 @@ import { IndicesListComponent } from './pages/indices-list/indices-list.componen
 import { IndexDetailComponent } from './pages/index-detail/index-detail.component';
 import { SectorsListComponent } from './pages/sectors-list/sectors-list.component';
 import { SectorDetailComponent } from './pages/sector-detail/sector-detail.component';
+import { FundsListComponent } from './pages/funds-list/funds-list.component';
+import { FundDetailComponent } from './pages/fund-detail/fund-detail.component';
 import { AdminLoginComponent } from './pages/admin-login/admin-login.component';
 import { ShariahStandardsComponent } from './pages/shariah-standards/shariah-standards.component';
 import { PurificationComponent } from './pages/purification/purification.component';
@@ -23,6 +25,8 @@ export const routes: Routes = [
       { path: '', component: HomeComponent },
       { path: 'stocks', component: StocksListComponent },
       { path: 'stocks/:code', component: StockDetailComponent },
+      { path: 'funds', component: FundsListComponent },
+      { path: 'funds/:slug', component: FundDetailComponent },
       { path: 'portfolio', component: PortfolioComponent },
       { path: 'shariah-standards', component: ShariahStandardsComponent },
       { path: 'purification', component: PurificationComponent },

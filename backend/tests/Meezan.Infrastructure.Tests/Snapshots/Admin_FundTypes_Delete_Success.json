@@ -1,0 +1,7 @@
+{
+  "StatusCode": 200,
+  "BodyShape": {
+    "message": "string:Type deleted",
+    "fundCount": "number:int"
+  }
+}

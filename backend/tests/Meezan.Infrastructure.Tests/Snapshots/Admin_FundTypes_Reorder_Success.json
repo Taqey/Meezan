@@ -1,0 +1,6 @@
+{
+  "StatusCode": 200,
+  "BodyShape": {
+    "reordered": "number:int"
+  }
+}

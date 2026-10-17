@@ -90,6 +90,9 @@ public static class DependencyInjection
         services.AddScoped<IFundClassificationBackupRepository, FundClassificationBackupRepository>();
         services.AddScoped<IFundClassificationService, FundClassificationService>();
         services.AddScoped<IFundReadQuery, FundReadQuery>();
+        services.AddScoped<IFundTypeDefinitionRepository, FundTypeDefinitionRepository>();
+        services.AddScoped<IFundTypeOverrideRepository, FundTypeOverrideRepository>();
+        services.AddScoped<IFundTypeChangeLogRepository, FundTypeChangeLogRepository>();
 
         // SNDUK Fund Client
         services.AddHttpClient<ISndukFundClient, SndukFundClient>(client =>

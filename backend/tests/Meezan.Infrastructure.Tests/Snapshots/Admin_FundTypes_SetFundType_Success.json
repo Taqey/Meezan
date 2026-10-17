@@ -1,0 +1,8 @@
+{
+  "StatusCode": 200,
+  "BodyShape": {
+    "message": "string:Fund type overridden",
+    "fundId": "number:int",
+    "typeId": "number:int"
+  }
+}

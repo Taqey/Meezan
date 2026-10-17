@@ -29,10 +29,17 @@ export interface EntityStat {
        [style.--item-index]="itemIndex">
       <div class="entity-card-top">
         <span class="entity-icon-box">
-          <lucide-icon [img]="icon" size="20"></lucide-icon>
+          <img *ngIf="logoUrl && !logoFailed"
+               class="entity-logo"
+               [src]="logoUrl"
+               [alt]="title"
+               loading="lazy"
+               decoding="async"
+               (error)="logoFailed = true">
+          <lucide-icon *ngIf="!logoUrl || logoFailed" [img]="icon" size="20"></lucide-icon>
         </span>
         <div class="entity-card-top-badges">
-          <span *ngIf="ribbon" class="entity-ribbon">{{ ribbon }}</span>
+          <span *ngIf="ribbon" class="entity-ribbon" [attr.title]="ribbonTitle ?? null">{{ ribbon }}</span>
           <span class="entity-pill">{{ pill }}</span>
         </div>
       </div>
@@ -68,6 +75,11 @@ export class EntityCardComponent {
   @Input() footerText = '';
   @Input() link: string | unknown[] | null = null;
   @Input() ribbon?: string | null;
+  /** Optional native tooltip for the ribbon (e.g. Sharia source clarification). */
+  @Input() ribbonTitle?: string | null;
   @Input() featured = false;
   @Input() itemIndex = 0;
+  /** Optional image (e.g. a fund logo). Falls back to the icon when absent or broken. */
+  @Input() logoUrl?: string | null;
+  logoFailed = false;
 }

@@ -2,7 +2,6 @@
 # Each later migration step refactors a controller to CQRS and removes it from this list.
 # At the end of the refactor series, this file MUST be completely empty.
 
-AdminFundTypesController
 AdminMarketDataController
 AdminStocksManagementController
 RemovalCandidatesController

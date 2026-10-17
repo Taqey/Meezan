@@ -1,0 +1,21 @@
+{
+  "StatusCode": 200,
+  "BodyShape": {
+    "id": "number:int",
+    "slug": "string:money-market",
+    "nameAr": "string:\u0635\u0646\u0627\u062F\u064A\u0642 \u0646\u0642\u062F\u064A\u0629",
+    "nameEn": "string:Money Market",
+    "icon": "string:dollar",
+    "color": "string:#F59E0B",
+    "displayOrder": "number:int",
+    "isVisible": "bool:True",
+    "isDeleted": "bool:False",
+    "deletedAt": null,
+    "deletedReason": "string:",
+    "createdAt": "string:date-time-normalized",
+    "updatedAt": "string:date-time-normalized",
+    "createdBy": "string:admin",
+    "updatedBy": "string:admin",
+    "overrides": []
+  }
+}

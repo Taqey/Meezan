@@ -1,0 +1,21 @@
+{
+  "StatusCode": 200,
+  "BodyShape": {
+    "id": "number:int",
+    "slug": "string:equity",
+    "nameAr": "string:\u0623\u0633\u0647\u0645 \u0645\u062D\u062F\u062B\u0629",
+    "nameEn": "string:Updated Equity",
+    "icon": "string:chart",
+    "color": "string:#10B981",
+    "displayOrder": "number:int",
+    "isVisible": "bool:True",
+    "isDeleted": "bool:False",
+    "deletedAt": null,
+    "deletedReason": "string:",
+    "createdAt": "string:date-time-normalized",
+    "updatedAt": "string:date-time-normalized",
+    "createdBy": "string:admin",
+    "updatedBy": "string:admin",
+    "overrides": []
+  }
+}

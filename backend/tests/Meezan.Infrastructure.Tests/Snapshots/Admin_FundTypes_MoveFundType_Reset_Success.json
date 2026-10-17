@@ -1,0 +1,8 @@
+{
+  "StatusCode": 200,
+  "BodyShape": {
+    "message": "string:Fund reset to default type",
+    "fundId": "number:int",
+    "cleared": "bool:True"
+  }
+}

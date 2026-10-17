@@ -1,0 +1,6 @@
+{
+  "StatusCode": 400,
+  "BodyShape": {
+    "message": "string:Slug \u0027equity\u0027 already exists."
+  }
+}

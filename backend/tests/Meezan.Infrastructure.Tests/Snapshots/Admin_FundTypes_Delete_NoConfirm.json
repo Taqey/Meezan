@@ -1,0 +1,7 @@
+{
+  "StatusCode": 400,
+  "BodyShape": {
+    "message": "string:Type has 1 fund(s). Pass confirm=true to delete.",
+    "fundCount": "number:int"
+  }
+}

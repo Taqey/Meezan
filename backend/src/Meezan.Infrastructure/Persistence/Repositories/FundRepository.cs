@@ -718,3 +718,140 @@ public class FundClassificationBackupRepository : IFundClassificationBackupRepos
         return await _context.FundClassificationBackups.AsNoTracking().OrderBy(b => b.FundCode).ToListAsync(cancellationToken);
     }
 }
+
+public class FundTypeDefinitionRepository : IFundTypeDefinitionRepository
+{
+    private readonly ApplicationDbContext _context;
+
+    public FundTypeDefinitionRepository(ApplicationDbContext context)
+    {
+        _context = context;
+    }
+
+    public async Task<List<FundTypeDefinition>> GetAllAsync(bool includeDeleted = false, CancellationToken cancellationToken = default)
+    {
+        var q = _context.FundTypeDefinitions.AsNoTracking();
+        if (!includeDeleted) q = q.Where(t => !t.IsDeleted);
+        return await q.OrderBy(t => t.DisplayOrder).ThenBy(t => t.NameAr).ToListAsync(cancellationToken);
+    }
+
+    public async Task<FundTypeDefinition?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+    {
+        return await _context.FundTypeDefinitions.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+    }
+
+    public async Task<FundTypeDefinition?> GetBySlugAsync(string slug, CancellationToken cancellationToken = default)
+    {
+        return await _context.FundTypeDefinitions.FirstOrDefaultAsync(x => x.Slug.ToLower() == slug.Trim().ToLower(), cancellationToken);
+    }
+
+    public async Task<bool> ExistsBySlugAsync(string slug, CancellationToken cancellationToken = default)
+    {
+        return await _context.FundTypeDefinitions.AnyAsync(t => t.Slug == slug, cancellationToken);
+    }
+
+    public async Task AddAsync(FundTypeDefinition definition, CancellationToken cancellationToken = default)
+    {
+        await _context.FundTypeDefinitions.AddAsync(definition, cancellationToken);
+    }
+
+    public void Update(FundTypeDefinition definition)
+    {
+        _context.FundTypeDefinitions.Update(definition);
+    }
+
+    public void Delete(FundTypeDefinition definition)
+    {
+        _context.FundTypeDefinitions.Remove(definition);
+    }
+
+    public async Task<List<FundTypeDefinition>> GetByIdsAsync(IEnumerable<int> ids, CancellationToken cancellationToken = default)
+    {
+        var idList = ids.ToList();
+        return await _context.FundTypeDefinitions.Where(t => idList.Contains(t.Id)).ToListAsync(cancellationToken);
+    }
+}
+
+public class FundTypeOverrideRepository : IFundTypeOverrideRepository
+{
+    private readonly ApplicationDbContext _context;
+
+    public FundTypeOverrideRepository(ApplicationDbContext context)
+    {
+        _context = context;
+    }
+
+    public async Task<FundTypeOverride?> GetByFundIdAsync(int fundId, CancellationToken cancellationToken = default)
+    {
+        return await _context.FundTypeOverrides.FirstOrDefaultAsync(o => o.FundId == fundId, cancellationToken);
+    }
+
+    public async Task<List<FundTypeOverride>> GetByDefinitionIdAsync(int definitionId, CancellationToken cancellationToken = default)
+    {
+        return await _context.FundTypeOverrides.Where(o => o.FundTypeDefinitionId == definitionId).ToListAsync(cancellationToken);
+    }
+
+    public async Task<List<FundTypeOverride>> GetByFundIdsAsync(IEnumerable<int> fundIds, CancellationToken cancellationToken = default)
+    {
+        var idList = fundIds.ToList();
+        return await _context.FundTypeOverrides.Where(o => idList.Contains(o.FundId)).ToListAsync(cancellationToken);
+    }
+
+    public async Task<Dictionary<int, int>> GetAllFundOverridesAsync(CancellationToken cancellationToken = default)
+    {
+        return await _context.FundTypeOverrides.AsNoTracking().ToDictionaryAsync(o => o.FundId, o => o.FundTypeDefinitionId, cancellationToken);
+    }
+
+    public async Task<int> CountByDefinitionIdAsync(int definitionId, CancellationToken cancellationToken = default)
+    {
+        return await _context.FundTypeOverrides.CountAsync(o => o.FundTypeDefinitionId == definitionId, cancellationToken);
+    }
+
+    public async Task AddAsync(FundTypeOverride @override, CancellationToken cancellationToken = default)
+    {
+        await _context.FundTypeOverrides.AddAsync(@override, cancellationToken);
+    }
+
+    public void Update(FundTypeOverride @override)
+    {
+        _context.FundTypeOverrides.Update(@override);
+    }
+
+    public void Delete(FundTypeOverride @override)
+    {
+        _context.FundTypeOverrides.Remove(@override);
+    }
+
+    public void DeleteRange(IEnumerable<FundTypeOverride> overrides)
+    {
+        _context.FundTypeOverrides.RemoveRange(overrides);
+    }
+}
+
+public class FundTypeChangeLogRepository : IFundTypeChangeLogRepository
+{
+    private readonly ApplicationDbContext _context;
+
+    public FundTypeChangeLogRepository(ApplicationDbContext context)
+    {
+        _context = context;
+    }
+
+    public async Task AddAsync(FundTypeChangeLog log, CancellationToken cancellationToken = default)
+    {
+        await _context.FundTypeChangeLogs.AddAsync(log, cancellationToken);
+    }
+
+    public async Task<(List<FundTypeChangeLog> Items, int TotalCount)> QueryPagedAsync(int page, int pageSize, CancellationToken cancellationToken = default)
+    {
+        var q = _context.FundTypeChangeLogs
+            .Include(l => l.Fund)
+            .Include(l => l.Definition)
+            .OrderByDescending(l => l.CreatedAt)
+            .AsNoTracking();
+
+        var total = await q.CountAsync(cancellationToken);
+        var items = await q.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync(cancellationToken);
+        return (items, total);
+    }
+}
