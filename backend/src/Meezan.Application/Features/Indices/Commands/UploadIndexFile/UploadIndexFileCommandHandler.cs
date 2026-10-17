@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using Meezan.Application.Common;
 using Meezan.Application.Common.Services.Text;
 using Meezan.Application.Common.Services.Market;
@@ -24,7 +25,7 @@ using MediatR;
 
 namespace Meezan.Application.Features.Indices.Commands.UploadIndexFile;
 
-public class UploadIndexFileCommandHandler : IRequestHandler<UploadIndexFileCommand, UploadIndexFileResultDto>
+public class UploadIndexFileCommandHandler : IRequestHandler<UploadIndexFileCommand, Result<UploadIndexFileResultDto>>
 {
     private readonly IIndexRepository _indexRepository;
     private readonly IStockRepository _stockRepository;
@@ -55,13 +56,13 @@ public class UploadIndexFileCommandHandler : IRequestHandler<UploadIndexFileComm
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<UploadIndexFileResultDto> Handle(UploadIndexFileCommand request, CancellationToken cancellationToken)
+    public async Task<Result<UploadIndexFileResultDto>> Handle(UploadIndexFileCommand request, CancellationToken cancellationToken)
     {
         // 1. Validate Index exists
         var index = await _indexRepository.GetByCodeAsync(request.IndexCode, cancellationToken);
         if (index == null)
         {
-            throw new KeyNotFoundException($"Index with code '{request.IndexCode}' was not found.");
+            return Error.NotFound("IndexNotFound", $"Index with code '{request.IndexCode}' was not found.");
         }
 
         // 3. Parse Excel

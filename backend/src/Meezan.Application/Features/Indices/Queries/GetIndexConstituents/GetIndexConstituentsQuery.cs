@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Results;
 using MediatR;
 using Meezan.Application.Features.Indices.DTOs;
 
@@ -18,4 +19,4 @@ public record GetIndexConstituentsQuery(
     decimal? MaxPeRatio = null,
     decimal? MinPbRatio = null,
     decimal? MaxPbRatio = null
-) : IRequest<IndexConstituentsPagedResultDto?>;
+) : IRequest<Result<IndexConstituentsPagedResultDto>>;

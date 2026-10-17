@@ -89,12 +89,14 @@ public static class ResultExtensions
         return error.Type switch
         {
             ErrorType.Validation => new BadRequestObjectResult(new { message = error.Message }),
-            ErrorType.NotFound => new NotFoundObjectResult(new
-            {
-                status = 404,
-                title = "Not Found",
-                message = error.Message
-            }),
+            ErrorType.NotFound => string.IsNullOrWhiteSpace(error.Message)
+                ? new NotFoundResult()
+                : new NotFoundObjectResult(new
+                {
+                    status = 404,
+                    title = "Not Found",
+                    message = error.Message
+                }),
             ErrorType.Conflict => new ConflictObjectResult(new
             {
                 status = 409,

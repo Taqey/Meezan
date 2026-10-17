@@ -1,4 +1,5 @@
 using MediatR;
+using Meezan.Application.Common.Results;
 
 namespace Meezan.Application.Features.Indices.Commands.UploadIndexFile;
 
@@ -7,4 +8,4 @@ public record UploadIndexFileCommand(
     Stream FileStream,
     string FileName,
     string? UploadedBy = null
-) : IRequest<UploadIndexFileResultDto>;
+) : IRequest<Result<UploadIndexFileResultDto>>;

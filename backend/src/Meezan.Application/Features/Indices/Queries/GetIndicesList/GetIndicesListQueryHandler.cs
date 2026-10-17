@@ -14,11 +14,12 @@ using Meezan.Application.Common.Interfaces.Repositories.Stocks;
 using Meezan.Application.Common.Interfaces.Repositories.System;
 using Meezan.Application.Common.Interfaces.Security;
 using Meezan.Application.Common.Interfaces.Storage;
+using Meezan.Application.Common.Results;
 using Meezan.Application.Features.Indices.DTOs;
 
 namespace Meezan.Application.Features.Indices.Queries.GetIndicesList;
 
-public class GetIndicesListQueryHandler : IRequestHandler<GetIndicesListQuery, List<IndexSummaryDto>>
+public class GetIndicesListQueryHandler : IRequestHandler<GetIndicesListQuery, Result<List<IndexSummaryDto>>>
 {
     private readonly IIndexRepository _indexRepo;
 
@@ -27,7 +28,7 @@ public class GetIndicesListQueryHandler : IRequestHandler<GetIndicesListQuery, L
         _indexRepo = indexRepo;
     }
 
-    public async Task<List<IndexSummaryDto>> Handle(GetIndicesListQuery request, CancellationToken cancellationToken)
+    public async Task<Result<List<IndexSummaryDto>>> Handle(GetIndicesListQuery request, CancellationToken cancellationToken)
     {
         var summaries = await _indexRepo.GetAllSummariesAsync(cancellationToken);
         return summaries.Select(s => new IndexSummaryDto(

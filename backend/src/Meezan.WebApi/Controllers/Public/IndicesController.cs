@@ -1,8 +1,10 @@
 using MediatR;
+using Meezan.Application.Common.Results;
 using Meezan.Application.Features.Indices.Commands.UploadIndexFile;
 using Meezan.Application.Features.Indices.DTOs;
 using Meezan.Application.Features.Indices.Queries.GetIndexConstituents;
 using Meezan.Application.Features.Indices.Queries.GetIndicesList;
+using Meezan.WebApi.Common;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Meezan.WebApi.Controllers.Public;
@@ -26,7 +28,7 @@ public class IndicesController : ControllerBase
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
         var result = await _sender.Send(new GetIndicesListQuery(), cancellationToken);
-        return Ok(result);
+        return result.ToActionResult();
     }
 
     /// <summary>
@@ -56,7 +58,7 @@ public class IndicesController : ControllerBase
             indexCode, page, pageSize, sortBy, sortDir, search, shariahStatus, shariahStatuses, priceComparison,
             minCompliantSources, minPeRatio, maxPeRatio, minPbRatio, maxPbRatio);
         var result = await _sender.Send(query, cancellationToken);
-        return result == null ? NotFound() : Ok(result);
+        return result.ToActionResult();
     }
 
     /// <summary>
@@ -75,7 +77,7 @@ public class IndicesController : ControllerBase
     {
         if (file == null || file.Length == 0)
         {
-            return BadRequest(new { message = "File must not be empty." });
+            return Result.Failure(Error.Validation("EmptyFile", "File must not be empty.", new { message = "File must not be empty." })).ToActionResult();
         }
 
         using var stream = file.OpenReadStream();
@@ -87,6 +89,6 @@ public class IndicesController : ControllerBase
         );
 
         var result = await _sender.Send(command, cancellationToken);
-        return Ok(result);
+        return result.ToActionResult();
     }
 }

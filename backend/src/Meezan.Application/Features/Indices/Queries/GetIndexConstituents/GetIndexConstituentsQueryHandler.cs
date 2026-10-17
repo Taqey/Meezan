@@ -18,11 +18,12 @@ using Meezan.Application.Common.Interfaces.Repositories.Stocks;
 using Meezan.Application.Common.Interfaces.Repositories.System;
 using Meezan.Application.Common.Interfaces.Security;
 using Meezan.Application.Common.Interfaces.Storage;
+using Meezan.Application.Common.Results;
 using Meezan.Application.Features.Indices.DTOs;
 
 namespace Meezan.Application.Features.Indices.Queries.GetIndexConstituents;
 
-public class GetIndexConstituentsQueryHandler : IRequestHandler<GetIndexConstituentsQuery, IndexConstituentsPagedResultDto?>
+public class GetIndexConstituentsQueryHandler : IRequestHandler<GetIndexConstituentsQuery, Result<IndexConstituentsPagedResultDto>>
 {
     private readonly IIndexRepository _indexRepo;
 
@@ -31,11 +32,12 @@ public class GetIndexConstituentsQueryHandler : IRequestHandler<GetIndexConstitu
         _indexRepo = indexRepo;
     }
 
-    public async Task<IndexConstituentsPagedResultDto?> Handle(
+    public async Task<Result<IndexConstituentsPagedResultDto>> Handle(
         GetIndexConstituentsQuery request, CancellationToken cancellationToken)
     {
         var index = await _indexRepo.GetByCodeAsync(request.IndexCode, cancellationToken);
-        if (index == null) return null;
+        if (index == null)
+            return Error.NotFound("IndexNotFound", "");
 
         int page = PageSizeHelper.ClampPage(request.Page);
         int pageSize = PageSizeHelper.Clamp(request.PageSize);
