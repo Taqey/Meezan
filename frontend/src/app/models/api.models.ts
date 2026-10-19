@@ -953,6 +953,13 @@ export interface FundClassificationTreeNode {
   hasAutoRule: boolean;
 }
 
+export interface FundAssetManagerOption {
+  id: number;
+  nameAr: string;
+  nameEn: string;
+  fundCount: number;
+}
+
 /** One node of the admin classification tree (all nodes + counts + audit fields). */
 export interface AdminClassificationNode {
   id: number;
@@ -1111,6 +1118,22 @@ export interface FundSyncLog {
   errorSummary: string | null;
   triggeredBy: string;
   durationSeconds: number;
+}
+
+export interface FundSyncStatusDto {
+  isRunning: boolean;
+  mode?: string | null;
+  triggeredBy?: string | null;
+  startedAtUtc?: string | null;
+  totalFunds: number;
+  processedCount: number;
+  updatedCount: number;
+  failedCount: number;
+  currentFundCode?: string | null;
+  currentPhase?: string | null;
+  finishedAtUtc?: string | null;
+  lastResultSummary?: string | null;
+  error?: string | null;
 }
 
 export interface FundPriceSyncResultDto {

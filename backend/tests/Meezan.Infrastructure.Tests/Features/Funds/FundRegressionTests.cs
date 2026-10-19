@@ -184,4 +184,68 @@ public class FundRegressionTests
             Assert.Equal(101, items[0].Id);
         }
     }
+
+    [Fact]
+    public async Task FundReadQuery_CalculatesDailyChangeFromPriceHistory_WhenDailyChangeIsNull()
+    {
+        var dbName = Guid.NewGuid().ToString();
+        await using (var context = CreateInMemoryDbContext(dbName))
+        {
+            var fund1 = new Fund
+            {
+                Id = 201,
+                SndukId = 201,
+                PublicId = "F201",
+                Slug = "f201",
+                NameAr = "صندوق 201",
+                NameEn = "Fund 201",
+                Code = "BCO",
+                Type = FundType.Equity,
+                IsActive = true,
+                CurrentPrice = 100m,
+                DailyChange = null, // null DailyChange
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            var fund2 = new Fund
+            {
+                Id = 202,
+                SndukId = 202,
+                PublicId = "F202",
+                Slug = "f202",
+                NameAr = "صندوق 202",
+                NameEn = "Fund 202",
+                Code = "XYZ",
+                Type = FundType.Equity,
+                IsActive = true,
+                CurrentPrice = 50m,
+                DailyChange = 0.5m,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            context.Funds.AddRange(fund1, fund2);
+
+            // History for fund 201: previous = 98.31, latest = 100 -> change = (100 - 98.31) / 98.31 * 100 = 1.719%
+            context.FundPriceHistories.AddRange(
+                new FundPriceHistory { FundId = 201, Date = DateTime.UtcNow.Date.AddDays(-2), Price = 98.31m },
+                new FundPriceHistory { FundId = 201, Date = DateTime.UtcNow.Date.AddDays(-1), Price = 100.00m }
+            );
+
+            await context.SaveChangesAsync();
+        }
+
+        await using (var context = CreateInMemoryDbContext(dbName))
+        {
+            var repo = new Meezan.Infrastructure.Persistence.Repositories.Funds.FundRepository(context);
+            var query = new Meezan.Infrastructure.Persistence.Queries.Funds.FundReadQuery(context, repo, null!);
+            var stats = await query.GetStatsAsync();
+
+            Assert.Equal(2, stats.TotalCount);
+            Assert.Equal("BCO", stats.BestDailyChangeCode);
+            Assert.NotNull(stats.BestDailyChange);
+            Assert.True(stats.BestDailyChange > 1.70 && stats.BestDailyChange < 1.73);
+        }
+    }
 }

@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, provideRouter, Router } from '@angular/router';
-import { of } from 'rxjs';
+import { ActivatedRoute, convertToParamMap, ParamMap, provideRouter, Router } from '@angular/router';
+import { BehaviorSubject, of } from 'rxjs';
 import { FundsListComponent } from './funds-list.component';
 import { ApiService } from '../../services/api.service';
 import type { FundClassificationTreeNode, FundListItemDto } from '../../models/api.models';
@@ -31,6 +31,7 @@ function fund(code: string): FundListItemDto {
 
 describe('FundsListComponent classification wiring', () => {
   let fixture: ComponentFixture<FundsListComponent>;
+  let queryParamMap$: BehaviorSubject<ParamMap>;
 
   beforeEach(async () => {
     const tree: FundClassificationTreeNode[] = [
@@ -43,9 +44,14 @@ describe('FundsListComponent classification wiring', () => {
         ? { items: REAL_FUNDS, totalCount: 3, page: 1, pageSize: 1000, totalPages: 1 }
         : { items: [fund('AA'), fund('BB')], totalCount: 2, page: 1, pageSize: 20, totalPages: 1 }),
       getClassificationTree: () => of(tree),
+      getFundAssetManagers: () => of([
+        { id: 1, nameAr: 'أتون فاروس', nameEn: 'Aton Pharos', fundCount: 5 },
+        { id: 2, nameAr: 'بلتون كابيتال', nameEn: 'Beltone Financial', fundCount: 8 }
+      ]),
       getFundStats: () => of({ totalCount: 2, islamicCount: 1, totalAum: 1000000, bestDailyChange: 1.5, bestDailyChangeCode: 'AA' })
     };
-    const route = { queryParamMap: of(new Map() as never) };
+    queryParamMap$ = new BehaviorSubject<ParamMap>(convertToParamMap({}));
+    const route = { queryParamMap: queryParamMap$ };
     await TestBed.configureTestingModule({
       imports: [FundsListComponent],
       providers: [
@@ -57,13 +63,15 @@ describe('FundsListComponent classification wiring', () => {
     fixture = TestBed.createComponent(FundsListComponent);
   });
 
-  it('renders the cascade and fund cards', async () => {
+  it('renders the cascade, managers, and fund cards', async () => {
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
     const html = fixture.nativeElement.innerHTML as string;
     expect(html).toContain('cascade-0');
     expect(html).toContain('صندوق AA');
+    expect(html).toContain('أتون فاروس (5)');
+    expect(html).toContain('بلتون كابيتال (8)');
   });
 
   it('renders verbatim live fund items without hanging', async () => {
@@ -88,5 +96,108 @@ describe('FundsListComponent classification wiring', () => {
     fixture.detectChanges();
     await fixture.whenStable();
     expect(comp.filter.node).toBe('sector');
+  });
+
+  it('proves dynamism: adding/renaming a tree node or manager dynamically updates filters with zero code change', async () => {
+    const comp = fixture.componentInstance;
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    // Dynamically updated tree received from backend
+    comp.classTree = [
+      treeNode({ slug: 'new-category', nameAr: 'تصنيف ديناميكي جديد', totalFundCount: 12 }),
+      treeNode({ slug: 'gold-funds', nameAr: 'صناديق الذهب المحدثة', totalFundCount: 3 })
+    ];
+    // Dynamically updated managers received from backend
+    comp.assetManagers = [
+      { id: 99, nameAr: 'شركة الرواد للاستثمار', nameEn: 'Al Rowad Asset Management', fundCount: 4 }
+    ];
+
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const html = fixture.nativeElement.innerHTML as string;
+
+    expect(html).toContain('شركة الرواد للاستثمار (4)');
+    expect(comp.assetManagers[0].nameAr).toBe('شركة الرواد للاستثمار');
+  });
+
+  it('handles stale or unknown node slugs gracefully without crashing', async () => {
+    const comp = fixture.componentInstance;
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    // Unknown/deleted node slug
+    const resolvedPath = comp.pathForSlug('deleted-unknown-slug');
+    expect(resolvedPath).toEqual([]);
+
+    (comp as any).pendingLegacySlug = 'deleted-unknown-slug';
+    comp.loadClassTree();
+    expect(comp.classPath).toEqual([]);
+    expect(comp.staleNodeNotice).toContain('لم يعد متاحاً وتم الرجوع للكل');
+  });
+
+  it('proves component instance is NOT re-created, filter panel remains mounted, and KPI stats are NOT refetched when a filter changes', async () => {
+    const api = TestBed.inject(ApiService);
+    const router = TestBed.inject(Router);
+    spyOn(api, 'getFundStats').and.callThrough();
+    spyOn(api, 'getFunds').and.callThrough();
+
+    let currentParams: Record<string, string> = {};
+    spyOn(router, 'navigate').and.callFake((_commands: unknown[], extras: any) => {
+      if (extras?.queryParams) {
+        Object.entries(extras.queryParams).forEach(([k, v]) => {
+          if (v === null || v === undefined) {
+            delete currentParams[k];
+          } else {
+            currentParams[k] = String(v);
+          }
+        });
+        queryParamMap$.next(convertToParamMap(currentParams));
+      }
+      return Promise.resolve(true);
+    });
+
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    // Verify initial mount
+    const initialInstance = fixture.componentInstance;
+    const initialFilterPanel = fixture.nativeElement.querySelector('.funds-filters-container');
+    expect(initialFilterPanel).toBeTruthy();
+    expect(api.getFundStats).toHaveBeenCalledTimes(1);
+    expect(api.getFunds).toHaveBeenCalledTimes(1);
+
+    // Open advanced filter panel
+    initialInstance.advancedOpen = true;
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.advanced-panel-wrapper.open')).toBeTruthy();
+
+    // Simulate changing an advanced filter (e.g. Risk level)
+    initialInstance.onRiskChange('high');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    // 1. Component instance is identical (no re-creation)
+    expect(fixture.componentInstance).toBe(initialInstance);
+
+    // 2. Filter panel DOM element remained mounted and in place
+    const panelAfter = fixture.nativeElement.querySelector('.funds-filters-container');
+    expect(panelAfter).toBe(initialFilterPanel);
+    expect(initialInstance.advancedOpen).toBeTrue();
+
+    // 3. getFunds fired for the new filter, but getFundStats was NOT refetched (called only once)
+    expect(api.getFunds).toHaveBeenCalledTimes(2);
+    expect(api.getFundStats).toHaveBeenCalledTimes(1);
+
+    // Simulate changing another advanced filter (e.g. Sharia compliance)
+    initialInstance.onShariaChange(true);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance).toBe(initialInstance);
+    expect(api.getFunds).toHaveBeenCalledTimes(3);
+    expect(api.getFundStats).toHaveBeenCalledTimes(1);
   });
 });

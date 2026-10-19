@@ -14,15 +14,5 @@ public sealed class CachedClassificationDataset
     public FundStatsDto Stats { get; set; } = new();
     public Dictionary<int, (int TypeId, string Slug)> TypeOverrides { get; set; } = new();
     public Dictionary<string, CachedTypeDefinition> TypeDefsBySlug { get; set; } = new();
-}
-
-public sealed class CachedTypeDefinition
-{
-    public int Id { get; set; }
-    public string Slug { get; set; } = string.Empty;
-    public string NameAr { get; set; } = string.Empty;
-    public string NameEn { get; set; } = string.Empty;
-    public int DisplayOrder { get; set; }
-    public bool IsVisible { get; set; }
-    public bool IsDeleted { get; set; }
+    public List<FundAssetManagerOptionDto> AssetManagers { get; set; } = new();
 }

@@ -26,6 +26,7 @@ using Meezan.Application.Features.Funds.Sync.Commands.RunFundPriceSync;
 using Meezan.Application.Features.Funds.Sync.Commands.RunFundSync;
 using Meezan.Application.Features.Funds.Sync.Commands.UpdateSyncSettings;
 using Meezan.Application.Features.Funds.Sync.Dtos;
+using Meezan.Application.Features.Funds.Sync.Queries.GetFundSyncStatus;
 using Meezan.Application.Features.Funds.Sync.Queries.GetLatestSyncRun;
 using Meezan.Application.Features.Funds.Sync.Queries.GetSyncHistory;
 using Meezan.Application.Features.Funds.Sync.Queries.GetSyncRunDetails;
@@ -78,6 +79,14 @@ public class AdminFundsController : ControllerBase
             FullSyncRunTimeCairo = request.FullSyncRunTimeCairo
         };
         var result = await _sender.Send(cmd, cancellationToken);
+        return result.ToActionResult();
+    }
+
+    [HttpGet("sync/status")]
+    [ProducesResponseType(typeof(Meezan.Application.Features.Funds.Sync.Dtos.FundSyncStatusDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetSyncStatus(CancellationToken cancellationToken = default)
+    {
+        var result = await _sender.Send(new GetFundSyncStatusQuery(), cancellationToken);
         return result.ToActionResult();
     }
 

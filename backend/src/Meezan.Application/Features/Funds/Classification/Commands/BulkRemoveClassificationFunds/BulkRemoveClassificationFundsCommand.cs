@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Interfaces.Caching;
 using MediatR;
 using Meezan.Application.Common.Interfaces.Persistence;
 using Meezan.Application.Common.Results;
@@ -9,4 +10,4 @@ public sealed record BulkRemoveClassificationFundsCommand(
     int NodeId,
     List<int>? FundIds,
     int? DestinationNodeId,
-    bool ResetToAuto) : IRequest<Result<BulkRemoveFundsResultDto>>, ITransactionalCommand;
+    bool ResetToAuto) : IRequest<Result<BulkRemoveFundsResultDto>>, ITransactionalCommand, IInvalidatesFundCatalog;

@@ -10,6 +10,7 @@ public interface IFundRepository
     Task<Fund?> GetByCodeAsync(string code, CancellationToken cancellationToken = default);
     Task<Fund?> GetBySlugAsync(string slug, CancellationToken cancellationToken = default);
     Task<List<Fund>> GetAllAsync(CancellationToken cancellationToken = default);
+    Task<List<Fund>> GetAllStaticAsync(CancellationToken cancellationToken = default);
     Task<(List<Fund> Items, int TotalCount)> QueryPagedAsync(FundListFilter filter, CancellationToken cancellationToken = default);
     Task AddAsync(Fund fund, CancellationToken cancellationToken = default);
     void Update(Fund fund);

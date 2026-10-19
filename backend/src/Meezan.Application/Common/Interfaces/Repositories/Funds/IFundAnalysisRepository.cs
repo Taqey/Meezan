@@ -5,6 +5,8 @@ namespace Meezan.Application.Common.Interfaces.Repositories.Funds;
 public interface IFundAnalysisRepository
 {
     Task<FundAnalysis?> GetByFundIdAsync(int fundId, CancellationToken cancellationToken = default);
+    Task<List<FundAnalysis>> GetAllAsync(CancellationToken cancellationToken = default);
     Task AddAsync(FundAnalysis analysis, CancellationToken cancellationToken = default);
     void Update(FundAnalysis analysis);
 }
+

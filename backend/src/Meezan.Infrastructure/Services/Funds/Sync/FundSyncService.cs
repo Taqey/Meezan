@@ -15,6 +15,7 @@ public class FundSyncService : IFundSyncService
 {
     private readonly IServiceProvider _services;
     private readonly ILogger<FundSyncService> _logger;
+    private readonly IFundSyncProgressTracker _tracker;
 
     /// <summary>
     /// A crashed run must never block later runs: a "Running" log row is only
@@ -22,10 +23,14 @@ public class FundSyncService : IFundSyncService
     /// </summary>
     public const int RunLeaseMinutes = 30;
 
-    public FundSyncService(IServiceProvider services, ILogger<FundSyncService> logger)
+    public FundSyncService(
+        IServiceProvider services,
+        ILogger<FundSyncService> logger,
+        IFundSyncProgressTracker tracker)
     {
         _services = services;
         _logger = logger;
+        _tracker = tracker;
     }
 
     /// <summary>
@@ -116,6 +121,7 @@ public class FundSyncService : IFundSyncService
 
             syncLog.TotalFunds = sndukFunds.Length;
             _logger.LogInformation("Fetched {Count} funds from SNDUK", sndukFunds.Length);
+            _tracker.StartRun("Full", triggeredBy, sndukFunds.Length);
 
             // Step 2: Upsert funds
             var fundRepo = scope.ServiceProvider.GetRequiredService<IFundRepository>();
@@ -131,9 +137,12 @@ public class FundSyncService : IFundSyncService
             await EnsureDefaultCategoriesAsync(categoryRepo, cancellationToken);
             await fundRepo.SaveChangesAsync(cancellationToken);
 
+            int processedIndex = 0;
             foreach (var sndukFund in sndukFunds)
             {
                 if (cancellationToken.IsCancellationRequested) break;
+                processedIndex++;
+                _tracker.UpdateProgress(processedIndex, updatedFunds, failedFunds, sndukFund.Code, "Syncing funds");
 
                 var detail = new FundSyncLogDetail
                 {
@@ -191,6 +200,7 @@ public class FundSyncService : IFundSyncService
                 finally
                 {
                     details.Add(detail);
+                    _tracker.UpdateProgress(processedIndex, updatedFunds, failedFunds, sndukFund.Code, "Syncing funds");
 
                     // Delay between requests
                     if (settings.RequestDelaySeconds > 0)
@@ -201,6 +211,7 @@ public class FundSyncService : IFundSyncService
             }
 
             // Update categories based on auto-rules (for new categories created by auto-derivation)
+            _tracker.UpdateProgress(processedIndex, updatedFunds, failedFunds, null!, "Refreshing categories");
             await RefreshAutoCategoriesAsync(categoryRepo, fundRepo, overrideRepo, cancellationToken);
 
             // Save all details
@@ -226,6 +237,7 @@ public class FundSyncService : IFundSyncService
 
             _logger.LogInformation("Fund sync completed: {Updated} updated, {Failed} failed, duration: {Duration}s",
                 updatedFunds, failedFunds, syncLog.DurationSeconds);
+            _tracker.SetCompleted($"اكتملت المزامنة: {updatedFunds} تم تحديثها، {failedFunds} فشلت");
 
             return syncLog;
         }
@@ -240,6 +252,7 @@ public class FundSyncService : IFundSyncService
             await scope.ServiceProvider.GetRequiredService<IUnitOfWork>().SaveChangesAsync(cancellationToken);
 
             _logger.LogError(ex, "Fund sync failed");
+            _tracker.SetFailed(ex.Message);
             throw;
         }
     }
@@ -732,6 +745,7 @@ public class FundSyncService : IFundSyncService
 
             syncLog.TotalFunds = sndukFunds.Length;
             _logger.LogInformation("Price sync: Fetched {Count} funds from SNDUK", sndukFunds.Length);
+            _tracker.StartRun("Prices", triggeredBy, sndukFunds.Length);
 
             var fundRepo = scope.ServiceProvider.GetRequiredService<IFundRepository>();
             var priceRepo = scope.ServiceProvider.GetRequiredService<IFundPriceHistoryRepository>();
@@ -741,12 +755,47 @@ public class FundSyncService : IFundSyncService
             var dbFundsByCode = allDbFunds.ToDictionary(f => f.Code.Trim().ToUpperInvariant());
             var matchedSndukIds = new HashSet<long>();
 
+            // Hardening check: abort without any write if payload looks broken
+            // (fewer than 50% of our funds found, or more than 50% null prices)
+            int matchedFoundCount = 0;
+            int nullPriceCount = 0;
+            foreach (var sf in sndukFunds)
+            {
+                bool matched = dbFundsBySndukId.ContainsKey(sf.Id) ||
+                    (!string.IsNullOrWhiteSpace(sf.Code) && dbFundsByCode.ContainsKey(sf.Code.Trim().ToUpperInvariant()));
+                if (matched)
+                {
+                    matchedFoundCount++;
+                }
+
+                var p = ParseDecimal(sf.CurrentPrice);
+                if (!p.HasValue || p.Value <= 0)
+                {
+                    nullPriceCount++;
+                }
+            }
+
+            if (allDbFunds.Count > 0 && matchedFoundCount < (allDbFunds.Count / 2))
+            {
+                throw new InvalidOperationException(
+                    $"Price sync payload broken: found only {matchedFoundCount}/{allDbFunds.Count} funds (<50%). Aborting sync with zero writes.");
+            }
+
+            if (sndukFunds.Length > 0 && nullPriceCount > (sndukFunds.Length / 2))
+            {
+                throw new InvalidOperationException(
+                    $"Price sync payload broken: {nullPriceCount}/{sndukFunds.Length} funds have null/missing prices (>50%). Aborting sync with zero writes.");
+            }
+
             var tz = Meezan.Infrastructure.Services.BackgroundServices.FundSyncBackgroundService.ResolveCairoTimeZone();
             var nowCairoDate = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, tz).Date;
 
+            int processedIndex = 0;
             foreach (var sndukFund in sndukFunds)
             {
                 if (cancellationToken.IsCancellationRequested) break;
+                processedIndex++;
+                _tracker.UpdateProgress(processedIndex, updatedFunds, failedFunds, sndukFund.Code, "Syncing prices");
 
                 // Match with our DB
                 Fund? existingFund = null;
@@ -782,21 +831,37 @@ public class FundSyncService : IFundSyncService
                     {
                         existingFund.CurrentPrice = price.Value;
                     }
+
                     if (sndukFund.DailyChange != null)
                     {
-                        existingFund.DailyChange = ParseDecimal(sndukFund.DailyChange);
+                        var dc = ParseDecimal(sndukFund.DailyChange);
+                        if (dc.HasValue)
+                        {
+                            existingFund.DailyChange = dc.Value;
+                        }
                     }
+
                     if (sndukFund.Returns != null)
                     {
-                        existingFund.Return1M = ParseDecimal(sndukFund.Returns.M1);
-                        existingFund.Return3M = ParseDecimal(sndukFund.Returns.M3);
-                        existingFund.Return6M = ParseDecimal(sndukFund.Returns.M6);
-                        existingFund.Return1Y = ParseDecimal(sndukFund.Returns.Y1);
-                        existingFund.Return3Y = ParseDecimal(sndukFund.Returns.Y3);
+                        var r1m = ParseDecimal(sndukFund.Returns.M1);
+                        if (r1m.HasValue) existingFund.Return1M = r1m.Value;
+
+                        var r3m = ParseDecimal(sndukFund.Returns.M3);
+                        if (r3m.HasValue) existingFund.Return3M = r3m.Value;
+
+                        var r6m = ParseDecimal(sndukFund.Returns.M6);
+                        if (r6m.HasValue) existingFund.Return6M = r6m.Value;
+
+                        var r1y = ParseDecimal(sndukFund.Returns.Y1);
+                        if (r1y.HasValue) existingFund.Return1Y = r1y.Value;
+
+                        var r3y = ParseDecimal(sndukFund.Returns.Y3);
+                        if (r3y.HasValue) existingFund.Return3Y = r3y.Value;
                     }
 
                     existingFund.PricesUpdatedAt = DateTime.UtcNow;
                     fundRepo.Update(existingFund);
+
 
                     // Upsert today's point in FundPriceHistory
                     if (price.HasValue && price.Value > 0)
@@ -838,6 +903,7 @@ public class FundSyncService : IFundSyncService
                 finally
                 {
                     details.Add(detail);
+                    _tracker.UpdateProgress(processedIndex, updatedFunds, failedFunds, sndukFund.Code, "Syncing prices");
                 }
             }
 
@@ -876,6 +942,7 @@ public class FundSyncService : IFundSyncService
 
             _logger.LogInformation("Fund price sync completed: {Updated} updated, {Failed} failed, {New} new, {Missing} missing, duration: {Duration}s",
                 updatedFunds, failedFunds, newFundsDetected, missingFundsReported, durationSeconds);
+            _tracker.SetCompleted($"اكتمل تحديث الأسعار: {updatedFunds} صندوق في {durationSeconds} ثانية");
 
             return new FundPriceSyncResultDto(
                 TotalSndukFunds: sndukFunds.Length,
@@ -902,6 +969,7 @@ public class FundSyncService : IFundSyncService
             catch { }
 
             _logger.LogError(ex, "Fund price sync job failed");
+            _tracker.SetFailed(ex.Message);
             throw;
         }
     }

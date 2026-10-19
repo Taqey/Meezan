@@ -51,6 +51,47 @@ public class FundRepository : IFundRepository
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<List<Fund>> GetAllStaticAsync(CancellationToken cancellationToken = default)
+    {
+        return await _context.Funds
+            .AsNoTracking()
+            .Select(f => new Fund
+            {
+                Id = f.Id,
+                SndukId = f.SndukId,
+                PublicId = f.PublicId,
+                Slug = f.Slug,
+                NameAr = f.NameAr,
+                NameEn = f.NameEn,
+                Code = f.Code,
+                Type = f.Type,
+                TypeNameAr = f.TypeNameAr,
+                TypeNameEn = f.TypeNameEn,
+                RiskLevel = f.RiskLevel,
+                IsIslamic = f.IsIslamic,
+                IsFeatured = f.IsFeatured,
+                IsActive = f.IsActive,
+                TotalScore = f.TotalScore,
+                Aum = f.Aum,
+                ManagementFee = f.ManagementFee,
+                MinimumInvestment = f.MinimumInvestment,
+                Currency = f.Currency,
+                AssetManagerId = f.AssetManagerId,
+                AssetManagerName = f.AssetManagerName,
+                AssetManagerNameEn = f.AssetManagerNameEn,
+                AssetManagerCode = f.AssetManagerCode,
+                LogoUrl = f.LogoUrl,
+                LocalLogoPath = f.LocalLogoPath,
+                DescriptionAr = f.DescriptionAr,
+                DescriptionEn = f.DescriptionEn,
+                InvestmentStrategy = f.InvestmentStrategy,
+                InceptionDate = f.InceptionDate,
+                ProspectusUrl = f.ProspectusUrl,
+                LastSyncedAt = f.LastSyncedAt
+            })
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<(List<Fund> Items, int TotalCount)> QueryPagedAsync(FundListFilter filter, CancellationToken cancellationToken = default)
     {
         var query = _context.Funds
@@ -258,6 +299,13 @@ public class FundAnalysisRepository : IFundAnalysisRepository
                 .FirstOrDefaultAsync(a => a.FundId == fundId, cancellationToken);
     }
 
+    public async Task<List<FundAnalysis>> GetAllAsync(CancellationToken cancellationToken = default)
+    {
+        return await _context.FundAnalyses
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task AddAsync(FundAnalysis analysis, CancellationToken cancellationToken = default)
     {
         await _context.FundAnalyses.AddAsync(analysis, cancellationToken);
@@ -287,6 +335,14 @@ public class FundSimilarRepository : IFundSimilarRepository
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<List<(int FundId, int SimilarFundId)>> GetAllSimilarLinksAsync(CancellationToken cancellationToken = default)
+    {
+        return await _context.FundSimilars
+            .AsNoTracking()
+            .Select(s => new ValueTuple<int, int>(s.FundId, s.SimilarFundId))
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task AddRangeAsync(IEnumerable<FundSimilar> similars, CancellationToken cancellationToken = default)
     {
         await _context.FundSimilars.AddRangeAsync(similars, cancellationToken);
@@ -298,6 +354,7 @@ public class FundSimilarRepository : IFundSimilarRepository
         _context.FundSimilars.RemoveRange(existing);
     }
 }
+
 
 public class FundCategoryRepository : IFundCategoryRepository
 {
@@ -373,6 +430,13 @@ public class FundCategoryOverrideRepository : IFundCategoryOverrideRepository
     {
         return await _context.FundCategoryOverrides
             .Where(o => o.CategoryId == categoryId)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<List<FundCategoryOverride>> GetAllAsync(CancellationToken cancellationToken = default)
+    {
+        return await _context.FundCategoryOverrides
+            .AsNoTracking()
             .ToListAsync(cancellationToken);
     }
 

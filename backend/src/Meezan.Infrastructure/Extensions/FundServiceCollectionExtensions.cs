@@ -61,6 +61,7 @@ public static class FundServiceCollectionExtensions
 
         // Fund Sync Background Service
         services.AddHostedService<FundSyncBackgroundService>();
+        services.AddSingleton<IFundSyncProgressTracker, FundSyncProgressTracker>();
         services.AddScoped<IFundSyncService, FundSyncService>();
 
         return services;

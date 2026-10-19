@@ -93,6 +93,17 @@ public class FundsController : ControllerBase
     }
 
     /// <summary>
+    /// Distinct asset managers with fund counts for public filtering.
+    /// </summary>
+    [HttpGet("managers")]
+    [ProducesResponseType(typeof(List<FundAssetManagerOptionDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetManagers(CancellationToken cancellationToken = default)
+    {
+        var result = await _sender.Send(new Meezan.Application.Features.Funds.Listing.Queries.GetFundAssetManagers.GetFundAssetManagersQuery(), cancellationToken);
+        return result.ToActionResult();
+    }
+
+    /// <summary>
     /// Hierarchical classification tree with direct & total fund counts.
     /// </summary>
     [HttpGet("classification-tree")]

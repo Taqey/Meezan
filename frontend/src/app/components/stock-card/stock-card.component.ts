@@ -50,7 +50,9 @@ import {
       </div>
 
       <!-- Non-compliance reason slot: always rendered with reserved height or neutral line to prevent card jump -->
-      <div class="noncompliance-reason" [class.empty]="!nonComplianceReasons.length">
+      <div class="noncompliance-reason"
+           [class.empty]="!nonComplianceReasons.length"
+           [attr.title]="nonComplianceReasons.join(' · ')">
         <span *ngIf="nonComplianceReasons.length > 0">
           <span *ngFor="let r of nonComplianceReasons; let last = last">{{ r }}<span *ngIf="!last"> · </span></span>
         </span>
@@ -126,4 +128,3 @@ export class StockCardComponent {
     });
   }
 }
-

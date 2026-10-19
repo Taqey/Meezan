@@ -56,8 +56,8 @@ public class DependencyInjectionComparisonTests
         using var scope = factory.Services.CreateScope();
         var hostedServices = scope.ServiceProvider.GetServices<IHostedService>().ToList();
         Assert.NotEmpty(hostedServices);
-        // Includes the 5 Infrastructure background services plus any host infrastructure background services
-        Assert.Equal(7, hostedServices.Count);
+        // Includes the 5 Infrastructure background services + FundSyncBackgroundService + CacheWarmupHostedService plus host infrastructure background services
+        Assert.Equal(8, hostedServices.Count);
     }
 
     private static string FormatType(Type? type)

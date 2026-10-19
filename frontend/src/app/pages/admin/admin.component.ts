@@ -54,7 +54,8 @@ import {
   FundSyncLog,
   FundSyncSettingsUpdateRequest,
   FundSyncLogDetail,
-  FundPriceSyncResultDto
+  FundPriceSyncResultDto,
+  FundSyncStatusDto
 } from '../../models/api.models';
 import {
   SHARIAH_STANDARDS,
@@ -154,8 +155,13 @@ interface EditableMarketForm {
               </div>
             </div>
 
-            <button class="btn btn-primary" (click)="triggerDailyScrape()" [disabled]="isScrapingRunning" style="width: 100%; justify-content: center;">
-              <lucide-icon [img]="PlayIcon" size="16"></lucide-icon>
+            <div *ngIf="isDailyRunning" class="progress-bar-container" style="margin-bottom: 8px;">
+              <div class="progress-bar-fill indeterminate"></div>
+            </div>
+
+            <button class="btn btn-primary" (click)="triggerDailyScrape()" [disabled]="isScrapingRunning" style="width: 100%; justify-content: center; gap: 8px;">
+              <lucide-icon *ngIf="!isDailyRunning" [img]="PlayIcon" size="16"></lucide-icon>
+              <lucide-icon *ngIf="isDailyRunning" [img]="RotateCcwIcon" size="16" class="spin-anim"></lucide-icon>
               {{ isDailyRunning ? 'جارٍ السحب اليومي...' : 'تشغيل السحب اليومي الآن (Run Daily)' }}
             </button>
           </div>
@@ -203,8 +209,13 @@ interface EditableMarketForm {
               </div>
             </div>
 
-            <button class="btn btn-outline" (click)="triggerQuarterlyScrape()" [disabled]="isScrapingRunning" style="width: 100%; justify-content: center; border-color: #93c5fd; color: #1d4ed8;">
-              <lucide-icon [img]="PlayIcon" size="16"></lucide-icon>
+            <div *ngIf="isQuarterlyRunning" class="progress-bar-container" style="margin-bottom: 8px;">
+              <div class="progress-bar-fill indeterminate"></div>
+            </div>
+
+            <button class="btn btn-outline" (click)="triggerQuarterlyScrape()" [disabled]="isScrapingRunning" style="width: 100%; justify-content: center; border-color: #93c5fd; color: #1d4ed8; gap: 8px;">
+              <lucide-icon *ngIf="!isQuarterlyRunning" [img]="PlayIcon" size="16"></lucide-icon>
+              <lucide-icon *ngIf="isQuarterlyRunning" [img]="RotateCcwIcon" size="16" class="spin-anim"></lucide-icon>
               {{ isQuarterlyRunning ? 'جارٍ السحب الربع سنوي...' : 'تشغيل السحب الربع سنوي الآن (Run Quarterly)' }}
             </button>
           </div>
@@ -253,8 +264,12 @@ interface EditableMarketForm {
             </div>
 
             <div style="display: flex; flex-direction: column; gap: 8px;">
-              <button class="btn btn-outline" (click)="triggerSnapshotsRefresh()" [disabled]="isMarketSnapshotsRunning" style="width: 100%; justify-content: center; border-color: #a7f3d0; color: #047857;">
-                <lucide-icon [img]="PlayIcon" size="16"></lucide-icon>
+              <div *ngIf="isMarketSnapshotsRunning" class="progress-bar-container" style="margin-bottom: 4px;">
+                <div class="progress-bar-fill indeterminate"></div>
+              </div>
+              <button class="btn btn-outline" (click)="triggerSnapshotsRefresh()" [disabled]="isMarketSnapshotsRunning" style="width: 100%; justify-content: center; border-color: #a7f3d0; color: #047857; gap: 8px;">
+                <lucide-icon *ngIf="!isMarketSnapshotsRunning" [img]="PlayIcon" size="16"></lucide-icon>
+                <lucide-icon *ngIf="isMarketSnapshotsRunning" [img]="RotateCcwIcon" size="16" class="spin-anim"></lucide-icon>
                 {{ isMarketSnapshotsRunning ? 'جارٍ تحديث اللقطات...' : 'تشغيل يدوي الآن (Run Snapshots)' }}
               </button>
               <div *ngIf="snapshotsRunResult" style="font-size: 11px; text-align: center;" [style.color]="snapshotsRunResult.failed > 0 ? '#b45309' : '#047857'">
@@ -321,13 +336,23 @@ interface EditableMarketForm {
               </div>
 
               <div style="display: flex; flex-direction: column; gap: 8px;">
+                <div *ngIf="fundPriceSyncRunning || fundSyncRunning || (fundSyncStatus?.isRunning)" class="progress-bar-container" style="margin-bottom: 4px;">
+                  <div class="progress-bar-fill indeterminate"></div>
+                </div>
+                <div *ngIf="fundSyncStatus?.isRunning" style="font-size: 11px; text-align: center; color: #7c3aed; font-weight: 600;">
+                  جارٍ التنفيذ ({{ fundSyncStatus?.currentPhase || 'قيد المزامنة' }}):
+                  <span *ngIf="fundSyncStatus?.totalFunds">{{ fundSyncStatus?.processedCount }} من {{ fundSyncStatus?.totalFunds }}</span>
+                  <span *ngIf="fundSyncStatus?.currentFundCode"> [{{ fundSyncStatus?.currentFundCode }}]</span>
+                </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                  <button class="btn btn-primary" (click)="runFundPriceSyncNow()" [disabled]="fundPriceSyncRunning || fundSyncRunning" style="justify-content: center; background: #059669; border-color: #059669;">
-                    <lucide-icon [img]="PlayIcon" size="15"></lucide-icon>
+                  <button class="btn btn-primary" (click)="runFundPriceSyncNow()" [disabled]="fundPriceSyncRunning || fundSyncRunning || (fundSyncStatus?.isRunning)" style="justify-content: center; background: #059669; border-color: #059669; gap: 6px;">
+                    <lucide-icon *ngIf="!fundPriceSyncRunning" [img]="PlayIcon" size="15"></lucide-icon>
+                    <lucide-icon *ngIf="fundPriceSyncRunning" [img]="RotateCcwIcon" size="15" class="spin-anim"></lucide-icon>
                     {{ fundPriceSyncRunning ? 'جارٍ التحديث...' : 'تحديث الأسعار الآن' }}
                   </button>
-                  <button class="btn btn-primary" (click)="runFundSyncNow()" [disabled]="fundSyncRunning || fundPriceSyncRunning" style="justify-content: center; background: #7c3aed; border-color: #7c3aed;">
-                    <lucide-icon [img]="PlayIcon" size="15"></lucide-icon>
+                  <button class="btn btn-primary" (click)="runFundSyncNow()" [disabled]="fundSyncRunning || fundPriceSyncRunning || (fundSyncStatus?.isRunning)" style="justify-content: center; background: #7c3aed; border-color: #7c3aed; gap: 6px;">
+                    <lucide-icon *ngIf="!fundSyncRunning" [img]="PlayIcon" size="15"></lucide-icon>
+                    <lucide-icon *ngIf="fundSyncRunning" [img]="RotateCcwIcon" size="15" class="spin-anim"></lucide-icon>
                     {{ fundSyncRunning ? 'جارٍ المزامنة...' : 'مزامنة كاملة' }}
                   </button>
                 </div>
@@ -376,12 +401,17 @@ interface EditableMarketForm {
               </div>
 
               <div style="display: flex; flex-direction: column; gap: 8px;">
+                <div *ngIf="fundCacheActionRunning" class="progress-bar-container" style="margin-bottom: 4px;">
+                  <div class="progress-bar-fill indeterminate"></div>
+                </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                  <button class="btn btn-outline" (click)="clearFundCacheNow()" [disabled]="fundCacheActionRunning" style="justify-content: center; border-color: #cbd5e1; font-size: 12px;">
-                    {{ fundCacheActionRunning ? 'جارٍ التنفيذ...' : 'تفريغ الذاكرة' }}
+                  <button class="btn btn-outline" (click)="clearFundCacheNow()" [disabled]="fundCacheActionRunning" style="justify-content: center; border-color: #cbd5e1; font-size: 12px; gap: 6px;">
+                    <lucide-icon *ngIf="fundCacheClearing" [img]="RotateCcwIcon" size="14" class="spin-anim"></lucide-icon>
+                    {{ fundCacheClearing ? 'جارٍ التفريغ...' : 'تفريغ الذاكرة' }}
                   </button>
-                  <button class="btn btn-primary" (click)="rebuildFundCacheNow()" [disabled]="fundCacheActionRunning" style="justify-content: center; background: #3b82f6; border-color: #3b82f6; font-size: 12px;">
-                    {{ fundCacheActionRunning ? 'جارٍ البناء...' : 'إعادة بناء الآن' }}
+                  <button class="btn btn-primary" (click)="rebuildFundCacheNow()" [disabled]="fundCacheActionRunning" style="justify-content: center; background: #3b82f6; border-color: #3b82f6; font-size: 12px; gap: 6px;">
+                    <lucide-icon *ngIf="fundCacheRebuilding" [img]="RotateCcwIcon" size="14" class="spin-anim"></lucide-icon>
+                    {{ fundCacheRebuilding ? 'جارٍ البناء...' : 'إعادة بناء الآن' }}
                   </button>
                 </div>
                 <div *ngIf="fundCacheMessage" style="font-size: 11px; text-align: center; color: #15803d;">
@@ -1796,6 +1826,7 @@ export class AdminComponent implements OnInit, OnDestroy {
   fundSyncLoading = false;
   fundSyncRunning = false;
   fundPriceSyncRunning = false;
+  fundSyncStatus?: FundSyncStatusDto | null;
   fundPriceSyncResult?: FundPriceSyncResultDto | null;
   fundPriceSyncError: string | null = null;
   fundSyncRunResult?: FundSyncLog | null;
@@ -1810,6 +1841,8 @@ export class AdminComponent implements OnInit, OnDestroy {
   // Fund Cache state
   fundCacheStatus: any = null;
   fundCacheActionRunning = false;
+  fundCacheClearing = false;
+  fundCacheRebuilding = false;
   fundCacheMessage: string | null = null;
 
   // Shariah tab
@@ -1897,12 +1930,14 @@ export class AdminComponent implements OnInit, OnDestroy {
     this.loadIndices();
     this.loadStocks();
     this.fetchScrapeStatus();
+    this.fetchFundSyncStatus();
     this.loadJobSettings();
     this.pollInterval = setInterval(() => {
       if (this.activeTab === 'scraping' || this.isAnyJobRunning) {
         this.fetchScrapeStatus();
+        this.fetchFundSyncStatus();
       }
-    }, 2500);
+    }, 2000);
   }
 
   ngOnDestroy(): void {
@@ -2052,20 +2087,47 @@ export class AdminComponent implements OnInit, OnDestroy {
     });
   }
 
+  fetchFundSyncStatus(): void {
+    this.api.getFundSyncStatus().subscribe({
+      next: (status) => {
+        this.fundSyncStatus = status;
+        if (status.isRunning) {
+          if (status.mode === 'Prices') {
+            this.fundPriceSyncRunning = true;
+          } else {
+            this.fundSyncRunning = true;
+          }
+        } else {
+          if (this.fundPriceSyncRunning || this.fundSyncRunning) {
+            this.loadFundSyncHistory();
+          }
+          this.fundPriceSyncRunning = false;
+          this.fundSyncRunning = false;
+        }
+      },
+      error: () => {}
+    });
+  }
+
   runFundPriceSyncNow(): void {
-    if (this.fundPriceSyncRunning) return;
+    if (this.fundPriceSyncRunning || this.fundSyncRunning) return;
     this.fundPriceSyncRunning = true;
     this.fundPriceSyncError = null;
+    this.fundPriceSyncResult = null;
+    this.fetchFundSyncStatus();
     this.api.runFundPriceSyncNow().subscribe({
       next: (res) => {
         this.fundPriceSyncResult = res;
         this.fundPriceSyncRunning = false;
         this.loadFundSyncHistory();
+        this.fetchFundSyncStatus();
         this.toast.show(`تم تحديث أسعار ${res.updatedFunds} صندوق في ${res.durationSeconds} ثانية`);
       },
       error: (err) => {
         this.fundPriceSyncRunning = false;
+        this.fetchFundSyncStatus();
         this.fundPriceSyncError = err.error?.message || err.message || 'فشل تحديث أسعار الصناديق';
+        this.toast.show('فشل تحديث أسعار الصناديق: ' + this.fundPriceSyncError);
       }
     });
   }
@@ -2087,14 +2149,17 @@ export class AdminComponent implements OnInit, OnDestroy {
   }
 
   runFundSyncNow(): void {
-    if (this.fundSyncRunning) return;
+    if (this.fundSyncRunning || this.fundPriceSyncRunning) return;
     this.fundSyncRunning = true;
     this.fundSyncRunError = null;
+    this.fundSyncRunResult = null;
+    this.fetchFundSyncStatus();
     this.api.runFundSyncNow().subscribe({
       next: (log) => {
         this.fundSyncRunResult = log;
         this.fundSyncRunning = false;
         this.loadFundSyncHistory();
+        this.fetchFundSyncStatus();
         const status = normFundSyncStatus(log.status);
         this.toast.show(
           status === 'success'
@@ -2104,7 +2169,9 @@ export class AdminComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         this.fundSyncRunning = false;
+        this.fetchFundSyncStatus();
         this.fundSyncRunError = err.error?.message || err.message || 'فشل تشغيل المزامنة';
+        this.toast.show('فشل تشغيل مزامنة الصناديق: ' + this.fundSyncRunError);
       }
     });
   }
@@ -2161,16 +2228,19 @@ export class AdminComponent implements OnInit, OnDestroy {
   clearFundCacheNow(): void {
     if (this.fundCacheActionRunning) return;
     this.fundCacheActionRunning = true;
+    this.fundCacheClearing = true;
     this.fundCacheMessage = null;
     this.api.clearFundCache().subscribe({
       next: (res) => {
         this.fundCacheActionRunning = false;
+        this.fundCacheClearing = false;
         this.fundCacheMessage = typeof res === 'string' ? res : 'تم تفريغ ذاكرة الصناديق بنجاح';
         this.loadFundCacheStatus();
         this.toast.show('تم تفريغ ذاكرة الصناديق بنجاح');
       },
       error: (err) => {
         this.fundCacheActionRunning = false;
+        this.fundCacheClearing = false;
         this.toast.show('فشل تفريغ الذاكرة: ' + (err.error?.message || err.message));
       }
     });
@@ -2179,16 +2249,19 @@ export class AdminComponent implements OnInit, OnDestroy {
   rebuildFundCacheNow(): void {
     if (this.fundCacheActionRunning) return;
     this.fundCacheActionRunning = true;
+    this.fundCacheRebuilding = true;
     this.fundCacheMessage = null;
     this.api.rebuildFundCache().subscribe({
       next: (res) => {
         this.fundCacheActionRunning = false;
+        this.fundCacheRebuilding = false;
         this.fundCacheMessage = typeof res === 'string' ? res : 'تم إعادة بناء ذاكرة الصناديق بنجاح';
         this.loadFundCacheStatus();
         this.toast.show('تم إعادة بناء ذاكرة الصناديق بنجاح');
       },
       error: (err) => {
         this.fundCacheActionRunning = false;
+        this.fundCacheRebuilding = false;
         this.toast.show('فشل إعادة بناء الذاكرة: ' + (err.error?.message || err.message));
       }
     });
@@ -2219,7 +2292,7 @@ export class AdminComponent implements OnInit, OnDestroy {
   }
 
   get isFundSyncRunning(): boolean {
-    return this.fundSyncRunning;
+    return this.fundSyncRunning || this.fundPriceSyncRunning || (this.fundSyncStatus?.isRunning ?? false);
   }
 
   get isScrapingRunning(): boolean {
@@ -2723,24 +2796,30 @@ export class AdminComponent implements OnInit, OnDestroy {
 
   triggerDailyScrape(): void {
     this.activeTriggerBucket = 'LiveDaily';
+    this.toast.show('بدأ السحب اليومي المباشر...');
     this.api.runScraping('LiveDaily').subscribe({
       next: () => {
         this.fetchScrapeStatus();
       },
       error: (err) => {
         console.error('Failed to trigger daily scrape', err);
+        this.activeTriggerBucket = undefined;
+        this.toast.show('فشل تشغيل السحب اليومي: ' + (err.error?.message || err.message || 'خطأ غير متوقع'));
       }
     });
   }
 
   triggerQuarterlyScrape(): void {
     this.activeTriggerBucket = 'SlowQuarterly';
+    this.toast.show('بدأ سحب الأساسيات الربع سنوية...');
     this.api.runScraping('SlowQuarterly').subscribe({
       next: () => {
         this.fetchScrapeStatus();
       },
       error: (err) => {
         console.error('Failed to trigger quarterly scrape', err);
+        this.activeTriggerBucket = undefined;
+        this.toast.show('فشل تشغيل السحب الربع سنوي: ' + (err.error?.message || err.message || 'خطأ غير متوقع'));
       }
     });
   }

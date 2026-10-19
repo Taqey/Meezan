@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, AfterViewInit, AfterViewChecked, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, AfterViewChecked, ViewChild, ElementRef, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink, Router } from '@angular/router';
 import { LucideAngularModule, ArrowLeft, TrendingUp, TrendingDown, AlertCircle, DollarSign, ShieldCheck, Star, Building2, Calendar, PieChart, BarChart3, FileText, ExternalLink, Loader2 } from 'lucide-angular';
@@ -436,6 +436,7 @@ export class FundDetailComponent implements OnInit, AfterViewInit, AfterViewChec
     private route: ActivatedRoute,
     private router: Router,
     private api: ApiService,
+    private ngZone: NgZone,
   ) {}
 
   ngOnInit(): void {
@@ -610,17 +611,19 @@ export class FundDetailComponent implements OnInit, AfterViewInit, AfterViewChec
       }
     };
 
-    void ensureChartJs().then(mod => {
-      if (!mod) return;
-      // The component may have navigated away while chart.js was loading.
-      if (!this.viewReady || !this.priceChartRef) return;
-      try {
-        this.chart = new mod.Chart(context, config);
-      } catch (e) {
-        // Never let a chart failure block the page body from rendering.
-        this.chart = null;
-        console.warn('Fund price chart could not be created', e);
-      }
+    this.ngZone.runOutsideAngular(() => {
+      void ensureChartJs().then(mod => {
+        if (!mod) return;
+        // The component may have navigated away while chart.js was loading.
+        if (!this.viewReady || !this.priceChartRef) return;
+        try {
+          this.chart = new mod.Chart(context, config);
+        } catch (e) {
+          // Never let a chart failure block the page body from rendering.
+          this.chart = null;
+          console.warn('Fund price chart could not be created', e);
+        }
+      });
     });
   }
 

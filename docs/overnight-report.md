@@ -51,18 +51,18 @@
 ## 3. Performance Metrics & Before / After
 
 ### 3.1 Latency & Query Counts
+Prices are never cached: every list/details request runs exactly one price query. Warm medians are of 20 runs against the remote DB (latency is dominated by the network round trip).
 - **`GET /api/funds` (First page, 20 items):**
-  - *Cold Latency:* 112 ms (SQL queries: 3)
-  - *Warm Latency:* 3 ms (SQL queries: **0**)
-- **`GET /api/funds?node=equity` (With Node Filter):**
-  - *Cold Latency:* 88 ms (SQL queries: 2)
-  - *Warm Latency:* 2 ms (SQL queries: **0**)
+  - *Cold:* static build (<= 10 SQL commands) + 1 price query (verified by `TargetDesignVerificationTests`)
+  - *Warm Latency:* 127.5 ms median (SQL queries: **1**, the price query)
+- **`GET /api/funds` (Node filter):**
+  - *Warm Latency:* 123.5 ms median (SQL queries: **1**)
+- **`GET /api/funds` (Search):**
+  - *Warm Latency:* 78.5 ms median (SQL queries: **1**)
 - **`GET /api/funds/classification-tree`:**
-  - *Cold Latency:* 45 ms (SQL queries: 1)
-  - *Warm Latency:* 1 ms (SQL queries: **0**)
+  - *Warm Latency:* 1 ms median (SQL queries: **0**, static only)
 - **`GET /api/funds/{id}`:**
-  - *Cold Latency:* 65 ms (SQL queries: 2)
-  - *Warm Latency:* 2 ms (SQL queries: **0**)
+  - *Warm Latency:* 312 ms median (the details path still loads classification context; not optimised in this change)
 
 ### 3.2 Price Sync Duration
 - *Full Sync Duration:* ~35 – 50 seconds

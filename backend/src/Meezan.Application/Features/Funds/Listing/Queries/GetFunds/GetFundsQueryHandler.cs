@@ -18,19 +18,22 @@ public sealed class GetFundsQueryHandler : IRequestHandler<GetFundsQuery, Result
     private readonly IFundDetailQuery _detailQuery;
     private readonly IFundClassificationService _classificationService;
     private readonly Meezan.Application.Common.Interfaces.Caching.IFundCacheService _cacheService;
+    private readonly Microsoft.Extensions.Options.IOptions<Meezan.Application.Common.Models.Caching.FundCacheOptions> _options;
 
     public GetFundsQueryHandler(
         IFundRepository fundRepo,
         IFundReadQuery readQuery,
         IFundDetailQuery detailQuery,
         IFundClassificationService classificationService,
-        Meezan.Application.Common.Interfaces.Caching.IFundCacheService cacheService)
+        Meezan.Application.Common.Interfaces.Caching.IFundCacheService cacheService,
+        Microsoft.Extensions.Options.IOptions<Meezan.Application.Common.Models.Caching.FundCacheOptions> options)
     {
         _fundRepo = fundRepo;
         _readQuery = readQuery;
         _detailQuery = detailQuery;
         _classificationService = classificationService;
         _cacheService = cacheService;
+        _options = options;
     }
 
     private static string? MapLegacyFilterSlug(string slug)
@@ -49,9 +52,13 @@ public sealed class GetFundsQueryHandler : IRequestHandler<GetFundsQuery, Result
 
     public async Task<Result<FundListResultDto>> Handle(GetFundsQuery request, CancellationToken cancellationToken)
     {
-        // Zero SQL Warm Path: Read static funds, prices, and classification from cache
+        if (!_options.Value.Enabled)
+        {
+            return await HandleDirectDbQueryAsync(request, cancellationToken);
+        }
+
+        // Target Design: Static funds and classification from cache
         var staticFundsMap = await _cacheService.GetStaticFundsAsync(cancellationToken);
-        var pricesMap = await _cacheService.GetPricesSnapshotAsync(cancellationToken);
         var classDataset = await _cacheService.GetClassificationDatasetAsync(cancellationToken);
 
         // Resolve node filter to allowed fund ids
@@ -88,7 +95,7 @@ public sealed class GetFundsQueryHandler : IRequestHandler<GetFundsQuery, Result
             if (allowedFundIds.Count == 0) { isEmptyFilter = true; break; }
         }
 
-        var candidates = new List<(Meezan.Application.Common.Models.Caching.CachedFundStatic Static, Meezan.Application.Common.Models.Caching.CachedFundPriceSnapshot? Price)>();
+        var candidates = new List<Meezan.Application.Common.Models.Caching.CachedFundStatic>();
 
         FundRiskLevel? parsedRiskLevel = null;
         if (!string.IsNullOrWhiteSpace(request.RiskLevel))
@@ -138,35 +145,57 @@ public sealed class GetFundsQueryHandler : IRequestHandler<GetFundsQuery, Result
                 if (request.MinManagementFee.HasValue && (sf.ManagementFee ?? 0) < request.MinManagementFee.Value) continue;
                 if (request.MaxManagementFee.HasValue && (sf.ManagementFee ?? 0) > request.MaxManagementFee.Value) continue;
 
-                pricesMap.TryGetValue(fId, out var priceSnap);
-                candidates.Add((sf, priceSnap));
+                candidates.Add(sf);
             }
         }
 
         var isDesc = request.SortDir.Equals("desc", StringComparison.OrdinalIgnoreCase);
-        candidates = (request.SortBy?.Trim().ToLowerInvariant()) switch
+        var sortField = request.SortBy?.Trim().ToLowerInvariant();
+        bool isPriceSort = sortField is "return1m" or "return3m" or "return6m" or "return1y" or "return3y" or "currentprice" || string.IsNullOrWhiteSpace(sortField);
+
+        Dictionary<int, Meezan.Application.Common.Models.Funds.FundPriceDto> candidatePrices;
+        if (isPriceSort && candidates.Count > 0)
         {
-            "return1m" => isDesc ? candidates.OrderByDescending(x => x.Price?.Return1M).ToList() : candidates.OrderBy(x => x.Price?.Return1M).ToList(),
-            "return3m" => isDesc ? candidates.OrderByDescending(x => x.Price?.Return3M).ToList() : candidates.OrderBy(x => x.Price?.Return3M).ToList(),
-            "return6m" => isDesc ? candidates.OrderByDescending(x => x.Price?.Return6M).ToList() : candidates.OrderBy(x => x.Price?.Return6M).ToList(),
-            "return3y" => isDesc ? candidates.OrderByDescending(x => x.Price?.Return3Y).ToList() : candidates.OrderBy(x => x.Price?.Return3Y).ToList(),
-            "aum" => isDesc ? candidates.OrderByDescending(x => x.Static.Aum).ToList() : candidates.OrderBy(x => x.Static.Aum).ToList(),
-            "managementfee" => isDesc ? candidates.OrderByDescending(x => x.Static.ManagementFee).ToList() : candidates.OrderBy(x => x.Static.ManagementFee).ToList(),
-            "totalscore" => isDesc ? candidates.OrderByDescending(x => x.Static.TotalScore).ToList() : candidates.OrderBy(x => x.Static.TotalScore).ToList(),
-            "name" => isDesc ? candidates.OrderByDescending(x => x.Static.NameAr).ToList() : candidates.OrderBy(x => x.Static.NameAr).ToList(),
-            "currentprice" => isDesc ? candidates.OrderByDescending(x => x.Price?.CurrentPrice).ToList() : candidates.OrderBy(x => x.Price?.CurrentPrice).ToList(),
-            _ => isDesc ? candidates.OrderByDescending(x => x.Price?.Return1Y).ToList() : candidates.OrderBy(x => x.Price?.Return1Y).ToList(),
+            // If sorted by price/return fields, query prices for all matching candidates in ONE SQL query
+            candidatePrices = await _readQuery.GetPricesForFundsAsync(candidates.Select(c => c.Id).ToList(), cancellationToken);
+        }
+        else
+        {
+            candidatePrices = new Dictionary<int, Meezan.Application.Common.Models.Funds.FundPriceDto>();
+        }
+
+        candidates = sortField switch
+        {
+            "return1m" => isDesc ? candidates.OrderByDescending(x => candidatePrices.TryGetValue(x.Id, out var p) ? p.Return1M : null).ToList() : candidates.OrderBy(x => candidatePrices.TryGetValue(x.Id, out var p) ? p.Return1M : null).ToList(),
+            "return3m" => isDesc ? candidates.OrderByDescending(x => candidatePrices.TryGetValue(x.Id, out var p) ? p.Return3M : null).ToList() : candidates.OrderBy(x => candidatePrices.TryGetValue(x.Id, out var p) ? p.Return3M : null).ToList(),
+            "return6m" => isDesc ? candidates.OrderByDescending(x => candidatePrices.TryGetValue(x.Id, out var p) ? p.Return6M : null).ToList() : candidates.OrderBy(x => candidatePrices.TryGetValue(x.Id, out var p) ? p.Return6M : null).ToList(),
+            "return3y" => isDesc ? candidates.OrderByDescending(x => candidatePrices.TryGetValue(x.Id, out var p) ? p.Return3Y : null).ToList() : candidates.OrderBy(x => candidatePrices.TryGetValue(x.Id, out var p) ? p.Return3Y : null).ToList(),
+            "aum" => isDesc ? candidates.OrderByDescending(x => x.Aum).ToList() : candidates.OrderBy(x => x.Aum).ToList(),
+            "managementfee" => isDesc ? candidates.OrderByDescending(x => x.ManagementFee).ToList() : candidates.OrderBy(x => x.ManagementFee).ToList(),
+            "totalscore" => isDesc ? candidates.OrderByDescending(x => x.TotalScore).ToList() : candidates.OrderBy(x => x.TotalScore).ToList(),
+            "name" => isDesc ? candidates.OrderByDescending(x => x.NameAr).ToList() : candidates.OrderBy(x => x.NameAr).ToList(),
+            "currentprice" => isDesc ? candidates.OrderByDescending(x => candidatePrices.TryGetValue(x.Id, out var p) ? p.CurrentPrice : null).ToList() : candidates.OrderBy(x => candidatePrices.TryGetValue(x.Id, out var p) ? p.CurrentPrice : null).ToList(),
+            _ => isDesc ? candidates.OrderByDescending(x => candidatePrices.TryGetValue(x.Id, out var p) ? p.Return1Y : null).ToList() : candidates.OrderBy(x => candidatePrices.TryGetValue(x.Id, out var p) ? p.Return1Y : null).ToList(),
         };
 
         var totalCount = candidates.Count;
         var pageItems = candidates.Skip((request.Page - 1) * request.PageSize).Take(request.PageSize).ToList();
+        var pageIds = pageItems.Select(x => x.Id).ToList();
 
-        var (overrides, defs) = await _readQuery.LoadEffectiveTypesAsync(pageItems.Select(x => x.Static.Id).ToList(), cancellationToken);
-
-        var result = pageItems.Select(x =>
+        // If not already fetched for all candidates, fetch prices for the current page in ONE SQL query
+        Dictionary<int, Meezan.Application.Common.Models.Funds.FundPriceDto> pagePrices;
+        if (isPriceSort && candidates.Count > 0)
         {
-            var f = x.Static;
-            var p = x.Price;
+            pagePrices = candidatePrices;
+        }
+        else
+        {
+            pagePrices = await _readQuery.GetPricesForFundsAsync(pageIds, cancellationToken);
+        }
+
+        var result = pageItems.Select(f =>
+        {
+            pagePrices.TryGetValue(f.Id, out var p);
             var eff = f.EffectiveClassification;
 
             var dto = new FundListItemDto
@@ -208,13 +237,93 @@ public sealed class GetFundsQueryHandler : IRequestHandler<GetFundsQuery, Result
             return dto;
         }).ToList();
 
-        return new FundListResultDto
+        return Result<FundListResultDto>.Success(new FundListResultDto
         {
             Items = result,
             TotalCount = totalCount,
             Page = request.Page,
             PageSize = request.PageSize,
             TotalPages = (int)Math.Ceiling((double)totalCount / request.PageSize)
+        });
+    }
+
+    private async Task<Result<FundListResultDto>> HandleDirectDbQueryAsync(GetFundsQuery request, CancellationToken cancellationToken)
+    {
+        var filter = new FundListFilter
+        {
+            Search = request.Search,
+            Type = request.Type,
+            RiskLevel = request.RiskLevel,
+            AssetManagerId = request.AssetManagerId,
+            IsIslamic = request.IsIslamic,
+            IsFeatured = request.IsFeatured,
+            CategoryId = request.CategoryId,
+            MinManagementFee = request.MinManagementFee,
+            MaxManagementFee = request.MaxManagementFee,
+            MinInvestment = request.MinInvestment,
+            MaxInvestment = request.MaxInvestment,
+            SortBy = request.SortBy,
+            SortDir = request.SortDir,
+            Page = request.Page,
+            PageSize = request.PageSize
         };
+
+        var (items, totalCount) = await _fundRepo.QueryPagedAsync(filter, cancellationToken);
+        var pageIds = items.Select(x => x.Id).ToList();
+        var pricesMap = await _readQuery.GetPricesForFundsAsync(pageIds, cancellationToken);
+        var (overrides, defs) = await _readQuery.LoadEffectiveTypesAsync(pageIds, cancellationToken);
+        var classCtx = await _detailQuery.LoadContextAsync(cancellationToken);
+        var classEff = await _detailQuery.ResolveEffectiveManyAsync(items, classCtx);
+
+        var result = items.Select(f =>
+        {
+            pricesMap.TryGetValue(f.Id, out var p);
+            var dto = new FundListItemDto
+            {
+                Id = f.Id,
+                SndukId = f.SndukId,
+                PublicId = f.PublicId,
+                Slug = f.Slug,
+                NameAr = f.NameAr,
+                NameEn = f.NameEn,
+                Code = f.Code,
+                Type = f.Type,
+                TypeNameAr = f.TypeNameAr,
+                TypeNameEn = f.TypeNameEn,
+                RiskLevel = f.RiskLevel,
+                IsIslamic = f.IsIslamic,
+                IsFeatured = f.IsFeatured,
+                CurrentPrice = p?.CurrentPrice ?? f.CurrentPrice,
+                DailyChange = p?.DailyChange ?? f.DailyChange,
+                Return1M = p?.Return1M ?? f.Return1M,
+                Return3M = p?.Return3M ?? f.Return3M,
+                Return6M = p?.Return6M ?? f.Return6M,
+                Return1Y = p?.Return1Y ?? f.Return1Y,
+                Return3Y = p?.Return3Y ?? f.Return3Y,
+                TotalScore = f.TotalScore,
+                Aum = f.Aum,
+                ManagementFee = f.ManagementFee,
+                MinimumInvestment = f.MinimumInvestment,
+                Currency = f.Currency,
+                AssetManagerId = f.AssetManagerId,
+                AssetManagerName = f.AssetManagerName,
+                AssetManagerNameEn = f.AssetManagerNameEn,
+                LogoUrl = f.LogoUrl,
+                LocalLogoPath = f.LocalLogoPath,
+                LastSyncedAt = f.LastSyncedAt
+            };
+            FundMappingExtensions.ApplyType(dto, f, overrides, defs);
+            FundMappingExtensions.ApplyClassification(dto, f, classEff);
+            return dto;
+        }).ToList();
+
+        return Result<FundListResultDto>.Success(new FundListResultDto
+        {
+            Items = result,
+            TotalCount = totalCount,
+            Page = request.Page,
+            PageSize = request.PageSize,
+            TotalPages = (int)Math.Ceiling((double)totalCount / request.PageSize)
+        });
     }
 }

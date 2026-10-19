@@ -655,8 +655,8 @@ button, input, select, textarea {
 .stock-meta {
   color: var(--muted-foreground);
   font-size: 11px;
-  height: 1.4em;
-  line-height: 1.4em;
+  min-height: 20px;
+  line-height: 20px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2031,6 +2031,17 @@ button, input, select, textarea {
   background: var(--primary);
   height: 100%;
   transition: width 0.3s ease;
+}
+
+.progress-bar-fill.indeterminate {
+  width: 40% !important;
+  animation: indeterminate-bar 1.4s infinite ease-in-out;
+}
+
+@keyframes indeterminate-bar {
+  0% { transform: translateX(250%); }
+  50% { transform: translateX(0%); }
+  100% { transform: translateX(-250%); }
 }
 
 .progress-stats {
@@ -4057,14 +4068,20 @@ app-shariah-standards .explainer-note {
 
 .entity-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
+}
+
+.entity-grid > * {
+  min-width: 0;
 }
 
 .entity-card {
   display: flex;
   flex-direction: column;
   height: 100%;
+  min-width: 0;
+  width: 100%;
   background: var(--card);
   border: 1px solid #e6ece8;
   border-top: 3px solid var(--accent, #087f5b);
@@ -4113,7 +4130,9 @@ app-shariah-standards .explainer-note {
   display: flex;
   align-items: center;
   gap: 6px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  max-width: 75%;
+  justify-content: flex-end;
 }
 
 .entity-icon-box {
@@ -4145,6 +4164,11 @@ app-shariah-standards .explainer-note {
   font-size: 11.5px;
   font-weight: 700;
   white-space: nowrap;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: inline-block;
+  vertical-align: middle;
 }
 
 .entity-card h2 {
@@ -4182,6 +4206,10 @@ app-shariah-standards .explainer-note {
   border-top: 1px solid var(--border);
   min-height: 140px;
   box-sizing: border-box;
+}
+
+.entity-stats.compact-stats {
+  min-height: unset;
 }
 
 .entity-stat {
@@ -4340,7 +4368,7 @@ app-shariah-standards .explainer-note {
     grid-template-columns: repeat(2, 1fr);
   }
   .entity-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -4354,9 +4382,11 @@ app-shariah-standards .explainer-note {
   .page-hero h1 {
     font-size: 32px;
   }
-  .kpi-grid,
-  .entity-grid {
+  .kpi-grid {
     grid-template-columns: 1fr;
+  }
+  .entity-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
   .kpi-card strong {
     font-size: 21px;
@@ -4380,7 +4410,7 @@ app-shariah-standards .explainer-note {
     display: none !important;
   }
   .entity-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .detail-card,
   .entity-card,
@@ -4591,10 +4621,11 @@ app-shariah-standards .explainer-note {
 .noncompliance-reason {
   font-size: 11px;
   color: #dc2626;
-  height: 1.5em;
-  line-height: 1.5em;
+  min-height: 22px;
+  line-height: 22px;
   margin-top: 4px;
-  padding-top: 4px;
+  padding-top: 2px;
+  padding-bottom: 2px;
   border-top: 1px solid rgba(239, 68, 68, 0.15);
   white-space: nowrap;
   overflow: hidden;
@@ -4609,3 +4640,14 @@ app-shariah-standards .explainer-note {
 .noncompliance-reason.empty .empty-placeholder {
   visibility: hidden;
 }
+
+@keyframes spin-cw {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.spin-anim {
+  animation: spin-cw 0.85s linear infinite;
+  display: inline-block;
+}
+

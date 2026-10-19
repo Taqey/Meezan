@@ -1758,10 +1758,10 @@ namespace Meezan.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("SectorId");
-
                     b.HasIndex("Ticker")
                         .IsUnique();
+
+                    b.HasIndex("SectorId", "IsActive", "DataStatus");
 
                     b.ToTable("Stocks", (string)null);
                 });

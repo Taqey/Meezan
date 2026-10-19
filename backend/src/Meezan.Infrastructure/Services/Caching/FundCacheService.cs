@@ -172,6 +172,7 @@ public class FundCacheService : IFundCacheService
 
     public async Task<CachedClassificationDataset> GetClassificationDatasetAsync(CancellationToken ct = default)
     {
+        ct.ThrowIfCancellationRequested();
         var ver = await GetDatasetVersionAsync("catalog", ct);
         var l1Key = $"{_prefix}:L1:classification:v{ver}";
 
@@ -221,6 +222,12 @@ public class FundCacheService : IFundCacheService
 
             var rebuilt = await RebuildClassificationDatasetAsync(ct);
 
+            if (rebuilt == null || ct.IsCancellationRequested)
+            {
+                _logger.LogWarning("Classification dataset build yielded empty or cancelled results. Nothing stored in cache.");
+                return rebuilt ?? new CachedClassificationDataset();
+            }
+
             _memoryCache.Set(l1Key, rebuilt, TimeSpan.FromMinutes(10));
 
             if (IsRedisAvailable())
@@ -257,7 +264,7 @@ public class FundCacheService : IFundCacheService
 
         var allNodes = await nodeRepo.GetAllAsync(false, ct);
         var visibleNodes = allNodes.Where(n => n.IsVisible && !n.IsDeleted).ToList();
-        var allFunds = await fundRepo.GetAllAsync(ct);
+        var allFunds = await fundRepo.GetAllStaticAsync(ct);
         var activeFunds = allFunds.Where(f => f.IsActive).ToList();
 
         var ctx = await detailQuery.LoadContextAsync(ct);
@@ -366,6 +373,21 @@ public class FundCacheService : IFundCacheService
         var totalAum = (double)activeFunds.Sum(f => f.Aum ?? 0);
         var bestFund = activeFunds.Where(f => f.DailyChange != null).OrderByDescending(f => f.DailyChange).FirstOrDefault();
 
+        // Asset managers
+        var assetManagers = activeFunds
+            .Where(f => f.AssetManagerId.HasValue && !string.IsNullOrWhiteSpace(f.AssetManagerName))
+            .GroupBy(f => new { Id = f.AssetManagerId!.Value, NameAr = f.AssetManagerName, NameEn = f.AssetManagerNameEn })
+            .Select(g => new FundAssetManagerOptionDto
+            {
+                Id = g.Key.Id,
+                NameAr = g.Key.NameAr,
+                NameEn = g.Key.NameEn,
+                FundCount = g.Count()
+            })
+            .OrderByDescending(m => m.FundCount)
+            .ThenBy(m => m.NameAr)
+            .ToList();
+
         return new CachedClassificationDataset
         {
             Tree = tree,
@@ -375,6 +397,7 @@ public class FundCacheService : IFundCacheService
             TypeOptions = typeOptions,
             TypeDefsBySlug = defsBySlug,
             TypeOverrides = typeOverrides,
+            AssetManagers = assetManagers,
             Stats = new FundStatsDto
             {
                 TotalCount = totalCount,
@@ -386,15 +409,24 @@ public class FundCacheService : IFundCacheService
         };
     }
 
+    private DateTime? _staticBuildCooldownUntilUtc;
+    private int _isStaticRebuilding = 0;
+
     public async Task<Dictionary<int, CachedFundStatic>> GetStaticFundsAsync(CancellationToken ct = default)
     {
+        ct.ThrowIfCancellationRequested();
         var ver = await GetDatasetVersionAsync("catalog", ct);
         var l1Key = $"{_prefix}:L1:static_funds:v{ver}";
 
         if (_memoryCache.TryGetValue<Dictionary<int, CachedFundStatic>>(l1Key, out var l1Val))
         {
-            Interlocked.Increment(ref _l1Hits);
-            return l1Val!;
+            if (l1Val != null && l1Val.Count > 0)
+            {
+                Interlocked.Increment(ref _l1Hits);
+                return l1Val;
+            }
+            // Incomplete/empty entry treated as a miss
+            _memoryCache.Remove(l1Key);
         }
 
         Interlocked.Increment(ref _l1Misses);
@@ -408,10 +440,10 @@ public class FundCacheService : IFundCacheService
                 var raw = await db.StringGetAsync(l2Key);
                 if (raw.HasValue)
                 {
-                    Interlocked.Increment(ref _l2Hits);
                     var cached = JsonSerializer.Deserialize<Dictionary<int, CachedFundStatic>>(raw.ToString());
-                    if (cached != null)
+                    if (cached != null && cached.Count > 0)
                     {
+                        Interlocked.Increment(ref _l2Hits);
                         _memoryCache.Set(l1Key, cached, TimeSpan.FromMinutes(10));
                         return cached;
                     }
@@ -425,38 +457,85 @@ public class FundCacheService : IFundCacheService
 
         Interlocked.Increment(ref _l2Misses);
 
+        // Cooldown guard: if a previous build failed within 30s, fallback to direct SQL path
+        if (_staticBuildCooldownUntilUtc.HasValue && DateTime.UtcNow < _staticBuildCooldownUntilUtc.Value)
+        {
+            _logger.LogWarning("Fund static cache build cooldown active until {CooldownUntil}. Falling back to direct build without caching.", _staticBuildCooldownUntilUtc.Value);
+            return await ExecuteDirectStaticFundsQueryAsync(ct);
+        }
+
+        // Single-flight per key with cancellation token
         await _staticFundsLock.WaitAsync(ct);
         try
         {
-            if (_memoryCache.TryGetValue<Dictionary<int, CachedFundStatic>>(l1Key, out var recheck))
+            if (_memoryCache.TryGetValue<Dictionary<int, CachedFundStatic>>(l1Key, out var recheck) && recheck != null && recheck.Count > 0)
             {
-                return recheck!;
+                return recheck;
             }
 
-            var rebuilt = await RebuildStaticFundsAsync(ct);
-            _memoryCache.Set(l1Key, rebuilt, TimeSpan.FromMinutes(10));
-
-            if (IsRedisAvailable())
+            // Re-entrancy guard
+            if (Interlocked.CompareExchange(ref _isStaticRebuilding, 1, 0) != 0)
             {
-                try
-                {
-                    var db = _redis!.GetDatabase();
-                    var json = JsonSerializer.Serialize(rebuilt);
-                    await db.StringSetAsync(l2Key, json, TimeSpan.FromDays(7));
-                }
-                catch (Exception ex)
-                {
-                    RecordRedisFailure(ex);
-                }
+                _logger.LogWarning("Re-entrancy detected in static funds build. Falling back to direct query.");
+                return await ExecuteDirectStaticFundsQueryAsync(ct);
             }
 
-            _lastRebuildUtc = DateTime.UtcNow;
-            return rebuilt;
+            try
+            {
+                var rebuilt = await RebuildStaticFundsAsync(ct);
+
+                // Incomplete or empty build must store NOTHING
+                if (rebuilt == null || rebuilt.Count == 0 || ct.IsCancellationRequested)
+                {
+                    _logger.LogWarning("Static funds build yielded empty or cancelled results. Nothing stored in cache.");
+                    return rebuilt ?? new Dictionary<int, CachedFundStatic>();
+                }
+
+                _memoryCache.Set(l1Key, rebuilt, TimeSpan.FromMinutes(10));
+
+                if (IsRedisAvailable())
+                {
+                    try
+                    {
+                        var db = _redis!.GetDatabase();
+                        var json = JsonSerializer.Serialize(rebuilt);
+                        await db.StringSetAsync(l2Key, json, TimeSpan.FromDays(7));
+                    }
+                    catch (Exception ex)
+                    {
+                        RecordRedisFailure(ex);
+                    }
+                }
+
+                _lastRebuildUtc = DateTime.UtcNow;
+                _staticBuildCooldownUntilUtc = null;
+                return rebuilt;
+            }
+            catch (OperationCanceledException)
+            {
+                _logger.LogInformation("Static funds cache build was cancelled.");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _staticBuildCooldownUntilUtc = DateTime.UtcNow.AddSeconds(30);
+                _logger.LogError(ex, "Failed to rebuild static funds cache. 30s cooldown applied. Falling back to direct SQL query.");
+                return await ExecuteDirectStaticFundsQueryAsync(ct);
+            }
+            finally
+            {
+                Interlocked.Exchange(ref _isStaticRebuilding, 0);
+            }
         }
         finally
         {
             _staticFundsLock.Release();
         }
+    }
+
+    private async Task<Dictionary<int, CachedFundStatic>> ExecuteDirectStaticFundsQueryAsync(CancellationToken ct)
+    {
+        return await RebuildStaticFundsAsync(ct);
     }
 
     private async Task<Dictionary<int, CachedFundStatic>> RebuildStaticFundsAsync(CancellationToken ct)
@@ -467,19 +546,36 @@ public class FundCacheService : IFundCacheService
         var similarRepo = scope.ServiceProvider.GetRequiredService<IFundSimilarRepository>();
         var overrideRepo = scope.ServiceProvider.GetRequiredService<IFundCategoryOverrideRepository>();
 
-        var allFunds = await fundRepo.GetAllAsync(ct);
-        var result = new Dictionary<int, CachedFundStatic>();
+        // Set-based bulk queries: constant number of queries (4 queries here, well under 10)
+        // 1. Static fund columns only (no price fields)
+        var allFunds = await fundRepo.GetAllStaticAsync(ct);
 
+        // 2. All analyses in one bulk query
+        var allAnalyses = await analysisRepo.GetAllAsync(ct);
+        var analysesByFundId = allAnalyses.ToDictionary(a => a.FundId);
+
+        // 3. Similar fund links in one bulk query (FundId, SimilarFundId only, no fund entity joins)
+        var allSimilarLinks = await similarRepo.GetAllSimilarLinksAsync(ct);
+        var similarsByFundId = allSimilarLinks
+            .GroupBy(s => s.FundId)
+            .ToDictionary(g => g.Key, g => g.Select(x => x.SimilarFundId).ToList());
+
+        // 4. Category overrides in one bulk query
+        var allOverrides = await overrideRepo.GetAllAsync(ct);
+        var overridesByFundId = allOverrides
+            .Where(o => o.Action == OverrideAction.Include)
+            .GroupBy(o => o.FundId)
+            .ToDictionary(g => g.Key, g => g.Select(x => x.CategoryId).ToList());
+
+        // Classification dataset: nodes and type defs
         var classDataset = await GetClassificationDatasetAsync(ct);
+
+        var result = new Dictionary<int, CachedFundStatic>(allFunds.Count);
 
         foreach (var f in allFunds)
         {
-            var analysis = await analysisRepo.GetByFundIdAsync(f.Id, ct);
-            var similars = await similarRepo.GetByFundIdAsync(f.Id, ct);
-            var overrides = await overrideRepo.GetByFundIdAsync(f.Id, ct);
-
             CachedFundAnalysis? cachedAnalysis = null;
-            if (analysis != null)
+            if (analysesByFundId.TryGetValue(f.Id, out var analysis) && analysis != null)
             {
                 cachedAnalysis = new CachedFundAnalysis
                 {
@@ -511,6 +607,8 @@ public class FundCacheService : IFundCacheService
             }
 
             classDataset.EffectiveByFundId.TryGetValue(f.Id, out var eff);
+            similarsByFundId.TryGetValue(f.Id, out var simList);
+            overridesByFundId.TryGetValue(f.Id, out var catList);
 
             result[f.Id] = new CachedFundStatic
             {
@@ -547,8 +645,8 @@ public class FundCacheService : IFundCacheService
                 LastSyncedAt = f.LastSyncedAt,
                 EffectiveClassification = eff,
                 Analysis = cachedAnalysis,
-                SimilarFundIds = similars.Select(s => s.SimilarFundId).ToList(),
-                CategoryIds = overrides.Where(o => o.Action == OverrideAction.Include).Select(o => o.CategoryId).ToList()
+                SimilarFundIds = simList ?? new List<int>(),
+                CategoryIds = catList ?? new List<int>()
             };
         }
 

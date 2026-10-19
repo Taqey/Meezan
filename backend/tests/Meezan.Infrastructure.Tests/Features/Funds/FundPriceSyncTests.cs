@@ -231,4 +231,101 @@ public class FundPriceSyncTests : IClassFixture<WebApplicationFactory<Program>>
             return 0;
         });
     }
+
+    [Fact]
+    public async Task StatusQuery_WhenIdle_ReturnsLatestDbSummary()
+    {
+        await WithDb(async db =>
+        {
+            db.FundSyncLogs.Add(new FundSyncLog
+            {
+                Id = 10,
+                Mode = "Prices",
+                Status = FundSyncStatus.Success,
+                TriggeredBy = "Manual",
+                TotalFunds = 150,
+                UpdatedFunds = 148,
+                FailedFunds = 2,
+                RunAt = DateTime.UtcNow.AddMinutes(-10),
+                FinishedAt = DateTime.UtcNow.AddMinutes(-9)
+            });
+            await db.SaveChangesAsync();
+            return 0;
+        });
+
+        using var scope = _factory.Services.CreateScope();
+        var sender = scope.ServiceProvider.GetRequiredService<ISender>();
+        var result = await sender.Send(new Meezan.Application.Features.Funds.Sync.Queries.GetFundSyncStatus.GetFundSyncStatusQuery());
+
+        Assert.True(result.IsSuccess);
+        var dto = result.Value;
+        Assert.False(dto.IsRunning);
+        Assert.Equal("Prices", dto.Mode);
+        Assert.Equal("Manual", dto.TriggeredBy);
+        Assert.Equal(150, dto.TotalFunds);
+        Assert.Equal(148, dto.UpdatedCount);
+    }
+
+    [Fact]
+    public async Task Tracker_TracksInFlightProgress_AndCompletes()
+    {
+        using var scope = _factory.Services.CreateScope();
+        var tracker = scope.ServiceProvider.GetRequiredService<Meezan.Application.Common.Interfaces.Repositories.Funds.IFundSyncProgressTracker>();
+        var sender = scope.ServiceProvider.GetRequiredService<ISender>();
+
+        tracker.StartRun("Full", "AdminTest", 172);
+        tracker.UpdateProgress(50, 48, 2, "BCO", "Syncing prices");
+
+        var statusResult = await sender.Send(new Meezan.Application.Features.Funds.Sync.Queries.GetFundSyncStatus.GetFundSyncStatusQuery());
+        Assert.True(statusResult.IsSuccess);
+        var status = statusResult.Value;
+        Assert.True(status.IsRunning);
+        Assert.Equal("Full", status.Mode);
+        Assert.Equal(172, status.TotalFunds);
+        Assert.Equal(50, status.ProcessedCount);
+        Assert.Equal(48, status.UpdatedCount);
+        Assert.Equal(2, status.FailedCount);
+        Assert.Equal("BCO", status.CurrentFundCode);
+
+        tracker.SetCompleted("Done successfully");
+        var completedResult = await sender.Send(new Meezan.Application.Features.Funds.Sync.Queries.GetFundSyncStatus.GetFundSyncStatusQuery());
+        Assert.True(completedResult.IsSuccess);
+        Assert.False(completedResult.Value.IsRunning);
+        Assert.Equal("Done successfully", completedResult.Value.LastResultSummary);
+    }
+
+    [Fact]
+    public async Task DoubleStart_RejectedByLease_WhenRunIsActive()
+    {
+        await WithDb(async db =>
+        {
+            var settings = await db.FundSyncSettings.FirstOrDefaultAsync();
+            if (settings == null)
+            {
+                db.FundSyncSettings.Add(new FundSyncSettings
+                {
+                    Id = 1,
+                    IsEnabled = true,
+                    PreventOverlap = true,
+                    RequestDelaySeconds = 0
+                });
+            }
+            db.FundSyncLogs.Add(new FundSyncLog
+            {
+                Status = FundSyncStatus.Running,
+                TriggeredBy = "Manual",
+                Mode = "Prices",
+                RunAt = DateTime.UtcNow.AddMinutes(-5)
+            });
+            await db.SaveChangesAsync();
+            return 0;
+        });
+
+        using var scope = _factory.Services.CreateScope();
+        var sender = scope.ServiceProvider.GetRequiredService<ISender>();
+        var result = await sender.Send(new RunFundPriceSyncCommand("Manual"));
+
+        Assert.True(result.IsFailure);
+        Assert.Contains("Another sync run is already in progress", result.Error.Message);
+    }
 }

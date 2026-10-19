@@ -10,15 +10,28 @@ public class CachedFundDetailQueryDecorator : IFundDetailQuery
 {
     private readonly IFundDetailQuery _inner;
     private readonly IFundCacheService _cache;
+    private readonly IFundReadQuery _readQuery;
+    private readonly Microsoft.Extensions.Options.IOptions<Meezan.Application.Common.Models.Caching.FundCacheOptions> _options;
 
-    public CachedFundDetailQueryDecorator(IFundDetailQuery inner, IFundCacheService cache)
+    public CachedFundDetailQueryDecorator(
+        IFundDetailQuery inner,
+        IFundCacheService cache,
+        IFundReadQuery readQuery,
+        Microsoft.Extensions.Options.IOptions<Meezan.Application.Common.Models.Caching.FundCacheOptions> options)
     {
         _inner = inner;
         _cache = cache;
+        _readQuery = readQuery;
+        _options = options;
     }
 
     public async Task<FundDetailBundle?> LoadAsync(int fundId, CancellationToken ct = default)
     {
+        if (!_options.Value.Enabled)
+        {
+            return await _inner.LoadAsync(fundId, ct);
+        }
+
         var staticFunds = await _cache.GetStaticFundsAsync(ct);
         if (!staticFunds.TryGetValue(fundId, out var s))
         {
@@ -26,7 +39,10 @@ public class CachedFundDetailQueryDecorator : IFundDetailQuery
             return await _inner.LoadAsync(fundId, ct);
         }
 
-        var prices = await _cache.GetPricesSnapshotAsync(ct);
+        // Fetch prices for this fund and any similar funds in ONE single query
+        var neededIds = new List<int> { fundId };
+        neededIds.AddRange(s.SimilarFundIds);
+        var prices = await _readQuery.GetPricesForFundsAsync(neededIds, ct);
         prices.TryGetValue(fundId, out var p);
 
         var priceHistory = await _cache.GetPriceHistoryAsync(fundId, ct);

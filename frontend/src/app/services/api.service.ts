@@ -43,6 +43,7 @@ import {
   FundCategoryDto,
   FundCategoryMembershipDto,
   FundPagedResultDto,
+  FundAssetManagerOption,
   FundListFilter,
   FundSortBy,
   FundType,
@@ -50,6 +51,7 @@ import {
   FundSyncSettings,
   FundSyncSettingsUpdateRequest,
   FundSyncLog,
+  FundSyncStatusDto,
   FundPriceSyncResultDto,
   FundSyncLogDetail,
   FundCategory,
@@ -406,6 +408,11 @@ export class ApiService {
     return this.http.get<FundTypeOptionDto[]>(`${this.baseUrl}/api/funds/types`);
   }
 
+  /** Distinct asset managers with fund counts for public filters. */
+  getFundAssetManagers(): Observable<FundAssetManagerOption[]> {
+    return this.http.get<FundAssetManagerOption[]>(`${this.baseUrl}/api/funds/managers`);
+  }
+
   // ── Admin Fund Types ───────────────────────────────────────────────────────
 
   getAllFundTypes(includeDeleted = false): Observable<FundTypeDefinition[]> {
@@ -583,6 +590,10 @@ export class ApiService {
   }
 
   // Sync runs
+  getFundSyncStatus(): Observable<FundSyncStatusDto> {
+    return this.http.get<FundSyncStatusDto>(`${this.baseUrl}/api/admin/funds/sync/status`);
+  }
+
   getLatestFundSyncRun(): Observable<FundSyncLog> {
     return this.http.get<FundSyncLog>(`${this.baseUrl}/api/admin/funds/sync/latest`);
   }

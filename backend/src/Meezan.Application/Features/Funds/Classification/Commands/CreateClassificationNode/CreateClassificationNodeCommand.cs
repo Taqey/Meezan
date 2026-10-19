@@ -1,10 +1,11 @@
+using Meezan.Application.Common.Interfaces.Caching;
 using MediatR;
 using Meezan.Application.Common.Interfaces.Persistence;
 using Meezan.Application.Common.Results;
 
 namespace Meezan.Application.Features.Funds.Classification.Commands.CreateClassificationNode;
 
-public sealed record CreateClassificationNodeCommand : IRequest<Result<CreateClassificationNodeResultDto>>, ITransactionalCommand
+public sealed record CreateClassificationNodeCommand : IRequest<Result<CreateClassificationNodeResultDto>>, ITransactionalCommand, IInvalidatesFundCatalog
 {
     public int? ParentId { get; init; }
     public string? Slug { get; init; }
