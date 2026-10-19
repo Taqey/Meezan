@@ -43,6 +43,7 @@ import {
   FundCategoryDto,
   FundCategoryMembershipDto,
   FundPagedResultDto,
+  FundAssetManagerOption,
   FundListFilter,
   FundSortBy,
   FundType,
@@ -50,6 +51,8 @@ import {
   FundSyncSettings,
   FundSyncSettingsUpdateRequest,
   FundSyncLog,
+  FundSyncStatusDto,
+  FundPriceSyncResultDto,
   FundSyncLogDetail,
   FundCategory,
   FundCategoryOverride,
@@ -405,6 +408,11 @@ export class ApiService {
     return this.http.get<FundTypeOptionDto[]>(`${this.baseUrl}/api/funds/types`);
   }
 
+  /** Distinct asset managers with fund counts for public filters. */
+  getFundAssetManagers(): Observable<FundAssetManagerOption[]> {
+    return this.http.get<FundAssetManagerOption[]>(`${this.baseUrl}/api/funds/managers`);
+  }
+
   // ── Admin Fund Types ───────────────────────────────────────────────────────
 
   getAllFundTypes(includeDeleted = false): Observable<FundTypeDefinition[]> {
@@ -582,6 +590,10 @@ export class ApiService {
   }
 
   // Sync runs
+  getFundSyncStatus(): Observable<FundSyncStatusDto> {
+    return this.http.get<FundSyncStatusDto>(`${this.baseUrl}/api/admin/funds/sync/status`);
+  }
+
   getLatestFundSyncRun(): Observable<FundSyncLog> {
     return this.http.get<FundSyncLog>(`${this.baseUrl}/api/admin/funds/sync/latest`);
   }
@@ -592,6 +604,10 @@ export class ApiService {
 
   runFundSyncNow(): Observable<FundSyncLog> {
     return this.http.post<FundSyncLog>(`${this.baseUrl}/api/admin/funds/sync/run`, {});
+  }
+
+  runFundPriceSyncNow(): Observable<FundPriceSyncResultDto> {
+    return this.http.post<FundPriceSyncResultDto>(`${this.baseUrl}/api/admin/funds/sync/prices`, {});
   }
 
   getFundSyncRunDetails(runId: number): Observable<FundSyncLogDetail[]> {
@@ -686,6 +702,19 @@ export class ApiService {
 
   getFundAdmin(id: number): Observable<FundListItemDto> {
     return this.http.get<FundListItemDto>(`${this.baseUrl}/api/admin/funds/funds/${id}`);
+  }
+
+  // Cache management
+  getFundCacheStatus(): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/api/admin/funds/cache/status`);
+  }
+
+  clearFundCache(): Observable<string> {
+    return this.http.post<string>(`${this.baseUrl}/api/admin/funds/cache/clear`, {});
+  }
+
+  rebuildFundCache(): Observable<string> {
+    return this.http.post<string>(`${this.baseUrl}/api/admin/funds/cache/rebuild`, {});
   }
 }
 

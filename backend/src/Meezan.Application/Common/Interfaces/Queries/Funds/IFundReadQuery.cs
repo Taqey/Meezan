@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Models.Funds;
 using Meezan.Application.Features.Funds.Classification.Dtos;
 using Meezan.Application.Features.Funds.Listing.Dtos;
 using Meezan.Application.Features.Funds.Types.Dtos;
@@ -22,5 +23,12 @@ public interface IFundReadQuery
     /// <summary>Loads manual type overrides and active type definitions for the given funds.</summary>
     Task<(Dictionary<int, (int TypeId, string Slug)> Overrides, Dictionary<string, Domain.Entities.FundTypeDefinition> BySlug)>
         LoadEffectiveTypesAsync(IReadOnlyCollection<int> fundIds, CancellationToken ct = default);
-}
 
+    /// <summary>Loads price projections in a single SQL query for the requested fund IDs.</summary>
+    Task<Dictionary<int, FundPriceDto>> GetPricesForFundsAsync(
+        IReadOnlyCollection<int> fundIds,
+        CancellationToken ct = default);
+
+    /// <summary>Returns distinct asset managers with active fund counts.</summary>
+    Task<List<FundAssetManagerOptionDto>> GetAssetManagersAsync(CancellationToken ct = default);
+}

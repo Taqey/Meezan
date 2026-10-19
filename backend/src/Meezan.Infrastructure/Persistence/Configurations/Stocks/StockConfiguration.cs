@@ -65,5 +65,7 @@ public class StockConfiguration : IEntityTypeConfiguration<Stock>
             .WithMany(s => s.Stocks)
             .HasForeignKey(e => e.SectorId)
             .OnDelete(DeleteBehavior.SetNull);
+
+        builder.HasIndex(e => new { e.SectorId, e.IsActive, e.DataStatus });
     }
 }

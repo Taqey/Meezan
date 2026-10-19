@@ -19,6 +19,7 @@
         "classificationSlug": "string:",
         "classificationPathAr": "string:",
         "classificationSource": "string:None",
+        "effectiveClassification": null,
         "riskLevel": "number:int",
         "isIslamic": "bool:True",
         "isFeatured": "bool:False",

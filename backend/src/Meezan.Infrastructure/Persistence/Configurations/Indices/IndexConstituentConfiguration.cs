@@ -30,5 +30,6 @@ public class IndexConstituentConfiguration : IEntityTypeConfiguration<IndexConst
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasIndex(e => new { e.IndexId, e.StockId });
+        builder.HasIndex(e => e.StockId);
     }
 }

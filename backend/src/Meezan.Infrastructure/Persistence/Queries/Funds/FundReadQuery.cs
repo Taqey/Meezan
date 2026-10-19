@@ -11,12 +11,12 @@ public sealed class FundReadQuery : IFundReadQuery
 {
     private readonly ApplicationDbContext _db;
     private readonly IFundRepository _fundRepo;
-    private readonly Services.Funds.Queries.FundDetailQuery _detailQuery;
+    private readonly IFundDetailQuery _detailQuery;
 
     public FundReadQuery(
         ApplicationDbContext db,
         IFundRepository fundRepo,
-        Services.Funds.Queries.FundDetailQuery detailQuery)
+        IFundDetailQuery detailQuery)
     {
         _db = db;
         _fundRepo = fundRepo;
@@ -31,18 +31,47 @@ public sealed class FundReadQuery : IFundReadQuery
         var islamicCount = await q.CountAsync(f => f.IsIslamic, ct);
         var totalAum = await q.SumAsync(f => (decimal?)(f.Aum ?? 0), ct) ?? 0m;
 
-        var bestFund = await q
-            .Where(f => f.DailyChange != null)
-            .OrderByDescending(f => f.DailyChange)
-            .Select(f => new { f.DailyChange, f.Code })
-            .FirstOrDefaultAsync(ct);
+        var activeFunds = await q
+            .Select(f => new { f.Id, f.Code, f.DailyChange })
+            .ToListAsync(ct);
+
+        // Map candidates from explicit DailyChange
+        var candidates = activeFunds
+            .Where(f => f.DailyChange.HasValue)
+            .Select(f => new { Value = f.DailyChange!.Value, f.Code, f.Id })
+            .ToList();
+
+        // If any fund has null DailyChange, check if FundPriceHistories has history points
+        var fundsNeedingHistory = activeFunds.Where(f => !f.DailyChange.HasValue).Select(f => f.Id).ToList();
+        if (fundsNeedingHistory.Count > 0)
+        {
+            var histories = await _db.FundPriceHistories.AsNoTracking()
+                .Where(h => fundsNeedingHistory.Contains(h.FundId))
+                .OrderByDescending(h => h.Date)
+                .ToListAsync(ct);
+
+            foreach (var group in histories.GroupBy(h => h.FundId))
+            {
+                var lastTwo = group.Take(2).ToList();
+                if (lastTwo.Count == 2 && lastTwo[1].Price > 0)
+                {
+                    var calcChange = Math.Round(((lastTwo[0].Price - lastTwo[1].Price) / lastTwo[1].Price) * 100m, 4);
+                    var code = activeFunds.FirstOrDefault(f => f.Id == group.Key)?.Code ?? "";
+                    candidates.Add(new { Value = calcChange, Code = code, Id = group.Key });
+                }
+            }
+        }
+
+        var bestFund = candidates
+            .OrderByDescending(c => c.Value)
+            .FirstOrDefault();
 
         return new FundStatsDto
         {
             TotalCount = totalCount,
             IslamicCount = islamicCount,
             TotalAum = (double)totalAum,
-            BestDailyChange = bestFund != null ? (double?)bestFund.DailyChange : null,
+            BestDailyChange = bestFund != null ? (double?)bestFund.Value : null,
             BestDailyChangeCode = bestFund?.Code
         };
     }
@@ -151,4 +180,52 @@ public sealed class FundReadQuery : IFundReadQuery
 
         return (overrides, defs.ToDictionary(kv => kv.Key, kv => kv.Value));
     }
+
+    public async Task<Dictionary<int, Meezan.Application.Common.Models.Funds.FundPriceDto>> GetPricesForFundsAsync(
+        IReadOnlyCollection<int> fundIds,
+        CancellationToken ct = default)
+    {
+        if (fundIds == null || fundIds.Count == 0)
+        {
+            return new Dictionary<int, Meezan.Application.Common.Models.Funds.FundPriceDto>();
+        }
+
+        var distinctIds = fundIds.Distinct().ToList();
+
+        return await _db.Funds
+            .AsNoTracking()
+            .Where(f => distinctIds.Contains(f.Id))
+            .Select(f => new Meezan.Application.Common.Models.Funds.FundPriceDto
+            {
+                Id = f.Id,
+                CurrentPrice = f.CurrentPrice,
+                DailyChange = f.DailyChange,
+                Return1M = f.Return1M,
+                Return3M = f.Return3M,
+                Return6M = f.Return6M,
+                Return1Y = f.Return1Y,
+                Return3Y = f.Return3Y,
+                PricesUpdatedAt = f.PricesUpdatedAt
+            })
+            .ToDictionaryAsync(p => p.Id, ct);
+    }
+
+    public async Task<List<FundAssetManagerOptionDto>> GetAssetManagersAsync(CancellationToken ct = default)
+    {
+        return await _db.Funds
+            .AsNoTracking()
+            .Where(f => f.IsActive && f.AssetManagerId.HasValue && !string.IsNullOrWhiteSpace(f.AssetManagerName))
+            .GroupBy(f => new { Id = f.AssetManagerId!.Value, NameAr = f.AssetManagerName, NameEn = f.AssetManagerNameEn })
+            .Select(g => new FundAssetManagerOptionDto
+            {
+                Id = g.Key.Id,
+                NameAr = g.Key.NameAr,
+                NameEn = g.Key.NameEn,
+                FundCount = g.Count()
+            })
+            .OrderByDescending(m => m.FundCount)
+            .ThenBy(m => m.NameAr)
+            .ToListAsync(ct);
+    }
 }
+

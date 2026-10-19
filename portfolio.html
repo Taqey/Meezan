@@ -1,0 +1,1146 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مُبسط محفظة البورصة المصرية - EGX Portfolio Builder</title>
+    <style>
+        :root {
+            --primary: #1e3a8a;
+            --primary-light: #3b82f6;
+            --accent: #10b981;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #cbd5e1;
+            --error: #ef4444;
+            
+            /* Badge colors */
+            --badge-strong: #059669;
+            --badge-medium: #d97706;
+            --badge-weak: #ea580c;
+            --badge-none: #6b7280;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Tahoma, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            color: var(--primary);
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            margin-bottom: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: var(--text-main);
+        }
+
+        input[type="number"], input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input:focus {
+            border-color: var(--primary-light);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .option-btn {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid var(--border);
+            background: #fff;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            color: var(--text-muted);
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .option-btn.active {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+        }
+
+        .toggle-switch {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            cursor: pointer;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 28px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #ccc;
+            transition: .3s;
+            border-radius: 28px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--accent);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(22px);
+        }
+
+        .error-msg {
+            color: var(--error);
+            font-size: 0.85rem;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            flex: 2;
+        }
+
+        .btn-primary:hover {
+            background: #172554;
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: var(--text-main);
+            flex: 1;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e1;
+        }
+
+        .results-section {
+            display: none;
+        }
+
+        .info-note {
+            background: #f1f5f9;
+            border-right: 4px solid var(--primary-light);
+            padding: 12px 16px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .method-card {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        .method-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .method-title {
+            font-size: 1.2rem;
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        .method-content {
+            display: grid;
+            grid-template-columns: 1fr 200px;
+            gap: 20px;
+            align-items: center;
+        }
+
+        @media (max-width: 768px) {
+            .method-content {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+            .chart-container {
+                margin: 0 auto;
+            }
+        }
+
+        .chart-container {
+            width: 160px;
+            height: 160px;
+            position: relative;
+        }
+
+        .donut-chart {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+
+        .legend {
+            list-style: none;
+            font-size: 0.9rem;
+        }
+
+        .legend li {
+            display: flex;
+            align-items: center;
+            margin-bottom: 6px;
+            gap: 8px;
+        }
+
+        .legend li { flex-wrap: wrap; }
+        .sat-hint {
+            flex-basis: 100%;
+            font-size: 0.8rem;
+            line-height: 1.6;
+            color: #475569;
+            background: #f5f3ff;
+            border-right: 3px solid #8b5cf6;
+            border-radius: 4px;
+            padding: 4px 8px;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+            display: inline-block;
+        }
+
+        .details-toggle {
+            margin-top: 15px;
+            background: none;
+            border: none;
+            color: var(--primary-light);
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.9rem;
+            padding: 0;
+        }
+
+        .details-content {
+            display: none;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px dashed var(--border);
+            font-size: 0.88rem;
+            color: var(--text-muted);
+        }
+
+        .details-content.show {
+            display: block;
+        }
+
+        .pros-cons {
+            margin-top: 10px;
+        }
+
+        .pros {
+            color: #059669;
+            margin-bottom: 4px;
+        }
+
+        .cons {
+            color: #dc2626;
+            margin-bottom: 8px;
+        }
+
+        .source-btn {
+            background: #e0f2fe;
+            color: #0369a1;
+            border: 1px solid #bae6fd;
+            border-radius: 6px;
+            padding: 3px 8px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: background 0.2s;
+            text-decoration: none;
+        }
+
+        .source-btn:hover {
+            background: #bae6fd;
+        }
+
+        .general-notes {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 30px;
+        }
+
+        .general-notes h3 {
+            margin-bottom: 12px;
+            color: var(--primary);
+            font-size: 1.1rem;
+        }
+
+        .general-notes ul {
+            padding-right: 20px;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .general-notes li {
+            margin-bottom: 8px;
+        }
+
+        /* Sources Section Styles */
+        .sources-section {
+            margin-top: 30px;
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .sources-section h3 {
+            color: var(--primary);
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .sources-intro {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 15px;
+            background: #fffbe3;
+            border-right: 3px solid #f59e0b;
+            padding: 8px 12px;
+            border-radius: 4px;
+        }
+
+        .source-block {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-bottom: 12px;
+            overflow: hidden;
+            transition: border-color 0.2s;
+        }
+
+        .source-block.highlight {
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+
+        .source-header {
+            padding: 12px 16px;
+            background: #f8fafc;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .source-title {
+            font-weight: bold;
+            font-size: 0.95rem;
+            color: var(--text-main);
+        }
+
+        .badge {
+            font-size: 0.75rem;
+            padding: 3px 8px;
+            border-radius: 12px;
+            color: #fff;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .badge-strong { background-color: var(--badge-strong); }
+        .badge-medium { background-color: var(--badge-medium); }
+        .badge-weak { background-color: var(--badge-weak); }
+        .badge-none { background-color: var(--badge-none); }
+
+        .source-body {
+            padding: 16px;
+            display: none;
+            border-top: 1px solid var(--border);
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            background: #fff;
+        }
+
+        .source-body.show {
+            display: block;
+        }
+
+        .source-quote {
+            font-style: italic;
+            color: #475569;
+            background: #f1f5f9;
+            padding: 8px 12px;
+            border-right: 3px solid var(--primary-light);
+            margin: 10px 0;
+            font-size: 0.85rem;
+        }
+
+        .source-links {
+            margin-top: 10px;
+        }
+
+        .source-links a {
+            color: var(--primary-light);
+            text-decoration: none;
+            display: inline-block;
+            margin-left: 10px;
+            margin-bottom: 5px;
+            word-break: break-all;
+            font-size: 0.85rem;
+        }
+
+        .source-links a:hover {
+            text-decoration: underline;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            display: none;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>مُبسط محفظة البورصة المصرية (EGX)</h1>
+        <p>ابني محفظتك الاستثمارية الذكية بالجمع بين توزيع الأصول ومنهجية الكور-ساتلايت (Core-Satellite)</p>
+    </header>
+
+    <div class="card">
+        <!-- Input 1: Age -->
+        <div class="form-group">
+            <label for="ageInput">1. السن (من 18 إلى 80 سنة):</label>
+            <input type="number" id="ageInput" min="18" max="80" placeholder="مثال: 35">
+            <div id="ageError" class="error-msg">الرجاء إدخال سن صحيح بين 18 و 80 سنة.</div>
+        </div>
+
+        <!-- Input 2: Investor Type -->
+        <div class="form-group">
+            <label>2. نوع المستثمر:</label>
+            <div class="btn-group" id="profileGroup">
+                <button type="button" class="option-btn" data-profile="Conservative">تحفظي (Conservative)</button>
+                <button type="button" class="option-btn" data-profile="Balanced">متوازن (Balanced)</button>
+                <button type="button" class="option-btn" data-profile="Aggressive">هجومي (Aggressive)</button>
+            </div>
+        </div>
+
+        <!-- Input 3: Gold Toggle -->
+        <div class="form-group">
+            <label>3. إضافة الذهب للمحفظة؟</label>
+            <div class="toggle-switch" id="goldToggleContainer">
+                <span>لا</span>
+                <label class="switch">
+                    <input type="checkbox" id="goldToggle">
+                    <span class="slider"></span>
+                </label>
+                <span>نعم (يتحدد النسبة تلقائياً حسب نوع المستثمر) <button type="button" class="source-btn" onclick="scrollToSource('gold_pct')">ℹ️ المصدر</button></span>
+            </div>
+        </div>
+
+        <!-- Input 4: Total Amount (Optional) -->
+        <div class="form-group">
+            <label for="amountInput">4. إجمالي المبلغ بالجنيه المصري (اختياري):</label>
+            <input type="number" id="amountInput" placeholder="مثال: 100000">
+        </div>
+
+        <div class="actions">
+            <button type="button" id="calcBtn" class="btn btn-primary">احسب المحفظة</button>
+            <button type="button" id="resetBtn" class="btn btn-secondary">إعادة ضبط</button>
+        </div>
+    </div>
+
+    <!-- Results Section -->
+    <div id="resultsSection" class="results-section">
+        <div class="info-note" id="satelliteInfoNote">
+            <span>Defensive = stable demand during downturns; Growth = benefits more from economic expansion (based on Fidelity's classification).</span>
+            <button type="button" class="source-btn" onclick="scrollToSource('defensive_vs_growth')">ℹ️ المصدر</button>
+        </div>
+
+        <div id="methodsContainer"></div>
+
+        <div class="general-notes">
+            <h3>ملاحظات هامة وإخلاء مسؤولية</h3>
+            <ul>
+                <li>نسب الكور/ساتلايت (80/20، 70/30، 60/40) مأخوذة من الصفحات التعليمية لشركات الوساطة ومصدرة الصناديق وليست دراسة أكاديمية بحتة، وهي بمثابة قاعدة تقريبية (Rule of thumb). <button type="button" class="source-btn" onclick="scrollToSource('core_satellite_ratios')">ℹ️ المصدر</button></li>
+                <li>نسب الذهب المقترحة لكل نوع مستثمر هي افتراض تنظيمي توجيهي وليست من دراسة مرجعية مُلزمة. <button type="button" class="source-btn" onclick="scrollToSource('gold_pct')">ℹ️ المصدر</button></li>
+                <li>طرق الأسهم والسندات أصلها أسواق أمريكية؛ وتطبيقها على البورصة المصرية (EGX) يعتبر تكييفاً محلياً للمفاهيم العالمية. <button type="button" class="source-btn" onclick="scrollToSource('egx_adaptation')">ℹ️ المصدر</button></li>
+                <li>ارتفاع نسبة الساتلايت يعني زيادة المخاطر وتقليل التنويع الواسع في السوق.</li>
+                <li>تصنيف القطاعات والتوجهات مستوحى من (Fidelity / Morningstar) كمرجعية إرشادية. <button type="button" class="source-btn" onclick="scrollToSource('defensive_vs_growth')">ℹ️ المصدر</button></li>
+                <li>هذه الأداة تعليمية وتثقيفية بالدرجة الأولى وليست استشارة مالية أو توصية بيع أو شراء.</li>
+            </ul>
+        </div>
+
+        <div style="margin-top: 20px; text-align: center;">
+            <button type="button" id="copyBtn" class="btn btn-primary" style="max-width: 300px;">نسخ النتائج</button>
+        </div>
+    </div>
+
+    <!-- Collapsible Sources & Details Section -->
+    <div class="sources-section">
+        <h3 onclick="toggleSourcesSection()">
+            <span>📚 المصادر والتفاصيل (Sources & Details)</span>
+            <span id="sourcesArrow">▼</span>
+        </h3>
+        <div id="sourcesContainer" style="display: none;">
+            <div class="sources-intro">
+                الملخصات بصياغتنا، ومش اقتباسات حرفية إلا لو مكتوب بين علامات تنصيص. راجع المصدر الأصلي.
+            </div>
+            <div id="sourceBlocks"></div>
+        </div>
+    </div>
+</div>
+
+<div id="toast" class="toast">تم نسخ النتائج بنجاح!</div>
+
+<script>
+    // Config Store including Sources Data
+    const SOURCES = {
+        core_satellite_ratios: {
+            title: "1. نسب توزيع الكور/ساتلايت (Core / Satellite ratios)",
+            summary: "تشرح الصفحات التعليمية من شركات الوساطة ومُصدري صناديق المؤشرات أن 'الكور' هو الجزء الأكبر والتراكمي السلبي (صناديق مؤشرات)، بينما 'الساتلايت' هو الجزء الأصغر والمركز (قطاع، فكرة، أو شركة). تعطي Saxo نسب 80/20 و 70/30 و 60/40 حسب ملف المخاطر؛ وتذكر Global X أن الكور غالبًا ما يمثل 60-90%؛ وتقترح eToro قاعدة 70/30 أو 80/20 للمستثمرين الأكثر تحفظًا؛ بينما تنوه CMC بأن 80/20 هي الأكثر شعبية مع توزيع الساتلايت على عدة أفكار.",
+            quote: "",
+            links: [
+                "https://home.saxo/learn/guides/diversification/core-satellite-approach-a-smarter-way-to-diversify-your-investments",
+                "https://www.globalxetfs.com.au/insights/post/core-satellite-investing-with-etfs/",
+                "https://etoro.com/investing/core-satellite-portfolio",
+                "https://www.cmcmarkets.com/en-gb/investing-guides/core-satellite-approach",
+                "https://pearler.com/learn/read/what-is-a-core-satellite-approach"
+            ],
+            strength: "medium", // strong, medium, weak, none
+            strengthText: "متوسط — صفحات تعليمية لشركات وساطة"
+        },
+        defensive_vs_growth: {
+            title: "2. تصنيف قطاعات الأسهم (Defensive vs Growth / Cyclical)",
+            summary: "تصنف فيديليتي (Fidelity) قطاعات السلع الكمالية، الصناعة، والتكنولوجيا كقطاعات دورية/نمو (تستفيد أكثر من التوسع الاقتصادي)، بينما تصنف الرعاية الصحية، السلع الاستهلاكية الأساسية، والمرافق كقطاعات دفاعية (طلب مستقر وحماية في الأزمات). يرفع النمو العوائد في الانتعاش، والدفاعي يحمي رأس المال في الهبوط. (تنبيه: النفط دوري عند فيديليتي ودفاعي عند آخرين، والتكنولوجيا تضعها مورنينغستار في فئة متوسطة 'حساسة').",
+            quote: "",
+            links: [
+                "https://www.fidelity.com/learning-center/trading-investing/markets-sectors/guide-to-industry-sectors",
+                "https://www.ii.co.uk/analysis-commentary/analyst-best-sectors-each-phase-economic-cycle-ii535704",
+                "https://awgmain.morningstar.com/webhelp/glossary_definitions/mutual_fund/glossary_all_Sectors.html",
+                "https://www.etf.com/node/125820.md"
+            ],
+            strength: "strong",
+            strengthText: "قوي — المرجعية (Fidelity / Morningstar)"
+        },
+        profile_mapping: {
+            title: "3. ربط نوع المستثمر بنوع الساتلايت (Mapping investor type → Satellite type)",
+            summary: "هذا الربط (تحفظي = دفاعي فقط، متوازن = مزيج 50/50، هجومي = نمو/دوري) هو دمج خاص بالبرنامج بين نسب الكور/ساتلايت وتصنيف القطاعات أعلاه؛ ولا يوجد مصدر واحد ينص على هذه المعادلة المحددة نصًا.",
+            quote: "",
+            links: [],
+            strength: "none",
+            strengthText: "افتراض مقترح — مفيش مصدر"
+        },
+        gold_pct: {
+            title: "4. نسبة الذهب بالبرنامج (Gold percentage)",
+            summary: "نسب الذهب المقترحة (تحفظي 10%، متوازن 7.5%، هجومي 5%) هي افتراض تنظيمي توجيهي تم اختياره للأداة لزيادة الحماية للتحفظي وتقليلها للهجومي، وليست مشتقة من دراسة مرجعية محددة.",
+            quote: "",
+            links: [],
+            strength: "none",
+            strengthText: "افتراض مقترح — مفيش مصدر"
+        },
+        age_rules: {
+            title: "5. قواعد العُمر ('100 − Age', '110 − Age', '120 − Age')",
+            summary: "تحدد قاعدة 100 نسبة السندات = العمر. ويوصي مخططون بـ 110 أو 120 لزيادة أفق النمو مع زيادة متوسط عمر البشر. تشير مورنينغستار إلى أن قواعد العمر القديمة قد تكون تحفظية أكثر من اللازم، وأن جون بوغل انتقل لـ 120 لأن القاعدة القديمة ظهرت في فترة عائدات سندات مرتفعة. وترى فيديليتي أن 120 تناسب من يتحمل مخاطر أعلى، بينما اقترح بينغن 128 - السن للسحب المستدام. في المقابل، يرى كايتس وففاو أن تقليل الأسهم قرب التقاعد يحمي من مخاطر تسلسل العوائد.",
+            quote: "",
+            links: [
+                "https://www.morningstar.com.au/personal-finance/portfolio-rules-of-thumb-do-they-stack-up",
+                "https://www.morningstar.com/markets/pinning-down-portfolio-rules-thumb",
+                "https://morningstar.co.uk/uk/news/208975/4-investment-rules-of-thumb.aspx",
+                "https://www-prd1.fidelity.ca/en/insights/articles/retirement-savings-stock-market",
+                "https://www-prd1.fidelity.ca/en/insights/articles/common-asset-allocation-rules",
+                "https://money.cnn.com/retirement/guide/investing_basics.moneymag/index7.htm",
+                "https://www.fool.com/terms/r/rule-of-110"
+            ],
+            strength: "strong",
+            strengthText: "قوي — (Morningstar / Fidelity) كقواعد تقريبية"
+        },
+        vanguard_lifestrategy: {
+            title: "6. Vanguard LifeStrategy (Conservative 40/60, Balanced 60/40, Aggressive 80/20)",
+            summary: "عائلة صناديق رسمية من شركة فانغارد تتبع نسبًا ثابتة ومباشرة بين الأسهم والسندات. مصدر مؤسسي صريح ومعتمد عالميًا كمرجعية قياسية.",
+            quote: "",
+            links: [
+                "https://investor.vanguard.com/mutual-funds/lifestrategy"
+            ],
+            strength: "strong",
+            strengthText: "قوي — مصدر مؤسسي مباشر (Vanguard)"
+        },
+        couch_potato: {
+            title: "7. Couch Potato (Scott Burns) 50/50",
+            summary: "طريقة سكوت بيرنز: نصف المحفظة في صندوق S&P 500 والنصف الآخر في صندوق سندات متوسطة الأجل مع إعادة توازن سنوية. سجل المؤلف أن أسوأ خسارة له كانت 10% في عام 1974 وحقق عائدًا 10.29% سنوياً مقابل 10.56% للأسهم الكاملة خلال فترة دراسته.",
+            quote: "",
+            links: [
+                "https://scottburns.com/?p=56"
+            ],
+            strength: "weak",
+            strengthText: "ضعيف إلى متوسط — المصدر هو المؤلف نفسه"
+        },
+        buffett_90_10: {
+            title: "8. Buffett 90/10",
+            summary: "نصيحة وارن باففت الشهيرة لورثته: 90% في صندوق مؤشر أسهم منخفض التكلفة (S&P 500) و 10% في سندات حكومية قصيرة الأجل. ترتكز على البساطة وخفض التكاليف. الرأي المقابل: المحافظ التي تحتوي سندات أكثر (60/40) أكثر استقرارًا لمن هم قرب التقاعد.",
+            quote: "",
+            links: [
+                "https://www.fool.com/investing/2026/04/14/what-warren-buffett-would-buy-if-choose-two-etfs/",
+                "https://www.fool.com/the-ascent/buying-stocks/articles/warren-buffett-loves-this-investing-strategy-should-you-try-it"
+            ],
+            strength: "medium",
+            strengthText: "متوسط — إعلام مالي وتصريحات شهيرة"
+        },
+        egx_adaptation: {
+            title: "9. تطبيق الطرق عالمية الأصل على البورصة المصرية (EGX)",
+            summary: "جميع طرق الأسهم/السندات أعلاه نابعة من أسواق أمريكية وعالمية. تطبيقها على السوق المصري وتطبيق الكور-ساتلايت داخل حصة الأسهم فقط هو تكييف خاص بهذا البرنامج وليس طريقة منشور بها أوراق بحثية محددة.",
+            quote: "",
+            links: [],
+            strength: "none",
+            strengthText: "تكييف خاص بالبرنامج — مفيش مصدر"
+        }
+    };
+
+    const config = {
+        profiles: {
+            Conservative: {
+                goldShare: 0.10,
+                stocksRatio: 0.40,
+                bondsRatio: 0.60,
+                coreShare: 0.80,
+                satelliteShare: 0.20,
+                satelliteLabel: "Defensive Sector Funds",
+                satelliteHint: "الدفاعي (طلب ثابت وبيثبت وقت الهبوط): صندوق القطاع الاستهلاكي",
+                methods: [
+                    {
+                        name: "100 − Age",
+                        type: "age",
+                        sourceTopicKeys: ["age_rules"],
+                        calc: (age) => {
+                            let b = age / 100;
+                            let s = 1 - b;
+                            return { stocks: s, bonds: b };
+                        },
+                        adv: "يقلل من إغراء توقيت السوق (Market Timing)، ويفرض عملية إعادة التوازن دورياً.",
+                        dis: "ترى مورنينغستار أن القواعد المعتمدة على السن قد تكون متحفظة أكثر من اللازم؛ وقد انتقل جون بوغل إلى 120 لأن القاعدة القديمة وُلدت في عصر كانت فيه عائدات السندات أعلى."
+                    },
+                    {
+                        name: "Vanguard LifeStrategy (Conservative)",
+                        type: "fixed",
+                        sourceTopicKeys: ["vanguard_lifestrategy"],
+                        stocks: 0.40,
+                        bonds: 0.60,
+                        adv: "مصدر مؤسسي صريح ومعتمد عالمياً.",
+                        dis: "يفتقر إلى سند قوي فريد خارج نطاق المؤسسة المصدرة."
+                    },
+                    {
+                        name: "Couch Potato (Scott Burns)",
+                        type: "fixed",
+                        sourceTopicKeys: ["couch_potato"],
+                        stocks: 0.50,
+                        bonds: 0.50,
+                        adv: "سجل المؤلف أن أسوأ خسارة له كانت 10% في عام 1974، بعائد سنوي 10.29% مقابل 10.56% للأسهم وحدها في فترة دراسته.",
+                        dis: "المصدر هو المؤلف نفسه، لذلك فهو ليس محايداً تماماً."
+                    }
+                ]
+            },
+            Balanced: {
+                goldShare: 0.075,
+                coreShare: 0.70,
+                satelliteShare: 0.30,
+                satelliteLabel: "Defensive + Growth Sector Funds (mix)",
+                satelliteHint: "الدفاعي (طلب ثابت وبيثبت وقت الهبوط): صندوق القطاع الاستهلاكي<br>النمو/الهجومي (بيستفيد من التوسع الاقتصادي): صناديق القطاع المالي، العقاري ومواد البناء، الصناعي، التكنولوجي",
+                methods: [
+                    {
+                        name: "110 − Age",
+                        type: "age",
+                        sourceTopicKeys: ["age_rules"],
+                        calc: (age) => {
+                            let s = Math.max(0, Math.min(1, (110 - age) / 100));
+                            let b = 1 - s;
+                            return { stocks: s, bonds: b };
+                        },
+                        adv: "يوصي به الكثير من المخططين الماليين (110 أو 120) نظراً لأن البشر يعيشون لفترات أطول ويحتاجون لنمو أعلى.",
+                        dis: "قد يمنح نمواً ضعيفاً نسبياً للتقاعد؛ كما أن السن ليس العامل الوحيد لتحديد المخاطر."
+                    },
+                    {
+                        name: "Vanguard LifeStrategy (60/40)",
+                        type: "fixed",
+                        sourceTopicKeys: ["vanguard_lifestrategy"],
+                        stocks: 0.60,
+                        bonds: 0.40,
+                        adv: "معيار كلاسيكي متوازن ومختبر تاريخياً.",
+                        dis: "قد لا يناسب الأهداف التي تختلف أفقها الزمني عن المتوسط العام."
+                    }
+                ]
+            },
+            Aggressive: {
+                goldShare: 0.05,
+                coreShare: 0.60,
+                satelliteShare: 0.40,
+                satelliteLabel: "Growth (Aggressive) Sector Funds",
+                satelliteHint: "النمو/الهجومي (بيستفيد من التوسع الاقتصادي): صناديق القطاع المالي، العقاري ومواد البناء، الصناعي، التكنولوجي",
+                methods: [
+                    {
+                        name: "120 − Age",
+                        type: "age",
+                        sourceTopicKeys: ["age_rules"],
+                        calc: (age) => {
+                            let s = Math.max(0, Math.min(1, (120 - age) / 100));
+                            let b = 1 - s;
+                            return { stocks: s, bonds: b };
+                        },
+                        adv: "تراه فيديليتي ملائماً للمستثمرين القادرين على تحمل مخاطر أعلى؛ دافع عنه جون بوغل؛ واقترح بينغن 128 - السن لعمليات السحب المستدامة.",
+                        dis: "يُجادل كايتس وففاو بأن تقليل الأسهم حول سن التقاعد يقلل من مخاطر تسلسل العوائد (Sequence-of-returns risk)."
+                    },
+                    {
+                        name: "Vanguard LifeStrategy (Aggressive)",
+                        type: "fixed",
+                        sourceTopicKeys: ["vanguard_lifestrategy"],
+                        stocks: 0.80,
+                        bonds: 0.20,
+                        adv: "نسبة نمو عالية للمدى الطويل بدعم مؤسسي.",
+                        dis: "تقلبات عالية قد لا يتحملها المستثمر الضعيف نفسياً."
+                    },
+                    {
+                        name: "Buffett 90/10",
+                        type: "fixed",
+                        sourceTopicKeys: ["buffett_90_10"],
+                        stocks: 0.90,
+                        bonds: 0.10,
+                        adv: "تكلفة منخفضة وبساطة مطلقة (أوصى به وارن باففت لورثته).",
+                        dis: "المحافظ ذات النسبة الأعلى من السندات (مثل 70/30 أو 60/40) أكثر استقراراً؛ ومن قرب تقاعدهم قد يحتاجون سندات أكثر."
+                    }
+                ]
+            }
+        },
+        labels: {
+            gold: "صندوق ذهب / ذهب",
+            bonds: "صندوق دخل ثابت / سندات (عام)",
+            core: "صندوق مؤشرات (Index Fund) يتتبع السوق المصري",
+        }
+    };
+
+    // State variables
+    let selectedProfile = null;
+
+    // DOM Elements
+    const ageInput = document.getElementById('ageInput');
+    const ageError = document.getElementById('ageError');
+    const profileButtons = document.querySelectorAll('#profileGroup .option-btn');
+    const goldToggle = document.getElementById('goldToggle');
+    const amountInput = document.getElementById('amountInput');
+    const calcBtn = document.getElementById('calcBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const resultsSection = document.getElementById('resultsSection');
+    const methodsContainer = document.getElementById('methodsContainer');
+    const toast = document.getElementById('toast');
+    const sourcesContainer = document.getElementById('sourcesContainer');
+    const sourceBlocks = document.getElementById('sourceBlocks');
+
+    // Initialize Sources UI
+    function renderSourcesUI() {
+        sourceBlocks.innerHTML = '';
+        Object.keys(SOURCES).forEach(key => {
+            const src = SOURCES[key];
+            const block = document.createElement('div');
+            block.className = 'source-block';
+            block.id = `source_block_${key}`;
+
+            let badgeClass = 'badge-none';
+            if (src.strength === 'strong') badgeClass = 'badge-strong';
+            else if (src.strength === 'medium') badgeClass = 'badge-medium';
+            else if (src.strength === 'weak') badgeClass = 'badge-weak';
+
+            let linksHtml = '';
+            if (src.links && src.links.length > 0) {
+                linksHtml = '<div class="source-links"><strong>الروابط المباشرة:</strong><br>';
+                src.links.forEach((link, idx) => {
+                    linksHtml += `<a href="${link}" target="_blank" rel="noopener noreferrer">[رابط ${idx + 1}] ${link}</a> `;
+                });
+                linksHtml += '</div>';
+            }
+
+            let quoteHtml = '';
+            if (src.quote && src.quote.trim() !== '') {
+                quoteHtml = `<div class="source-quote">"${src.quote.trim()}"</div>`;
+            }
+
+            block.innerHTML = `
+                <div class="source-header" onclick="toggleSourceBlock('${key}')">
+                    <span class="source-title">${src.title}</span>
+                    <span class="badge ${badgeClass}">${src.strengthText}</span>
+                </div>
+                <div class="source-body" id="source_body_${key}">
+                    <p>${src.summary}</p>
+                    ${quoteHtml}
+                    ${linksHtml}
+                </div>
+            `;
+            sourceBlocks.appendChild(block);
+        });
+    }
+
+    renderSourcesUI();
+
+    // Toggle entire sources section
+    function toggleSourcesSection(open) {
+        const isHidden = sourcesContainer.style.display === 'none';
+        const shouldShow = open !== undefined ? open : isHidden;
+        sourcesContainer.style.display = shouldShow ? 'block' : 'none';
+        document.getElementById('sourcesArrow').textContent = shouldShow ? '▲' : '▼';
+    }
+
+    // Toggle individual source block
+    function toggleSourceBlock(key, forceOpen) {
+        const body = document.getElementById(`source_body_${key}`);
+        if (!body) return;
+        const isShow = body.classList.contains('show');
+        if (forceOpen || !isShow) {
+            body.classList.add('show');
+        } else {
+            body.classList.remove('show');
+        }
+    }
+
+    // Scroll directly to source block
+    function scrollToSource(key) {
+        toggleSourcesSection(true);
+        toggleSourceBlock(key, true);
+
+        const block = document.getElementById(`source_block_${key}`);
+        if (block) {
+            block.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            block.classList.add('highlight');
+            setTimeout(() => {
+                block.classList.remove('highlight');
+            }, 2500);
+        }
+    }
+
+    // Profile selection handler
+    profileButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            profileButtons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            selectedProfile = btn.getAttribute('data-profile');
+        });
+    });
+
+    // Reset handler
+    resetBtn.addEventListener('click', () => {
+        ageInput.value = '';
+        amountInput.value = '';
+        goldToggle.checked = false;
+        profileButtons.forEach(b => b.classList.remove('active'));
+        selectedProfile = null;
+        resultsSection.style.display = 'none';
+        ageError.style.display = 'none';
+    });
+
+    // Calculation Handler
+    calcBtn.addEventListener('click', () => {
+        const age = parseInt(ageInput.value);
+        
+        if (isNaN(age) || age < 18 || age > 80) {
+            ageError.style.display = 'block';
+            ageInput.focus();
+            return;
+        } else {
+            ageError.style.display = 'none';
+        }
+
+        if (!selectedProfile) {
+            alert('الرجاء اختيار نوع المستثمر (تحفظي، متوازن، أو هجومي).');
+            return;
+        }
+
+        const includeGold = goldToggle.checked;
+        const totalAmount = parseFloat(amountInput.value) || 0;
+
+        calculateAndRender(age, selectedProfile, includeGold, totalAmount);
+    });
+
+    function calculateAndRender(age, profileKey, includeGold, totalAmount) {
+        const profileData = config.profiles[profileKey];
+        const goldPct = includeGold ? profileData.goldShare : 0;
+        const remainder = 1 - goldPct;
+
+        const methods = profileData.methods;
+        methodsContainer.innerHTML = '';
+
+        methods.forEach((method) => {
+            let sRatio, bRatio;
+            if (method.type === 'age') {
+                const res = method.calc(age);
+                sRatio = res.stocks;
+                bRatio = res.bonds;
+            } else {
+                sRatio = method.stocks;
+                bRatio = method.bonds;
+            }
+
+            let stocksPortionOfTotal = remainder * sRatio;
+            let bondsPortionOfTotal = remainder * bRatio;
+
+            let coreSharePct = profileData.coreShare;
+            let satSharePct = profileData.satelliteShare;
+
+            let corePortionOfTotal = stocksPortionOfTotal * coreSharePct;
+            let satellitePortionOfTotal = stocksPortionOfTotal * satSharePct;
+
+            let rawGold = goldPct * 100;
+            let rawBonds = bondsPortionOfTotal * 100;
+            let rawCore = corePortionOfTotal * 100;
+            let rawSat = satellitePortionOfTotal * 100;
+
+            let items = [
+                { key: 'gold', label: config.labels.gold, val: rawGold, color: '#f59e0b' },
+                { key: 'bonds', label: config.labels.bonds, val: rawBonds, color: '#3b82f6' },
+                { key: 'core', label: config.labels.core, val: rawCore, color: '#10b981' },
+                { key: 'sat', label: profileData.satelliteLabel, val: rawSat, color: '#8b5cf6', hint: profileData.satelliteHint }
+            ];
+
+            items = items.filter(item => item.key !== 'gold' || includeGold);
+
+            let roundedSum = 0;
+            items.forEach(item => {
+                item.rounded = Math.round(item.val * 10) / 10;
+                roundedSum += item.rounded;
+            });
+
+            let diff = Math.round((100 - roundedSum) * 10) / 10;
+            if (Math.abs(diff) > 0.001) {
+                let largest = items.reduce((max, curr) => curr.val > max.val ? curr : max, items[0]);
+                largest.rounded = Math.round((largest.rounded + diff) * 10) / 10;
+            }
+
+            const card = document.createElement('div');
+            card.className = 'method-card';
+
+            const svgChart = createDonutChart(items);
+
+            let legendHtml = '<ul class="legend">';
+            items.forEach(item => {
+                let amountText = totalAmount > 0 ? ` (${formatCurrency((item.rounded / 100) * totalAmount)} ج.م)` : '';
+                legendHtml += `<li><span class="legend-color" style="background-color: ${item.color};"></span><strong>${item.rounded}%</strong> ${item.label}${amountText}${item.hint ? `<span class="sat-hint">${item.hint}</span>` : ''}</li>`;
+            });
+            legendHtml += '</ul>';
+
+            // Source Topic keys associated with this method
+            const allSourceKeys = [...(method.sourceTopicKeys || []), 'core_satellite_ratios', 'defensive_vs_growth', 'gold_pct', 'egx_adaptation'];
+            let sourceBtnsHtml = '<p style="margin-top:8px;"><strong>المصادر المتعلقة:</strong> ';
+            allSourceKeys.forEach(k => {
+                if (SOURCES[k]) {
+                    sourceBtnsHtml += `<button type="button" class="source-btn" onclick="scrollToSource('${k}')">ℹ️ ${SOURCES[k].title.split('(')[0]}</button> `;
+                }
+            });
+            sourceBtnsHtml += '</p>';
+
+            card.innerHTML = `
+                <div class="method-header">
+                    <div class="method-title">${method.name}</div>
+                    <button type="button" class="source-btn" onclick="scrollToSource('${method.sourceTopicKeys ? method.sourceTopicKeys[0] : 'core_satellite_ratios'}')">ℹ️ المصدر</button>
+                </div>
+                <div class="method-content">
+                    <div>${legendHtml}</div>
+                    <div class="chart-container">${svgChart}</div>
+                </div>
+                <button type="button" class="details-toggle" onclick="toggleDetails(this)">التفاصيل ▼</button>
+                <div class="details-content">
+                    <p><strong>خطوات الحساب:</strong></p>
+                    <p>1. نسبة الذهب: ${includeGold ? (goldPct * 100) + '%' : '0%'} ← المتبقي للاستثمار: ${(remainder * 100)}%</p>
+                    <p>2. توزيع الأسهم والسندات من المتبقي: أسهم ${(sRatio * 100).toFixed(1)}%، سندات ${(bRatio * 100).toFixed(1)}%</p>
+                    <p>3. تطبيق الكور-ساتلايت على الأسهم (${(stocksPortionOfTotal * 100).toFixed(1)}%): صندوق مؤشرات Core ${(coreSharePct * 100)}% = ${rawCore.toFixed(1)}%، وساتلايت Satellite ${(satSharePct * 100)}% = ${rawSat.toFixed(1)}%</p>
+                    <div class="pros-cons">
+                        <p class="pros"><strong>المميزات:</strong> ${method.adv}</p>
+                        <p class="cons"><strong>العيوب:</strong> ${method.dis}</p>
+                    </div>
+                    ${sourceBtnsHtml}
+                </div>
+            `;
+
+            methodsContainer.appendChild(card);
+        });
+
+        resultsSection.style.display = 'block';
+        resultsSection.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function createDonutChart(items) {
+        let cumulativePercent = 0;
+        let svgContent = '';
+
+        items.forEach(item => {
+            const startAngle = (cumulativePercent / 100) * 360;
+            cumulativePercent += item.rounded;
+            const endAngle = (cumulativePercent / 100) * 360;
+
+            const x1 = 50 + 40 * Math.cos(Math.PI * startAngle / 180);
+            const y1 = 50 + 40 * Math.sin(Math.PI * startAngle / 180);
+            const x2 = 50 + 40 * Math.cos(Math.PI * endAngle / 180);
+            const y2 = 50 + 40 * Math.sin(Math.PI * endAngle / 180);
+
+            const largeArcFlag = item.rounded > 50 ? 1 : 0;
+            const pathData = `M 50 50 L ${x1} ${y1} A 40 40 0 ${largeArcFlag} 1 ${x2} ${y2} Z`;
+
+            svgContent += `<path d="${pathData}" fill="${item.color}" />`;
+        });
+
+        svgContent += `<circle cx="50" cy="50" r="25" fill="#ffffff" />`;
+
+        return `<svg class="donut-chart" viewBox="0 0 100 100">${svgContent}</svg>`;
+    }
+
+    function toggleDetails(btn) {
+        const content = btn.nextElementSibling;
+        content.classList.toggle('show');
+        btn.textContent = content.classList.contains('show') ? 'التفاصيل ▲' : 'التفاصيل ▼';
+    }
+
+    function formatCurrency(num) {
+        return num.toLocaleString('ar-EG', { maximumFractionDigits: 0 });
+    }
+
+    copyBtn.addEventListener('click', () => {
+        let text = "نتائج خطة محفظتي الاستثمارية في البورصة المصرية (EGX):\n\n";
+        document.querySelectorAll('.method-card').forEach(card => {
+            const title = card.querySelector('.method-title').innerText;
+            text += `📌 ${title}\n`;
+            card.querySelectorAll('.legend li').forEach(li => {
+                text += ` - ${li.innerText}\n`;
+            });
+            text += "\n";
+        });
+
+        navigator.clipboard.writeText(text).then(() => {
+            toast.style.display = 'block';
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3000);
+        });
+    });
+</script>
+
+</body>
+</html>

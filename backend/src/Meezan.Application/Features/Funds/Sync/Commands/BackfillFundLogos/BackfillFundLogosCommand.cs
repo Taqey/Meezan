@@ -1,6 +1,7 @@
 using MediatR;
+using Meezan.Application.Common.Interfaces.Caching;
 using Meezan.Application.Common.Results;
 
 namespace Meezan.Application.Features.Funds.Sync.Commands.BackfillFundLogos;
 
-public sealed record BackfillFundLogosCommand : IRequest<Result<BackfillFundLogosResultDto>>;
+public sealed record BackfillFundLogosCommand : IRequest<Result<BackfillFundLogosResultDto>>, IInvalidatesFundCatalog;

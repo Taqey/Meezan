@@ -24,8 +24,6 @@ public interface IIndexRepository
     Task<HashSet<int>> GetConstituentStockIdsAsync(int indexId, CancellationToken cancellationToken = default);
 
     Task<List<IndexSummaryProjection>> GetAllSummariesAsync(CancellationToken cancellationToken = default);
-    Task<(List<ConstituentProjection> Items, int TotalCount)> QueryConstituentsPagedAsync(
-        string indexCode, ConstituentListFilter filter, CancellationToken cancellationToken = default);
 }
 
 public record IndexSummaryProjection(

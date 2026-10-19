@@ -14,4 +14,6 @@ public sealed record UpdateSyncSettingsCommand : IRequest<Result<FundSyncSetting
     public int? RetryBackoffSeconds { get; init; }
     public bool? AutoIndexFundTypeEnabled { get; init; }
     public bool? AutoClassificationEnabled { get; init; }
+    public bool? FullSyncScheduleEnabled { get; init; }
+    public TimeOnly? FullSyncRunTimeCairo { get; init; }
 }

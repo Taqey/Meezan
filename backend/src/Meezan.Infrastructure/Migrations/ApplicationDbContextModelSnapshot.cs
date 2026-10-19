@@ -129,6 +129,9 @@ namespace Meezan.Infrastructure.Migrations
                         .HasMaxLength(250)
                         .HasColumnType("nvarchar(250)");
 
+                    b.Property<DateTime?>("PricesUpdatedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("ProspectusUrl")
                         .IsRequired()
                         .HasMaxLength(500)
@@ -841,6 +844,13 @@ namespace Meezan.Infrastructure.Migrations
                     b.Property<DateTime?>("FinishedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("Mode")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasDefaultValue("Full");
+
                     b.Property<DateTime>("RunAt")
                         .HasColumnType("datetime2");
 
@@ -922,6 +932,16 @@ namespace Meezan.Infrastructure.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<TimeOnly>("FullSyncRunTimeCairo")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("time")
+                        .HasDefaultValue(new TimeOnly(2, 0, 0));
+
+                    b.Property<bool>("FullSyncScheduleEnabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<bool>("IsEnabled")
                         .HasColumnType("bit");
@@ -1738,10 +1758,10 @@ namespace Meezan.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("SectorId");
-
                     b.HasIndex("Ticker")
                         .IsUnique();
+
+                    b.HasIndex("SectorId", "IsActive", "DataStatus");
 
                     b.ToTable("Stocks", (string)null);
                 });

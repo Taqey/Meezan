@@ -1,5 +1,6 @@
 using MediatR;
 using Meezan.Application.Common;
+using Meezan.Application.Common.Interfaces.Queries.Indices;
 using Meezan.Application.Common.Interfaces.Repositories.Indices;
 using Meezan.Application.Common.Results;
 using Meezan.Application.Features.Indices.DTOs;
@@ -8,19 +9,16 @@ namespace Meezan.Application.Features.Indices.Queries.GetIndexConstituents;
 
 public class GetIndexConstituentsQueryHandler : IRequestHandler<GetIndexConstituentsQuery, Result<IndexConstituentsPagedResultDto>>
 {
-    private readonly IIndexRepository _indexRepo;
+    private readonly IIndexConstituentReadQuery _query;
 
-    public GetIndexConstituentsQueryHandler(IIndexRepository indexRepo)
+    public GetIndexConstituentsQueryHandler(IIndexConstituentReadQuery query)
     {
-        _indexRepo = indexRepo;
+        _query = query;
     }
 
     public async Task<Result<IndexConstituentsPagedResultDto>> Handle(
         GetIndexConstituentsQuery request, CancellationToken cancellationToken)
     {
-        var index = await _indexRepo.GetByCodeAsync(request.IndexCode, cancellationToken);
-        if (index == null)
-            return Error.NotFound("IndexNotFound", "");
 
         int page = PageSizeHelper.ClampPage(request.Page);
         int pageSize = PageSizeHelper.Clamp(request.PageSize);
@@ -41,8 +39,11 @@ public class GetIndexConstituentsQueryHandler : IRequestHandler<GetIndexConstitu
             MaxPbRatio: request.MaxPbRatio
         );
 
-        var (projections, totalCount) = await _indexRepo.QueryConstituentsPagedAsync(
-            request.IndexCode, filter, cancellationToken);
+        var page_ = await _query.QueryPageAsync(request.IndexCode, filter, cancellationToken);
+        if (page_ == null)
+            return Error.NotFound("IndexNotFound", "");
+        var projections = page_.Items;
+        var totalCount = page_.TotalCount;
 
         var items = projections.Select(p =>
         {
@@ -76,10 +77,10 @@ public class GetIndexConstituentsQueryHandler : IRequestHandler<GetIndexConstitu
         int totalPages = totalCount == 0 ? 0 : (int)Math.Ceiling((double)totalCount / pageSize);
 
         return new IndexConstituentsPagedResultDto(
-            IndexCode: index.Code,
-            IndexNameAr: index.NameAr,
-            IndexNameEn: index.NameEn,
-            LastUpdated: index.LastUpdated,
+            IndexCode: page_.IndexCode,
+            IndexNameAr: page_.IndexNameAr,
+            IndexNameEn: page_.IndexNameEn,
+            LastUpdated: page_.LastUpdated,
             Items: items,
             Page: page,
             PageSize: pageSize,

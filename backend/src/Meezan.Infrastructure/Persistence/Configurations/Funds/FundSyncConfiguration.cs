@@ -17,6 +17,11 @@ public class FundSyncLogConfiguration : IEntityTypeConfiguration<FundSyncLog>
 
         builder.Property(e => e.FinishedAt);
 
+        builder.Property(e => e.Mode)
+            .IsRequired()
+            .HasMaxLength(20)
+            .HasDefaultValue("Full");
+
         builder.Property(e => e.Status)
             .IsRequired()
             .HasConversion<int>();
@@ -98,6 +103,14 @@ public class FundSyncSettingsConfiguration : IEntityTypeConfiguration<FundSyncSe
 
         builder.Property(e => e.RunTimeCairo)
             .IsRequired();
+
+        builder.Property(e => e.FullSyncScheduleEnabled)
+            .IsRequired()
+            .HasDefaultValue(false);
+
+        builder.Property(e => e.FullSyncRunTimeCairo)
+            .IsRequired()
+            .HasDefaultValue(new TimeOnly(2, 0));
 
         builder.Property(e => e.PreventOverlap)
             .IsRequired();

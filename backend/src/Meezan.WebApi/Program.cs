@@ -17,6 +17,12 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
+// Ensure rapid graceful shutdown (<10s)
+builder.Services.Configure<HostOptions>(options =>
+{
+    options.ShutdownTimeout = TimeSpan.FromSeconds(10);
+});
+
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<Meezan.Application.Common.Interfaces.Security.ICurrentUser, CurrentUser>();
 

@@ -275,7 +275,7 @@ public class ArchitectureTests
             string.Join(Environment.NewLine, violations));
     }
 
-    private static string? FindSolutionDirectory()
+    public static string? FindSolutionDirectory()
     {
         var current = new DirectoryInfo(AppContext.BaseDirectory);
         while (current != null)

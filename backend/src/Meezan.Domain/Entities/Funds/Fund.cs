@@ -61,6 +61,7 @@ public class Fund
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? LastSyncedAt { get; set; }
+    public DateTime? PricesUpdatedAt { get; set; }
 
     // Navigation
     public ICollection<FundPriceHistory> PriceHistory { get; set; } = new List<FundPriceHistory>();

@@ -75,10 +75,19 @@ public class FundSyncBackgroundService : BackgroundService
     {
         using var scope = _services.CreateScope();
         var syncService = scope.ServiceProvider.GetRequiredService<IFundSyncService>();
+        var settingsRepo = scope.ServiceProvider.GetRequiredService<IFundSyncSettingsRepository>();
+        var settings = await settingsRepo.GetAsync(cancellationToken);
 
         try
         {
-            await syncService.RunSyncAsync("Scheduled", cancellationToken);
+            _logger.LogInformation("Starting scheduled fund price sync");
+            await syncService.RunPriceSyncAsync("Scheduled", cancellationToken);
+
+            if (settings != null && settings.FullSyncScheduleEnabled)
+            {
+                _logger.LogInformation("Starting scheduled full fund sync (FullSyncScheduleEnabled is true)");
+                await syncService.RunSyncAsync("Scheduled", cancellationToken);
+            }
         }
         catch (Exception ex)
         {

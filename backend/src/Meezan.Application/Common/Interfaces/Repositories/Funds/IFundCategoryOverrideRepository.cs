@@ -6,6 +6,7 @@ public interface IFundCategoryOverrideRepository
 {
     Task<List<FundCategoryOverride>> GetByFundIdAsync(int fundId, CancellationToken cancellationToken = default);
     Task<List<FundCategoryOverride>> GetByCategoryIdAsync(int categoryId, CancellationToken cancellationToken = default);
+    Task<List<FundCategoryOverride>> GetAllAsync(CancellationToken cancellationToken = default);
     Task<FundCategoryOverride?> GetAsync(int fundId, int categoryId, CancellationToken cancellationToken = default);
     Task AddAsync(FundCategoryOverride @override, CancellationToken cancellationToken = default);
     void Update(FundCategoryOverride @override);

@@ -14,6 +14,7 @@ import { ShariahStandardsComponent } from './pages/shariah-standards/shariah-sta
 import { PurificationComponent } from './pages/purification/purification.component';
 import { FavoritesComponent } from './pages/favorites/favorites.component';
 import { PortfolioComponent } from './pages/portfolio/portfolio.component';
+import { PortfolioSimplifierComponent } from './pages/portfolio-simplifier/portfolio-simplifier.component';
 import { adminAuthGuard } from './guards/admin-auth.guard';
 
 export const routes: Routes = [
@@ -22,12 +23,13 @@ export const routes: Routes = [
     path: '',
     component: PublicLayoutComponent,
     children: [
-      { path: '', component: HomeComponent },
+      { path: '', component: HomeComponent, pathMatch: 'full' },
       { path: 'stocks', component: StocksListComponent },
       { path: 'stocks/:code', component: StockDetailComponent },
       { path: 'funds', component: FundsListComponent },
       { path: 'funds/:slug', component: FundDetailComponent },
       { path: 'portfolio', component: PortfolioComponent },
+      { path: 'portfolio-simplifier', component: PortfolioSimplifierComponent },
       { path: 'shariah-standards', component: ShariahStandardsComponent },
       { path: 'purification', component: PurificationComponent },
       { path: 'favorites', component: FavoritesComponent },

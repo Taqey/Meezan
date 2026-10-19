@@ -47,6 +47,7 @@ import {
           <a routerLink="/funds" routerLinkActive="active" (click)="closeMenu()">الصناديق</a>
           <a routerLink="/indices" routerLinkActive="active" (click)="closeMenu()">المؤشرات</a>
           <a routerLink="/portfolio" routerLinkActive="active" (click)="closeMenu()">تكوين محفظة استثمارية</a>
+          <a routerLink="/portfolio-simplifier" routerLinkActive="active" (click)="closeMenu()">مُبسّط المحفظة</a>
           <a routerLink="/shariah-standards" routerLinkActive="active" (click)="closeMenu()">المعايير الشرعية</a>
           <a routerLink="/purification" routerLinkActive="active" (click)="closeMenu()">التطهير</a>
           <a routerLink="/favorites" routerLinkActive="active" (click)="closeMenu()">
@@ -74,6 +75,7 @@ import {
         <a routerLink="/funds" routerLinkActive="active" (click)="closeDrawer()">الصناديق</a>
         <a routerLink="/indices" routerLinkActive="active" (click)="closeDrawer()">المؤشرات</a>
         <a routerLink="/portfolio" routerLinkActive="active" (click)="closeDrawer()">تكوين محفظة استثمارية</a>
+        <a routerLink="/portfolio-simplifier" routerLinkActive="active" (click)="closeDrawer()">مُبسّط المحفظة</a>
         <a routerLink="/shariah-standards" routerLinkActive="active" (click)="closeDrawer()">المعايير الشرعية</a>
         <a routerLink="/purification" routerLinkActive="active" (click)="closeDrawer()">التطهير</a>
         <a routerLink="/favorites" routerLinkActive="active" (click)="closeDrawer()">

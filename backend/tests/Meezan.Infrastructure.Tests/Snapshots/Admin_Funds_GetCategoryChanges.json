@@ -53,6 +53,7 @@
           "createdAt": "string:date-time-normalized",
           "updatedAt": "string:date-time-normalized",
           "lastSyncedAt": null,
+          "pricesUpdatedAt": null,
           "priceHistory": [],
           "analysis": null,
           "similarFunds": [],

@@ -1,7 +1,9 @@
+using Meezan.Application.Common.Interfaces.Caching;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Persistence;
 using Meezan.Application.Common.Interfaces.Repositories.Funds;
 using Meezan.Application.Common.Interfaces.Storage;
+using Meezan.Application.Features.Funds.Sync.Dtos;
 using Meezan.Domain.Entities;
 using Meezan.Infrastructure.Services.Funds.Classification;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,6 +15,7 @@ public class FundSyncService : IFundSyncService
 {
     private readonly IServiceProvider _services;
     private readonly ILogger<FundSyncService> _logger;
+    private readonly IFundSyncProgressTracker _tracker;
 
     /// <summary>
     /// A crashed run must never block later runs: a "Running" log row is only
@@ -20,10 +23,14 @@ public class FundSyncService : IFundSyncService
     /// </summary>
     public const int RunLeaseMinutes = 30;
 
-    public FundSyncService(IServiceProvider services, ILogger<FundSyncService> logger)
+    public FundSyncService(
+        IServiceProvider services,
+        ILogger<FundSyncService> logger,
+        IFundSyncProgressTracker tracker)
     {
         _services = services;
         _logger = logger;
+        _tracker = tracker;
     }
 
     /// <summary>
@@ -31,7 +38,7 @@ public class FundSyncService : IFundSyncService
     /// Returns false when another live run holds it.
     /// </summary>
     private async Task<bool> TryAcquireRunAsync(
-        IFundSyncLogRepository logRepo, string triggeredBy, CancellationToken ct)
+        IFundSyncLogRepository logRepo, string triggeredBy, string mode, CancellationToken ct)
     {
         var now = DateTime.UtcNow;
         var latest = await logRepo.GetLatestAsync(ct);
@@ -61,6 +68,7 @@ public class FundSyncService : IFundSyncService
         {
             Status = FundSyncStatus.Running,
             TriggeredBy = triggeredBy,
+            Mode = mode,
             RunAt = now
         };
         await logRepo.AddAsync(log, ct);
@@ -81,7 +89,7 @@ public class FundSyncService : IFundSyncService
         var logRepo = scope.ServiceProvider.GetRequiredService<IFundSyncLogRepository>();
 
         // Overlap guard: lease-based so a crashed run cannot block future runs.
-        if (settings.PreventOverlap && !await TryAcquireRunAsync(logRepo, triggeredBy, cancellationToken))
+        if (settings.PreventOverlap && !await TryAcquireRunAsync(logRepo, triggeredBy, "Full", cancellationToken))
         {
             throw new InvalidOperationException(
                 $"Another sync run is already in progress (lease {RunLeaseMinutes} min).");
@@ -113,6 +121,7 @@ public class FundSyncService : IFundSyncService
 
             syncLog.TotalFunds = sndukFunds.Length;
             _logger.LogInformation("Fetched {Count} funds from SNDUK", sndukFunds.Length);
+            _tracker.StartRun("Full", triggeredBy, sndukFunds.Length);
 
             // Step 2: Upsert funds
             var fundRepo = scope.ServiceProvider.GetRequiredService<IFundRepository>();
@@ -128,9 +137,12 @@ public class FundSyncService : IFundSyncService
             await EnsureDefaultCategoriesAsync(categoryRepo, cancellationToken);
             await fundRepo.SaveChangesAsync(cancellationToken);
 
+            int processedIndex = 0;
             foreach (var sndukFund in sndukFunds)
             {
                 if (cancellationToken.IsCancellationRequested) break;
+                processedIndex++;
+                _tracker.UpdateProgress(processedIndex, updatedFunds, failedFunds, sndukFund.Code, "Syncing funds");
 
                 var detail = new FundSyncLogDetail
                 {
@@ -188,6 +200,7 @@ public class FundSyncService : IFundSyncService
                 finally
                 {
                     details.Add(detail);
+                    _tracker.UpdateProgress(processedIndex, updatedFunds, failedFunds, sndukFund.Code, "Syncing funds");
 
                     // Delay between requests
                     if (settings.RequestDelaySeconds > 0)
@@ -198,6 +211,7 @@ public class FundSyncService : IFundSyncService
             }
 
             // Update categories based on auto-rules (for new categories created by auto-derivation)
+            _tracker.UpdateProgress(processedIndex, updatedFunds, failedFunds, null!, "Refreshing categories");
             await RefreshAutoCategoriesAsync(categoryRepo, fundRepo, overrideRepo, cancellationToken);
 
             // Save all details
@@ -223,6 +237,7 @@ public class FundSyncService : IFundSyncService
 
             _logger.LogInformation("Fund sync completed: {Updated} updated, {Failed} failed, duration: {Duration}s",
                 updatedFunds, failedFunds, syncLog.DurationSeconds);
+            _tracker.SetCompleted($"اكتملت المزامنة: {updatedFunds} تم تحديثها، {failedFunds} فشلت");
 
             return syncLog;
         }
@@ -237,6 +252,7 @@ public class FundSyncService : IFundSyncService
             await scope.ServiceProvider.GetRequiredService<IUnitOfWork>().SaveChangesAsync(cancellationToken);
 
             _logger.LogError(ex, "Fund sync failed");
+            _tracker.SetFailed(ex.Message);
             throw;
         }
     }
@@ -680,6 +696,282 @@ public class FundSyncService : IFundSyncService
         using var scope = _services.CreateScope();
         var logRepo = scope.ServiceProvider.GetRequiredService<IFundSyncLogRepository>();
         return await logRepo.GetLatestAsync(cancellationToken);
+    }
+
+    public async Task<FundPriceSyncResultDto> RunPriceSyncAsync(string triggeredBy, CancellationToken cancellationToken = default)
+    {
+        using var scope = _services.CreateScope();
+        var settingsRepo = scope.ServiceProvider.GetRequiredService<IFundSyncSettingsRepository>();
+        var settings = await settingsRepo.GetAsync(cancellationToken);
+
+        if (settings == null || !settings.IsEnabled)
+        {
+            throw new InvalidOperationException("Fund sync is disabled");
+        }
+
+        var logRepo = scope.ServiceProvider.GetRequiredService<IFundSyncLogRepository>();
+
+        if (settings.PreventOverlap && !await TryAcquireRunAsync(logRepo, triggeredBy, "Prices", cancellationToken))
+        {
+            throw new InvalidOperationException(
+                $"Another sync run is already in progress (lease {RunLeaseMinutes} min).");
+        }
+
+        var syncLog = logRepo.LastAdded!;
+        await scope.ServiceProvider.GetRequiredService<IUnitOfWork>().SaveChangesAsync(cancellationToken);
+
+        var startTime = DateTime.UtcNow;
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        int updatedFunds = 0;
+        int failedFunds = 0;
+        int newFundsDetected = 0;
+        int missingFundsReported = 0;
+        var details = new List<FundSyncLogDetail>();
+
+        try
+        {
+            var sndukClient = scope.ServiceProvider.GetRequiredService<ISndukFundClient>();
+            var fundListResponse = await sndukClient.GetFundListAsync(cancellationToken);
+
+            var sndukFunds = (fundListResponse?.Funds ?? [])
+                .GroupBy(f => f.Id)
+                .Select(g => g.First())
+                .ToArray();
+
+            if (sndukFunds.Length == 0)
+            {
+                throw new InvalidOperationException("No funds returned from SNDUK");
+            }
+
+            syncLog.TotalFunds = sndukFunds.Length;
+            _logger.LogInformation("Price sync: Fetched {Count} funds from SNDUK", sndukFunds.Length);
+            _tracker.StartRun("Prices", triggeredBy, sndukFunds.Length);
+
+            var fundRepo = scope.ServiceProvider.GetRequiredService<IFundRepository>();
+            var priceRepo = scope.ServiceProvider.GetRequiredService<IFundPriceHistoryRepository>();
+            var detailRepo = scope.ServiceProvider.GetRequiredService<IFundSyncLogDetailRepository>();
+            var allDbFunds = await fundRepo.GetAllAsync(cancellationToken);
+            var dbFundsBySndukId = allDbFunds.ToDictionary(f => f.SndukId);
+            var dbFundsByCode = allDbFunds.ToDictionary(f => f.Code.Trim().ToUpperInvariant());
+            var matchedSndukIds = new HashSet<long>();
+
+            // Hardening check: abort without any write if payload looks broken
+            // (fewer than 50% of our funds found, or more than 50% null prices)
+            int matchedFoundCount = 0;
+            int nullPriceCount = 0;
+            foreach (var sf in sndukFunds)
+            {
+                bool matched = dbFundsBySndukId.ContainsKey(sf.Id) ||
+                    (!string.IsNullOrWhiteSpace(sf.Code) && dbFundsByCode.ContainsKey(sf.Code.Trim().ToUpperInvariant()));
+                if (matched)
+                {
+                    matchedFoundCount++;
+                }
+
+                var p = ParseDecimal(sf.CurrentPrice);
+                if (!p.HasValue || p.Value <= 0)
+                {
+                    nullPriceCount++;
+                }
+            }
+
+            if (allDbFunds.Count > 0 && matchedFoundCount < (allDbFunds.Count / 2))
+            {
+                throw new InvalidOperationException(
+                    $"Price sync payload broken: found only {matchedFoundCount}/{allDbFunds.Count} funds (<50%). Aborting sync with zero writes.");
+            }
+
+            if (sndukFunds.Length > 0 && nullPriceCount > (sndukFunds.Length / 2))
+            {
+                throw new InvalidOperationException(
+                    $"Price sync payload broken: {nullPriceCount}/{sndukFunds.Length} funds have null/missing prices (>50%). Aborting sync with zero writes.");
+            }
+
+            var tz = Meezan.Infrastructure.Services.BackgroundServices.FundSyncBackgroundService.ResolveCairoTimeZone();
+            var nowCairoDate = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, tz).Date;
+
+            int processedIndex = 0;
+            foreach (var sndukFund in sndukFunds)
+            {
+                if (cancellationToken.IsCancellationRequested) break;
+                processedIndex++;
+                _tracker.UpdateProgress(processedIndex, updatedFunds, failedFunds, sndukFund.Code, "Syncing prices");
+
+                // Match with our DB
+                Fund? existingFund = null;
+                if (dbFundsBySndukId.TryGetValue(sndukFund.Id, out var fById))
+                {
+                    existingFund = fById;
+                }
+                else if (!string.IsNullOrWhiteSpace(sndukFund.Code) && dbFundsByCode.TryGetValue(sndukFund.Code.Trim().ToUpperInvariant(), out var fByCode))
+                {
+                    existingFund = fByCode;
+                }
+
+                if (existingFund == null)
+                {
+                    newFundsDetected++;
+                    continue;
+                }
+
+                matchedSndukIds.Add(existingFund.SndukId);
+
+                var detail = new FundSyncLogDetail
+                {
+                    FundSyncLogId = syncLog.Id,
+                    FundId = existingFund.Id,
+                    FundCode = existingFund.Code,
+                    AttemptedAt = DateTime.UtcNow
+                };
+
+                try
+                {
+                    var price = ParseDecimal(sndukFund.CurrentPrice);
+                    if (price.HasValue && price.Value > 0)
+                    {
+                        existingFund.CurrentPrice = price.Value;
+                    }
+
+                    if (sndukFund.DailyChange != null)
+                    {
+                        var dc = ParseDecimal(sndukFund.DailyChange);
+                        if (dc.HasValue)
+                        {
+                            existingFund.DailyChange = dc.Value;
+                        }
+                    }
+
+                    if (sndukFund.Returns != null)
+                    {
+                        var r1m = ParseDecimal(sndukFund.Returns.M1);
+                        if (r1m.HasValue) existingFund.Return1M = r1m.Value;
+
+                        var r3m = ParseDecimal(sndukFund.Returns.M3);
+                        if (r3m.HasValue) existingFund.Return3M = r3m.Value;
+
+                        var r6m = ParseDecimal(sndukFund.Returns.M6);
+                        if (r6m.HasValue) existingFund.Return6M = r6m.Value;
+
+                        var r1y = ParseDecimal(sndukFund.Returns.Y1);
+                        if (r1y.HasValue) existingFund.Return1Y = r1y.Value;
+
+                        var r3y = ParseDecimal(sndukFund.Returns.Y3);
+                        if (r3y.HasValue) existingFund.Return3Y = r3y.Value;
+                    }
+
+                    existingFund.PricesUpdatedAt = DateTime.UtcNow;
+                    fundRepo.Update(existingFund);
+
+
+                    // Upsert today's point in FundPriceHistory
+                    if (price.HasValue && price.Value > 0)
+                    {
+                        var pointDate = ParseDateTime(sndukFund.UpdatedAt)?.Date ?? nowCairoDate;
+                        var existingPoint = await priceRepo.GetByFundIdAndDateAsync(existingFund.Id, pointDate, cancellationToken);
+                        if (existingPoint == null)
+                        {
+                            await priceRepo.AddRangeAsync(new[]
+                            {
+                                new FundPriceHistory
+                                {
+                                    FundId = existingFund.Id,
+                                    Date = pointDate,
+                                    Price = price.Value,
+                                    Change = existingFund.DailyChange,
+                                    CreatedAt = DateTime.UtcNow
+                                }
+                            }, cancellationToken);
+                        }
+                        else
+                        {
+                            existingPoint.Price = price.Value;
+                            existingPoint.Change = existingFund.DailyChange;
+                            priceRepo.UpdateRange(new[] { existingPoint });
+                        }
+                    }
+
+                    updatedFunds++;
+                    detail.Status = FundSyncDetailStatus.Success;
+                }
+                catch (Exception ex)
+                {
+                    failedFunds++;
+                    detail.Status = FundSyncDetailStatus.Failed;
+                    detail.ErrorMessage = ex.Message;
+                    _logger.LogError(ex, "Price sync: Failed to update price for fund {Code}", sndukFund.Code);
+                }
+                finally
+                {
+                    details.Add(detail);
+                    _tracker.UpdateProgress(processedIndex, updatedFunds, failedFunds, sndukFund.Code, "Syncing prices");
+                }
+            }
+
+            missingFundsReported = allDbFunds.Count(f => !matchedSndukIds.Contains(f.SndukId));
+
+            if (details.Any())
+            {
+                await detailRepo.AddRangeAsync(details, cancellationToken);
+            }
+
+            stopwatch.Stop();
+            var durationSeconds = Math.Round(stopwatch.Elapsed.TotalSeconds, 2);
+
+            syncLog.UpdatedFunds = updatedFunds;
+            syncLog.FailedFunds = failedFunds;
+            syncLog.SkippedFunds = newFundsDetected;
+            syncLog.Status = failedFunds > 0 ? FundSyncStatus.Partial : FundSyncStatus.Success;
+            syncLog.FinishedAt = DateTime.UtcNow;
+            syncLog.DurationSeconds = (int)stopwatch.Elapsed.TotalSeconds;
+
+            var summaryParts = new List<string>();
+            if (failedFunds > 0) summaryParts.Add($"{failedFunds} fund(s) failed");
+            if (newFundsDetected > 0) summaryParts.Add($"{newFundsDetected} new funds detected, run a full sync");
+            if (missingFundsReported > 0) summaryParts.Add($"{missingFundsReported} DB fund(s) missing from SNDUK list");
+            syncLog.ErrorSummary = summaryParts.Count > 0 ? string.Join("; ", summaryParts) : null;
+
+            logRepo.Update(syncLog);
+            await scope.ServiceProvider.GetRequiredService<IUnitOfWork>().SaveChangesAsync(cancellationToken);
+
+            // Task 3 Hook: Invalidate Price Cache
+            var priceCacheInvalidator = scope.ServiceProvider.GetService<IFundPriceCacheInvalidator>();
+            if (priceCacheInvalidator != null)
+            {
+                await priceCacheInvalidator.InvalidatePriceCacheAsync(cancellationToken);
+            }
+
+            _logger.LogInformation("Fund price sync completed: {Updated} updated, {Failed} failed, {New} new, {Missing} missing, duration: {Duration}s",
+                updatedFunds, failedFunds, newFundsDetected, missingFundsReported, durationSeconds);
+            _tracker.SetCompleted($"اكتمل تحديث الأسعار: {updatedFunds} صندوق في {durationSeconds} ثانية");
+
+            return new FundPriceSyncResultDto(
+                TotalSndukFunds: sndukFunds.Length,
+                UpdatedFunds: updatedFunds,
+                MissingFromSndukCount: missingFundsReported,
+                NewInSndukCount: newFundsDetected,
+                DurationSeconds: durationSeconds,
+                SyncedAtUtc: DateTime.UtcNow,
+                Message: syncLog.ErrorSummary);
+        }
+        catch (Exception ex)
+        {
+            stopwatch.Stop();
+            syncLog.Status = FundSyncStatus.Failed;
+            syncLog.FinishedAt = DateTime.UtcNow;
+            syncLog.DurationSeconds = (int)stopwatch.Elapsed.TotalSeconds;
+            syncLog.ErrorSummary = ex.Message;
+
+            logRepo.Update(syncLog);
+            try
+            {
+                await scope.ServiceProvider.GetRequiredService<IUnitOfWork>().SaveChangesAsync(cancellationToken);
+            }
+            catch { }
+
+            _logger.LogError(ex, "Fund price sync job failed");
+            _tracker.SetFailed(ex.Message);
+            throw;
+        }
     }
 
     public async Task<(List<FundSyncLog> Items, int TotalCount)> GetRunHistoryAsync(int page, int pageSize, CancellationToken cancellationToken = default)

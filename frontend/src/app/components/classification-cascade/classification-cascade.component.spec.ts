@@ -31,6 +31,10 @@ function setup(path: string[]): ClassificationCascadeComponent {
   const c = new ClassificationCascadeComponent();
   c.tree = TREE;
   c.path = path;
+  c.ngOnChanges({
+    tree: { currentValue: TREE, previousValue: undefined, firstChange: true, isFirstChange: () => true },
+    path: { currentValue: path, previousValue: undefined, firstChange: true, isFirstChange: () => true }
+  });
   return c;
 }
 

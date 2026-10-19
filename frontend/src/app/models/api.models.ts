@@ -721,6 +721,25 @@ export interface FundListItemDto {
   logoUrl: string;
   localLogoPath: string;
   lastSyncedAt: string | null;
+  effectiveClassification?: EffectiveClassificationDto | null;
+}
+
+export interface EffectiveClassificationDto {
+  nodeId?: number | null;
+  slug: string;
+  nameAr: string;
+  nameEn: string;
+  path: string;
+  rootSlug: string;
+  rootNameAr: string;
+  rootNameEn: string;
+  leafSlug: string;
+  leafNameAr: string;
+  leafNameEn: string;
+  source: string;
+  pathSlugs: string[];
+  pathNamesAr: string[];
+  pathNamesEn: string[];
 }
 
 export interface FundDetailDto extends FundListItemDto {
@@ -777,6 +796,11 @@ export interface FundSimilarDto {
   localLogoPath?: string | null;
   /** Original SNDUK/Supabase logo URL used as fallback. */
   logoUrl?: string | null;
+  typeNameAr?: string | null;
+  typeNameEn?: string | null;
+  typeSlug?: string | null;
+  classificationPathAr?: string | null;
+  effectiveClassification?: EffectiveClassificationDto | null;
 }
 
 /** One row of the editable fund-type catalog (powers the public type dropdown). */
@@ -929,6 +953,13 @@ export interface FundClassificationTreeNode {
   hasAutoRule: boolean;
 }
 
+export interface FundAssetManagerOption {
+  id: number;
+  nameAr: string;
+  nameEn: string;
+  fundCount: number;
+}
+
 /** One node of the admin classification tree (all nodes + counts + audit fields). */
 export interface AdminClassificationNode {
   id: number;
@@ -1079,6 +1110,7 @@ export interface FundSyncLog {
   runAt: string;
   finishedAt: string | null;
   status: 'running' | 'success' | 'partial' | 'failed';
+  mode?: 'Prices' | 'Full' | string;
   totalFunds: number;
   updatedFunds: number;
   failedFunds: number;
@@ -1086,6 +1118,32 @@ export interface FundSyncLog {
   errorSummary: string | null;
   triggeredBy: string;
   durationSeconds: number;
+}
+
+export interface FundSyncStatusDto {
+  isRunning: boolean;
+  mode?: string | null;
+  triggeredBy?: string | null;
+  startedAtUtc?: string | null;
+  totalFunds: number;
+  processedCount: number;
+  updatedCount: number;
+  failedCount: number;
+  currentFundCode?: string | null;
+  currentPhase?: string | null;
+  finishedAtUtc?: string | null;
+  lastResultSummary?: string | null;
+  error?: string | null;
+}
+
+export interface FundPriceSyncResultDto {
+  totalSndukFunds: number;
+  updatedFunds: number;
+  missingFromSndukCount: number;
+  newInSndukCount: number;
+  durationSeconds: number;
+  syncedAtUtc: string;
+  message?: string | null;
 }
 
 export interface FundSyncLogDetail {
@@ -1110,6 +1168,8 @@ export interface FundSyncSettingsUpdateRequest {
   maxRetries?: number;
   retryBackoffSeconds?: number;
   autoClassificationEnabled?: boolean;
+  fullSyncScheduleEnabled?: boolean;
+  fullSyncRunTimeCairo?: string;
 }
 
 export interface FundCategory {

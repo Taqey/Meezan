@@ -13,6 +13,7 @@ public static class DependencyInjection
         services.AddShariahServices();
         services.AddScrapingServices();
         services.AddFundServices(configuration);
+        services.AddCachingServices(configuration);
 
         return services;
     }

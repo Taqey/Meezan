@@ -146,6 +146,8 @@ public class FundConfiguration : IEntityTypeConfiguration<Fund>
 
         builder.Property(e => e.LastSyncedAt);
 
+        builder.Property(e => e.PricesUpdatedAt);
+
         builder.HasMany(e => e.PriceHistory)
             .WithOne(p => p.Fund)
             .HasForeignKey(p => p.FundId)

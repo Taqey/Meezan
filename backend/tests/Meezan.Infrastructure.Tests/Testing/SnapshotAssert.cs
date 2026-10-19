@@ -115,9 +115,20 @@ public static class SnapshotAssert
         Directory.CreateDirectory(dir);
         var path = Path.Combine(dir, $"{snapshotName}.json");
 
-        if (!File.Exists(path))
+        if (!File.Exists(path) || Environment.GetEnvironmentVariable("UPDATE_SNAPSHOTS") == "true")
         {
             File.WriteAllText(path, currentJson);
+
+            // Also update source tree snapshot file if found
+            var solutionDir = ArchitectureTests.FindSolutionDirectory();
+            if (solutionDir != null)
+            {
+                var srcSnapshotPath = Path.Combine(solutionDir, "tests", "Meezan.Infrastructure.Tests", snapshotDir, $"{snapshotName}.json");
+                if (Directory.Exists(Path.GetDirectoryName(srcSnapshotPath)))
+                {
+                    File.WriteAllText(srcSnapshotPath, currentJson);
+                }
+            }
             return;
         }
 

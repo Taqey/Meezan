@@ -1,4 +1,8 @@
 using MediatR;
+using Meezan.Application.Common.Models.Caching;
+using Meezan.Application.Features.Funds.Caching.Commands.ClearFundCache;
+using Meezan.Application.Features.Funds.Caching.Commands.RebuildFundCache;
+using Meezan.Application.Features.Funds.Caching.Queries.GetCacheStatus;
 using Meezan.Application.Features.Funds.Categories.Commands.CreateFundCategory;
 using Meezan.Application.Features.Funds.Categories.Commands.DeleteFundCategory;
 using Meezan.Application.Features.Funds.Categories.Commands.ExcludeFundFromCategory;
@@ -18,8 +22,11 @@ using Meezan.Application.Features.Funds.Classification.Commands.ResetFundOverrid
 using Meezan.Application.Features.Funds.Details.Queries.GetAdminFundById;
 using Meezan.Application.Features.Funds.Listing.Queries.GetAdminFunds;
 using Meezan.Application.Features.Funds.Sync.Commands.BackfillFundLogos;
+using Meezan.Application.Features.Funds.Sync.Commands.RunFundPriceSync;
 using Meezan.Application.Features.Funds.Sync.Commands.RunFundSync;
 using Meezan.Application.Features.Funds.Sync.Commands.UpdateSyncSettings;
+using Meezan.Application.Features.Funds.Sync.Dtos;
+using Meezan.Application.Features.Funds.Sync.Queries.GetFundSyncStatus;
 using Meezan.Application.Features.Funds.Sync.Queries.GetLatestSyncRun;
 using Meezan.Application.Features.Funds.Sync.Queries.GetSyncHistory;
 using Meezan.Application.Features.Funds.Sync.Queries.GetSyncRunDetails;
@@ -67,9 +74,19 @@ public class AdminFundsController : ControllerBase
             MaxRetries = request.MaxRetries,
             RetryBackoffSeconds = request.RetryBackoffSeconds,
             AutoIndexFundTypeEnabled = request.AutoIndexFundTypeEnabled,
-            AutoClassificationEnabled = request.AutoClassificationEnabled
+            AutoClassificationEnabled = request.AutoClassificationEnabled,
+            FullSyncScheduleEnabled = request.FullSyncScheduleEnabled,
+            FullSyncRunTimeCairo = request.FullSyncRunTimeCairo
         };
         var result = await _sender.Send(cmd, cancellationToken);
+        return result.ToActionResult();
+    }
+
+    [HttpGet("sync/status")]
+    [ProducesResponseType(typeof(Meezan.Application.Features.Funds.Sync.Dtos.FundSyncStatusDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetSyncStatus(CancellationToken cancellationToken = default)
+    {
+        var result = await _sender.Send(new GetFundSyncStatusQuery(), cancellationToken);
         return result.ToActionResult();
     }
 
@@ -103,6 +120,14 @@ public class AdminFundsController : ControllerBase
     public async Task<IActionResult> RunSyncNow(CancellationToken cancellationToken = default)
     {
         var result = await _sender.Send(new RunFundSyncCommand("Manual"), cancellationToken);
+        return result.ToActionResult();
+    }
+
+    [HttpPost("sync/prices")]
+    [ProducesResponseType(typeof(FundPriceSyncResultDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> RunPriceSyncNow(CancellationToken cancellationToken = default)
+    {
+        var result = await _sender.Send(new RunFundPriceSyncCommand("Manual"), cancellationToken);
         return result.ToActionResult();
     }
 
@@ -341,6 +366,32 @@ public class AdminFundsController : ControllerBase
     {
         var result = await _sender.Send(new GetAdminFundByIdQuery(id), cancellationToken);
         if (result.IsSuccess && result.Value == null) return NotFound();
+        return result.ToActionResult();
+    }
+
+    // ========== FUND CACHE MANAGEMENT ==========
+
+    [HttpGet("cache/status")]
+    [ProducesResponseType(typeof(CacheStatusDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetCacheStatus(CancellationToken cancellationToken = default)
+    {
+        var result = await _sender.Send(new GetCacheStatusQuery(), cancellationToken);
+        return result.ToActionResult();
+    }
+
+    [HttpPost("cache/clear")]
+    [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+    public async Task<IActionResult> ClearCache(CancellationToken cancellationToken = default)
+    {
+        var result = await _sender.Send(new ClearFundCacheCommand(), cancellationToken);
+        return result.ToActionResult();
+    }
+
+    [HttpPost("cache/rebuild")]
+    [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+    public async Task<IActionResult> RebuildCache(CancellationToken cancellationToken = default)
+    {
+        var result = await _sender.Send(new RebuildFundCacheCommand(), cancellationToken);
         return result.ToActionResult();
     }
 }

@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Interfaces.Caching;
 using Meezan.Application.Common.Interfaces.Repositories.Stocks;
 using Meezan.Application.Features.Sectors.DTOs;
 using Meezan.Domain.Entities;
@@ -9,10 +10,12 @@ namespace Meezan.Infrastructure.Persistence.Repositories.Stocks;
 public class StockRepository : IStockRepository
 {
     private readonly ApplicationDbContext _context;
+    private readonly ISectorStaticCache _sectorStaticCache;
 
-    public StockRepository(ApplicationDbContext context)
+    public StockRepository(ApplicationDbContext context, ISectorStaticCache sectorStaticCache)
     {
         _context = context;
+        _sectorStaticCache = sectorStaticCache;
     }
 
     public async Task<Stock?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
@@ -347,10 +350,6 @@ public class StockRepository : IStockRepository
                     .Select(ic => ic.Weight)
                     .FirstOrDefault(),
                 WeightIndexCode = weightIndexCode,
-                IndexCodesList = st.IndexConstituents
-                    .Where(ic => ic.Index != null)
-                    .Select(ic => ic.Index!.Code)
-                    .ToList(),
                 // Shariah metrics for non-compliance reason display on the card (effective override ?? feed)
                 CoreActivityCompliant = st.ShariahMetrics != null ? (st.ShariahMetrics.CoreActivityCompliantOverride ?? st.ShariahMetrics.CoreActivityCompliant) : null,
                 CategoryAr = st.ShariahMetrics != null ? (st.ShariahMetrics.CategoryArOverride ?? st.ShariahMetrics.CategoryAr) : null,
@@ -360,6 +359,18 @@ public class StockRepository : IStockRepository
                 PurificationPct = st.ShariahCompliance != null ? st.ShariahCompliance.Pct : null
             })
             .ToListAsync(cancellationToken);
+
+        // Fetch index memberships for the page's stocks in a separate keyed query to avoid cartesian explosion
+        var pageStockIds = pageEntities.Select(x => x.Id).ToList();
+        var constituentPairs = await _context.IndexConstituents
+            .AsNoTracking()
+            .Where(ic => pageStockIds.Contains(ic.StockId) && ic.Index != null)
+            .Select(ic => new { ic.StockId, Code = ic.Index!.Code })
+            .ToListAsync(cancellationToken);
+
+        var indexCodesByStockId = constituentPairs
+            .GroupBy(p => p.StockId)
+            .ToDictionary(g => g.Key, g => g.Select(p => p.Code).Distinct().ToList());
 
         // If weightIndexCode is SECTORAL-INDICES, sector weights are calculated dynamically on the fly
         // using SectorWeightCalculator based on MarketValue (with USD->EGP conversion and 35% cap).
@@ -430,11 +441,13 @@ public class StockRepository : IStockRepository
                 finalWeight = st.StoredWeight;
             }
 
+            var indexCodes = indexCodesByStockId.TryGetValue(st.Id, out var codes) ? codes : new List<string>();
+
             return new StockListProjection(
                 st.Ticker,
                 st.NameAr,
                 st.NameEn,
-                string.Join("|", st.IndexCodesList),
+                string.Join("|", indexCodes),
                 st.ShariahStatus,
                 st.ClosingPrice,
                 st.ChangePct,
@@ -658,71 +671,78 @@ public class StockRepository : IStockRepository
     public async Task<List<SectorSummaryDto>> GetSectorsWithCountAsync(
         CancellationToken cancellationToken = default)
     {
-        // Visible population only (mirrors the stocks-list filters): active stocks
-        // with market data. Aggregates are computed in memory through
-        // ShariahStatusResolver.EffectiveStatus, so the verdict behind the
-        // compliance counts always agrees with the lists and the detail page
-        // (activity gate → board opinions → standards upgrade → stored verdict).
-        var stocks = await _context.Stocks
+        // 1. Static sector definitions from cache (L1/L2)
+        var staticSectors = await _sectorStaticCache.GetAsync(cancellationToken);
+
+        // 2. Set-based aggregate query grouped by SectorId in SQL:
+        // Visible population only: active stocks with market data and a sector.
+        // Compliance: reads stored ShariahCompliance.Status directly with activity gate.
+        var aggregates = await _context.Stocks
             .AsNoTracking()
             .Where(s => s.IsActive
                 && s.DataStatus == Meezan.Domain.Enums.StockDataStatus.Active
                 && s.MarketData != null
                 && s.SectorId != null)
-            .Include(s => s.Sector)
-            .Include(s => s.MarketData)
-            .Include(s => s.SupportResistance)
-            .Include(s => s.ShariahMetrics)
-            .Include(s => s.ShariahCompliance)
-            .Include(s => s.ShariahSourceOpinions)
+            .GroupBy(s => s.SectorId!.Value)
+            .Select(g => new
+            {
+                SectorId = g.Key,
+                TotalCount = g.Count(),
+                CompliantCount = g.Count(s =>
+                    (s.ShariahMetrics != null && s.ShariahMetrics.CoreActivityCompliantOverride != null
+                        ? (s.ShariahMetrics.CoreActivityCompliantOverride == false ? ShariahStatus.NonCompliant
+                            : (s.ShariahCompliance != null ? s.ShariahCompliance.Status : ShariahStatus.Pending))
+                        : (s.ShariahMetrics != null && s.ShariahMetrics.CoreActivityCompliant == false
+                            ? ShariahStatus.NonCompliant
+                            : (s.ShariahCompliance != null ? s.ShariahCompliance.Status : ShariahStatus.Pending)))
+                    == ShariahStatus.Compliant),
+                ChangeSum = g.Sum(s => s.SupportResistance != null ? (s.SupportResistance.ChangePct ?? 0m) : 0m),
+                ChangeN = g.Count(s => s.SupportResistance != null && s.SupportResistance.ChangePct != null),
+                MarketCapSum = g.Sum(s => s.MarketData != null ? (s.MarketData.MarketValue ?? 0m) : 0m),
+                HasCap = g.Any(s => s.MarketData != null && s.MarketData.MarketValue != null),
+                CompliantMarketCapSum = g.Sum(s =>
+                    ((s.ShariahMetrics != null && s.ShariahMetrics.CoreActivityCompliantOverride != null
+                        ? (s.ShariahMetrics.CoreActivityCompliantOverride == false ? ShariahStatus.NonCompliant
+                            : (s.ShariahCompliance != null ? s.ShariahCompliance.Status : ShariahStatus.Pending))
+                        : (s.ShariahMetrics != null && s.ShariahMetrics.CoreActivityCompliant == false
+                            ? ShariahStatus.NonCompliant
+                            : (s.ShariahCompliance != null ? s.ShariahCompliance.Status : ShariahStatus.Pending)))
+                    == ShariahStatus.Compliant) && s.MarketData != null ? (s.MarketData.MarketValue ?? 0m) : 0m),
+                HasCompliantCap = g.Any(s =>
+                    ((s.ShariahMetrics != null && s.ShariahMetrics.CoreActivityCompliantOverride != null
+                        ? (s.ShariahMetrics.CoreActivityCompliantOverride == false ? ShariahStatus.NonCompliant
+                            : (s.ShariahCompliance != null ? s.ShariahCompliance.Status : ShariahStatus.Pending))
+                        : (s.ShariahMetrics != null && s.ShariahMetrics.CoreActivityCompliant == false
+                            ? ShariahStatus.NonCompliant
+                            : (s.ShariahCompliance != null ? s.ShariahCompliance.Status : ShariahStatus.Pending)))
+                    == ShariahStatus.Compliant) && s.MarketData != null && s.MarketData.MarketValue != null),
+                PeSum = g.Sum(s => (s.MarketData != null && s.MarketData.PeRatio != null && s.MarketData.PeRatio > 0) ? s.MarketData.PeRatio.Value : 0m),
+                PeN = g.Count(s => s.MarketData != null && s.MarketData.PeRatio != null && s.MarketData.PeRatio > 0)
+            })
             .ToListAsync(cancellationToken);
 
-        return stocks
-            .GroupBy(s => s.SectorId!.Value)
-            .Select(g =>
-            {
-                var sector = g.First().Sector!;
-                var list = g.ToList();
-                var total = list.Count;
-                var compliantCount = 0;
-                decimal changeSum = 0;
-                var changeN = 0;
-                decimal capSum = 0;
-                var hasCap = false;
-                decimal compCapSum = 0;
-                var hasCompCap = false;
-                decimal peSum = 0;
-                var peN = 0;
-                foreach (var st in list)
-                {
-                    var effective = Meezan.Application.Common.Services.Shariah.ShariahStatusResolver.EffectiveStatus(
-                        st.ShariahCompliance, st.ShariahMetrics, st.ShariahSourceOpinions);
-                    var isCompliant = effective == Meezan.Domain.Enums.ShariahStatus.Compliant;
-                    if (isCompliant) compliantCount++;
-                    var chg = st.SupportResistance?.ChangePct;
-                    if (chg != null) { changeSum += chg.Value; changeN++; }
-                    var cap = st.MarketData?.MarketValue;
-                    if (cap != null)
-                    {
-                        capSum += cap.Value;
-                        hasCap = true;
-                        if (isCompliant) { compCapSum += cap.Value; hasCompCap = true; }
-                    }
-                    var pe = st.MarketData?.PeRatio;
-                    if (pe != null && pe.Value > 0) { peSum += pe.Value; peN++; }
-                }
-                return new SectorSummaryDto(
-                    sector.Id,
-                    sector.NameAr,
-                    sector.NameEn,
-                    total,
-                    compliantCount,
-                    total > 0 ? Math.Round(100m * compliantCount / total, 1) : null,
-                    changeN > 0 ? changeSum / changeN : null,
-                    hasCap ? capSum : null,
-                    hasCompCap ? compCapSum : null,
-                    peN > 0 ? peSum / peN : null);
-            })
+        var aggBySectorId = aggregates.ToDictionary(a => a.SectorId);
+        var sectorDict = staticSectors.ToDictionary(s => s.Id);
+
+        var result = new List<SectorSummaryDto>(aggregates.Count);
+        foreach (var agg in aggregates)
+        {
+            if (!sectorDict.TryGetValue(agg.SectorId, out var sec)) continue;
+
+            result.Add(new SectorSummaryDto(
+                sec.Id,
+                sec.NameAr,
+                sec.NameEn,
+                agg.TotalCount,
+                agg.CompliantCount,
+                agg.TotalCount > 0 ? Math.Round(100m * agg.CompliantCount / agg.TotalCount, 1) : null,
+                agg.ChangeN > 0 ? Math.Round(agg.ChangeSum / agg.ChangeN, 2) : null,
+                agg.HasCap ? agg.MarketCapSum : null,
+                agg.HasCompliantCap ? agg.CompliantMarketCapSum : null,
+                agg.PeN > 0 ? Math.Round(agg.PeSum / agg.PeN, 2) : null));
+        }
+
+        return result
             .OrderByDescending(s => s.StocksCount)
             .ToList();
     }

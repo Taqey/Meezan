@@ -1,4 +1,4 @@
-﻿import { Component, OnInit, OnDestroy, AfterViewInit, AfterViewChecked, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, AfterViewChecked, ViewChild, ElementRef, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink, Router } from '@angular/router';
 import { LucideAngularModule, ArrowLeft, TrendingUp, TrendingDown, AlertCircle, DollarSign, ShieldCheck, Star, Building2, Calendar, PieChart, BarChart3, FileText, ExternalLink, Loader2 } from 'lucide-angular';
@@ -66,7 +66,7 @@ async function ensureChartJs(): Promise<typeof import('chart.js') | null> {
                 {{ fund.classificationPathAr }}
               </span>
               <span class="fund-type" [style.background]="getFundAccent(fund.type).tint" [style.color]="getFundAccent(fund.type).accent">
-                {{ fund.typeNameAr }}
+                {{ fund.effectiveClassification?.rootNameAr || fund.typeNameAr }}
               </span>
               <span *ngIf="fund.assetManagerName" style="font-size: 12px; background: var(--muted); padding: 2px 8px; border-radius: 6px; border: 1px solid var(--border);">
                 {{ fund.assetManagerName }}
@@ -188,12 +188,17 @@ async function ensureChartJs(): Promise<typeof import('chart.js') | null> {
               <h2>صناديق في نفس الفئة</h2>
             </div>
           </div>
-          <div class="similar-funds-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px;">
-            <a *ngFor="let sim of fund.similarFunds" [routerLink]="['/funds', sim.id]" class="similar-fund-card" style="display: block; padding: 12px; background: white; border: 1px solid var(--border); border-radius: 8px; text-decoration: none; transition: transform 0.2s, box-shadow 0.2s;">
-              <img class="similar-logo" [src]="simLogoUrl(sim)" [alt]="sim.nameAr" loading="lazy" (error)="onSimLogoError($event)">
-              <div style="font-weight: 600; font-size: 14px;">{{ sim.code }}</div>
-              <div style="font-size: 12px; color: var(--muted-foreground); margin-top: 4px;">{{ sim.nameAr }}</div>
-              <div style="font-size: 11px; color: var(--muted-foreground); margin-top: 4px;">{{ sim.nameEn }}</div>
+          <div class="similar-funds-grid">
+            <a *ngFor="let sim of fund.similarFunds" [routerLink]="['/funds', sim.id]" class="similar-fund-card">
+              <div class="similar-logo-box">
+                <img class="similar-logo" [src]="simLogoUrl(sim)" [alt]="sim.nameAr" loading="lazy" (error)="onSimLogoError($event)">
+              </div>
+              <div class="similar-code" [attr.title]="sim.code">{{ sim.code || '—' }}</div>
+              <div class="similar-name-ar" [attr.title]="sim.nameAr">{{ sim.nameAr || '—' }}</div>
+              <div class="similar-name-en" [attr.title]="sim.nameEn">{{ sim.nameEn || '—' }}</div>
+              <div class="similar-type" [attr.title]="sim.effectiveClassification?.rootNameAr || sim.typeNameAr">
+                {{ sim.effectiveClassification?.rootNameAr || sim.typeNameAr || '—' }}
+              </div>
             </a>
           </div>
         </div>
@@ -242,8 +247,83 @@ async function ensureChartJs(): Promise<typeof import('chart.js') | null> {
     .metric-card span { font-size: 11px; color: var(--muted-foreground); text-transform: uppercase; }
     .metric-card strong { font-size: 16px; color: var(--ink); }
     .explanations div { border-left: 3px solid var(--primary); padding-left: 12px; }
-    .similar-funds-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+    .similar-funds-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+    .similar-fund-card {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      min-height: 180px;
+      padding: 14px;
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      text-decoration: none;
+      box-sizing: border-box;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
     .similar-fund-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    .similar-logo-box {
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 8px;
+    }
+    .similar-logo {
+      width: 32px;
+      height: 32px;
+      object-fit: contain;
+      border-radius: 8px;
+      background: #fff;
+      border: 1px solid var(--border);
+    }
+    .similar-code {
+      font-weight: 600;
+      font-size: 13px;
+      height: 1.3em;
+      line-height: 1.3em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--ink);
+    }
+    .similar-name-ar {
+      font-size: 12px;
+      color: var(--ink);
+      margin-top: 4px;
+      height: 2.8em;
+      line-height: 1.4em;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .similar-name-en {
+      font-size: 11px;
+      color: var(--muted-foreground);
+      margin-top: 4px;
+      height: 1.3em;
+      line-height: 1.3em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      direction: ltr;
+      text-align: right;
+    }
+    .similar-type {
+      font-size: 11px;
+      color: var(--primary);
+      font-weight: 600;
+      margin-top: auto;
+      padding-top: 6px;
+      height: 1.3em;
+      line-height: 1.3em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
     .category-badge { font-weight: 500; }
     .class-path-badge {
       font-size: 11px; background: var(--muted); padding: 2px 8px; border-radius: 6px;
@@ -259,15 +339,6 @@ async function ensureChartJs(): Promise<typeof import('chart.js') | null> {
       border: 1px solid var(--border);
       vertical-align: middle;
       margin-inline-end: 8px;
-    }
-    .similar-logo {
-      width: 32px;
-      height: 32px;
-      object-fit: contain;
-      border-radius: 8px;
-      background: #fff;
-      border: 1px solid var(--border);
-      margin-bottom: 8px;
     }
     .attribution a:hover { text-decoration: none; }
   `]
@@ -365,6 +436,7 @@ export class FundDetailComponent implements OnInit, AfterViewInit, AfterViewChec
     private route: ActivatedRoute,
     private router: Router,
     private api: ApiService,
+    private ngZone: NgZone,
   ) {}
 
   ngOnInit(): void {
@@ -539,17 +611,19 @@ export class FundDetailComponent implements OnInit, AfterViewInit, AfterViewChec
       }
     };
 
-    void ensureChartJs().then(mod => {
-      if (!mod) return;
-      // The component may have navigated away while chart.js was loading.
-      if (!this.viewReady || !this.priceChartRef) return;
-      try {
-        this.chart = new mod.Chart(context, config);
-      } catch (e) {
-        // Never let a chart failure block the page body from rendering.
-        this.chart = null;
-        console.warn('Fund price chart could not be created', e);
-      }
+    this.ngZone.runOutsideAngular(() => {
+      void ensureChartJs().then(mod => {
+        if (!mod) return;
+        // The component may have navigated away while chart.js was loading.
+        if (!this.viewReady || !this.priceChartRef) return;
+        try {
+          this.chart = new mod.Chart(context, config);
+        } catch (e) {
+          // Never let a chart failure block the page body from rendering.
+          this.chart = null;
+          console.warn('Fund price chart could not be created', e);
+        }
+      });
     });
   }
 
