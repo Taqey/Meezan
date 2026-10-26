@@ -1,0 +1,83 @@
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { LoadingSkeletonsComponent } from '../loading-skeletons/loading-skeletons.component';
+import { EmptyStateComponent } from '../empty-state/empty-state.component';
+import {
+  MzCardsGridComponent, MzFiltersBarComponent, MzPageHeaderComponent, MzPaginationComponent, MzQuickFilterTabsComponent,
+  MzResultsInfoComponent, MzStatsRowComponent, type MzFiltersConfig, type MzLegendItem, type MzListingCardData, type MzTab
+} from './ui-listing';
+import type { MzStat } from './ui-small';
+
+export interface MzListingConfig {
+  header: { badge: string; count?: string; title: string; description: string };
+  stats?: MzStat[] | null;
+  statsLoading?: boolean;
+  tabs?: MzTab[] | null;
+  activeTab?: string;
+  filters?: MzFiltersConfig | null;
+  results?: { text: string; note?: string | null; legend?: MzLegendItem[] | null } | null;
+  cards: MzListingCardData[];
+  loading?: boolean;
+  error?: { title: string; message: string } | null;
+  empty: { title: string; message: string };
+  page?: number;
+  totalPages?: number;
+}
+
+/**
+ * ListingPage template: PageHeader → StatsRow → QuickFilterTabs → FiltersBar → ResultsInfo → CardsGrid → Pagination.
+ * One config object drives every listing page; only the data differs.
+ * Slots: [actions] header actions, [advanced] advanced-filter panel, [view] replaces the cards grid
+ * (alternate table / heat-map views), [footer] trailing note.
+ */
+@Component({
+  selector: 'mz-listing-page',
+  standalone: true,
+  imports: [
+    CommonModule, MzPageHeaderComponent, MzStatsRowComponent, MzQuickFilterTabsComponent, MzFiltersBarComponent,
+    MzResultsInfoComponent, MzCardsGridComponent, MzPaginationComponent, LoadingSkeletonsComponent, EmptyStateComponent
+  ],
+  host: { class: 'mz mz-page', style: 'display:block' },
+  template: `
+    <mz-page-header [badge]="config.header.badge" [count]="config.header.count || ''" [title]="config.header.title" [description]="config.header.description">
+      <ng-container actions><ng-content select="[actions]"></ng-content></ng-container>
+    </mz-page-header>
+
+    <mz-stats-row *ngIf="config.stats?.length" [stats]="config.stats!" [loading]="!!config.statsLoading"></mz-stats-row>
+
+    <section class="mz-filters-section" *ngIf="config.tabs?.length || config.filters">
+      <mz-quick-filter-tabs *ngIf="config.tabs?.length" [tabs]="config.tabs!" [active]="config.activeTab || ''" (onChange)="tabChange.emit($event)"></mz-quick-filter-tabs>
+      <mz-filters-bar *ngIf="config.filters" [config]="config.filters" (searchChange)="searchChange.emit($event)"
+                      (controlChange)="controlChange.emit($event)" (sortChange)="sortChange.emit($event)" (advancedClick)="advancedClick.emit()"></mz-filters-bar>
+      <div class="mz-card mz-advanced-panel" *ngIf="config.filters?.advanced?.open"><ng-content select="[advanced]"></ng-content></div>
+    </section>
+
+    <mz-results-info *ngIf="config.results" [text]="config.results.text" [note]="config.results.note" [legend]="config.results.legend"><ng-content select="[resultsExtra]"></ng-content></mz-results-info>
+
+    <app-loading-skeletons *ngIf="config.loading && !config.error" variant="card" [count]="6"></app-loading-skeletons>
+    <app-empty-state *ngIf="config.error" [title]="config.error.title" [message]="config.error.message" actionLabel="إعادة المحاولة" (action)="retry.emit()"></app-empty-state>
+
+    <ng-container *ngIf="!config.loading && !config.error">
+      <ng-content select="[view]"></ng-content>
+      <ng-container *ngIf="!customView">
+        <mz-cards-grid *ngIf="config.cards.length" [cards]="config.cards"></mz-cards-grid>
+        <app-empty-state *ngIf="!config.cards.length" [title]="config.empty.title" [message]="config.empty.message"></app-empty-state>
+      </ng-container>
+    </ng-container>
+
+    <mz-pagination *ngIf="(config.totalPages || 1) > 1" [page]="config.page || 1" [totalPages]="config.totalPages || 1" (pageChange)="pageChange.emit($event)"></mz-pagination>
+    <ng-content select="[footer]"></ng-content>
+  `
+})
+export class MzListingPageComponent {
+  @Input() config!: MzListingConfig;
+  /** True when a projected [view] (table / heat-map) replaces the cards grid. */
+  @Input() customView = false;
+  @Output() tabChange = new EventEmitter<string>();
+  @Output() searchChange = new EventEmitter<string>();
+  @Output() controlChange = new EventEmitter<{ id: string; values: string[] }>();
+  @Output() sortChange = new EventEmitter<string>();
+  @Output() advancedClick = new EventEmitter<void>();
+  @Output() pageChange = new EventEmitter<number>();
+  @Output() retry = new EventEmitter<void>();
+}
