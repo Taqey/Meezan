@@ -7,16 +7,14 @@ import { navigateQueryParams } from '../../utils/navigation-utils';
 import { ApiService } from '../../services/api.service';
 import { ConstituentItemDto, IndexSummaryDto, MarketSnapshotDto } from '../../models/api.models';
 import { indexAccentFor, indexIconFor, indexShowsAggregates, isFeaturedIndex } from '../../models/market-icons';
-import { PageHeaderComponent } from '../../components/page-header/page-header.component';
+import { MzListingPageComponent, type MzListingConfig } from '../../components/ui/ui-listing-page';
+import type { MzListingCardData } from '../../components/ui/ui-listing';
 import { ViewSwitcherComponent, type EntityView } from '../../components/view-switcher/view-switcher.component';
-import { KpiStripComponent, type KpiData } from '../../components/kpi-strip/kpi-strip.component';
-import { FilterChipsComponent, type ChipOption } from '../../components/filter-chips/filter-chips.component';
-import { SectionHeaderComponent } from '../../components/section-header/section-header.component';
-import { EntityCardComponent, type EntityStat } from '../../components/entity-card/entity-card.component';
+import { type KpiData } from '../../components/kpi-strip/kpi-strip.component';
+import { type ChipOption } from '../../components/filter-chips/filter-chips.component';
+import { type EntityStat } from '../../components/entity-card/entity-card.component';
 import { EntityTableComponent, type EntityTableColumn, type EntityTableRow } from '../../components/entity-table/entity-table.component';
 import { EntityHeatmapComponent, type HeatTileData } from '../../components/entity-heatmap/entity-heatmap.component';
-import { LoadingSkeletonsComponent } from '../../components/loading-skeletons/loading-skeletons.component';
-import { EmptyStateComponent } from '../../components/empty-state/empty-state.component';
 
 type IndexSort = 'compliantCount' | 'compliance' | 'performance' | 'name';
 type Chip = 'all' | 'compliance' | 'performance' | 'name';
@@ -36,94 +34,24 @@ interface IndexStats {
 @Component({
   selector: 'app-indices-list',
   standalone: true,
-  imports: [
-    CommonModule, LucideAngularModule, PageHeaderComponent, ViewSwitcherComponent,
-    KpiStripComponent, FilterChipsComponent, SectionHeaderComponent, EntityCardComponent,
-    EntityTableComponent, EntityHeatmapComponent, LoadingSkeletonsComponent, EmptyStateComponent
-  ],
-  template: `
-    <div class="entity-page">
-      <app-page-header
-        [crumbs]="headerCrumbs"
-        pill="المؤشرات الرسمية"
-        title="المؤشرات الرسمية للبورصة المصرية"
-        description="تعرّف على مكونات كل مؤشر معتمد، وتابع أوزان الأسهم داخله وتقييماتها الشرعية والعادلة.">
-        <ng-container toolbar>
-          <app-view-switcher [view]="view" (viewChange)="setView($event)"></app-view-switcher>
-          <button type="button" class="btn btn-outline btn-sm" (click)="printReport()">
-            <lucide-icon [img]="PrintIcon" size="15"></lucide-icon> تقرير PDF
-          </button>
-        </ng-container>
-      </app-page-header>
-
-      <app-kpi-strip [kpis]="kpiList" [loading]="loading || statsLoading"></app-kpi-strip>
-
-      <app-filter-chips
-        *ngIf="!loading && !loadError"
-        [chips]="chipOptions"
-        [activeId]="chip"
-        (selected)="setChip($event)">
-      </app-filter-chips>
-
-      <app-section-header
-        *ngIf="!loading && !loadError"
-        [lead]="indices.length + ' مؤشراً رسمياً في قاعدة البيانات'"
-        [sessionDate]="sessionLabel"
-        [sourceNote]="sourceNote">
-      </app-section-header>
-
-      <app-loading-skeletons *ngIf="(loading || statsLoading) && !loadError" variant="card" [count]="6"></app-loading-skeletons>
-
-      <app-empty-state
-        *ngIf="!loading && loadError"
-        title="تعذّر تحميل المؤشرات"
-        message="تحقق من الاتصال ثم حاول مرة أخرى."
-        actionLabel="إعادة المحاولة"
-        (action)="load()">
-      </app-empty-state>
-
-      <app-empty-state
-        *ngIf="!loading && !loadError && !indices.length"
-        title="لا توجد مؤشرات مسجّلة حتى الآن"
-        message="تتم إضافة المؤشرات تلقائياً عند رفع كشوف البورصة الرسمية.">
-      </app-empty-state>
-
-      <!-- Grid view -->
-      <div class="entity-grid" *ngIf="!loading && !loadError && indices.length && view === 'grid' && !statsLoading">
-        <app-entity-card
-          *ngFor="let idx of displayedIndices; let i = index; trackBy: trackIndex"
-          [itemIndex]="i"
-          [title]="idx.nameAr"
-          [subtitle]="idx.nameEn"
-          [icon]="getIndexIcon(idx.code)"
-          [accent]="accentFor(idx.code).accent"
-          [tint]="accentFor(idx.code).tint"
-          [ink]="accentFor(idx.code).ink"
-          [pill]="idx.constituentsCount + ' سهم مكوّن'"
-          [stats]="cardStats(idx)"
-          [autoPadStats]="false"
-          [footerText]="footerFor(idx)"
-          [link]="linkFor(idx)"
-          [ribbon]="isFeatured(idx.code) ? 'المؤشر الشرعي الرسمي' : null"
-          [featured]="isFeatured(idx.code)">
-        </app-entity-card>
-      </div>
-
-      <app-entity-table
-        *ngIf="!loading && !loadError && indices.length && view === 'table' && !statsLoading"
-        [columns]="tableColumns"
-        [rows]="tableRows"
-        [sortKey]="tableSortKey"
-        [sortDir]="tableSortDir"
-        (sortChange)="setTableSort($event)"
-        ariaLabel="جدول المؤشرات الرسمية">
-      </app-entity-table>
-
-      <app-entity-heatmap
-        *ngIf="!loading && !loadError && indices.length && view === 'heatmap' && !statsLoading"
-        [tiles]="heatTiles">
-      </app-entity-heatmap>
-    </div>
+  imports: [CommonModule, LucideAngularModule, MzListingPageComponent, ViewSwitcherComponent, EntityTableComponent, EntityHeatmapComponent],
+    template: `
+    <mz-listing-page [config]="config" [customView]="view !== 'grid'" (tabChange)="setChip($event)" (retry)="load()">
+      <ng-container actions>
+        <app-view-switcher [view]="view" (viewChange)="setView($event)"></app-view-switcher>
+        <button type="button" class="mz-btn" (click)="printReport()">
+          <lucide-icon [img]="PrintIcon" size="15"></lucide-icon> تقرير PDF
+        </button>
+      </ng-container>
+      <ng-container view>
+        <app-entity-table
+          *ngIf="indices.length && view === 'table' && !statsLoading"
+          [columns]="tableColumns" [rows]="tableRows" [sortKey]="tableSortKey" [sortDir]="tableSortDir"
+          (sortChange)="setTableSort($event)" ariaLabel="جدول المؤشرات الرسمية">
+        </app-entity-table>
+        <app-entity-heatmap *ngIf="indices.length && view === 'heatmap' && !statsLoading" [tiles]="heatTiles"></app-entity-heatmap>
+      </ng-container>
+    </mz-listing-page>
   `
 })
 export class IndicesListComponent implements OnInit {
@@ -179,6 +107,7 @@ export class IndicesListComponent implements OnInit {
   load(): void {
     this.loading = true;
     this.loadError = false;
+    this.rebuild();
     this.api.getIndices().subscribe({
       next: (data) => {
         this.indices = data || [];
@@ -191,6 +120,7 @@ export class IndicesListComponent implements OnInit {
         this.indices = [];
         this.loading = false;
         this.loadError = true;
+        this.rebuild();
         this.statsLoading = false;
       }
     });
@@ -312,6 +242,7 @@ export class IndicesListComponent implements OnInit {
     this.tableRows = this.sortTable([...this.indices]).map((idx) => this.toTableRow(idx));
     this.heatTiles = this.heatTilesFor([...this.indices]);
     this.kpiList = this.buildKpis();
+    this.rebuild();
   }
 
   private statsFor(code: string): IndexStats | null {
@@ -515,6 +446,7 @@ export class IndicesListComponent implements OnInit {
       return;
     }
     this.statsLoading = true;
+    this.rebuild();
     // Umbrella entries are skipped entirely: nothing is calculated for them.
     const targets = this.indices.filter((idx) => indexShowsAggregates(idx.code));
     if (!targets.length) {
@@ -627,4 +559,46 @@ export class IndicesListComponent implements OnInit {
     if (value === null || value === undefined) return 'var(--muted-foreground)';
     return Math.abs(Number(value)) >= 2.5 ? '#fff' : 'var(--ink)';
   }
+
+  /** Single config object for the shared ListingPage. */
+  config: MzListingConfig = { header: { badge: '', title: '', description: '' }, cards: [], empty: { title: '', message: '' } };
+
+  rebuild(): void {
+    const busy = this.loading || this.statsLoading;
+    this.config = {
+      header: {
+        badge: 'المؤشرات الرسمية',
+        title: 'المؤشرات الرسمية للبورصة المصرية',
+        description: 'تعرّف على مكونات كل مؤشر معتمد، وتابع أوزان الأسهم داخله وتقييماتها الشرعية والعادلة.'
+      },
+      stats: this.kpiList.map((k) => ({ label: k.label, value: k.value, icon: k.icon, chip: k.sub })),
+      statsLoading: busy,
+      tabs: this.loading || this.loadError ? null : this.chipOptions.map((c) => ({ id: c.id, label: c.label })),
+      activeTab: this.chip,
+      results: this.loading || this.loadError ? null : {
+        text: this.indices.length + ' مؤشراً رسمياً في قاعدة البيانات',
+        note: [this.sessionLabel, this.sourceNote].filter(Boolean).join(' · ') || null
+      },
+      cards: busy ? [] : this.displayedIndices.map((i) => this.toCard(i)),
+      loading: busy && !this.loadError,
+      error: !this.loading && this.loadError ? { title: 'تعذّر تحميل المؤشرات', message: 'تحقق من الاتصال ثم حاول مرة أخرى.' } : null,
+      empty: { title: 'لا توجد مؤشرات مسجّلة حتى الآن', message: 'تتم إضافة المؤشرات تلقائياً عند رفع كشوف البورصة الرسمية.' }
+    };
+  }
+
+  private toCard(idx: IndexSummaryDto): MzListingCardData {
+    const featured = this.isFeatured(idx.code);
+    return {
+      id: idx.code,
+      title: idx.nameAr,
+      subtitle: idx.nameEn,
+      icon: this.getIndexIcon(idx.code),
+      featured,
+      badges: [...(featured ? [{ label: 'المؤشر الشرعي الرسمي', tone: 'default' as const }] : []), { label: idx.constituentsCount + ' سهم مكوّن', tone: 'neutral' as const }],
+      metrics: this.cardStats(idx).map((st) => ({ label: st.label, value: st.value, tone: st.tone })),
+      linkLabel: this.footerFor(idx),
+      link: this.linkFor(idx)
+    };
+  }
+
 }

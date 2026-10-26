@@ -1391,7 +1391,7 @@ button, input, select, textarea {
 
 /* Fair Value Breakdown */
 
-/* "بيانات غير كافية لحساب القيمة العادلة" — no numeric fair value, no verdict */
+/* "╪¿┘è╪º┘å╪º╪¬ ╪║┘è╪▒ ┘â╪º┘ü┘è╪⌐ ┘ä╪¡╪│╪º╪¿ ╪º┘ä┘é┘è┘à╪⌐ ╪º┘ä╪╣╪º╪»┘ä╪⌐" ΓÇö no numeric fair value, no verdict */
 .fair-unavailable {
   margin-top: 24px;
   padding: 16px;
@@ -1533,14 +1533,14 @@ button, input, select, textarea {
   margin: 8px 0;
 }
 
-/* Board with no recorded opinion on this stock — an explicit third state, never a
-   fabricated متوافق/غير متوافق verdict, and never counted in the aggregate. */
+/* Board with no recorded opinion on this stock ΓÇö an explicit third state, never a
+   fabricated ┘à╪¬┘ê╪º┘ü┘é/╪║┘è╪▒ ┘à╪¬┘ê╪º┘ü┘é verdict, and never counted in the aggregate. */
 .source-card.no-opinion {
   background: var(--muted);
   border-style: dashed;
 }
 
-/* Unified full-color cards for ALL 7 Shariah boards — no progress bar, no percentage.
+/* Unified full-color cards for ALL 7 Shariah boards ΓÇö no progress bar, no percentage.
    Color is determined by the status VALUE, not the source key. */
 .source-card {
   padding: 16px;
@@ -1576,7 +1576,7 @@ button, input, select, textarea {
   color: #1a1a1a;
 }
 
-/* noOpinion: full gray — used for both "لا يوجد رأي" boards AND EGX33 non-membership. */
+/* noOpinion: full gray ΓÇö used for both "┘ä╪º ┘è┘ê╪¼╪» ╪▒╪ú┘è" boards AND EGX33 non-membership. */
 .source-card.no-opinion {
   background: var(--muted);
   color: var(--muted-foreground);
@@ -1713,7 +1713,7 @@ button, input, select, textarea {
   background: var(--muted);
 }
 
-/* Activity hard gate: a single "غير متوافق مع الشريعة — النشاط: …" verdict replaces the
+/* Activity hard gate: a single "╪║┘è╪▒ ┘à╪¬┘ê╪º┘ü┘é ┘à╪╣ ╪º┘ä╪┤╪▒┘è╪╣╪⌐ ΓÇö ╪º┘ä┘å╪┤╪º╪╖: ΓÇª" verdict replaces the
    7-source opinion grid and the AAOIFI/S&P ratio panel for prohibited activities. */
 .activity-verdict-card {
   border-color: rgba(200, 68, 61, 0.35);
@@ -2054,7 +2054,7 @@ button, input, select, textarea {
   gap: 4px;
 }
 
-/* ── Admin dashboard responsive ──────────────────────────────────────── */
+/* ΓöÇΓöÇ Admin dashboard responsive ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */
 .admin-heading-content {
   display: flex;
   flex-direction: column;
@@ -2305,9 +2305,9 @@ footer {
   }
 }
 
-/* ── Favorites ───────────────────────────────────────────────────────── */
+/* ΓöÇΓöÇ Favorites ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */
 /* Star + percentage share a flex row in the card header (RTL: the percentage
-   sits to the right of the star with a gap) — nothing overlaps, nothing clips. */
+   sits to the right of the star with a gap) ΓÇö nothing overlaps, nothing clips. */
 .stock-card .stock-top {
   gap: 8px;
 }
@@ -2481,7 +2481,7 @@ footer {
   font-size: 12.5px;
 }
 
-/* ── Info pages (Shariah standards + Purification) ─────────────────────────
+/* ΓöÇΓöÇ Info pages (Shariah standards + Purification) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
    Spacing scale for these pages: 8 / 12 / 16 / 24 / 32.
    Same tokens as the stock detail page (colors, font, radii). */
 
@@ -2533,7 +2533,7 @@ app-purification .intro-main p:last-child {
   margin-bottom: 0;
 }
 
-/* Cards: light — thin border, soft shadow, generous airy padding. */
+/* Cards: light ΓÇö thin border, soft shadow, generous airy padding. */
 app-shariah-standards .detail-card,
 app-purification .detail-card {
   margin: 24px 0 0;
@@ -2567,7 +2567,7 @@ app-purification .calc-radio:focus-within {
   outline-offset: 2px;
 }
 
-/* ── Shared comparison table ─────────────────────────────────────────── */
+/* ΓöÇΓöÇ Shared comparison table ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */
 /* NOTE (phantom-scrollbar fix): overflow-x other than visible forces
    overflow-y:visible to compute as auto, so this container also scrolls
    vertically. The rows' entrance animation (translateY) briefly extends the
@@ -2635,7 +2635,7 @@ app-purification .calc-radio:focus-within {
   color: var(--muted-foreground);
 }
 
-/* ── Standards page table: equal columns, centered values ────────────── */
+/* ΓöÇΓöÇ Standards page table: equal columns, centered values ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */
 app-shariah-standards .standards-table {
   table-layout: fixed;
   min-width: 640px;
@@ -2725,7 +2725,7 @@ app-shariah-standards .explainer-note {
   line-height: 1.8;
 }
 
-/* ── Purification page ───────────────────────────────────────────────── */
+/* ΓöÇΓöÇ Purification page ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */
 .reasons-list {
   display: flex;
   flex-direction: column;
@@ -2875,7 +2875,7 @@ app-shariah-standards .explainer-note {
   padding-top: 12px;
 }
 
-/* Summary cards ("باختصار"): two side by side on desktop, stacked on mobile. */
+/* Summary cards ("╪¿╪º╪«╪¬╪╡╪º╪▒"): two side by side on desktop, stacked on mobile. */
 .summary-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -3311,7 +3311,7 @@ app-shariah-standards .explainer-note {
   }
 }
 
-/* ── Motion system ───────────────────────────────────────────────────────
+/* ΓöÇΓöÇ Motion system ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
    GPU-friendly only (transform + opacity, never width/height/top/left).
    Directions are RTL-neutral (vertical slides, scales, fades). */
 
@@ -3616,7 +3616,7 @@ app-shariah-standards .explainer-note {
   transform-origin: top center;
 }
 
-/* ── Responsive audit: touch, type, layout, safe areas ────────────────── */
+/* ΓöÇΓöÇ Responsive audit: touch, type, layout, safe areas ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */
 
 /* Coarse pointers (phones/tablets): 44px touch targets, no sticky hovers. */
 @media (pointer: coarse) {
@@ -3750,7 +3750,7 @@ app-shariah-standards .explainer-note {
     height: 44px;
     width: 72px;
   }
-  /* iOS zooms on focus when inputs are under 16px — keep desktop sizes intact. */
+  /* iOS zooms on focus when inputs are under 16px ΓÇö keep desktop sizes intact. */
   input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="submit"]):not([type="button"]),
   select,
   textarea {
@@ -3846,7 +3846,7 @@ app-shariah-standards .explainer-note {
   }
 }
 
-/* ── Shared entity pages (sectors + indices): one layout system ────────── */
+/* ΓöÇΓöÇ Shared entity pages (sectors + indices): one layout system ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */
 .page-toolbar {
   display: flex;
   align-items: center;
@@ -4432,7 +4432,7 @@ app-shariah-standards .explainer-note {
   min-width: 680px;
 }
 
-/* ── Shariah Standards responsive table-to-cards (≤ 768px) ───────────── */
+/* ΓöÇΓöÇ Shariah Standards responsive table-to-cards (Γëñ 768px) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */
 @media (max-width: 768px) {
   app-shariah-standards .table-scroll {
     overflow-x: visible;
@@ -4559,7 +4559,7 @@ app-shariah-standards .explainer-note {
   }
 }
 
-/* ── Sector Weights & Capping Indicators ──────────────────────────── */
+/* ΓöÇΓöÇ Sector Weights & Capping Indicators ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */
 .neutral-pill.capped-pill {
   background: rgba(245, 158, 11, 0.12);
   color: #d97706;

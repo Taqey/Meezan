@@ -180,7 +180,6 @@ export class StocksListComponent implements OnInit {
 
   // ── Shared-component event adapters (thin: they only call the existing handlers) ──
   onTabChange(id: string): void {
-    this.indexCodes = this.indexCodes;
     if (id === 'all') {
       this.shariahStatuses = [];
       this.priceComparison = '';

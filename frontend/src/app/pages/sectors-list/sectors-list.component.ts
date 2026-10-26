@@ -7,16 +7,14 @@ import { navigateQueryParams } from '../../utils/navigation-utils';
 import { ApiService } from '../../services/api.service';
 import { MarketSnapshotDto, SectorSummaryDto, StockListItemDto } from '../../models/api.models';
 import { sectorAccentFor, sectorIconFor } from '../../models/market-icons';
-import { PageHeaderComponent } from '../../components/page-header/page-header.component';
+import { MzListingPageComponent, type MzListingConfig } from '../../components/ui/ui-listing-page';
+import type { MzListingCardData } from '../../components/ui/ui-listing';
 import { ViewSwitcherComponent, type EntityView } from '../../components/view-switcher/view-switcher.component';
-import { KpiStripComponent, type KpiData } from '../../components/kpi-strip/kpi-strip.component';
-import { FilterChipsComponent, type ChipOption } from '../../components/filter-chips/filter-chips.component';
-import { SectionHeaderComponent } from '../../components/section-header/section-header.component';
-import { EntityCardComponent, type EntityStat } from '../../components/entity-card/entity-card.component';
+import { type KpiData } from '../../components/kpi-strip/kpi-strip.component';
+import { type ChipOption } from '../../components/filter-chips/filter-chips.component';
+import { type EntityStat } from '../../components/entity-card/entity-card.component';
 import { EntityTableComponent, type EntityTableColumn, type EntityTableRow } from '../../components/entity-table/entity-table.component';
 import { EntityHeatmapComponent, type HeatTileData } from '../../components/entity-heatmap/entity-heatmap.component';
-import { LoadingSkeletonsComponent } from '../../components/loading-skeletons/loading-skeletons.component';
-import { EmptyStateComponent } from '../../components/empty-state/empty-state.component';
 
 type CardSort = 'compliantCount' | 'name' | 'performance' | 'compliance' | 'pe';
 type Chip = 'all' | 'compliance' | 'performance' | 'pe' | 'name';
@@ -24,101 +22,28 @@ type Chip = 'all' | 'compliance' | 'performance' | 'pe' | 'name';
 @Component({
   selector: 'app-sectors-list',
   standalone: true,
-  imports: [
-    CommonModule, LucideAngularModule, PageHeaderComponent, ViewSwitcherComponent,
-    KpiStripComponent, FilterChipsComponent, SectionHeaderComponent, EntityCardComponent,
-    EntityTableComponent, EntityHeatmapComponent, LoadingSkeletonsComponent, EmptyStateComponent
-  ],
-  template: `
-    <div class="entity-page">
-      <app-page-header
-        [crumbs]="headerCrumbs"
-        pill="تصنيف قطاعي متوافق مع الشريعة"
-        title="القطاعات الاقتصادية"
-        description="تصفّح الأسهم المتوافقة شرعاً مرتبةً حسب قطاعها الاقتصادي. اختر قطاعاً لعرض أسهمه وتقييماتهم الشرعية والعادلة.">
-        <ng-container toolbar>
-          <app-view-switcher [view]="view" (viewChange)="setView($event)"></app-view-switcher>
-          <button type="button" class="btn btn-outline btn-sm" (click)="printReport()">
-            <lucide-icon [img]="PrintIcon" size="15"></lucide-icon> تقرير PDF
-          </button>
-        </ng-container>
-      </app-page-header>
-
-      <app-kpi-strip [kpis]="kpiList" [loading]="loading || dataPending"></app-kpi-strip>
-
-      <app-filter-chips
-        *ngIf="!loading && !loadError"
-        [chips]="chipOptions"
-        [activeId]="chip"
-        (selected)="setChip($event)">
-      </app-filter-chips>
-
-      <app-section-header
-        *ngIf="!loading && !loadError"
-        [lead]="sectors.length + ' قطاعاً بأسهم مصنّفة في قاعدة البيانات'"
-        [sessionDate]="sessionLabel"
-        [sourceNote]="sourceNote">
-      </app-section-header>
-
-      <app-loading-skeletons *ngIf="loading" variant="card" [count]="6"></app-loading-skeletons>
-
-      <app-empty-state
-        *ngIf="!loading && loadError"
-        title="تعذّر تحميل القطاعات"
-        message="تحقق من الاتصال ثم حاول مرة أخرى."
-        actionLabel="إعادة المحاولة"
-        (action)="load()">
-      </app-empty-state>
-
-      <app-empty-state
-        *ngIf="!loading && !loadError && !sectors.length"
-        [icon]="LayersIcon"
-        title="لا توجد قطاعات مسجّلة حتى الآن"
-        message="يتم استخراج القطاعات تلقائياً عند رفع كشوف المؤشرات من البورصة المصرية.">
-      </app-empty-state>
-
-      <!-- Grid view (waits for both data passes: skeletons, never "—") -->
-      <div class="entity-grid" *ngIf="!loading && !loadError && sectors.length && view === 'grid' && !dataPending">
-        <app-entity-card
-          *ngFor="let s of displayedSectors; let i = index; trackBy: trackSector"
-          [itemIndex]="i"
-          [title]="s.nameAr"
-          [subtitle]="s.nameEn"
-          [icon]="getSectorIcon(s.nameEn)"
-          [accent]="accentFor(s.nameEn).accent"
-          [tint]="accentFor(s.nameEn).tint"
-          [ink]="accentFor(s.nameEn).ink"
-          [pill]="s.stocksCount + ' سهم مصنّف'"
-          [stats]="cardStats(s)"
-          [autoPadStats]="false"
-          [footerText]="'استعرض الـ ' + s.stocksCount + ' سهم'"
-          [link]="['/indices/Sectoral-Indices', s.id]">
-        </app-entity-card>
-      </div>
-
-      <!-- Waiting skeletons for any view while data settles -->
-      <app-loading-skeletons
-        *ngIf="!loading && !loadError && sectors.length && dataPending"
-        variant="card"
-        [count]="6">
-      </app-loading-skeletons>
-
-      <app-entity-table
-        *ngIf="!loading && !loadError && sectors.length && view === 'table' && !dataPending"
-        [columns]="tableColumns"
-        [rows]="tableRows"
-        [sortKey]="tableSortKey"
-        [sortDir]="tableSortDir"
-        (sortChange)="setTableSort($event)"
-        ariaLabel="جدول القطاعات الاقتصادية">
-      </app-entity-table>
-
-      <app-entity-heatmap
-        *ngIf="!loading && !loadError && sectors.length && view === 'heatmap' && !dataPending"
-        [tiles]="heatTiles"
-        [sizeNote]="hasAnyMarketCap ? 'حجم المربع يعكس القيمة السوقية للقطاع' : null">
-      </app-entity-heatmap>
-    </div>
+  imports: [CommonModule, LucideAngularModule, MzListingPageComponent, ViewSwitcherComponent, EntityTableComponent, EntityHeatmapComponent],
+    template: `
+    <mz-listing-page [config]="config" [customView]="view !== 'grid'" (tabChange)="setChip($event)" (retry)="load()">
+      <ng-container actions>
+        <app-view-switcher [view]="view" (viewChange)="setView($event)"></app-view-switcher>
+        <button type="button" class="mz-btn" (click)="printReport()">
+          <lucide-icon [img]="PrintIcon" size="15"></lucide-icon> تقرير PDF
+        </button>
+      </ng-container>
+      <ng-container view>
+        <app-entity-table
+          *ngIf="sectors.length && view === 'table' && !dataPending"
+          [columns]="tableColumns" [rows]="tableRows" [sortKey]="tableSortKey" [sortDir]="tableSortDir"
+          (sortChange)="setTableSort($event)" ariaLabel="جدول القطاعات الاقتصادية">
+        </app-entity-table>
+        <app-entity-heatmap
+          *ngIf="sectors.length && view === 'heatmap' && !dataPending"
+          [tiles]="heatTiles"
+          [sizeNote]="hasAnyMarketCap ? 'حجم المربع يعكس القيمة السوقية للقطاع' : null">
+        </app-entity-heatmap>
+      </ng-container>
+    </mz-listing-page>
   `
 })
 export class SectorsListComponent implements OnInit {
@@ -219,6 +144,7 @@ export class SectorsListComponent implements OnInit {
   load(): void {
     this.loading = true;
     this.loadError = false;
+    this.rebuild();
     this.api.getSectors().subscribe({
       next: (data) => {
         this.sectors = data || [];
@@ -230,6 +156,7 @@ export class SectorsListComponent implements OnInit {
         this.sectors = [];
         this.loading = false;
         this.loadError = true;
+        this.rebuild();
       }
     });
   }
@@ -237,6 +164,7 @@ export class SectorsListComponent implements OnInit {
   /** Official quotes, cached once per page load; silent fallback when absent. */
   private loadSnapshots(): void {
     this.snapshotsLoading = true;
+    this.rebuild();
     this.api.getMarketSnapshots().subscribe({
       next: (rows) => {
         this.snapshots = rows || [];
@@ -347,6 +275,7 @@ export class SectorsListComponent implements OnInit {
       tooltip: this.heatLabel(s)
     }));
     this.kpiList = this.buildKpis();
+    this.rebuild();
   }
 
   private buildTableColumns(): EntityTableColumn[] {
@@ -658,4 +587,43 @@ export class SectorsListComponent implements OnInit {
     if (value === null || value === undefined) return 'var(--muted-foreground)';
     return Math.abs(Number(value)) >= 2.5 ? '#fff' : 'var(--ink)';
   }
+
+  /** Single config object for the shared ListingPage. */
+  config: MzListingConfig = { header: { badge: '', title: '', description: '' }, cards: [], empty: { title: '', message: '' } };
+
+  rebuild(): void {
+    this.config = {
+      header: {
+        badge: 'تصنيف قطاعي متوافق مع الشريعة',
+        title: 'القطاعات الاقتصادية',
+        description: 'تصفّح الأسهم المتوافقة شرعاً مرتبةً حسب قطاعها الاقتصادي. اختر قطاعاً لعرض أسهمه وتقييماتهم الشرعية والعادلة.'
+      },
+      stats: this.kpiList.map((k) => ({ label: k.label, value: k.value, icon: k.icon, chip: k.sub })),
+      statsLoading: this.loading || this.dataPending,
+      tabs: this.loading || this.loadError ? null : this.chipOptions.map((c) => ({ id: c.id, label: c.label })),
+      activeTab: this.chip,
+      results: this.loading || this.loadError ? null : {
+        text: this.sectors.length + ' قطاعاً بأسهم مصنّفة في قاعدة البيانات',
+        note: [this.sessionLabel, this.sourceNote].filter(Boolean).join(' · ') || null
+      },
+      cards: this.dataPending ? [] : this.displayedSectors.map((s) => this.toCard(s)),
+      loading: this.loading || (this.sectors.length > 0 && this.dataPending),
+      error: !this.loading && this.loadError ? { title: 'تعذّر تحميل القطاعات', message: 'تحقق من الاتصال ثم حاول مرة أخرى.' } : null,
+      empty: { title: 'لا توجد قطاعات مسجّلة حتى الآن', message: 'يتم استخراج القطاعات تلقائياً عند رفع كشوف المؤشرات من البورصة المصرية.' }
+    };
+  }
+
+  private toCard(s: SectorSummaryDto): MzListingCardData {
+    return {
+      id: s.id,
+      title: s.nameAr,
+      subtitle: s.nameEn,
+      icon: this.getSectorIcon(s.nameEn),
+      badges: [{ label: s.stocksCount + ' سهم مصنّف', tone: 'neutral' }],
+      metrics: this.cardStats(s).map((st) => ({ label: st.label, value: st.value, tone: st.tone })),
+      linkLabel: 'استعرض الـ ' + s.stocksCount + ' سهم',
+      link: ['/indices/Sectoral-Indices', s.id]
+    };
+  }
+
 }
