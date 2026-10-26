@@ -17,6 +17,22 @@ import {
 } from 'lucide-angular';
 import { ApiService } from '../../services/api.service';
 import { ComparisonBadgeComponent } from '../../components/comparison-badge/comparison-badge.component';
+import {
+  MzBackLinkComponent,
+  MzDetailsHeaderCardComponent,
+  MzSupportResistanceCardComponent,
+  MzFairValueCardComponent,
+  MzMarketIndicatorsSectionComponent,
+  MzShariaAuthoritiesSectionComponent,
+  MzDetailsSectionComponent,
+  MzInfoGridComponent,
+  MzHeaderTag,
+  MzSrPoint,
+  MzFairMethod,
+  MzIndicator,
+  MzAuthority,
+  MzMetric
+} from '../../components/ui';
 import { StatusBadgeComponent } from '../../components/status-badge/status-badge.component';
 import { FavoriteToggleComponent } from '../../components/favorite-toggle/favorite-toggle.component';
 import { RevealDirective } from '../../directives/reveal.directive';
@@ -50,7 +66,20 @@ type EffectiveOpinionView = ShariahSourceOpinionView & { effectiveStatus: string
 @Component({
   selector: 'app-stock-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, LucideAngularModule, ComparisonBadgeComponent, StatusBadgeComponent, FavoriteToggleComponent, RevealDirective],
+  imports: [
+    CommonModule,
+    RouterLink,
+    LucideAngularModule,
+    ComparisonBadgeComponent,
+    RevealDirective,
+    MzBackLinkComponent,
+    MzDetailsHeaderCardComponent,
+    MzSupportResistanceCardComponent,
+    MzFairValueCardComponent,
+    MzMarketIndicatorsSectionComponent,
+    MzShariaAuthoritiesSectionComponent,
+    MzDetailsSectionComponent
+  ],
   template: `
     <div *ngIf="loading" class="empty-state">
       <p>جارٍ تحميل بيانات السهم والتقييمات من قاعدة البيانات...</p>
@@ -62,377 +91,90 @@ type EffectiveOpinionView = ShariahSourceOpinionView & { effectiveStatus: string
     </div>
 
     <div *ngIf="!loading && marketData">
-      <!-- Detail Hero -->
-      <div class="detail-hero">
-        <a routerLink="/stocks" class="back-link">
-          <lucide-icon [img]="ArrowLeftIcon" size="15"></lucide-icon> العودة إلى الأسهم
-        </a>
+      <!-- Back Link -->
+      <mz-back-link [to]="'/stocks'" label="العودة إلى الأسهم"></mz-back-link>
 
-        <div class="detail-heading">
-          <div>
-            <div class="ticker large">
-              {{ marketData.ticker }}
-              <app-favorite-toggle [symbol]="marketData.ticker"></app-favorite-toggle>
-              <span *ngIf="marketData.nameEn">{{ marketData.nameEn }}</span>
-            </div>
-            <h1>{{ marketData.nameAr || marketData.ticker }}</h1>
-            <div class="tag-row">
-              <span *ngIf="marketData.sectorNameAr">{{ marketData.sectorNameAr }}</span>
-              <span *ngIf="marketData.sectorWeight !== null && marketData.sectorWeight !== undefined && marketData.sectorWeight > 0"
-                    class="sector-weight-tag"
-                    [class.capped]="marketData.isSectorWeightCapped"
-                    [title]="marketData.isSectorWeightCapped ? 'الوزن النسبي مسقوف عند 35% (معامل السقف: ' + (marketData.sectorCappingFactor | number:'1.4-4') + ')' : 'الوزن النسبي في قطاع ' + (marketData.sectorNameAr || '')">
-                الوزن في القطاع: {{ marketData.sectorWeight | number:'1.2-2' }}%
-                <small *ngIf="marketData.isSectorWeightCapped">(مسقوف - معامل: {{ marketData.sectorCappingFactor | number:'1.4-4' }})</small>
-              </span>
-              <span *ngIf="marketData.sectorWeight === null && marketData.sectorNameAr"
-                    class="sector-weight-tag muted"
-                    title="لا توجد قيمة سوقية صالحة لحساب الوزن">
-                الوزن في القطاع: —
-              </span>
-              <ng-container *ngFor="let idx of nonSectoralIndices">
-                <a [routerLink]="['/indices', idx.code]">
-                  {{ getIndexLabel(idx.code) }}<ng-container *ngIf="idx.weight && idx.weight > 0"> ({{ idx.weight | number:'1.2-2' }}%)</ng-container>
-                </a>
-              </ng-container>
-            </div>
-          </div>
-
-          <div class="detail-price" *ngIf="marketData.hasMarketData !== false">
-            <span>سعر الإغلاق الأخير</span>
-            <strong *ngIf="marketData.closingPrice !== null && marketData.closingPrice !== undefined; else noPrice">
-              {{ marketData.closingPrice | number:'1.2-2' }} <small>{{ currencyLabel }}</small>
-            </strong>
-            <ng-template #noPrice>
-              <strong>— <small>{{ currencyLabel }}</small></strong>
-            </ng-template>
-            <b *ngIf="supportResistance?.changePct !== null && supportResistance?.changePct !== undefined"
-               [ngClass]="(supportResistance?.changePct ?? 0) >= 0 ? 'positive' : 'negative'">
-              {{ (supportResistance?.changePct ?? 0) > 0 ? '+' : '' }}{{ supportResistance?.changePct | number:'1.2-2' }}%
-            </b>
-          </div>
-          <div class="detail-price board-only-notice" *ngIf="marketData.hasMarketData === false">
-            <span class="muted">بيانات التداول والسوق</span>
-            <strong>غير متداولة / غير مقيدة في مباشر</strong>
-          </div>
-        </div>
-      </div>
+      <!-- Detail Hero Header Card -->
+      <mz-details-header-card
+        [title]="marketData.nameAr || marketData.ticker"
+        [code]="marketData.ticker"
+        [secondaryName]="marketData.nameEn"
+        [favoriteSymbol]="marketData.ticker"
+        [tags]="headerTags"
+        [priceLabel]="marketData.hasMarketData !== false ? 'سعر الإغلاق الأخير' : 'بيانات التداول والسوق'"
+        [price]="marketData.hasMarketData !== false ? (marketData.closingPrice != null ? (marketData.closingPrice | number:'1.2-2') : '—') : 'غير متداولة'"
+        [currency]="marketData.hasMarketData !== false ? currencyLabel : ''"
+        [changeText]="supportResistance?.changePct != null ? ((supportResistance?.changePct ?? 0) > 0 ? '+' : '') + (supportResistance?.changePct | number:'1.2-2') + '%' : null"
+        [changeTone]="(supportResistance?.changePct ?? 0) >= 0 ? 'positive' : 'negative'">
+      </mz-details-header-card>
 
       <!-- Detail Grid: Support/Resistance + Fair Value (Only if stock has market data) -->
-      <div class="detail-grid" *ngIf="marketData.hasMarketData !== false">
+      <div class="mz-details-two" *ngIf="marketData.hasMarketData !== false" style="margin: 20px 0;">
         <!-- Support & Resistance Ladder -->
-        <div class="detail-card support-card">
-          <div class="card-heading">
-            <div>
-              <span class="eyebrow">قراءة فنية</span>
-              <h2>الدعم والمقاومة والارتكاز</h2>
-            </div>
-            <span class="neutral-pill" *ngIf="supportResistance">
-              الارتكاز: {{ supportResistance.pivot != null ? (supportResistance.pivot | number:'1.2-2') : '—' }} {{ currencyLabel }}
-            </span>
-          </div>
-
-          <!-- Out of range notice if price is outside [S2, R2] -->
-          <div class="ladder-out-of-range-note" *ngIf="supportResistance && supportResistanceOutOfRangeNote">
-            <lucide-icon [img]="InfoIcon" size="16"></lucide-icon>
-            <span>{{ supportResistanceOutOfRangeNote }}</span>
-          </div>
-
-          <div class="ladder" *ngIf="supportResistance">
-            <div class="ladder-line"></div>
-            <!-- Dynamic current-price marker (hidden if price is outside [S2, R2]) -->
-            <div class="current-marker" *ngIf="supportResistanceMarkerPosition !== null" [style.right.%]="supportResistanceMarkerPosition">
-              <span>السعر {{ currentStockPrice | number:'1.2-2' }}</span>
-            </div>
-            <div class="ladder-point" style="right: 5%;">
-              <i></i>
-              <b>S2</b>
-              <span>{{ supportResistance.s2 != null ? (supportResistance.s2 | number:'1.2-2') : '—' }}</span>
-            </div>
-            <div class="ladder-point" style="right: 27.5%;">
-              <i></i>
-              <b>S1</b>
-              <span>{{ supportResistance.s1 != null ? (supportResistance.s1 | number:'1.2-2') : '—' }}</span>
-            </div>
-            <div class="ladder-point" style="right: 50%;">
-              <i></i>
-              <b>PIVOT</b>
-              <span>{{ supportResistance.pivot != null ? (supportResistance.pivot | number:'1.2-2') : '—' }}</span>
-            </div>
-            <div class="ladder-point" style="right: 72.5%;">
-              <i></i>
-              <b>R1</b>
-              <span>{{ supportResistance.r1 != null ? (supportResistance.r1 | number:'1.2-2') : '—' }}</span>
-            </div>
-            <div class="ladder-point" style="right: 95%;">
-              <i></i>
-              <b>R2</b>
-              <span>{{ supportResistance.r2 != null ? (supportResistance.r2 | number:'1.2-2') : '—' }}</span>
-            </div>
-          </div>
-          <div *ngIf="!supportResistance" class="muted" style="margin-top: 40px;">
-            بيانات الدعم والمقاومة غير متوفرة حالياً لهذا السهم.
-          </div>
-        </div>
+        <mz-support-resistance-card
+          eyebrow="قراءة فنية"
+          title="الدعم والمقاومة والارتكاز"
+          [pivotLabel]="supportResistance ? 'الارتكاز: ' + (supportResistance.pivot != null ? (supportResistance.pivot | number:'1.2-2') : '—') + ' ' + currencyLabel : null"
+          [note]="supportResistanceOutOfRangeNote || 'تحسب نقاط الارتكاز الفنية يومياً بناءً على أعلى وأدنى سعر وسعر الإغلاق لجلسة التداول السابقة.'"
+          [points]="srPoints"
+          [markerPos]="supportResistanceMarkerPosition"
+          [markerLabel]="'السعر ' + (currentStockPrice != null ? (currentStockPrice | number:'1.2-2') : '')"
+          emptyText="بيانات الدعم والمقاومة غير متوفرة حالياً لهذا السهم.">
+        </mz-support-resistance-card>
 
         <!-- Fair Value Card (Graham formula only) -->
-        <div class="detail-card fair-card">
-          <div class="card-heading">
-            <div>
-              <span class="eyebrow">نموذج جراهام (Graham Formula)</span>
-              <h2>القيمة العادلة</h2>
-            </div>
-            <app-comparison-badge [comparison]="fairValueComparison"></app-comparison-badge>
-          </div>
-
-          <!-- Insufficient data: no trustworthy fair value exists (Graham needs EPS > 0 & BookValue > 0).
-               Shown instead of a fabricated "قريبة من العادلة — 0.00" verdict: no numeric fair value, no
-               confidence %, no approved-methods line. -->
-          <div class="fair-unavailable" *ngIf="isFairValueUnavailable">
-            <strong>بيانات غير كافية لحساب القيمة العادلة (نموذج جراهام)</strong>
-            <p class="muted">
-              لا توجد حالياً بيانات كافية لنموذج جراهام (ربحية EPS، قيمة دفترية BookValue، أو سعر السهم الحالي
-              غير متاح). لن تُعرض قيمة عادلة رقمية أو نسبة ثقة حتى توفّر هذه البيانات.
-            </p>
-          </div>
-
-          <ng-container *ngIf="!isFairValueUnavailable">
-            <div class="fair-number">
-              <strong>{{ marketData.fairValue | number:'1.2-2' }}</strong>
-              <span>{{ currencyLabel }}</span>
-              <b *ngIf="fairValuePremiumPct !== null; else fvGapNa"
-                 [ngClass]="fairValueSignal === 'cheap' ? 'positive' : (fairValueSignal === 'expensive' ? 'negative' : '')">
-                <ng-container *ngIf="fairValueSignal === 'expensive'">-{{ fairValuePremiumPct | number:'1.1-1' }}% — السعر أعلى من القيمة العادلة بنسبة {{ fairValuePremiumPct | number:'1.1-1' }}%-<span *ngIf="showFairValueMultiple"> (فرصة للهبوط {{ fairValueMultiple | number:'1.1-1' }}x للوصول للسعر العادل)</span></ng-container>
-                <ng-container *ngIf="fairValueSignal === 'cheap'">السعر أقل من القيمة العادلة — فرصة صعود +{{ fairValueUpsidePct | number:'1.1-1' }}% ({{ fairValueUpsideMultiple | number:'1.1-1' }}x للوصول للعادلة)</ng-container>
-                <ng-container *ngIf="fairValueSignal !== 'cheap' && fairValueSignal !== 'expensive'">{{ fairValuePremiumPct | number:'1.1-1' }}% — السعر قريب من القيمة العادلة</ng-container>
-              </b>
-              <ng-template #fvGapNa><b class="muted">N/A</b></ng-template>
-            </div>
-
-            <p class="muted">
-              نموذج جراهام: √(22.5 × EPS × BookValue) · مستوى الثقة: <strong>{{ getConfidenceLabel(marketData.valuationConfidence) }}</strong>
-            </p>
-
-            <!-- 4 Methods List (displayed individually, no aggregation) -->
-            <div class="method-list" *ngIf="marketData.fairValueMethods && marketData.fairValueMethods.length">
-              <div class="method" *ngFor="let m of marketData.fairValueMethods" [class.outlier]="m.isOutlier">
-                <span>{{ getMethodDisplayName(m.name) }}</span>
-                <strong>{{ m.value != null ? (m.value | number:'1.2-2') : '—' }} {{ currencyLabel }}</strong>
-                <em *ngIf="m.isOutlier">قيمة شاذة مستبعدة (Outlier)</em>
-              </div>
-            </div>
-          </ng-container>
-        </div>
+        <mz-fair-value-card
+          eyebrow="نموذج جراهام (Graham Formula)"
+          title="القيمة العادلة"
+          [unavailable]="isFairValueUnavailable"
+          unavailableTitle="بيانات غير كافية لحساب القيمة العادلة (نموذج جراهام)"
+          unavailableText="لا توجد حالياً بيانات كافية لنموذج جراهام (ربحية EPS، قيمة دفترية BookValue، أو سعر السهم الحالي غير متاح). لن تُعرض قيمة عادلة رقمية أو نسبة ثقة حتى توفّر هذه البيانات."
+          [value]="(marketData.fairValue | number:'1.2-2') || '—'"
+          [currency]="currencyLabel"
+          [gapText]="fairValueGapText"
+          [gapTone]="fairValueSignal === 'cheap' ? 'positive' : (fairValueSignal === 'expensive' ? 'negative' : 'muted')"
+          [formulaNote]="'نموذج جراهام: √(22.5 × EPS × BookValue) · مستوى الثقة: ' + getConfidenceLabel(marketData.valuationConfidence)"
+          [methods]="fairValueMethodsList">
+          <app-comparison-badge badge [comparison]="fairValueComparison"></app-comparison-badge>
+        </mz-fair-value-card>
       </div>
 
-      <!-- Shariah Opinions Grid: Multi-source evaluators.
-           Hidden entirely when نشاط الشركة is غير متوافق: the activity is a standalone,
-           automatic disqualification, so no board opinion grid and no ratio panel apply. -->
-      <section class="detail-card shariah-card" *ngIf="!isActivityNonCompliant" appReveal>
-        <!-- Permanent display-layer override for frozen ticker group:
-             ADIB, SAUD, FAIT, FAITA, ATLC, AMIA.
-             Shows only a single green "يوجد لجنة شرعية" badge.
-             Skips normal rendering (7-source opinions and AAOIFI & S&P ratio panel) entirely. -->
-        <ng-container *ngIf="isShariahBoardFrozen">
-          <div class="card-heading">
-            <div>
-              <span class="eyebrow">الإشراف الشرعي</span>
-              <h2>الإشراف الشرعي للسهم</h2>
-            </div>
-            <div>
-              <span class="status-badge status-good" style="font-size: 13px; padding: 6px 14px;">
-                <span class="status-dot"></span>
-                يوجد لجنة شرعية
-              </span>
-            </div>
-          </div>
+      <!-- Shariah Opinions Grid: Multi-source evaluators -->
+      <mz-sharia-authorities-section
+        *ngIf="!isActivityNonCompliant"
+        appReveal
+        style="margin: 20px 0;"
+        [eyebrow]="isShariahBoardFrozen || marketData.hasShariahBoard ? 'الإشراف الشرعي' : 'تغطية الجهات الشرعية'"
+        [title]="isShariahBoardFrozen || marketData.hasShariahBoard ? 'الإشراف الشرعي للسهم' : 'آراء الهيئات الشرعية (7 مصادر مستقلة)'"
+        [summaryText]="shariaSummaryText"
+        [summaryNote]="shariaSummaryNote"
+        [summaryTone]="shariaSummaryTone"
+        [authorities]="shariaAuthoritiesList"
+        [ratiosTitle]="shouldShowRatiosSection ? 'المعايير والنسب المالية الشرعية التفصيلية (AAOIFI & S&P)' : ''"
+        [ratios]="shariaRatiosList"
+        (authorityAction)="onAuthorityAction($event)">
+        <!-- Fallback note if ratios unavailable -->
+        <p *ngIf="shouldShowRatiosSection && !hasShariahMetricsData" class="mz-authority-note" style="margin-top:12px">
+          Data currently unavailable — لا توجد حالياً بيانات النسب المالية الشرعية لهذا السهم.
+        </p>
+      </mz-sharia-authorities-section>
 
-          <div class="board-exists-panel">
-            <p class="board-note" style="margin: 0;">تشرف لجنة/هيئة شرعية على هذا السهم وعلى توافق أنشطته ومعاييره الشرعية.</p>
-          </div>
-        </ng-container>
-
-        <!-- Standard resolution pipeline for all other tickers outside the frozen list -->
-        <ng-container *ngIf="!isShariahBoardFrozen">
-          <!-- Simplified display for stocks overseen by their own Sharia board/committee
-               (plain "لجنة شرعية" and accredited "هيئة رقابة شرعية داخلية معتمدة" are the
-               same case): status + one note only — no purification %, no 7-source grid,
-               no AAOIFI/S&P metrics panel. -->
-          <div class="card-heading" *ngIf="marketData.hasShariahBoard">
-            <div>
-              <span class="eyebrow">الإشراف الشرعي</span>
-              <h2>الإشراف الشرعي للسهم</h2>
-              <p>الحكم المعتمد: <app-status-badge [status]="marketData.shariahStatus"></app-status-badge></p>
-            </div>
-            <div class="ratio-big">
-              <strong>موجودة</strong>
-              <span>لجنة أو هيئة شرعية تشرف على السهم</span>
-            </div>
-          </div>
-
-          <div class="board-exists-panel" *ngIf="marketData.hasShariahBoard">
-            <p class="board-note">{{ marketData.shariahBoardNote || 'تشرف لجنة/هيئة شرعية على هذا السهم وعلى توافق أنشطته ومعاييره الشرعية.' }}</p>
-          </div>
-
-          <div class="card-heading" *ngIf="!marketData.hasShariahBoard">
-            <div>
-              <span class="eyebrow">تغطية الجهات الشرعية</span>
-              <h2>آراء الهيئات الشرعية (7 مصادر مستقلة)</h2>
-              <p>الحكم الداخلي المعتمد: <app-status-badge [status]="internalVerdict"></app-status-badge><span *ngIf="showPurificationPct"> (نسبة التطهير: {{ marketData.shariahPct }}%)</span><span *ngIf="showScholarsHeaderNote" class="verdict-override-note"> — متوافق وفق فتاوى بعض العلماء الأفراد فقط (نسبة القروض {{ loansPct | number:'1.0-2' }}% ≤ 50%)</span><span *ngIf="showFallbackHeaderNote" class="verdict-override-note"> — متوافق وفق رأي الجهات الشرعية (النسب غير متوفرة)</span></p>
-            </div>
-            <div class="ratio-big">
-              <!-- Aggregate is over boards that actually returned a stored opinion for THIS
-                   stock (per stock-board pair), never a fixed /7 when coverage is incomplete. -->
-              <strong *ngIf="totalAvailableSourcesCount > 0">
-                {{ compliantSourcesCount }} من {{ totalAvailableSourcesCount }}
-              </strong>
-              <strong *ngIf="totalAvailableSourcesCount === 0" class="no-coverage">لا رأي مسجّل</strong>
-              <span *ngIf="totalAvailableSourcesCount > 0">جهات تعتبر السهم متوافقاً</span>
-              <span *ngIf="totalAvailableSourcesCount === 0">من أصل 7 مصادر مستقلة</span>
-              <span class="coverage-note" *ngIf="compliancePercent !== null">
-                {{ compliancePercent }}% مؤشرات متوافقة من أصل {{ totalAvailableSourcesCount }} رأياً مسجّلاً
-              </span>
-              <span class="coverage-note muted" *ngIf="noOpinionSourcesCount > 0">
-                {{ noOpinionSourcesCount }} من 7 بلا رأي مسجّل على هذا السهم
-              </span>
-            </div>
-          </div>
-
-<div class="opinion-grid" *ngIf="!marketData.hasShariahBoard">
-           <!-- 7 board cards. Halal Bourse shows the STORED verdict only;
-                other boards show their raw opinion (doubtful sanitized to no-opinion). -->
-           <div class="source-card"
-                [class.no-opinion]="op.noOpinion || (isHalalBourseCard(op) && isHalalInsufficient)"
-                [class.compliant]="!op.noOpinion && !(isHalalBourseCard(op) && isHalalInsufficient) && isCompliant(getCardStatus(op))"
-                [class.non-compliant]="!op.noOpinion && !(isHalalBourseCard(op) && isHalalInsufficient) && isNonCompliant(getCardStatus(op))"
-                *ngFor="let op of sourceOpinionsList; let i = index; trackBy: trackOpinionByKey"
-                [style.--item-index]="i">
-            <div class="source-top">
-              <strong>{{ getSourceName(op.sourceKey) }}</strong>
-              <!-- No recorded opinion on this stock: say so explicitly instead of
-                   rendering a default متوافق / غير متوافق verdict. -->
-              <span class="no-opinion-label" *ngIf="op.noOpinion">لا يوجد رأي مسجّل</span>
-              <app-status-badge *ngIf="!op.noOpinion && !isManualSource(op)" [status]="getCardStatus(op)"></app-status-badge>
-            </div>
-
-            <p class="no-opinion-hint" *ngIf="op.noOpinion">
-              لم تُصدر هذه الجهة رأياً على هذا السهم بعد — لا تُحتسب في نسبة الامتثال.
-            </p>
-
-            <!-- All 7 boards: unified full-color card, no progress/score -->
-            <ng-container *ngIf="!op.noOpinion">
-              <div class="verdict-badge">
-                {{ getVerdictLabel(getCardStatus(op)) }}
-              </div>
-              <div class="verdict-meta">
-                <span *ngIf="op.sourceLastUpdated">تحديث: {{ op.sourceLastUpdated | date:'yyyy-MM-dd' }}</span>
-                <span *ngIf="!op.sourceLastUpdated && op.fetchedAt">جُلب: {{ op.fetchedAt | date:'yyyy-MM-dd' }}</span>
-              </div>
-              <p class="verdict-note">{{ op.note || 'لا توجد ملاحظات تفصيلية مسجلة من المصدر.' }}</p>
-              <!-- PDF link for manual sources (FaisalBank, Ostoul) when stored.
-                   Absolute backend URL via the shared helper: the stored path is
-                   backend-relative and would resolve to the SPA (home page) here. -->
-              <a *ngIf="isManualSource(op) && pdfUrlFor(op)" [href]="pdfUrlFor(op)" target="_blank" rel="noopener noreferrer" class="verdict-pdf-link">
-                <lucide-icon [img]="FileTextIcon" size="14"></lucide-icon> View PDF
-              </a>
-              <!-- Details entry on the Halal Bourse card only: shown for every stock with
-                   sufficient data. -->
-              <ng-container *ngIf="isHalalBourseCard(op)">
-                <button type="button" class="details-button" *ngIf="showDetailsButton" (click)="openStandardsDialog($event)">
-                  عرض التفاصيل
-                </button>
-              </ng-container>
-            </ng-container>
-          </div>
-
-          <!-- 8th card: EGX33 Shariah index membership (informational, not a board opinion) -->
-          <div class="source-card"
-               [class.compliant]="isEGX33Constituent"
-               [class.no-opinion]="!isEGX33Constituent">
-            <div class="source-top">
-              <strong>مؤشر الشريعة EGX33</strong>
-            </div>
-            <ng-container *ngIf="isEGX33Constituent">
-              <div class="verdict-badge">ضمن مؤشر الشريعة EGX33</div>
-              <p class="verdict-note">السهم مدرج ضمن مكونات مؤشر الشريعة EGX33.</p>
-            </ng-container>
-            <ng-container *ngIf="!isEGX33Constituent">
-              <div class="verdict-badge">غير مدرج في مؤشر الشريعة EGX33</div>
-              <p class="verdict-note">السهم غير مدرج في مكونات مؤشر الشريعة EGX33 (قد يكون متوافقاً شرعياً لأسباب أخرى).</p>
-            </ng-container>
-          </div>
-        </div>
-
-        <!-- Dedicated Shariah Metrics Section (AAOIFI & S&P Breakdown).
-             Visibility depends on WHY the stock is non-compliant, not on the status
-             alone: hidden only for impermissible core business (activityCompliant ===
-             false) and board-governed stocks. Permissible-activity stocks show it for
-             every stored verdict (Compliant, NonCompliant, insufficient); with no data it shows
-             "Data currently unavailable" instead of hiding silently. -->
-        <div class="shariah-metrics-panel" *ngIf="shouldShowRatiosSection">
-          <div class="metrics-header">
-            <div>
-              <h3>المعايير والنسب المالية الشرعية التفصيلية (AAOIFI & S&P)</h3>
-              <span class="muted" *ngIf="marketData.shariahMetrics?.sourceUpdatedAt">
-                آخر تحديث للمصدر: {{ marketData.shariahMetrics?.sourceUpdatedAt | date:'yyyy-MM-dd HH:mm' }}
-              </span>
-            </div>
-            <div class="metrics-flags">
-              <span class="flag-badge" [class.pass]="getActivityCompliant()" [class.fail]="!getActivityCompliant()">
-                نشاط الشركة: {{ getActivityCompliant() ? 'متوافق' : 'غير متوافق' }}
-              </span>
-            </div>
-          </div>
-
-          <ng-container *ngIf="hasShariahMetricsData; else metricsUnavailable">
-            <div class="metrics-grid">
-              <div class="metric-cell">
-                <span>تصنيف النشاط</span>
-                <strong>{{ marketData.shariahMetrics?.activityClassification || marketData.sectorNameAr || 'نشاط تشغيلي تجاري' }}</strong>
-              </div>
-              <div class="metric-cell">
-                <span>تطهير السهم (AAOIFI)</span>
-                <strong>{{ aaoifiHaramPerShare != null ? aaoifiHaramPerShare : '—' }} {{ currencyLabel }}/سهم</strong>
-              </div>
-              <div class="metric-cell">
-                <span>نسبة الإيراد المحرم (S&P)</span>
-                <strong>{{ spHaramPct != null ? spHaramPct : '—' }}%</strong>
-              </div>
-              <div class="metric-cell">
-                <span>نسبة القروض والفوائد</span>
-                <strong>{{ loansPct != null ? loansPct : '—' }}%</strong>
-              </div>
-            </div>
-          </ng-container>
-          <ng-template #metricsUnavailable>
-            <p class="muted" style="margin: 0;">Data currently unavailable — لا توجد حالياً بيانات النسب المالية الشرعية لهذا السهم.</p>
-          </ng-template>
-        </div>
-        </ng-container>
-      </section>
-
-      <!-- Activity hard gate: when the company's own line of business is prohibited the
-           stock is out at the first screening gate. Single verdict with the activity as
-           the only reason — no 7-source opinion grid and no AAOIFI/S&P ratio panel. -->
-      <section class="detail-card shariah-card activity-verdict-card" *ngIf="isActivityNonCompliant" appReveal>
-        <div class="card-heading">
-          <div>
-            <span class="eyebrow">حُكم النشاط</span>
-            <h2>غير متوافق مع الشريعة — النشاط: {{ activityClassificationLabel }}</h2>
-          </div>
-        </div>
-        <p class="muted">
+      <!-- Activity hard gate -->
+      <mz-details-section
+        *ngIf="isActivityNonCompliant"
+        appReveal
+        style="margin: 20px 0;"
+        eyebrow="حُكم النشاط"
+        [title]="'غير متوافق مع الشريعة — النشاط: ' + activityClassificationLabel">
+        <p class="mz-authority-note">
           Non-compliant due to the nature of its core business; financial screens are not applied.
         </p>
-        <p class="muted">
-          يستبعد السهم بوابة النشاط ذاتها، ولذلك لا تُعرض النسب المالية الشرعية ولا آراء
-          الهيئات الشرعية.
+        <p class="mz-authority-note">
+          يستبعد السهم بوابة النشاط ذاتها، ولذلك لا تُعرض النسب المالية الشرعية ولا آراء الهيئات الشرعية.
         </p>
-      </section>
+      </mz-details-section>
 
-      <!-- Quantitative standards dialog (Bourse Halal card "عرض التفاصيل").
-           Accessible: role=dialog + aria-modal, focus trap, ESC/backdrop close,
-           RTL, scrollable panel on mobile. -->
+      <!-- Quantitative standards dialog (Bourse Halal card 'عرض التفاصيل') -->
       <div class="standards-dialog-backdrop" *ngIf="showStandardsDialog" [class.closing]="dialogClosing" (click)="onStandardsBackdropClick($event)">
         <div class="standards-dialog" role="dialog" aria-modal="true" aria-labelledby="std-dialog-title"
              tabindex="-1" (keydown)="onStandardsDialogKeydown($event)">
@@ -520,51 +262,16 @@ type EffectiveOpinionView = ShariahSourceOpinionView & { effectiveStatus: string
         </div>
       </div>
 
-      <!-- Market Data Fundamentals (Only if stock has market data) -->
-      <section class="detail-card market-card" *ngIf="marketData.hasMarketData !== false" appReveal>
-        <div class="card-heading">
-          <div>
-            <span class="eyebrow">بيانات التداول والقوائم</span>
-            <h2>مؤشرات السوق المالية</h2>
-          </div>
-          <span class="muted">{{ getSourceText(marketData.sourceLastUpdateText) }}</span>
-        </div>
-
-        <div class="fundamentals">
-          <div>
-            <span>القيمة الاسمية</span>
-            <strong>{{ marketData.nominalValue != null ? (marketData.nominalValue | number:'1.2-2') + ' ' + (marketData.currency || 'ج.م') : '—' }}</strong>
-          </div>
-          <div>
-            <span>القيمة الدفترية</span>
-            <strong>{{ marketData.bookValue != null ? (marketData.bookValue | number:'1.2-2') + ' ' + (marketData.currency || 'ج.م') : '—' }}</strong>
-          </div>
-          <div>
-            <span>مضاعف القيمة الدفترية (P/B)</span>
-            <strong>{{ marketData.pbRatio ? (marketData.pbRatio | number:'1.2-2') + 'x' : '—' }}</strong>
-          </div>
-          <div>
-            <span>ربحية السهم (EPS)</span>
-            <strong>{{ marketData.eps != null ? (marketData.eps | number:'1.2-2') + ' ' + (marketData.currency || 'ج.م') : '—' }}</strong>
-          </div>
-          <div>
-            <span>مضاعف الربحية (P/E)</span>
-            <strong>{{ marketData.peRatio ? (marketData.peRatio | number:'1.2-2') + 'x' : '—' }}</strong>
-          </div>
-          <div>
-            <span>القيمة السوقية</span>
-            <strong>{{ marketData.marketValue != null ? (marketData.marketValue | number:'1.0-0') : '—' }}</strong>
-          </div>
-          <div>
-            <span>أعلى سعر بالجلسة</span>
-            <strong>{{ marketData.high != null ? (marketData.high | number:'1.2-2') : '—' }}</strong>
-          </div>
-          <div>
-            <span>أدنى سعر بالجلسة</span>
-            <strong>{{ marketData.low != null ? (marketData.low | number:'1.2-2') : '—' }}</strong>
-          </div>
-        </div>
-      </section>
+      <!-- Market Data Fundamentals -->
+      <mz-market-indicators-section
+        *ngIf="marketData.hasMarketData !== false"
+        appReveal
+        style="margin: 20px 0;"
+        eyebrow="بيانات التداول والقوائم"
+        title="مؤشرات السوق المالية"
+        [items]="marketIndicatorsList">
+        <span action class="mz-authority-meta">{{ getSourceText(marketData.sourceLastUpdateText) }}</span>
+      </mz-market-indicators-section>
     </div>
   `
 })
@@ -1347,4 +1054,174 @@ export class StockDetailComponent implements OnInit, OnDestroy {
     if (garbled > text.length * 0.3) return 'بيانات محدثة آلياً';
     return text.trim();
   }
+
+  // ── Mappers for shared details components ───────────────────────────
+  get headerTags(): MzHeaderTag[] {
+    if (!this.marketData) return [];
+    const tags: MzHeaderTag[] = [];
+    if (this.marketData.sectorNameAr) {
+      tags.push({ label: this.marketData.sectorNameAr, tone: 'neutral' });
+    }
+    if (this.marketData.sectorWeight !== null && this.marketData.sectorWeight !== undefined && this.marketData.sectorWeight > 0) {
+      const isCapped = this.marketData.isSectorWeightCapped;
+      const factor = this.marketData.sectorCappingFactor;
+      const label = 'الوزن في القطاع: ' + Number(this.marketData.sectorWeight).toFixed(2) + '%' + (isCapped && factor ? ' (مسقوف - معامل: ' + Number(factor).toFixed(4) + ')' : '');
+      tags.push({ label, tone: 'neutral' });
+    }
+    for (const idx of this.nonSectoralIndices) {
+      const w = idx.weight && idx.weight > 0 ? ' (' + Number(idx.weight).toFixed(2) + '%)' : '';
+      tags.push({
+        label: this.getIndexLabel(idx.code) + w,
+        link: ['/indices', idx.code],
+        tone: 'default'
+      });
+    }
+    return tags;
+  }
+
+  get srPoints(): MzSrPoint[] {
+    if (!this.supportResistance) return [];
+    const sr = this.supportResistance;
+    const pts: MzSrPoint[] = [];
+    if (sr.s2 != null) pts.push({ key: 's2', label: 'S2', value: Number(sr.s2).toFixed(2), pos: 5, kind: 's' });
+    if (sr.s1 != null) pts.push({ key: 's1', label: 'S1', value: Number(sr.s1).toFixed(2), pos: 27.5, kind: 's' });
+    if (sr.pivot != null) pts.push({ key: 'pivot', label: 'PIVOT', value: Number(sr.pivot).toFixed(2), pos: 50, kind: 'p' });
+    if (sr.r1 != null) pts.push({ key: 'r1', label: 'R1', value: Number(sr.r1).toFixed(2), pos: 72.5, kind: 'r' });
+    if (sr.r2 != null) pts.push({ key: 'r2', label: 'R2', value: Number(sr.r2).toFixed(2), pos: 95, kind: 'r' });
+    return pts;
+  }
+
+  get fairValueGapText(): string | null {
+    if (this.fairValuePremiumPct === null) return 'N/A';
+    if (this.fairValueSignal === 'expensive') {
+      const mult = this.showFairValueMultiple && this.fairValueMultiple !== null ? ' (فرصة للهبوط ' + Number(this.fairValueMultiple).toFixed(1) + 'x للوصول للسعر العادل)' : '';
+      return '-' + Number(this.fairValuePremiumPct).toFixed(1) + '% — السعر أعلى من القيمة العادلة بنسبة ' + Number(this.fairValuePremiumPct).toFixed(1) + '%' + mult;
+    }
+    if (this.fairValueSignal === 'cheap') {
+      const up = this.fairValueUpsidePct != null ? Number(this.fairValueUpsidePct).toFixed(1) : '';
+      const mult = this.fairValueUpsideMultiple != null ? Number(this.fairValueUpsideMultiple).toFixed(1) : '';
+      return 'السعر أقل من القيمة العادلة — فرصة صعود +' + up + '% (' + mult + 'x للوصول للعادلة)';
+    }
+    return Number(this.fairValuePremiumPct).toFixed(1) + '% — السعر قريب من القيمة العادلة';
+  }
+
+  get fairValueMethodsList(): MzFairMethod[] {
+    return (this.marketData?.fairValueMethods || []).map(m => ({
+      name: this.getMethodDisplayName(m.name),
+      value: (m.value != null ? Number(m.value).toFixed(2) : '—') + ' ' + this.currencyLabel,
+      outlier: !!m.isOutlier,
+      outlierLabel: 'قيمة شاذة مستبعدة (Outlier)'
+    }));
+  }
+
+  get shariaSummaryText(): string {
+    if (this.isShariahBoardFrozen) return 'يوجد لجنة شرعية تشرف على هذا السهم وعلى توافق أنشطته ومعاييره الشرعية.';
+    if (this.marketData?.hasShariahBoard) {
+      return (this.marketData.shariahBoardNote || 'تشرف لجنة/هيئة شرعية على هذا السهم وعلى توافق أنشطته ومعاييره الشرعية.') +
+        ' · الحكم المعتمد: ' + this.getVerdictLabel(this.marketData.shariahStatus);
+    }
+    const verdict = this.getVerdictLabel(this.internalVerdict);
+    const pur = this.showPurificationPct ? ' (نسبة التطهير: ' + this.marketData?.shariahPct + '%)' : '';
+    const ov = this.showScholarsHeaderNote ? ' — متوافق وفق فتاوى بعض العلماء الأفراد فقط (نسبة القروض ' + (this.loansPct != null ? Number(this.loansPct).toFixed(2) : '') + '% ≤ 50%)' :
+      (this.showFallbackHeaderNote ? ' — متوافق وفق رأي الجهات الشرعية (النسب غير متوفرة)' : '');
+    return 'الحكم الداخلي المعتمد: ' + verdict + pur + ov;
+  }
+
+  get shariaSummaryNote(): string | null {
+    if (this.isShariahBoardFrozen || this.marketData?.hasShariahBoard) return null;
+    if (this.totalAvailableSourcesCount === 0) return 'لا رأي مسجّل من أصل 7 مصادر مستقلة';
+    const pct = this.compliancePercent !== null ? this.compliancePercent + '% مؤشرات متوافقة · ' : '';
+    const noOp = this.noOpinionSourcesCount > 0 ? ' (' + this.noOpinionSourcesCount + ' بلا رأي)' : '';
+    return this.compliantSourcesCount + ' من ' + this.totalAvailableSourcesCount + ' جهات تعتبر السهم متوافقاً · ' + pct + noOp;
+  }
+
+  get shariaSummaryTone(): 'good' | 'bad' | 'neutral' {
+    if (this.isShariahBoardFrozen || this.isCompliant(this.internalVerdict)) return 'good';
+    if (this.isNonCompliant(this.internalVerdict)) return 'bad';
+    return 'neutral';
+  }
+
+  get shariaAuthoritiesList(): MzAuthority[] {
+    if (this.isShariahBoardFrozen || this.marketData?.hasShariahBoard) return [];
+    const list: MzAuthority[] = [];
+    for (const op of this.sourceOpinionsList) {
+      const isHalal = this.isHalalBourseCard(op);
+      const isInsuff = isHalal && this.isHalalInsufficient;
+      const status: 'good' | 'bad' | 'neutral' = op.noOpinion || isInsuff ? 'neutral' : (this.isCompliant(this.getCardStatus(op)) ? 'good' : 'bad');
+      const statusLabel = op.noOpinion ? 'لا يوجد رأي مسجّل' : this.getVerdictLabel(this.getCardStatus(op));
+      const date = op.sourceLastUpdated ? 'تحديث: ' + new Date(op.sourceLastUpdated).toISOString().slice(0, 10) :
+        (op.fetchedAt ? 'جُلب: ' + new Date(op.fetchedAt).toISOString().slice(0, 10) : null);
+      list.push({
+        name: this.getSourceName(op.sourceKey),
+        status,
+        statusLabel,
+        date: !op.noOpinion ? date : null,
+        note: op.noOpinion ? 'لم تُصدر هذه الجهة رأياً على هذا السهم بعد — لا تُحتسب في نسبة الامتثال.' : (op.note || 'لا توجد ملاحظات تفصيلية مسجلة من المصدر.'),
+        pdfUrl: this.isManualSource(op) ? this.pdfUrlFor(op) : null,
+        actionLabel: isHalal && this.showDetailsButton ? 'عرض التفاصيل' : null
+      });
+    }
+
+    // 8th card: EGX33
+    list.push({
+      name: 'مؤشر الشريعة EGX33',
+      status: this.isEGX33Constituent ? 'good' : 'neutral',
+      statusLabel: this.isEGX33Constituent ? 'ضمن مؤشر الشريعة EGX33' : 'غير مدرج في مؤشر الشريعة',
+      note: this.isEGX33Constituent ? 'السهم مدرج ضمن مكونات مؤشر الشريعة EGX33.' : 'السهم غير مدرج في مكونات مؤشر الشريعة EGX33 (قد يكون متوافقاً شرعياً لأسباب أخرى).'
+    });
+
+    return list;
+  }
+
+  onAuthorityAction(a: MzAuthority): void {
+    if (a.name.includes('حلال') || a.actionLabel === 'عرض التفاصيل') {
+      this.openStandardsDialog();
+    }
+  }
+
+  get shariaRatiosList(): MzMetric[] {
+    if (!this.shouldShowRatiosSection || !this.hasShariahMetricsData) return [];
+    return [
+      {
+        label: 'تصنيف النشاط',
+        value: this.marketData?.shariahMetrics?.activityClassification || this.marketData?.sectorNameAr || 'نشاط تشغيلي تجاري',
+        tone: null
+      },
+      {
+        label: 'تطهير السهم (AAOIFI)',
+        value: (this.aaoifiHaramPerShare != null ? this.aaoifiHaramPerShare : '—') + ' ' + this.currencyLabel + '/سهم',
+        tone: null,
+        ltr: true
+      },
+      {
+        label: 'نسبة الإيراد المحرم (S&P)',
+        value: (this.spHaramPct != null ? Number(this.spHaramPct).toFixed(2) : '—') + '%',
+        tone: this.spHaramPct != null && this.spHaramPct > 5 ? 'negative' : 'positive',
+        ltr: true
+      },
+      {
+        label: 'نسبة القروض والفوائد',
+        value: (this.loansPct != null ? Number(this.loansPct).toFixed(2) : '—') + '%',
+        tone: this.loansPct != null && this.loansPct > 33.33 ? 'negative' : 'positive',
+        ltr: true
+      }
+    ];
+  }
+
+  get marketIndicatorsList(): MzIndicator[] {
+    const md = this.marketData;
+    if (!md) return [];
+    const cur = md.currency || 'ج.م';
+    return [
+      { label: 'القيمة الاسمية', value: md.nominalValue != null ? Number(md.nominalValue).toFixed(2) + ' ' + cur : '—', ltr: true },
+      { label: 'القيمة الدفترية', value: md.bookValue != null ? Number(md.bookValue).toFixed(2) + ' ' + cur : '—', ltr: true },
+      { label: 'مضاعف القيمة الدفترية (P/B)', value: md.pbRatio ? Number(md.pbRatio).toFixed(2) + 'x' : '—', ltr: true },
+      { label: 'ربحية السهم (EPS)', value: md.eps != null ? Number(md.eps).toFixed(2) + ' ' + cur : '—', ltr: true },
+      { label: 'مضاعف الربحية (P/E)', value: md.peRatio ? Number(md.peRatio).toFixed(2) + 'x' : '—', ltr: true },
+      { label: 'القيمة السوقية', value: md.marketValue != null ? Number(md.marketValue).toLocaleString('en-US', { maximumFractionDigits: 0 }) : '—', ltr: true },
+      { label: 'أعلى سعر بالجلسة', value: md.high != null ? Number(md.high).toFixed(2) : '—', ltr: true },
+      { label: 'أدنى سعر بالجلسة', value: md.low != null ? Number(md.low).toFixed(2) : '—', ltr: true }
+    ];
+  }
+
 }

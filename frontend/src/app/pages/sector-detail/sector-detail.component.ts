@@ -15,11 +15,12 @@ import { navigateQueryParams } from '../../utils/navigation-utils';
 import { StockCardComponent } from '../../components/stock-card/stock-card.component';
 import { IndexSummaryDto, PagedResult, SectorSummaryDto, StockListItemDto } from '../../models/api.models';
 import { matchesNonComplianceType } from '../../models/shariah-standards';
+import { MzBackLinkComponent } from '../../components/ui';
 
 @Component({
   selector: 'app-sector-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, LucideAngularModule, StockCardComponent],
+  imports: [CommonModule, RouterLink, FormsModule, LucideAngularModule, StockCardComponent, MzBackLinkComponent],
   template: `
     <div *ngIf="loading && !sector" class="empty-state">
       <p>جارٍ تحميل بيانات القطاع...</p>
@@ -34,9 +35,7 @@ import { matchesNonComplianceType } from '../../models/shariah-standards';
       <!-- Sector Hero -->
       <div class="page-intro index-detail-intro">
         <div>
-          <a routerLink="/indices/Sectoral-Indices" class="back-link">
-            <lucide-icon [img]="ArrowLeftIcon" size="15"></lucide-icon> العودة إلى القطاعات
-          </a>
+          <mz-back-link [to]="'/indices/Sectoral-Indices'" label="العودة إلى القطاعات"></mz-back-link>
           <span class="eyebrow">قطاع اقتصادي</span>
           <h1>{{ sector.nameAr }}</h1>
           <p>{{ sector.nameEn }}</p>

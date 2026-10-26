@@ -13,11 +13,12 @@ import { ApiService } from '../../services/api.service';
 import { navigateQueryParams } from '../../utils/navigation-utils';
 import { StockCardComponent } from '../../components/stock-card/stock-card.component';
 import { ConstituentItemDto, IndexConstituentsPagedResultDto } from '../../models/api.models';
+import { MzBackLinkComponent } from '../../components/ui';
 
 @Component({
   selector: 'app-index-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, LucideAngularModule, StockCardComponent],
+  imports: [CommonModule, RouterLink, FormsModule, LucideAngularModule, StockCardComponent, MzBackLinkComponent],
   template: `
     <div *ngIf="loading" class="empty-state">
       <p>جارٍ تحميل بيانات مكونات المؤشر...</p>
@@ -31,9 +32,7 @@ import { ConstituentItemDto, IndexConstituentsPagedResultDto } from '../../model
     <div *ngIf="result">
       <div class="page-intro index-detail-intro">
         <div>
-          <a routerLink="/indices" class="back-link">
-            <lucide-icon [img]="ArrowLeftIcon" size="15"></lucide-icon> العودة إلى المؤشرات
-          </a>
+          <mz-back-link [to]="'/indices'" label="العودة إلى المؤشرات"></mz-back-link>
           <span class="eyebrow">مؤشر البورصة الرسمية</span>
           <h1>{{ result.indexNameAr || result.indexCode }}</h1>
           <p>{{ result.indexNameEn }} · كود المؤشر: {{ result.indexCode }}</p>

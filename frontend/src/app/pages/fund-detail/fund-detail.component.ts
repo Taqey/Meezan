@@ -5,6 +5,17 @@ import { LucideAngularModule, ArrowLeft, TrendingUp, TrendingDown, AlertCircle, 
 import { ApiService } from '../../services/api.service';
 import { FundDetailDto, FundPricePointDto, FundAnalysisDto, FundSimilarDto, FundCategoryMembershipDto, FundRiskLevel, FundType } from '../../models/api.models';
 import { FavoriteToggleComponent } from '../../components/favorite-toggle/favorite-toggle.component';
+import {
+  MzBackLinkComponent,
+  MzDetailsHeaderCardComponent,
+  MzDetailsSectionComponent,
+  MzInfoGridComponent,
+  MzInfoCardComponent,
+  MzCardsGridComponent,
+  MzHeaderTag,
+  MzIndicator,
+  MzListingCardData
+} from '../../components/ui';
 import { Subject, takeUntil } from 'rxjs';
 import { fundLogoUrl } from '../../models/fund-display';
 import type { Chart, ChartConfiguration } from 'chart.js';
@@ -30,7 +41,15 @@ async function ensureChartJs(): Promise<typeof import('chart.js') | null> {
 @Component({
   selector: 'app-fund-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, LucideAngularModule, FavoriteToggleComponent],
+  imports: [
+    CommonModule,
+    RouterLink,
+    LucideAngularModule,
+    MzBackLinkComponent,
+    MzDetailsHeaderCardComponent,
+    MzDetailsSectionComponent,
+    MzInfoGridComponent
+  ],
   template: `
     <div *ngIf="loading" class="empty-state">
       <lucide-icon [img]="Loader2Icon" size="32" class="animate-spin"></lucide-icon>
@@ -43,189 +62,150 @@ async function ensureChartJs(): Promise<typeof import('chart.js') | null> {
     </div>
 
     <div *ngIf="!loading && fund">
-      <div class="detail-hero">
-        <a routerLink="/funds" class="back-link">
-          <lucide-icon [img]="ArrowLeftIcon" size="15"></lucide-icon> العودة إلى الصناديق
-        </a>
+      <!-- Back Link -->
+      <mz-back-link [to]="'/funds'" label="العودة إلى الصناديق"></mz-back-link>
 
-        <div class="detail-heading">
-          <div>
-            <div class="ticker large">
-              <img class="detail-logo"
-                   [src]="heroLogoUrl"
-                   [alt]="fund.nameAr"
-                   loading="eager"
-                   (error)="heroLogoUrl = null">
-              {{ fund.code }}
-              <app-favorite-toggle [symbol]="fund.code"></app-favorite-toggle>
-              <span *ngIf="fund.nameEn">{{ fund.nameEn }}</span>
-            </div>
-            <h1>{{ fund.nameAr }}</h1>
-            <div class="tag-row">
-              <span *ngIf="fund.classificationPathAr" class="class-path-badge" [title]="fund.classificationPathAr">
-                {{ fund.classificationPathAr }}
-              </span>
-              <span class="fund-type" [style.background]="getFundAccent(fund.type).tint" [style.color]="getFundAccent(fund.type).accent">
-                {{ fund.effectiveClassification?.rootNameAr || fund.typeNameAr }}
-              </span>
-              <span *ngIf="fund.assetManagerName" style="font-size: 12px; background: var(--muted); padding: 2px 8px; border-radius: 6px; border: 1px solid var(--border);">
-                {{ fund.assetManagerName }}
-              </span>
-              <span *ngIf="fund.isIslamic" style="font-size: 11px; background: #dcfce7; color: #166534; padding: 2px 8px; border-radius: 6px; border: 1px solid #bbf7d0;">
-                <lucide-icon [img]="ShieldCheckIcon" size="12"></lucide-icon> متوافق شرعياً
-              </span>
-              <span *ngIf="fund.isFeatured" style="font-size: 11px; background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 6px; border: 1px solid #fcd34d;">
-                <lucide-icon [img]="StarIcon" size="12"></lucide-icon> مميز
-              </span>
-            </div>
+      <!-- Details Header Card -->
+      <mz-details-header-card
+        [title]="fund.nameAr"
+        [code]="fund.code"
+        [secondaryName]="fund.nameEn"
+        [favoriteSymbol]="fund.code"
+        [tags]="headerTags"
+        priceLabel="السعر الحالي"
+        [price]="fund.currentPrice != null ? (fund.currentPrice | number:'1.4-4') : '—'"
+        [currency]="fund.currency || 'EGP'"
+        [changeText]="fund.dailyChange != null ? ((fund.dailyChange > 0 ? '+' : '') + fund.dailyChange.toFixed(2) + '%') : null"
+        [changeTone]="fund.dailyChange != null ? (fund.dailyChange > 0 ? 'positive' : (fund.dailyChange < 0 ? 'negative' : 'muted')) : 'muted'">
+        <span titleBadge *ngIf="fund.isIslamic" class="mz-badge" style="background:#dcfce7;color:#166534;border:1px solid #bbf7d0;font-size:11px;gap:4px">
+          <lucide-icon [img]="ShieldCheckIcon" [size]="12"></lucide-icon> متوافق شرعياً
+        </span>
+      </mz-details-header-card>
+
+      <div style="display: flex; flex-direction: column; gap: 24px; margin-top: 24px;">
+        <!-- Section 1: Details & Overview -->
+        <mz-details-section
+          eyebrow="بيانات سريعة"
+          title="تفاصيل الصندوق ومعلومات التأسيس">
+          <a *ngIf="fund.prospectusUrl" action [href]="fund.prospectusUrl" target="_blank" rel="noopener noreferrer"
+             class="mz-btn" style="background:#f0fdf4;border-color:#bbf7d0;color:#166534;font-size:12px;gap:6px">
+            <lucide-icon [img]="FileTextIcon" [size]="15"></lucide-icon> عرض نشرة الإصدار الرسمية (PDF)
+          </a>
+
+          <mz-info-grid [items]="fundFundamentalsList"></mz-info-grid>
+
+          <div *ngIf="fund.descriptionAr" style="margin-top: 20px; padding-top: 16px; border-top: 1px solid rgba(188,202,192,.3);">
+            <h3 class="mz-subtitle" style="margin-top:0">وصف الصندوق</h3>
+            <p class="mz-authority-note" style="white-space: pre-wrap; font-size: 13px; line-height: 1.8;">{{ fund.descriptionAr }}</p>
+          </div>
+        </mz-details-section>
+
+        <!-- Section 2: Historical Performance Chart -->
+        <mz-details-section
+          eyebrow="الأداء التاريخي"
+          title="رسم بياني للأسعار وتطور العائد">
+          <div action class="mz-perf-tabs" style="margin:0">
+            <button *ngFor="let period of chartPeriods" type="button" class="mz-chip"
+                    [class.active]="selectedPeriod === period.key"
+                    (click)="selectPeriod(period.key)">
+              {{ period.label }}
+            </button>
           </div>
 
-          <div class="detail-price" *ngIf="fund.currentPrice !== null && fund.currentPrice !== undefined">
-            <span>السعر الحالي</span>
-            <strong>{{ fund.currentPrice | number:'1.4-4' }} <small>{{ fund.currency }}</small></strong>
-            <b [style.color]="fund.dailyChange !== null && fund.dailyChange > 0 ? 'var(--good)' : (fund.dailyChange !== null && fund.dailyChange < 0 ? 'var(--bad)' : 'inherit')">
-              {{ fund.dailyChange !== null && fund.dailyChange > 0 ? '+' : '' }}{{ fund.dailyChange?.toFixed(2) }}%
-            </b>
-          </div>
-          <div class="detail-price" *ngIf="fund.currentPrice === null || fund.currentPrice === undefined">
-            <span class="muted">السعر الحالي</span>
-            <strong>—</strong>
-          </div>
-        </div>
-      </div>
-
-      <div class="detail-grid">
-        <div class="detail-card">
-          <div class="card-heading">
-            <div>
-              <span class="eyebrow">معلومات أساسية</span>
-              <h2>تفاصيل الصندوق</h2>
-            </div>
-          </div>
-
-          <div class="fundamentals" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
-            <div><span>كود الصندوق</span><strong style="font-family: monospace;">{{ fund.code }}</strong></div>
-            <div><span>المدير</span><strong>{{ fund.assetManagerName || '—' }}</strong></div>
-            <div><span>العملة</span><strong>{{ fund.currency }}</strong></div>
-            <div><span>تاريخ التأسيس</span><strong>{{ fund.inceptionDate ? (fund.inceptionDate | date:'yyyy-MM-dd') : '—' }}</strong></div>
-            <div><span>الحد الأدنى للاستثمار</span><strong>{{ fund.minimumInvestment || '—' }}</strong></div>
-            <div><span>الرسوم السنوية</span><strong>{{ fund.managementFee !== null ? fund.managementFee + '%' : '—' }}</strong></div>
-            <div><span>إجمالي الأصول (AUM)</span><strong>{{ fund.aum !== null ? (fund.aum / 1e6).toFixed(1) + ' م' + fund.currency : '—' }}</strong></div>
-            <div><span>مستوى المخاطر</span><strong [style.color]="getRiskColor(fund.riskLevel)">{{ getRiskLabel(fund.riskLevel) }}</strong></div>
-          </div>
-
-          <div *ngIf="fund.prospectusUrl" style="margin-top: 16px; padding: 12px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px;">
-            <a [href]="fund.prospectusUrl" target="_blank" rel="noopener" class="btn btn-outline" style="display: inline-flex; align-items: center; gap: 8px;">
-              <lucide-icon [img]="FileTextIcon" size="16"></lucide-icon> عرض نشرة الإصدار
-            </a>
-            <span class="muted" style="margin-right: 12px; font-size: 11px;">يفتح في نافذة جديدة</span>
-          </div>
-
-          <div *ngIf="fund.descriptionAr" style="margin-top: 16px;">
-            <h3 style="margin: 0 0 8px;">وصف الصندوق</h3>
-            <p class="muted" style="white-space: pre-wrap;">{{ fund.descriptionAr }}</p>
-          </div>
-        </div>
-
-        <div class="detail-card">
-          <div class="card-heading">
-            <div>
-              <span class="eyebrow">الأداء التاريخي</span>
-              <h2>رسم بياني للأسعار</h2>
-            </div>
-            <div class="period-buttons" style="display: flex; gap: 8px;">
-              <button *ngFor="let period of chartPeriods" class="btn btn-outline" [class.active]="selectedPeriod === period.key" (click)="selectPeriod(period.key)" style="font-size: 12px; padding: 4px 12px;">{{ period.label }}</button>
-            </div>
-          </div>
-
-          <div class="chart-container" style="height: 300px; position: relative;">
+          <div class="chart-container" style="height: 300px; position: relative; margin-top: 16px;">
             <canvas #priceChart></canvas>
           </div>
 
-          <div *ngIf="!chartHasData()" class="muted" style="text-align: center; padding: 40px;">
+          <div *ngIf="!chartHasData()" class="mz-authority-note" style="text-align: center; padding: 40px 0;">
             لا توجد بيانات سعرية تاريخية متاحة لهذا الصندوق.
           </div>
-        </div>
+        </mz-details-section>
 
-        <div class="detail-card" *ngIf="fund.analysis">
-          <div class="card-heading">
-            <div>
-              <span class="eyebrow">تحليل SNDUK</span>
-              <h2>درجات ومؤشرات التحليل</h2>
-            </div>
-            <span class="muted" *ngIf="fund.analysis.calculatedAt">آخر تحديث: {{ fund.analysis.calculatedAt | date:'yyyy-MM-dd' }}</span>
-          </div>
+        <!-- Section 3: SNDUK Analysis (if present) -->
+        <mz-details-section
+          *ngIf="fund.analysis"
+          eyebrow="تحليل SNDUK"
+          title="درجات ومؤشرات التحليل">
+          <span action class="mz-authority-meta" *ngIf="fund.analysis.calculatedAt">
+            آخر تحديث: {{ fund.analysis.calculatedAt | date:'yyyy-MM-dd' }}
+          </span>
 
-          <div class="scores-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 16px;">
+          <div class="scores-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px;">
             <div *ngFor="let score of analysisScores" class="score-card" [style.border-color]="score.color" [style.background]="score.color + '15'">
-              <div style="font-size: 11px; color: var(--muted-foreground); text-transform: uppercase;">{{ score.label }}</div>
-              <div style="font-size: 28px; font-weight: 700; color: var(--ink);" *ngIf="score.value !== null">{{ score.value | number:'1.1-1' }}</div>
-              <div style="font-size: 28px; font-weight: 700; color: var(--muted-foreground);" *ngIf="score.value === null">—</div>
-              <div style="font-size: 11px; color: {{ score.color }}; margin-top: 4px;" *ngIf="score.value !== null">{{ score.badge }}</div>
+              <div style="font-size: 11px; color: var(--mz-outline); text-transform: uppercase;">{{ score.label }}</div>
+              <div style="font-size: 26px; font-weight: 700; color: var(--mz-on-surface); margin: 4px 0;" *ngIf="score.value !== null">{{ score.value | number:'1.1-1' }}</div>
+              <div style="font-size: 26px; font-weight: 700; color: var(--mz-outline);" *ngIf="score.value === null">—</div>
+              <div style="font-size: 11px; color: {{ score.color }}; font-weight: 600;" *ngIf="score.value !== null">{{ score.badge }}</div>
             </div>
           </div>
 
-          <div class="metrics-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-top: 16px;">
-            <div *ngFor="let metric of analysisMetrics" class="metric-card">
-              <span>{{ metric.label }}</span>
-              <strong>{{ metric.value }}</strong>
+          <div class="mz-infogrid" style="margin-bottom: 20px;">
+            <div *ngFor="let metric of analysisMetrics" class="mz-indicator">
+              <span class="mz-indicator-label">{{ metric.label }}</span>
+              <strong class="mz-indicator-value mz-ltr">{{ metric.value }}</strong>
             </div>
           </div>
 
-          <div class="explanations" style="margin-top: 20px;">
-            <h3 style="margin: 0 0 12px;">ملاحظات التحليل</h3>
-            <div *ngFor="let exp of analysisExplanations" style="margin-bottom: 12px; padding: 12px; background: var(--muted); border-radius: 8px;">
-              <strong style="color: var(--primary);">{{ exp.title }}:</strong>
-              <p style="margin: 8px 0 0; color: var(--muted-foreground);">{{ exp.text }}</p>
+          <div class="explanations" *ngIf="analysisExplanations.length" style="padding-top: 16px; border-top: 1px solid rgba(188,202,192,.3);">
+            <h3 class="mz-subtitle" style="margin-top:0">ملاحظات التحليل</h3>
+            <div *ngFor="let exp of analysisExplanations" style="margin-bottom: 12px; padding: 12px; background: var(--mz-surface-low); border-radius: 8px; border-inline-start: 3px solid var(--mz-primary);">
+              <strong style="color: var(--mz-primary); font-size: 13px;">{{ exp.title }}:</strong>
+              <p class="mz-authority-note" style="margin: 6px 0 0;">{{ exp.text }}</p>
             </div>
           </div>
-        </div>
+        </mz-details-section>
 
-        <div class="detail-card" *ngIf="fund.similarFunds && fund.similarFunds.length > 0">
-          <div class="card-heading">
-            <div>
-              <span class="eyebrow">صناديق مشابهة</span>
-              <h2>صناديق في نفس الفئة</h2>
-            </div>
-          </div>
-          <div class="similar-funds-grid">
-            <a *ngFor="let sim of fund.similarFunds" [routerLink]="['/funds', sim.id]" class="similar-fund-card">
-              <div class="similar-logo-box">
-                <img class="similar-logo" [src]="simLogoUrl(sim)" [alt]="sim.nameAr" loading="lazy" (error)="onSimLogoError($event)">
+        <!-- Section 4: Similar Funds (if present) -->
+        <mz-details-section
+          *ngIf="fund.similarFunds && fund.similarFunds.length > 0"
+          eyebrow="صناديق مشابهة"
+          title="صناديق في نفس الفئة">
+          <div class="mz-grid cols-4" style="margin-bottom:0">
+            <a *ngFor="let sim of fund.similarFunds" [routerLink]="['/funds', sim.id]"
+               class="mz-card mz-lcard" style="min-height: 170px;">
+              <div class="mz-lcard-head">
+                <div class="mz-lcard-id">
+                  <img *ngIf="simLogoUrl(sim)" [src]="simLogoUrl(sim)" [alt]="sim.nameAr"
+                       style="width:28px;height:28px;object-fit:contain;border-radius:6px;border:1px solid rgba(188,202,192,.3);padding:2px;background:#fff;"
+                       (error)="onSimLogoError($event)">
+                  <div>
+                    <h3 class="mz-lcard-title" [attr.title]="sim.nameAr" style="font-size:14px;line-height:20px;">{{ sim.nameAr || '—' }}</h3>
+                    <span class="mz-lcard-sub" [attr.title]="sim.nameEn">{{ sim.nameEn || '—' }}</span>
+                  </div>
+                </div>
+                <div class="mz-lcard-badges">
+                  <span class="mz-badge neutral"><span class="mz-ltr">{{ sim.code || '—' }}</span></span>
+                </div>
               </div>
-              <div class="similar-code" [attr.title]="sim.code">{{ sim.code || '—' }}</div>
-              <div class="similar-name-ar" [attr.title]="sim.nameAr">{{ sim.nameAr || '—' }}</div>
-              <div class="similar-name-en" [attr.title]="sim.nameEn">{{ sim.nameEn || '—' }}</div>
-              <div class="similar-type" [attr.title]="sim.effectiveClassification?.rootNameAr || sim.typeNameAr">
-                {{ sim.effectiveClassification?.rootNameAr || sim.typeNameAr || '—' }}
+              <div class="mz-lcard-foot" style="margin-top:auto;">
+                <span style="font-weight:600;color:var(--mz-primary);">{{ sim.effectiveClassification?.rootNameAr || sim.typeNameAr || '—' }}</span>
+                <span style="color:var(--mz-primary);display:inline-flex;align-items:center;gap:2px">عرض الصندوق ←</span>
               </div>
             </a>
           </div>
-        </div>
+        </mz-details-section>
 
-        <div class="detail-card">
-          <div class="card-heading">
-            <div>
-              <span class="eyebrow">التصنيفات</span>
-              <h2>الانتماء للتصنيفات</h2>
-            </div>
-          </div>
+        <!-- Section 5: Classification Memberships -->
+        <mz-details-section
+          eyebrow="التصنيفات والهيكلة"
+          title="تصنيفات الصندوق والخصائص القانونية">
           <div *ngIf="fund.categoryMemberships && fund.categoryMemberships.length > 0" style="display: flex; flex-wrap: wrap; gap: 8px;">
-            <span *ngFor="let cm of fund.categoryMemberships" class="category-badge" [style.background]="getCategoryColor(cm.source)" style="color: var(--ink); padding: 4px 10px; border-radius: 999px; font-size: 12px; display: inline-flex; align-items: center; gap: 6px;">
+            <span *ngFor="let cm of fund.categoryMemberships" class="mz-badge" [style.background]="getCategoryColor(cm.source)" style="color: var(--mz-on-surface); padding: 6px 12px; font-size: 12px; gap: 6px;">
               {{ cm.categoryNameAr }}
-              <span style="font-size: 10px; opacity: 0.7;">{{ cm.source }}</span>
+              <small style="opacity: 0.7; font-size: 10px;">{{ cm.source }}</small>
             </span>
           </div>
-          <div *ngIf="!fund.categoryMemberships || fund.categoryMemberships.length === 0" class="muted" style="padding: 16px;">
-            لا يوجد تصنيفات مسجلة لهذا الصندوق.
-          </div>
-        </div>
+          <p *ngIf="!fund.categoryMemberships || fund.categoryMemberships.length === 0" class="mz-authority-note">
+            لا توجد تصنيفات مسجلة لهذا الصندوق.
+          </p>
+        </mz-details-section>
 
-        <div class="attribution" style="margin: 24px 0; padding: 16px; background: var(--muted); border-radius: 12px; text-align: center; font-size: 12px; color: var(--muted-foreground);">
-          المصدر: <a href="https://snduk.com" target="_blank" rel="noopener" style="color: var(--primary); text-decoration: underline;">SNDUK</a> |
+        <!-- Section 6: Attribution / Disclaimer -->
+        <footer class="mz-source-note" style="padding: 16px 0;">
+          المصدر: <a href="https://snduk.com" target="_blank" rel="noopener noreferrer" style="color: var(--mz-primary); font-weight: 600;">SNDUK</a> |
           آخر تحديث: {{ lastSyncedAt ? (lastSyncedAt | date:'yyyy-MM-dd HH:mm') : '—' }} |
-          <span style="color: var(--bad);">إخلاء المسؤولية: البيانات للأغراض المعلوماتية فقط ولا تُعد نصيحة استثمارية.</span>
-        </div>
+          <span style="color: var(--mz-error);">إخلاء المسؤولية: البيانات للأغراض المعلوماتية فقط ولا تُعد نصيحة استثمارية.</span>
+        </footer>
       </div>
     </div>
   `,
@@ -672,4 +652,40 @@ export class FundDetailComponent implements OnInit, AfterViewInit, AfterViewChec
       default: return '#f3f4f6';
     }
   }
+
+  // ── Mappers for shared UI components ────────────────────────────────
+  get headerTags(): MzHeaderTag[] {
+    if (!this.fund) return [];
+    const tags: MzHeaderTag[] = [];
+    if (this.fund.classificationPathAr) {
+      tags.push({ label: this.fund.classificationPathAr, tone: 'neutral' });
+    }
+    const typeLabel = this.fund.effectiveClassification?.rootNameAr || this.fund.typeNameAr;
+    if (typeLabel) {
+      tags.push({ label: typeLabel, tone: 'default' });
+    }
+    if (this.fund.assetManagerName) {
+      tags.push({ label: this.fund.assetManagerName, tone: 'outline' });
+    }
+    if (this.fund.isFeatured) {
+      tags.push({ label: 'مميز ★', tone: 'warn' });
+    }
+    return tags;
+  }
+
+  get fundFundamentalsList(): MzIndicator[] {
+    if (!this.fund) return [];
+    const f = this.fund;
+    return [
+      { label: 'كود الصندوق', value: f.code, ltr: true },
+      { label: 'المدير', value: f.assetManagerName || '—' },
+      { label: 'العملة', value: f.currency, ltr: true },
+      { label: 'تاريخ التأسيس', value: f.inceptionDate ? new Date(f.inceptionDate).toISOString().slice(0, 10) : '—', ltr: true },
+      { label: 'الحد الأدنى للاستثمار', value: f.minimumInvestment || '—' },
+      { label: 'الرسوم السنوية', value: f.managementFee !== null ? f.managementFee + '%' : '—', ltr: true },
+      { label: 'إجمالي الأصول (AUM)', value: f.aum !== null ? (f.aum / 1e6).toFixed(1) + ' م ' + f.currency : '—', ltr: true },
+      { label: 'مستوى المخاطر', value: this.getRiskLabel(f.riskLevel) }
+    ];
+  }
+
 }

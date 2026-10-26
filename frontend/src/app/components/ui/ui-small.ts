@@ -1,7 +1,7 @@
 import { Component, EventEmitter, HostListener, ElementRef, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { LucideAngularModule, Search, ChevronDown, Star, type LucideIconData } from 'lucide-angular';
+import { LucideAngularModule, Search, ChevronDown, Star, FileText, type LucideIconData } from 'lucide-angular';
 import { FavoriteToggleComponent } from '../favorite-toggle/favorite-toggle.component';
 
 export type Tone = 'positive' | 'negative' | 'muted' | null | undefined;
@@ -278,26 +278,43 @@ export class MzIndicatorCardComponent {
   @Input() ltr = false;
 }
 
-export interface MzAuthority { name: string; status: 'good' | 'bad' | 'neutral'; statusLabel: string; date?: string | null; note?: string | null; }
+export interface MzAuthority {
+  name: string;
+  status: 'good' | 'bad' | 'neutral';
+  statusLabel: string;
+  date?: string | null;
+  note?: string | null;
+  pdfUrl?: string | null;
+  actionLabel?: string | null;
+}
 
 @Component({
   selector: 'mz-authority-card',
   standalone: true,
-  imports: [CommonModule, MzStatusTagComponent],
+  imports: [CommonModule, LucideAngularModule, MzStatusTagComponent],
   host: { class: 'mz', style: 'display:block' },
   template: `
-    <div class="mz-authority">
+    <div class="mz-authority" [ngClass]="authority.status">
       <div class="mz-authority-head">
         <span class="mz-authority-name">{{ authority.name }}</span>
         <mz-status-tag [tone]="authority.status" [label]="authority.statusLabel"></mz-status-tag>
       </div>
+      <div class="mz-authority-verdict" *ngIf="authority.statusLabel">{{ authority.statusLabel }}</div>
       <span class="mz-authority-meta" *ngIf="authority.date">{{ authority.date }}</span>
       <span class="mz-authority-note" *ngIf="authority.note">{{ authority.note }}</span>
+      <a *ngIf="authority.pdfUrl" [href]="authority.pdfUrl" target="_blank" rel="noopener noreferrer" class="mz-authority-pdf">
+        <lucide-icon [img]="FileTextIcon" [size]="14"></lucide-icon> View PDF
+      </a>
+      <button *ngIf="authority.actionLabel" type="button" class="mz-authority-action" (click)="action.emit()">
+        {{ authority.actionLabel }}
+      </button>
     </div>
   `
 })
 export class MzAuthorityCardComponent {
+  readonly FileTextIcon = FileText;
   @Input() authority!: MzAuthority;
+  @Output() action = new EventEmitter<void>();
 }
 
 export const MZ_STAR = Star;

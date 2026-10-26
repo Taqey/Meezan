@@ -108,12 +108,16 @@ export interface MzSrPoint { key: string; label: string; value: string; pos: num
       <p class="mz-authority-note" *ngIf="note">{{ note }}</p>
       <ng-container *ngIf="points.length; else empty">
         <div class="mz-sr-bar">
-          <span *ngFor="let p of points; let i = index" class="mz-sr-pt" [ngClass]="[p.kind, i % 2 ? 'below' : 'above']" [style.right.%]="p.pos">
-            <b class="mz-ltr">{{ p.value }}</b>{{ p.label }}
-          </span>
-          <span class="mz-sr-marker" *ngIf="markerPos != null" [style.right.%]="markerPos" [attr.title]="markerLabel"></span>
+          <div class="mz-sr-marker" *ngIf="markerPos != null" [style.right.%]="markerPos">
+            <span class="mz-sr-marker-tag">{{ markerLabel }}</span>
+            <div class="mz-sr-marker-stem"></div>
+          </div>
+          <div *ngFor="let p of points" class="mz-sr-pt" [ngClass]="p.kind" [style.right.%]="p.pos">
+            <i></i>
+            <b>{{ p.label }}</b>
+            <span class="mz-ltr">{{ p.value }}</span>
+          </div>
         </div>
-        <div class="mz-authority-note" *ngIf="markerLabel && markerPos != null" style="text-align:center">{{ markerLabel }}</div>
       </ng-container>
       <ng-template #empty><p class="mz-authority-note">{{ emptyText }}</p></ng-template>
     </mz-details-section>
@@ -199,6 +203,7 @@ export class MzInfoGridComponent {
   host: { class: 'mz', style: 'display:block' },
   template: `
     <mz-details-section [eyebrow]="eyebrow" [title]="title">
+      <span action><ng-content select="[action]"></ng-content></span>
       <mz-info-grid [items]="items"></mz-info-grid>
       <ng-content></ng-content>
     </mz-details-section>
@@ -222,7 +227,7 @@ export class MzMarketIndicatorsSectionComponent {
         <span>{{ summaryText }}</span><span class="mz-authority-meta" *ngIf="summaryNote">{{ summaryNote }}</span>
       </div>
       <div class="mz-authority-grid" *ngIf="authorities.length">
-        <mz-authority-card *ngFor="let a of authorities" [authority]="a"></mz-authority-card>
+        <mz-authority-card *ngFor="let a of authorities" [authority]="a" (action)="authorityAction.emit(a)"></mz-authority-card>
       </div>
       <ng-container *ngIf="ratios.length">
         <h3 class="mz-subtitle">{{ ratiosTitle }}</h3>
@@ -243,6 +248,7 @@ export class MzShariaAuthoritiesSectionComponent {
   @Input() authorities: MzAuthority[] = [];
   @Input() ratiosTitle = '';
   @Input() ratios: MzMetric[] = [];
+  @Output() authorityAction = new EventEmitter<MzAuthority>();
 }
 
 /* ───────────── InfoCard ───────────── */
