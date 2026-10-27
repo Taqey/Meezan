@@ -794,8 +794,7 @@ export class StockDetailComponent implements OnInit, OnDestroy {
   getMethodDisplayName(name: string): string {
     const n = name.trim();
     if (n === 'Graham') return 'نموذج جراهام (Graham Formula)';
-    if (n === 'SectorPE×EPS') return 'مضاعف ربحية القطاع (Sector P/E × EPS)';
-    if (n === 'SectorPB×BV') return 'مضاعف دفتري القطاع (Sector P/B × Book Value)';
+    if (n === 'PEG' || n === 'PEG_Ratio' || n.includes('PEG')) return 'مكرر الربحية إلى النمو (PEG Ratio Valuation)';
     if (n === 'BookValue') return 'القيمة الدفترية المباشرة (Book Value)';
     return name;
   }
@@ -1130,12 +1129,37 @@ export class StockDetailComponent implements OnInit, OnDestroy {
   }
 
   get fairValueMethodsList(): MzFairMethod[] {
-    return (this.marketData?.fairValueMethods || []).map(m => ({
+    const methods = this.marketData?.fairValueMethods || [];
+    // Exclude Sector multiples as requested
+    const filtered = methods.filter(m => {
+      const n = (m.name || '').trim();
+      return n !== 'SectorPE×EPS' && n !== 'SectorPB×BV';
+    });
+
+    const list: MzFairMethod[] = filtered.map(m => ({
       name: this.getMethodDisplayName(m.name),
       value: (m.value != null ? Number(m.value).toFixed(2) : '—') + ' ' + this.currencyLabel,
       outlier: !!m.isOutlier,
       outlierLabel: 'قيمة شاذة مستبعدة (Outlier)'
     }));
+
+    // Ensure PEG ratio valuation is shown (empty '—' until calculated in future)
+    const hasPeg = list.some(m => m.name.includes('PEG'));
+    if (!hasPeg) {
+      const pegEntry: MzFairMethod = {
+        name: 'مكرر الربحية إلى النمو (PEG Ratio Valuation)',
+        value: '—',
+        outlier: false
+      };
+      const grahamIdx = list.findIndex(m => m.name.includes('جراهام'));
+      if (grahamIdx >= 0) {
+        list.splice(grahamIdx + 1, 0, pegEntry);
+      } else {
+        list.push(pegEntry);
+      }
+    }
+
+    return list;
   }
 
   get shariaSummaryText(): string {
@@ -1232,10 +1256,25 @@ export class StockDetailComponent implements OnInit, OnDestroy {
     ];
   }
 
+  get effectiveSharesOutstanding(): number | null {
+    const md = this.marketData;
+    if (!md) return null;
+    if (md.sharesOutstanding != null && Number(md.sharesOutstanding) > 0) {
+      return Number(md.sharesOutstanding);
+    }
+    // Compute from Market Value / Closing Price if both exist
+    if (md.marketValue != null && md.closingPrice != null && Number(md.closingPrice) > 0) {
+      return Number(md.marketValue) / Number(md.closingPrice);
+    }
+    return null;
+  }
+
   get marketIndicatorsList(): MzIndicator[] {
     const md = this.marketData;
     if (!md) return [];
     const cur = md.currency || 'ج.م';
+    const shares = this.effectiveSharesOutstanding;
+
     return [
       { label: 'القيمة الاسمية', value: md.nominalValue != null ? Number(md.nominalValue).toFixed(2) + ' ' + cur : '—', ltr: true },
       { label: 'القيمة الدفترية', value: md.bookValue != null ? Number(md.bookValue).toFixed(2) + ' ' + cur : '—', ltr: true },
@@ -1248,7 +1287,7 @@ export class StockDetailComponent implements OnInit, OnDestroy {
       { label: 'معدل نمو الأرباح', value: md.earningsGrowthRate != null ? `${md.earningsGrowthRate > 0 ? '+' : ''}${Number(md.earningsGrowthRate).toFixed(1)}%` : '—', ltr: true },
       { label: 'معدل نمو ربحية السهم', value: md.epsGrowthRate != null ? `${md.epsGrowthRate > 0 ? '+' : ''}${Number(md.epsGrowthRate).toFixed(1)}%` : '—', ltr: true },
       { label: 'التدفق النقدي الحر (Free Cash Flow)', value: md.freeCashFlow != null ? `${Number(md.freeCashFlow).toLocaleString('en-US', { maximumFractionDigits: 1 })} مليون ${cur}` : '—', ltr: true },
-      { label: 'عدد الأسهم القائمة', value: md.sharesOutstanding != null ? `${(Number(md.sharesOutstanding) / 1000000).toLocaleString('en-US', { maximumFractionDigits: 2 })} مليون سهم` : '—', ltr: true }
+      { label: 'عدد الأسهم القائمة', value: shares != null ? `${(shares / 1000000).toLocaleString('en-US', { maximumFractionDigits: 2 })} مليون سهم` : '—', ltr: true }
     ];
   }
 
