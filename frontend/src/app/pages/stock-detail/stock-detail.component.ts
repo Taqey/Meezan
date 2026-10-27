@@ -993,7 +993,7 @@ export class StockDetailComponent implements OnInit, OnDestroy {
   }
 
   get currencyLabel(): string {
-    const c = this.marketData?.currency || '';
+    const c = (this.marketData?.currency || '').trim();
     if (c.includes('دولار') || c.includes('$') || c.toUpperCase().includes('USD')) return '$';
     return 'ج.م';
   }
@@ -1371,7 +1371,7 @@ export class StockDetailComponent implements OnInit, OnDestroy {
   get marketIndicatorsList(): MzIndicator[] {
     const md = this.marketData;
     if (!md) return [];
-    const cur = md.currency || 'ج.م';
+    const cur = this.currencyLabel;
     const shares = this.effectiveSharesOutstanding;
 
     return [
