@@ -1254,28 +1254,29 @@ export class StockDetailComponent implements OnInit, OnDestroy {
     const activitySub = isActivityOk ? 'نشاط متوافق' : 'نشاط غير متوافق';
     const activityTone: 'positive' | 'negative' = isActivityOk ? 'positive' : 'negative';
 
-    // 2. Purification (AAOIFI)
+    // 2. Purification Ratio (نسبة التطهير = نسبة الإيراد المحرم)
     let purVal = '—';
     let purSub = 'نسبة يسيرة جداً';
     let purTone: 'neutral' | 'positive' | 'negative' = 'neutral';
-    if (this.aaoifiHaramPerShare != null) {
-      purVal = `${this.aaoifiHaramPerShare} ${this.currencyLabel}/سهم`;
-      purSub = this.aaoifiHaramPerShare === 0 ? 'لا يتطلب تطهير' : 'نسبة يسيرة جداً';
+    if (this.spHaramPct != null) {
+      const pct = Number(this.spHaramPct);
+      purVal = `${pct.toFixed(2)}%`;
+      purSub = pct === 0 ? 'لا يتطلب تطهير' : 'نسبة يسيرة جداً';
       purTone = 'neutral';
     }
 
-    // 3. Impure Income (S&P)
+    // 3. Impure Income Ratio (نسبة الإيراد المحرم)
     let spVal = '—';
-    let spSub = 'أقل من الحد الأقصى (5%)';
+    let spSub = 'أقل من الحد الأقصى (20%)';
     let spTone: 'positive' | 'negative' = 'positive';
     if (this.spHaramPct != null) {
       const pct = Number(this.spHaramPct);
       spVal = `${pct.toFixed(2)}%`;
-      if (pct <= 5) {
-        spSub = 'أقل من الحد الأقصى (5%)';
+      if (pct <= 20) {
+        spSub = 'أقل من الحد الأقصى (20%)';
         spTone = 'positive';
       } else {
-        spSub = 'أعلى من الحد الأقصى (5%)';
+        spSub = 'أعلى من الحد الأقصى (20%)';
         spTone = 'negative';
       }
     }
@@ -1304,13 +1305,13 @@ export class StockDetailComponent implements OnInit, OnDestroy {
         tone: activityTone
       },
       {
-        label: 'تطهير السهم (AAOIFI)',
+        label: 'نسبة التطهير',
         value: purVal,
         subtext: purSub,
         tone: purTone
       },
       {
-        label: 'نسبة الإيراد المحرم (S&P)',
+        label: 'نسبة الإيراد المحرم',
         value: spVal,
         subtext: spSub,
         tone: spTone
@@ -1333,15 +1334,15 @@ export class StockDetailComponent implements OnInit, OnDestroy {
         tone: null
       },
       {
-        label: 'تطهير السهم (AAOIFI)',
-        value: (this.aaoifiHaramPerShare != null ? this.aaoifiHaramPerShare : '—') + ' ' + this.currencyLabel + '/سهم',
+        label: 'نسبة التطهير',
+        value: (this.spHaramPct != null ? Number(this.spHaramPct).toFixed(2) : '—') + '%',
         tone: null,
         ltr: true
       },
       {
-        label: 'نسبة الإيراد المحرم (S&P)',
+        label: 'نسبة الإيراد المحرم',
         value: (this.spHaramPct != null ? Number(this.spHaramPct).toFixed(2) : '—') + '%',
-        tone: this.spHaramPct != null && this.spHaramPct > 5 ? 'negative' : 'positive',
+        tone: this.spHaramPct != null && this.spHaramPct > 20 ? 'negative' : 'positive',
         ltr: true
       },
       {
