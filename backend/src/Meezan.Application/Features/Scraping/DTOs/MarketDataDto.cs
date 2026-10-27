@@ -8,6 +8,7 @@ public record MarketDataDto(
     string? NameEn,
     string? SectorNameAr,
     string? SectorNameEn,
+    int? SectorId,
     List<IndexInStockDto> Indices,
     string? ShariahStatus,
     decimal? ShariahPct,

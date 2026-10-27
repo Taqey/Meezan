@@ -181,6 +181,7 @@ export interface MarketDataDto {
   nameEn?: string | null;
   sectorNameAr?: string | null;
   sectorNameEn?: string | null;
+  sectorId?: number | null;
   indices: IndexInStockDto[];
   shariahStatus?: string | null;
   /** Purification percentage — never populated for board-governed stocks. */

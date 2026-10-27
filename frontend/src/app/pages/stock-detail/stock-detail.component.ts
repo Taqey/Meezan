@@ -41,6 +41,7 @@ import { RevealDirective } from '../../directives/reveal.directive';
 import {
   IndexInStockDto,
   MarketDataDto,
+  SectorSummaryDto,
   SHARIAH_SOURCE_NAMES,
   ShariahSourceKey,
   ShariahSourceOpinionDto,
@@ -326,6 +327,8 @@ export class StockDetailComponent implements OnInit, OnDestroy {
   }
 
 
+  sectors: SectorSummaryDto[] = [];
+
   constructor(
     private route: ActivatedRoute,
     private api: ApiService,
@@ -334,10 +337,29 @@ export class StockDetailComponent implements OnInit, OnDestroy {
   ) { }
 
   ngOnInit(): void {
+    this.loadSectors();
     this.route.paramMap.subscribe((params) => {
       this.ticker = params.get('code') || '';
       if (this.ticker) {
         this.loadStockData();
+      }
+    });
+  }
+
+  private loadSectors(): void {
+    const cacheKey = 'all_sectors_summary';
+    const cached = this.cache.get<SectorSummaryDto[]>(cacheKey);
+    if (cached) {
+      this.sectors = cached.data;
+      if (!this.cache.isStale(cacheKey)) return;
+    }
+    this.api.getSectors().subscribe({
+      next: (sectors) => {
+        this.sectors = sectors || [];
+        this.cache.set(cacheKey, this.sectors);
+      },
+      error: () => {
+        if (!cached) this.sectors = [];
       }
     });
   }
@@ -1080,6 +1102,15 @@ export class StockDetailComponent implements OnInit, OnDestroy {
     return text.trim();
   }
 
+  resolveSectorId(nameAr?: string | null, nameEn?: string | null): number | null {
+    if (!nameAr && !nameEn) return null;
+    const match = this.sectors.find(s =>
+      (nameAr && s.nameAr && s.nameAr.trim().toLowerCase() === nameAr.trim().toLowerCase()) ||
+      (nameEn && s.nameEn && s.nameEn.trim().toLowerCase() === nameEn.trim().toLowerCase())
+    );
+    return match ? match.id : null;
+  }
+
   // ── Mappers for shared details components ───────────────────────────
   get headerTags(): MzHeaderTag[] {
     if (!this.marketData) return [];
@@ -1087,7 +1118,12 @@ export class StockDetailComponent implements OnInit, OnDestroy {
     if (this.marketData.sectorNameAr) {
       const hasWeight = this.marketData.sectorWeight !== null && this.marketData.sectorWeight !== undefined && this.marketData.sectorWeight > 0;
       const weightStr = hasWeight ? ` (${Number(this.marketData.sectorWeight).toFixed(2)}%)` : '';
-      tags.push({ label: `${this.marketData.sectorNameAr}${weightStr}`, tone: 'neutral' });
+      const sectorId = this.marketData.sectorId || this.resolveSectorId(this.marketData.sectorNameAr, this.marketData.sectorNameEn);
+      tags.push({
+        label: `${this.marketData.sectorNameAr}${weightStr}`,
+        link: sectorId ? ['/indices/Sectoral-Indices', sectorId] : ['/indices/Sectoral-Indices'],
+        tone: 'neutral'
+      });
     }
     for (const idx of this.nonSectoralIndices) {
       const w = idx.weight && idx.weight > 0 ? ' (' + Number(idx.weight).toFixed(2) + '%)' : '';
