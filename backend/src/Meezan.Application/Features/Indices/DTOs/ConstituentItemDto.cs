@@ -16,5 +16,6 @@ public record ConstituentItemDto(
     string? Currency,
     string? SectorNameAr = null,
     bool HasShariahBoard = false,
-    string? ShariahBoardNote = null
+    string? ShariahBoardNote = null,
+    decimal? MarketCap = null
 );

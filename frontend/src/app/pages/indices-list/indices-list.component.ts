@@ -16,7 +16,7 @@ import { type EntityStat } from '../../components/entity-card/entity-card.compon
 import { FormsModule } from '@angular/forms';
 import { SessionCacheService } from '../../services/session-cache.service';
 import { EntityTableComponent, type EntityTableColumn, type EntityTableRow } from '../../components/entity-table/entity-table.component';
-import { EntityHeatmapComponent, type HeatTileData } from '../../components/entity-heatmap/entity-heatmap.component';
+import { TreemapComponent, type TreemapItem } from '../../components/treemap/treemap.component';
 
 type IndexSort = 'compliantCount' | 'compliance' | 'performance' | 'name' | 'constituents' | 'change';
 type Chip = 'all' | 'compliance' | 'performance' | 'name';
@@ -31,12 +31,14 @@ interface IndexStats {
   weightedDen: number;
   /** Set of unique ticker codes in this index (for de-duplication). */
   tickers: Set<string>;
+  /** Sum of market caps of constituents. */
+  marketCapSum: number;
 }
 
 @Component({
   selector: 'app-indices-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule, MzListingPageComponent, ViewSwitcherComponent, EntityTableComponent, EntityHeatmapComponent],
+  imports: [CommonModule, FormsModule, LucideAngularModule, MzListingPageComponent, ViewSwitcherComponent, EntityTableComponent, TreemapComponent],
     template: `
     <mz-listing-page
       [config]="config"
@@ -59,7 +61,11 @@ interface IndexStats {
           [columns]="tableColumns" [rows]="tableRows" [sortKey]="tableSortKey" [sortDir]="tableSortDir"
           (sortChange)="setTableSort($event)" ariaLabel="جدول المؤشرات الرسمية">
         </app-entity-table>
-        <app-entity-heatmap *ngIf="indices.length && view === 'heatmap' && !statsLoading" [tiles]="heatTiles"></app-entity-heatmap>
+        <app-treemap
+          *ngIf="indices.length && view === 'heatmap' && !statsLoading"
+          [items]="treemapItems"
+          sizeNote="حجم كل مربع يمثل إجمالي القيمة السوقية لأسهم المؤشر">
+        </app-treemap>
       </ng-container>
       <div advanced class="mz-adv-grid">
         <label class="mz-slicer">
@@ -83,7 +89,7 @@ export class IndicesListComponent implements OnInit, OnDestroy {
   indices: IndexSummaryDto[] = [];
   displayedIndices: IndexSummaryDto[] = [];
   tableRows: EntityTableRow[] = [];
-  heatTiles: HeatTileData[] = [];
+  treemapItems: TreemapItem[] = [];
   kpiList: KpiData[] = [];
   loading = true;
   loadError = false;
@@ -361,7 +367,7 @@ export class IndicesListComponent implements OnInit, OnDestroy {
 
     this.displayedIndices = list;
     this.tableRows = this.sortTable([...list]).map((idx) => this.toTableRow(idx));
-    this.heatTiles = this.heatTilesFor([...list]);
+    this.treemapItems = this.treemapItemsFor([...list]);
     this.kpiList = this.buildKpis();
     this.rebuild();
   }
@@ -502,23 +508,39 @@ export class IndicesListComponent implements OnInit, OnDestroy {
     };
   }
 
-  /** Heat tiles skip umbrella entries (no tile at all). */
-  private heatTilesFor(list: IndexSummaryDto[]): HeatTileData[] {
-    return list.filter((idx) => indexShowsAggregates(idx.code)).map((idx) => this.toHeatTile(idx));
-  }
+  /** TradingView-style treemap tiles: tile area = sum of constituent market caps, excludes umbrella Sectoral-Indices */
+  private treemapItemsFor(list: IndexSummaryDto[]): TreemapItem[] {
+    return list
+      .filter((idx) => indexShowsAggregates(idx.code))
+      .map((idx) => {
+        const change = this.changeOf(idx);
+        const stats = this.statsFor(idx.code);
+        const snap = this.officialFor(idx.code);
+        const cap = stats?.marketCapSum && stats.marketCapSum > 0 ? stats.marketCapSum : 1;
+        const shortCode = indexShortNameFor(idx.code);
+        const fullName = indexFullNameFor(idx.code);
 
-  private toHeatTile(idx: IndexSummaryDto): HeatTileData {
-    const change = this.changeOf(idx);
-    return {
-      id: idx.code,
-      title: idx.nameAr,
-      valueText: change !== null ? `${this.perfArrow(change)} ${this.formatSignedPct(change)}` : null,
-      grow: 1,
-      color: this.heatColor(change),
-      ink: this.heatInk(change),
-      link: this.linkFor(idx),
-      tooltip: `${idx.nameAr} — ${idx.constituentsCount} سهم`
-    };
+        let subLabel = '';
+        if (snap?.value != null) {
+          const ptsVal = Number(snap.value).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+          const ptsChg = snap.change != null ? ` (${snap.change > 0 ? '+' : ''}${Number(snap.change).toFixed(1)})` : '';
+          subLabel = `${ptsVal} ن${ptsChg}`;
+        }
+
+        const capFormatted = stats?.marketCapSum && stats.marketCapSum > 0
+          ? `${(stats.marketCapSum / 1_000_000_000).toFixed(1)} مليار ج.م`
+          : 'غير متوفر';
+
+        return {
+          id: idx.code,
+          label: shortCode,
+          subLabel: subLabel,
+          value: cap,
+          changePct: change,
+          link: this.linkFor(idx),
+          tooltip: `${fullName} (${shortCode})\nالقيمة السوقية: ${capFormatted}\nالتغير: ${change !== null ? this.formatSignedPct(change) : '—'}\nالنقاط: ${snap?.value != null ? snap.value : '—'}`
+        };
+      });
   }
 
   // ── KPIs ────────────────────────────────────────────────────────────
@@ -585,11 +607,14 @@ export class IndicesListComponent implements OnInit, OnDestroy {
         const stats = new Map<string, IndexStats>();
         results.forEach((items, i) => {
           const key = (targets[i]?.code || '').trim();
-          const row: IndexStats = { total: 0, compliant: 0, changeSum: 0, changeN: 0, weightedSum: 0, weightedDen: 0, tickers: new Set<string>() };
+          const row: IndexStats = { total: 0, compliant: 0, changeSum: 0, changeN: 0, weightedSum: 0, weightedDen: 0, tickers: new Set<string>(), marketCapSum: 0 };
           for (const it of items) {
             row.total++;
             if (it.ticker) row.tickers.add(it.ticker);
             if (this.isCompliantStatus(it.shariahStatus)) row.compliant++;
+            if (it.marketCap !== null && it.marketCap !== undefined) {
+              row.marketCapSum += Number(it.marketCap);
+            }
             if (it.changePct !== null && it.changePct !== undefined) {
               const change = Number(it.changePct);
               row.changeSum += change;

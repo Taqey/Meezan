@@ -380,6 +380,7 @@ export interface ConstituentItemDto {
   /** Stock overseen by a Sharia board/committee (unified simplified display). */
   hasShariahBoard?: boolean;
   shariahBoardNote?: string | null;
+  marketCap?: number | null;
 }
 
 export interface IndexConstituentsPagedResultDto {

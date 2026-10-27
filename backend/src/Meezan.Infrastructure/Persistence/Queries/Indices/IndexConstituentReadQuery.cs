@@ -68,7 +68,8 @@ public sealed class IndexConstituentReadQuery : IIndexConstituentReadQuery
                 st.Weight,
                 fr?.Currency,
                 st.SectorNameAr,
-                fr?.HasShariahBoard ?? false));
+                fr?.HasShariahBoard ?? false,
+                fr?.MarketCap));
         }
 
         return new IndexConstituentsPage(entry.Code, entry.NameAr, entry.NameEn, entry.LastUpdated, items, total);
@@ -247,6 +248,7 @@ public sealed class IndexConstituentReadQuery : IIndexConstituentReadQuery
         public decimal? FairValueDiffPct { get; init; }
         public bool HasShariahBoard { get; init; }
         public bool CoreOk { get; init; }
+        public decimal? MarketCap { get; init; }
     }
 
     private async Task<(Dictionary<int, FreshRow> Fresh, Dictionary<int, List<ShariahSourceOpinionDto>> Opinions)> LoadFreshAsync(
@@ -270,6 +272,7 @@ public sealed class IndexConstituentReadQuery : IIndexConstituentReadQuery
                 PriceComparison = s.FairValue != null ? s.FairValue.PriceComparison.ToString() : null,
                 FairValueDiffPct = s.FairValue != null ? s.FairValue.FairValueDiffPct : null,
                 HasShariahBoard = s.ShariahCompliance != null && s.ShariahCompliance.HasShariahBoard,
+                MarketCap = s.MarketData != null ? s.MarketData.MarketValue : null,
                 // Activity hard gate: non-compliant core activity is a standalone disqualification,
                 // so the source opinions are not read for those rows.
                 CoreOk = s.ShariahMetrics == null
