@@ -7,19 +7,23 @@ import { LucideAngularModule, Layers, ShieldCheck, TrendingUp, Flame } from 'luc
 import { ApiService } from '../../services/api.service';
 import { SessionCacheService } from '../../services/session-cache.service';
 import { navigateQueryParams } from '../../utils/navigation-utils';
-import { ConstituentItemDto, IndexConstituentsPagedResultDto } from '../../models/api.models';
+import { ConstituentItemDto, IndexConstituentsPagedResultDto, MarketSnapshotDto } from '../../models/api.models';
 import { normalizeStatusValue } from '../../models/shariah-standards';
 import { MzListingPageComponent, type MzListingConfig } from '../../components/ui/ui-listing-page';
 import { stockToCard } from '../../components/ui/ui-mappers';
 import type { MzStat } from '../../components/ui/ui-small';
 
+import { ViewSwitcherComponent, type EntityView } from '../../components/view-switcher/view-switcher.component';
+import { TreemapComponent, type TreemapItem } from '../../components/treemap/treemap.component';
+
 @Component({
   selector: 'app-index-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule, MzListingPageComponent],
+  imports: [CommonModule, FormsModule, LucideAngularModule, MzListingPageComponent, ViewSwitcherComponent, TreemapComponent],
   template: `
     <mz-listing-page
       [config]="config"
+      [customView]="view !== 'grid'"
       (tabChange)="onTabChange($event)"
       (searchChange)="onSearchInput($event)"
       (controlChange)="onControlChange($event)"
@@ -27,6 +31,18 @@ import type { MzStat } from '../../components/ui/ui-small';
       (advancedClick)="advancedOpen = !advancedOpen; rebuild()"
       (pageChange)="setPage($event)"
       (retry)="retry()">
+
+      <ng-container actions>
+        <app-view-switcher [view]="view" (viewChange)="setView($event)"></app-view-switcher>
+      </ng-container>
+
+      <ng-container view>
+        <app-treemap
+          *ngIf="view === 'heatmap' && !kpisLoading"
+          [items]="treemapItems"
+          sizeNote="حجم كل مربع يمثل الوزن النسبي للسهم في المؤشر">
+        </app-treemap>
+      </ng-container>
 
       <div resultsExtra class="mz-active-filters">
         <span class="mz-badge pill neutral" *ngFor="let st of shariahStatuses">الحكم: {{ getShariahLabel(st) }} <button type="button" class="mz-x" (click)="removeShariah(st)" aria-label="إزالة">×</button></span>
@@ -93,6 +109,7 @@ export class IndexDetailComponent implements OnInit, OnDestroy {
   loadError = false;
   advancedOpen = false;
 
+  view: EntityView = 'grid';
   page = 1;
   pageSize = 20;
   search = '';
@@ -172,6 +189,7 @@ export class IndexDetailComponent implements OnInit, OnDestroy {
           this.sortBy = saved.sortBy || 'weight';
           this.sortDir = saved.sortDir || 'desc';
           this.advancedOpen = saved.advancedOpen || false;
+          this.view = saved.view || 'grid';
           this.loadConstituents();
           return;
         }
@@ -199,6 +217,9 @@ export class IndexDetailComponent implements OnInit, OnDestroy {
       this.maxPe = params['maxPe'] !== undefined && params['maxPe'] !== null ? Number(params['maxPe']) : null;
       this.minPb = params['minPb'] !== undefined && params['minPb'] !== null ? Number(params['minPb']) : null;
       this.maxPb = params['maxPb'] !== undefined && params['maxPb'] !== null ? Number(params['maxPb']) : null;
+      if (params['view'] === 'heatmap' || params['view'] === 'grid') {
+        this.view = params['view'];
+      }
 
       if (this.code) {
         this.loadConstituents();
@@ -222,7 +243,8 @@ export class IndexDetailComponent implements OnInit, OnDestroy {
         maxPb: this.maxPb,
         sortBy: this.sortBy,
         sortDir: this.sortDir,
-        advancedOpen: this.advancedOpen
+        advancedOpen: this.advancedOpen,
+        view: this.view
       });
     }
   }
@@ -642,9 +664,69 @@ export class IndexDetailComponent implements OnInit, OnDestroy {
       minPb: this.minPb !== null ? this.minPb : null,
       maxPb: this.maxPb !== null ? this.maxPb : null,
       sortBy: this.sortBy !== 'weight' ? this.sortBy : null,
-      sortDir: this.sortDir !== 'desc' ? this.sortDir : null
+      sortDir: this.sortDir !== 'desc' ? this.sortDir : null,
+      view: this.view !== 'grid' ? this.view : null
     };
 
     navigateQueryParams(this.router, this.route, queryParams);
+  }
+
+  setView(v: EntityView): void {
+    if (this.view === v) return;
+    this.view = v;
+    this.updateUrl();
+  }
+
+  get treemapItems(): TreemapItem[] {
+    if (!this.allConstituents?.length) return [];
+
+    let list = this.allConstituents;
+
+    // Filter by search
+    if (this.search) {
+      const q = this.search.trim().toLowerCase();
+      list = list.filter(s =>
+        s.ticker.toLowerCase().includes(q) ||
+        (s.nameAr && s.nameAr.includes(q)) ||
+        (s.nameEn && s.nameEn.toLowerCase().includes(q))
+      );
+    }
+
+    // Filter by tabs (quick filter)
+    if (this.activeTab === 'compliant') {
+      list = list.filter(s => normalizeStatusValue(s.shariahStatus) === 'compliant');
+    } else if (this.activeTab === 'cheap') {
+      list = list.filter(s => s.priceComparison === 'Cheap');
+    }
+
+    // Filter by Shariah statuses
+    if (this.shariahStatuses.length > 0) {
+      list = list.filter(s => s.shariahStatus && this.shariahStatuses.includes(s.shariahStatus));
+    }
+
+    // Filter by valuation
+    if (this.priceComparison) {
+      list = list.filter(s => s.priceComparison === this.priceComparison);
+    }
+
+    return list.map(s => {
+      const weight = s.weight !== null && s.weight !== undefined && s.weight > 0 ? Number(s.weight) : 0.01;
+      const priceText = s.closingPrice != null ? `${Number(s.closingPrice).toFixed(2)} ج.م` : '';
+      const shariahLabel = s.shariahStatus ? this.getShariahLabel(s.shariahStatus) : '—';
+      const changeText = s.changePct != null ? `${s.changePct > 0 ? '+' : ''}${Number(s.changePct).toFixed(2)}%` : '—';
+
+      return {
+        id: s.ticker,
+        label: s.ticker,
+        subLabel: priceText,
+        value: weight,
+        changePct: s.changePct,
+        price: s.closingPrice,
+        weightPct: s.weight,
+        shariahStatus: s.shariahStatus,
+        link: ['/stocks', s.ticker],
+        tooltip: `${s.nameAr || s.ticker} (${s.ticker})\nالسعر: ${priceText || '—'}\nالتغير: ${changeText}\nالوزن في المؤشر: ${s.weight != null ? s.weight.toFixed(2) + '%' : '—'}\nالحكم الشرعي: ${shariahLabel}`
+      };
+    });
   }
 }

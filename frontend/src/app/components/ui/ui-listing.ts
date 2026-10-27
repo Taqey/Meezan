@@ -167,6 +167,7 @@ export interface MzListingCardData {
   mainUnit?: string | null;
   metrics?: MzMetric[];
   ribbon?: { text: string; aside?: string | null; tone?: 'good' | 'bad' | 'neutral' } | null;
+  tags?: { label: string; tone?: 'good' | 'bad' | 'neutral'; note?: string | null }[];
   footerItems?: (string | { label: string; title?: string })[];
   sectorBadge?: { label: string; bg: string; color: string } | null;
   favoriteSymbol?: string | null;
@@ -219,7 +220,7 @@ export interface MzListingCardData {
         <div class="mz-lcard-tags" *ngIf="card.tags?.length">
           <ng-container *ngFor="let t of card.tags">
             <div class="mz-lcard-tag-row">
-              <mz-status-tag [tone]="t.tone" [label]="t.label"></mz-status-tag>
+              <mz-status-tag [tone]="t.tone || 'neutral'" [label]="t.label"></mz-status-tag>
             </div>
             <div class="mz-lcard-tag-note" *ngIf="t.note" [attr.title]="t.note">
               <span>{{ t.note }}</span>

@@ -1814,6 +1814,10 @@ export class AdminComponent implements OnInit, OnDestroy {
     marketValue: null,
     peRatio: null,
     pbRatio: null,
+    sharesOutstanding: null,
+    earningsGrowthRate: null,
+    epsGrowthRate: null,
+    freeCashFlow: null,
     currency: 'EGP',
     sourceLastUpdateText: 'تعديل يدوي عبر لوحة الإدارة',
     recalculateRatios: true
@@ -2548,7 +2552,9 @@ export class AdminComponent implements OnInit, OnDestroy {
           this.marketForm = {
             closingPrice: null, high: null, low: null, open: null,
             nominalValue: null, bookValue: null, eps: null, marketValue: null,
-            peRatio: null, pbRatio: null, currency: 'EGP',
+            peRatio: null, pbRatio: null,
+            sharesOutstanding: null, earningsGrowthRate: null, epsGrowthRate: null, freeCashFlow: null,
+            currency: 'EGP',
             sourceLastUpdateText: 'تعديل يدوي من لوحة الإدارة',
             recalculateRatios: true
           };

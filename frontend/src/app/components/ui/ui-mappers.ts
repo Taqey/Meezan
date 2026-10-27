@@ -64,7 +64,7 @@ export function stockToCard(s: StockListItemDto | ConstituentItemDto, options?: 
   const change = signedPct(s.changePct);
 
   // Footer items and sector badge resolution based on parent context
-  let footerItems: string[] = [];
+  let footerItems: (string | { label: string; title?: string })[] = [];
   let sectorBadge: MzListingCardData['sectorBadge'] = null;
   const hasWeight = s.weight !== null && s.weight !== undefined && !isNaN(Number(s.weight)) && Number(s.weight) > 0;
   const weightText = hasWeight ? `${Number(s.weight).toFixed(2)}%` : null;
