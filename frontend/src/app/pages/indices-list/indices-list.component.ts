@@ -279,6 +279,7 @@ export class IndicesListComponent implements OnInit, OnDestroy {
       { view: view === 'grid' ? null : view },
       'merge'
     );
+    this.rebuild();
   }
 
   printReport(): void {
@@ -508,7 +509,7 @@ export class IndicesListComponent implements OnInit, OnDestroy {
     };
   }
 
-  /** TradingView-style treemap tiles: tile area = sum of constituent market caps, excludes umbrella Sectoral-Indices */
+  /** TradingView-style treemap tiles: tile area = constituent market cap (or constituent count / weight as proportional fallback), excludes umbrella Sectoral-Indices */
   private treemapItemsFor(list: IndexSummaryDto[]): TreemapItem[] {
     return list
       .filter((idx) => indexShowsAggregates(idx.code))
@@ -516,20 +517,30 @@ export class IndicesListComponent implements OnInit, OnDestroy {
         const change = this.changeOf(idx);
         const stats = this.statsFor(idx.code);
         const snap = this.officialFor(idx.code);
-        const cap = stats?.marketCapSum && stats.marketCapSum > 0 ? stats.marketCapSum : 1;
+        // Use marketCapSum if available, otherwise constituent count * 1000, fallback to 10
+        const cap = stats?.marketCapSum && stats.marketCapSum > 0
+          ? stats.marketCapSum
+          : (idx.constituentsCount ? idx.constituentsCount * 1000 : 10);
         const shortCode = indexShortNameFor(idx.code);
         const fullName = indexFullNameFor(idx.code);
 
         let subLabel = '';
         if (snap?.value != null) {
           const ptsVal = Number(snap.value).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-          const ptsChg = snap.change != null ? ` (${snap.change > 0 ? '+' : ''}${Number(snap.change).toFixed(1)})` : '';
-          subLabel = `${ptsVal} ن${ptsChg}`;
+          const ptsChg = snap.change != null
+            ? ` (${snap.change > 0 ? '+' : ''}${Number(snap.change).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })})`
+            : '';
+          subLabel = `${ptsVal} نقطة${ptsChg}`;
         }
 
         const capFormatted = stats?.marketCapSum && stats.marketCapSum > 0
           ? `${(stats.marketCapSum / 1_000_000_000).toFixed(1)} مليار ج.م`
-          : 'غير متوفر';
+          : `${idx.constituentsCount} سهم`;
+
+        const changeFormatted = change !== null ? this.formatSignedPct(change) : '—';
+        const pointsFormatted = snap?.value != null
+          ? `${Number(snap.value).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} نقطة`
+          : '—';
 
         return {
           id: idx.code,
@@ -538,7 +549,7 @@ export class IndicesListComponent implements OnInit, OnDestroy {
           value: cap,
           changePct: change,
           link: this.linkFor(idx),
-          tooltip: `${fullName} (${shortCode})\nالقيمة السوقية: ${capFormatted}\nالتغير: ${change !== null ? this.formatSignedPct(change) : '—'}\nالنقاط: ${snap?.value != null ? snap.value : '—'}`
+          tooltip: `${fullName} (${shortCode})\n${stats?.marketCapSum ? 'القيمة السوقية: ' + capFormatted : 'الأسهم: ' + capFormatted}\nالتغير: ${changeFormatted}\nالنقاط: ${pointsFormatted}`
         };
       });
   }
@@ -672,8 +683,10 @@ export class IndicesListComponent implements OnInit, OnDestroy {
     const snap = this.officialFor(idx.code);
     let perfLabel = change !== null ? `${this.perfArrow(change)} ${this.formatSignedPct(change)}` : null;
     if (snap?.value != null) {
-      const ptsVal = Number(snap.value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      const ptsChg = snap.change != null ? ` (${snap.change > 0 ? '+' : ''}${Number(snap.change).toFixed(2)})` : '';
+      const ptsVal = Number(snap.value).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 2 });
+      const ptsChg = snap.change != null
+        ? ` (${snap.change > 0 ? '+' : ''}${Number(snap.change).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 2 })})`
+        : '';
       perfLabel = `${ptsVal} نقطة · ${perfLabel || ''}${ptsChg}`;
     }
     return [
@@ -765,7 +778,9 @@ export class IndicesListComponent implements OnInit, OnDestroy {
         }
       },
       results: this.loading || this.loadError ? null : {
-        text: this.indices.length + ' مؤشراً رسمياً في قاعدة البيانات',
+        text: this.view === 'heatmap'
+          ? `${this.treemapItems.length} مؤشرات معروضة في الخريطة الحرارية`
+          : this.indices.length + ' مؤشراً رسمياً في قاعدة البيانات',
         note: [this.sessionLabel, this.sourceNote].filter(Boolean).join(' · ') || null
       },
       cards: this.loading ? [] : this.displayedIndices.map((i) => this.toCard(i)),

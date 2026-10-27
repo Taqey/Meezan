@@ -39,6 +39,8 @@ import { TreemapComponent, type TreemapItem } from '../../components/treemap/tre
         <app-treemap
           *ngIf="view === 'heatmap' && !kpisLoading"
           [items]="treemapItems"
+          [unweightedCount]="unweightedCount"
+          unweightedLabel="سهم بدون وزن نسبي غير معروضة في الخريطة"
           sizeNote="حجم كل مربع يمثل الوزن النسبي للسهم في القطاع">
         </app-treemap>
       </ng-container>
@@ -584,7 +586,9 @@ export class SectorDetailComponent implements OnInit, OnDestroy {
         advanced: { label: 'تصفية متقدمة', open: this.advancedOpen, count: activeFilterCount }
       },
       results: {
-        text: `${this.totalCount} سهم في قطاع ${this.sector?.nameAr || ''} (الصفحة ${this.page} من ${this.totalPages || 1})`,
+        text: this.view === 'heatmap'
+          ? `${this.treemapItems.length} سهم معروض في الخريطة الحرارية لقطاع ${this.sector?.nameAr || ''}`
+          : `${this.totalCount} سهم في قطاع ${this.sector?.nameAr || ''} (الصفحة ${this.page} من ${this.totalPages || 1})`,
         note: this.sectorWeightWarning,
         legend: [{ label: 'متوافق', tone: 'good' }, { label: 'غير متوافق', tone: 'bad' }]
       },
@@ -739,10 +743,42 @@ export class SectorDetailComponent implements OnInit, OnDestroy {
     this.updateUrl();
   }
 
+  get unweightedCount(): number {
+    if (!this.allSectorStocks?.length) return 0;
+    const filtered = this.filterSectorStocks(this.allSectorStocks);
+    return filtered.filter(s => s.weight === null || s.weight === undefined || Number(s.weight) <= 0).length;
+  }
+
   get treemapItems(): TreemapItem[] {
     if (!this.allSectorStocks?.length) return [];
+    const list = this.filterSectorStocks(this.allSectorStocks);
 
-    let list = this.allSectorStocks;
+    // Only draw items that have a positive weight
+    return list
+      .filter(s => s.weight !== null && s.weight !== undefined && Number(s.weight) > 0)
+      .map(s => {
+        const weight = Number(s.weight);
+        const priceText = s.closingPrice != null ? `${Number(s.closingPrice).toFixed(2)} ج.م` : '';
+        const shariahLabel = s.shariahStatus ? this.getShariahLabel(s.shariahStatus) : '—';
+        const changeText = s.changePct != null ? `${s.changePct > 0 ? '+' : ''}${Number(s.changePct).toFixed(2)}%` : '—';
+
+        return {
+          id: s.ticker,
+          label: s.ticker,
+          subLabel: priceText,
+          value: weight,
+          changePct: s.changePct,
+          price: s.closingPrice,
+          weightPct: s.weight,
+          shariahStatus: s.shariahStatus,
+          link: ['/stocks', s.ticker],
+          tooltip: `${s.nameAr || s.ticker} (${s.ticker})\nالسعر: ${priceText || '—'}\nالتغير: ${changeText}\nالوزن في القطاع: ${weight.toFixed(2)}%\nالحكم الشرعي: ${shariahLabel}`
+        };
+      });
+  }
+
+  private filterSectorStocks(all: StockListItemDto[]): StockListItemDto[] {
+    let list = all;
 
     // Filter by search
     if (this.search) {
@@ -782,24 +818,6 @@ export class SectorDetailComponent implements OnInit, OnDestroy {
     if (this.minPb !== null) list = list.filter(s => s.pbRatio !== null && s.pbRatio !== undefined && s.pbRatio >= this.minPb!);
     if (this.maxPb !== null) list = list.filter(s => s.pbRatio !== null && s.pbRatio !== undefined && s.pbRatio <= this.maxPb!);
 
-    return list.map(s => {
-      const weight = s.weight !== null && s.weight !== undefined && s.weight > 0 ? Number(s.weight) : 0.01;
-      const priceText = s.closingPrice != null ? `${Number(s.closingPrice).toFixed(2)} ج.م` : '';
-      const shariahLabel = s.shariahStatus ? this.getShariahLabel(s.shariahStatus) : '—';
-      const changeText = s.changePct != null ? `${s.changePct > 0 ? '+' : ''}${Number(s.changePct).toFixed(2)}%` : '—';
-
-      return {
-        id: s.ticker,
-        label: s.ticker,
-        subLabel: priceText,
-        value: weight,
-        changePct: s.changePct,
-        price: s.closingPrice,
-        weightPct: s.weight,
-        shariahStatus: s.shariahStatus,
-        link: ['/stocks', s.ticker],
-        tooltip: `${s.nameAr || s.ticker} (${s.ticker})\nالسعر: ${priceText || '—'}\nالتغير: ${changeText}\nالوزن في القطاع: ${s.weight != null ? s.weight.toFixed(2) + '%' : '—'}\nالحكم الشرعي: ${shariahLabel}`
-      };
-    });
+    return list;
   }
 }

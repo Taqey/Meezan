@@ -40,6 +40,8 @@ import { TreemapComponent, type TreemapItem } from '../../components/treemap/tre
         <app-treemap
           *ngIf="view === 'heatmap' && !kpisLoading"
           [items]="treemapItems"
+          [unweightedCount]="unweightedCount"
+          unweightedLabel="سهم بدون وزن نسبي غير معروضة في الخريطة"
           sizeNote="حجم كل مربع يمثل الوزن النسبي للسهم في المؤشر">
         </app-treemap>
       </ng-container>
@@ -486,10 +488,13 @@ export class IndexDetailComponent implements OnInit, OnDestroy {
     const snap = this.snapshot;
     let quoteLine = '';
     if (snap?.value != null) {
-      const val = Number(snap.value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      const chgPct = snap.changePct != null ? `${snap.changePct > 0 ? '+' : ''}${Number(snap.changePct).toFixed(2)}%` : '—';
-      const chgPts = snap.change != null ? ` (${snap.change > 0 ? '+' : ''}${Number(snap.change).toFixed(2)})` : '';
-      quoteLine = ` · ${val} نقطة (${chgPct}${chgPts})`;
+      const val = Number(snap.value).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 2 });
+      const chgPts = snap.change != null
+        ? `${snap.change > 0 ? '+' : ''}${Number(snap.change).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 2 })}`
+        : '';
+      const chgPct = snap.changePct != null ? `${snap.changePct > 0 ? '+' : ''}${Number(snap.changePct).toFixed(2)}%` : '';
+      const perfParts = [chgPts, chgPct].filter(Boolean).join(' · ');
+      quoteLine = ` · ${val} نقطة${perfParts ? ' (' + perfParts + ')' : ''}`;
     }
 
     this.config = {
@@ -539,7 +544,9 @@ export class IndexDetailComponent implements OnInit, OnDestroy {
         advanced: { label: 'تصفية متقدمة', open: this.advancedOpen, count: activeFilterCount }
       },
       results: {
-        text: `${this.result?.totalCount || 0} سهم مكوّن (الصفحة ${this.page} من ${this.result?.totalPages || 1})`,
+        text: this.view === 'heatmap'
+          ? `${this.treemapItems.length} سهم معروض في الخريطة الحرارية للمؤشر`
+          : `${this.result?.totalCount || 0} سهم مكوّن (الصفحة ${this.page} من ${this.result?.totalPages || 1})`,
         legend: [{ label: 'متوافق', tone: 'good' }, { label: 'غير متوافق', tone: 'bad' }]
       },
       cards: (this.result?.items || []).map((s) => stockToCard(s, { parent: 'index' })),
@@ -677,10 +684,49 @@ export class IndexDetailComponent implements OnInit, OnDestroy {
     this.updateUrl();
   }
 
+  get unweightedCount(): number {
+    if (!this.allConstituents?.length) return 0;
+    const filtered = this.filterConstituents(this.allConstituents);
+    return filtered.filter(s => s.weight === null || s.weight === undefined || Number(s.weight) <= 0).length;
+  }
+
   get treemapItems(): TreemapItem[] {
     if (!this.allConstituents?.length) return [];
+    const list = this.filterConstituents(this.allConstituents);
 
-    let list = this.allConstituents;
+    // If an index has NO constituent weights recorded yet (e.g. EGX100, EGX70),
+    // use equal weight (1) so all constituent tiles are drawn proportionally instead of dropped.
+    // If an index has real weights (e.g. EGX30, EGX33, EGX35-LV), respect real weights and track unweighted.
+    const hasAnyRealWeight = list.some(s => s.weight !== null && s.weight !== undefined && Number(s.weight) > 0);
+
+    const validList = hasAnyRealWeight
+      ? list.filter(s => s.weight !== null && s.weight !== undefined && Number(s.weight) > 0)
+      : list;
+
+    return validList.map(s => {
+      const weight = hasAnyRealWeight ? Number(s.weight) : 1;
+      const priceText = s.closingPrice != null ? `${Number(s.closingPrice).toFixed(2)} ج.م` : '';
+      const shariahLabel = s.shariahStatus ? this.getShariahLabel(s.shariahStatus) : '—';
+      const changeText = s.changePct != null ? `${s.changePct > 0 ? '+' : ''}${Number(s.changePct).toFixed(2)}%` : '—';
+      const weightDisplay = s.weight != null && Number(s.weight) > 0 ? `${Number(s.weight).toFixed(2)}%` : 'متساوي';
+
+      return {
+        id: s.ticker,
+        label: s.ticker,
+        subLabel: priceText,
+        value: weight,
+        changePct: s.changePct,
+        price: s.closingPrice,
+        weightPct: s.weight,
+        shariahStatus: s.shariahStatus,
+        link: ['/stocks', s.ticker],
+        tooltip: `${s.nameAr || s.ticker} (${s.ticker})\nالسعر: ${priceText || '—'}\nالتغير: ${changeText}\nالوزن في المؤشر: ${weightDisplay}\nالحكم الشرعي: ${shariahLabel}`
+      };
+    });
+  }
+
+  private filterConstituents(all: ConstituentItemDto[]): ConstituentItemDto[] {
+    let list = all;
 
     // Filter by search
     if (this.search) {
@@ -709,24 +755,6 @@ export class IndexDetailComponent implements OnInit, OnDestroy {
       list = list.filter(s => s.priceComparison === this.priceComparison);
     }
 
-    return list.map(s => {
-      const weight = s.weight !== null && s.weight !== undefined && s.weight > 0 ? Number(s.weight) : 0.01;
-      const priceText = s.closingPrice != null ? `${Number(s.closingPrice).toFixed(2)} ج.م` : '';
-      const shariahLabel = s.shariahStatus ? this.getShariahLabel(s.shariahStatus) : '—';
-      const changeText = s.changePct != null ? `${s.changePct > 0 ? '+' : ''}${Number(s.changePct).toFixed(2)}%` : '—';
-
-      return {
-        id: s.ticker,
-        label: s.ticker,
-        subLabel: priceText,
-        value: weight,
-        changePct: s.changePct,
-        price: s.closingPrice,
-        weightPct: s.weight,
-        shariahStatus: s.shariahStatus,
-        link: ['/stocks', s.ticker],
-        tooltip: `${s.nameAr || s.ticker} (${s.ticker})\nالسعر: ${priceText || '—'}\nالتغير: ${changeText}\nالوزن في المؤشر: ${s.weight != null ? s.weight.toFixed(2) + '%' : '—'}\nالحكم الشرعي: ${shariahLabel}`
-      };
-    });
+    return list;
   }
 }

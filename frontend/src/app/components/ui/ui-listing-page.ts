@@ -70,7 +70,7 @@ export interface MzListingConfig {
       </ng-container>
     </ng-container>
 
-    <mz-pagination *ngIf="(config.totalPages || 1) > 1" [page]="config.page || 1" [totalPages]="config.totalPages || 1" (pageChange)="pageChange.emit($event)"></mz-pagination>
+    <mz-pagination *ngIf="!customView && (config.totalPages || 1) > 1" [page]="config.page || 1" [totalPages]="config.totalPages || 1" (pageChange)="pageChange.emit($event)"></mz-pagination>
     <ng-content select="[footer]"></ng-content>
   `
 })

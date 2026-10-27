@@ -71,7 +71,7 @@ interface LayoutTile {
           (click)="onTileClick(tile.item)"
         >
           <div class="tile-content" [style.font-size.px]="tile.fontSize">
-            <span class="tile-code">{{ tile.item.label }}</span>
+            <span class="tile-code" *ngIf="tile.rect.w >= 28 && tile.rect.h >= 18">{{ tile.item.label }}</span>
             <span *ngIf="tile.showDetails && tile.item.changePct !== null && tile.item.changePct !== undefined" class="tile-change" dir="ltr">
               {{ formatSignedPct(tile.item.changePct) }}
             </span>
@@ -85,6 +85,11 @@ interface LayoutTile {
           <span>لا توجد بيانات كافية لعرض الخريطة الحرارية</span>
         </div>
       </div>
+
+      <div *ngIf="unweightedCount > 0" class="treemap-unweighted-note">
+        <span class="note-bullet">ℹ</span>
+        <span>{{ unweightedCount }} {{ unweightedLabel }}</span>
+      </div>
     </div>
   `,
   styles: [`
@@ -94,6 +99,18 @@ interface LayoutTile {
       gap: 12px;
       width: 100%;
     }
+    .treemap-unweighted-note {
+      font-size: 0.85rem;
+      color: var(--muted-foreground, #6b7280);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0 4px;
+    }
+    .note-bullet {
+      color: var(--primary, #0f766e);
+      font-weight: 700;
+    }
     .treemap-container {
       position: relative;
       width: 100%;
@@ -102,6 +119,11 @@ interface LayoutTile {
       border-radius: var(--radius-lg, 12px);
       overflow: hidden;
       direction: rtl;
+    }
+    @media (max-width: 768px) {
+      .treemap-container {
+        height: 420px !important;
+      }
     }
     .treemap-tile {
       position: absolute;
@@ -189,8 +211,10 @@ interface LayoutTile {
 })
 export class TreemapComponent implements AfterViewInit, OnChanges, OnDestroy {
   @Input() items: TreemapItem[] = [];
-  @Input() height = 540;
+  @Input() height = 580;
   @Input() sizeNote?: string | null;
+  @Input() unweightedCount = 0;
+  @Input() unweightedLabel = 'عناصر بدون وزن غير معروضة في الخريطة';
 
   @ViewChild('container') containerRef!: ElementRef<HTMLDivElement>;
 
@@ -210,7 +234,7 @@ export class TreemapComponent implements AfterViewInit, OnChanges, OnDestroy {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['items'] || changes['height']) {
+    if (changes['items'] || changes['height'] || changes['unweightedCount']) {
       this.computeLayout();
     }
   }
@@ -238,11 +262,11 @@ export class TreemapComponent implements AfterViewInit, OnChanges, OnDestroy {
     return `${num > 0 ? '+' : ''}${num.toFixed(2)}%`;
   }
 
-  // Squarified treemap layout algorithm (Bruls, Huizing, van Wijk)
+  // Squarified treemap layout algorithm (Bruls, Huizing, van Wijk) with exact pixel snapping
   computeLayout(): void {
     if (!this.containerRef?.nativeElement) return;
     const containerW = this.containerRef.nativeElement.clientWidth || 800;
-    const containerH = this.height || 540;
+    const containerH = this.height || 580;
 
     const validItems = this.items.filter((it) => it.value && it.value > 0);
     if (validItems.length === 0 || containerW <= 0 || containerH <= 0) {
@@ -265,8 +289,8 @@ export class TreemapComponent implements AfterViewInit, OnChanges, OnDestroy {
       const rect = layoutRects[i] || { x: 0, y: 0, w: 0, h: 0 };
       const { color, ink } = this.resolveColor(item.changePct);
       const minDim = Math.min(rect.w, rect.h);
-      const fontSize = Math.max(10, Math.min(18, Math.floor(minDim / 5.5)));
-      const showDetails = rect.w >= 65 && rect.h >= 45;
+      const fontSize = Math.max(10, Math.min(18, Math.floor(minDim / 5)));
+      const showDetails = rect.w >= 60 && rect.h >= 40;
 
       return {
         item,
@@ -282,32 +306,31 @@ export class TreemapComponent implements AfterViewInit, OnChanges, OnDestroy {
   private squarify(children: number[], row: number[], rect: Rect, result: Rect[]): void {
     if (children.length === 0) {
       if (row.length > 0) {
-        this.layoutRow(row, rect, result);
+        this.layoutRow(row, rect, result, true);
       }
       return;
     }
 
     const c = children[0];
+    const side = Math.min(rect.w, rect.h);
     if (row.length === 0) {
       this.squarify(children.slice(1), [c], rect, result);
       return;
     }
 
-    const currentWorst = this.worst(row, rect);
-    const newWorst = this.worst([...row, c], rect);
+    const currentWorst = this.worst(row, side);
+    const newWorst = this.worst([...row, c], side);
 
     if (newWorst <= currentWorst) {
       this.squarify(children.slice(1), [...row, c], rect, result);
     } else {
-      const remainingRect = this.layoutRow(row, rect, result);
+      const remainingRect = this.layoutRow(row, rect, result, false);
       this.squarify(children, [], remainingRect, result);
     }
   }
 
-  private worst(row: number[], rect: Rect): number {
-    const side = Math.min(rect.w, rect.h);
+  private worst(row: number[], side: number): number {
     if (side <= 0) return Infinity;
-
     const rowSum = row.reduce((a, b) => a + b, 0);
     if (rowSum <= 0) return Infinity;
 
@@ -325,46 +348,70 @@ export class TreemapComponent implements AfterViewInit, OnChanges, OnDestroy {
     return maxAspect;
   }
 
-  private layoutRow(row: number[], rect: Rect, result: Rect[]): Rect {
+  private layoutRow(row: number[], rect: Rect, result: Rect[], isLast: boolean): Rect {
     const rowSum = row.reduce((a, b) => a + b, 0);
-    const isHorizontal = rect.w >= rect.h;
-    const side = isHorizontal ? rect.h : rect.w;
-    const rowThickness = side > 0 ? rowSum / side : 0;
+    if (rowSum <= 0 || rect.w <= 0 || rect.h <= 0) return rect;
 
-    let offset = 0;
-    for (const area of row) {
-      const length = rowThickness > 0 ? area / rowThickness : 0;
-      if (isHorizontal) {
-        result.push({
-          x: Math.round(rect.x + offset),
-          y: Math.round(rect.y),
-          w: Math.round(length),
-          h: Math.round(rowThickness)
-        });
-      } else {
+    if (rect.w >= rect.h) {
+      // Shorter side is height. Row thickness is along width.
+      let rowThickness = rect.h > 0 ? rowSum / rect.h : 0;
+      if (isLast) {
+        // Last row snaps to the remaining width
+        rowThickness = rect.w;
+      }
+
+      let offset = 0;
+      for (let i = 0; i < row.length; i++) {
+        const area = row[i];
+        let length = rowThickness > 0 ? area / rowThickness : 0;
+        if (i === row.length - 1) {
+          length = Math.max(0, rect.h - offset);
+        }
         result.push({
           x: Math.round(rect.x),
           y: Math.round(rect.y + offset),
           w: Math.round(rowThickness),
           h: Math.round(length)
         });
+        offset += length;
       }
-      offset += length;
-    }
 
-    if (isHorizontal) {
+      const nextW = Math.max(0, rect.w - rowThickness);
+      return {
+        x: rect.x + rowThickness,
+        y: rect.y,
+        w: nextW,
+        h: rect.h
+      };
+    } else {
+      // Shorter side is width. Row thickness is along height.
+      let rowThickness = rect.w > 0 ? rowSum / rect.w : 0;
+      if (isLast) {
+        rowThickness = rect.h;
+      }
+
+      let offset = 0;
+      for (let i = 0; i < row.length; i++) {
+        const area = row[i];
+        let length = rowThickness > 0 ? area / rowThickness : 0;
+        if (i === row.length - 1) {
+          length = Math.max(0, rect.w - offset);
+        }
+        result.push({
+          x: Math.round(rect.x + offset),
+          y: Math.round(rect.y),
+          w: Math.round(length),
+          h: Math.round(rowThickness)
+        });
+        offset += length;
+      }
+
+      const nextH = Math.max(0, rect.h - rowThickness);
       return {
         x: rect.x,
         y: rect.y + rowThickness,
         w: rect.w,
-        h: Math.max(0, rect.h - rowThickness)
-      };
-    } else {
-      return {
-        x: rect.x + rowThickness,
-        y: rect.y,
-        w: Math.max(0, rect.w - rowThickness),
-        h: rect.h
+        h: nextH
       };
     }
   }
