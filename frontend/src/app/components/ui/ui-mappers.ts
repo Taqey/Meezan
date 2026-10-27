@@ -82,9 +82,11 @@ export function stockToCard(s: StockListItemDto | ConstituentItemDto, options?: 
       footerItems.push(`الوزن في المؤشر: ${weightText}`);
     }
   } else {
-    // 4. Main Stocks page: sector name + index badges as in reference.
-    const indexLabels = (s.indices || []).map((code) =>
-      code === 'Sectoral-Indices' ? (s.sectorNameAr || INDEX_ARABIC_NAMES['Sectoral-Indices'] || 'قطاعي') : (INDEX_ARABIC_NAMES[code] || code));
+    // 4. Main Stocks page: sector name + real index badges.
+    // Exclude 'Sectoral-Indices' umbrella so sector name is never repeated as an index badge!
+    const indexLabels = (s.indices || [])
+      .filter((code) => code && code.toUpperCase() !== 'SECTORAL-INDICES')
+      .map((code) => INDEX_ARABIC_NAMES[code] || code);
     footerItems = [s.sectorNameAr || '', indexLabels.join(' • ')].filter(Boolean);
   }
 

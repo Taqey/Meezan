@@ -184,7 +184,7 @@ export interface MzListingCardData {
   host: { class: 'mz', style: 'display:block;min-width:0' },
   template: `
     <a class="mz-card hoverable mz-lcard" [class.featured]="card.featured" [routerLink]="card.link || null">
-      <div class="mz-lcard-body">
+      <div class="mz-lcard-top">
         <div class="mz-lcard-head">
           <div class="mz-lcard-id">
             <mz-favorite-button *ngIf="card.favoriteSymbol" [symbol]="card.favoriteSymbol"></mz-favorite-button>
@@ -206,6 +206,8 @@ export interface MzListingCardData {
         <div class="mz-lcard-metrics" *ngIf="card.metrics?.length">
           <mz-metric-item *ngFor="let m of card.metrics" [label]="m.label" [value]="m.value" [tone]="m.tone" [ltr]="!!m.ltr"></mz-metric-item>
         </div>
+      </div>
+      <div class="mz-lcard-bottom">
         <div class="mz-lcard-ribbon-wrap" *ngIf="!card.metrics?.length">
           <div class="mz-lcard-ribbon" *ngIf="card.ribbon as r" [ngClass]="r.tone || 'neutral'">
             <span>{{ r.text }}</span><span *ngIf="r.aside" style="font-size:10px;opacity:.8">{{ r.aside }}</span>
@@ -225,10 +227,10 @@ export interface MzListingCardData {
             </div>
           </ng-container>
         </div>
-      </div>
-      <div class="mz-lcard-foot" *ngIf="card.footerItems?.length || card.linkLabel">
-        <span *ngFor="let f of card.footerItems">{{ f }}</span>
-        <span *ngIf="card.linkLabel" style="color:var(--mz-primary);display:inline-flex;align-items:center;gap:2px">{{ card.linkLabel }}<lucide-icon [img]="LinkIcon" [size]="14"></lucide-icon></span>
+        <div class="mz-lcard-foot" *ngIf="card.footerItems?.length || card.linkLabel">
+          <span *ngFor="let f of card.footerItems">{{ f }}</span>
+          <span *ngIf="card.linkLabel" style="color:var(--mz-primary);display:inline-flex;align-items:center;gap:2px">{{ card.linkLabel }}<lucide-icon [img]="LinkIcon" [size]="14"></lucide-icon></span>
+        </div>
       </div>
     </a>
   `
