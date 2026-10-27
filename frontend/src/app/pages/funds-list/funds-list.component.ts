@@ -602,10 +602,13 @@ export class FundsListComponent implements OnInit, OnDestroy {
           { icon: this.DollarSignIcon, value: this.formatAum(stats.totalAum), label: 'إجمالي الأصول تحت الإدارة' }
         ];
         this.cache.set('funds_stats', this.kpiList);
-        this.rebuild();
         this.statsLoading = false;
+        this.rebuild();
       },
-      error: () => { this.statsLoading = false; }
+      error: () => {
+        this.statsLoading = false;
+        this.rebuild();
+      }
     });
   }
 

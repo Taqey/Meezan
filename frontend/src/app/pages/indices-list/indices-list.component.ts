@@ -736,8 +736,8 @@ export class IndicesListComponent implements OnInit, OnDestroy {
         text: this.indices.length + ' مؤشراً رسمياً في قاعدة البيانات',
         note: [this.sessionLabel, this.sourceNote].filter(Boolean).join(' · ') || null
       },
-      cards: busy ? [] : this.displayedIndices.map((i) => this.toCard(i)),
-      loading: busy && !this.loadError,
+      cards: this.loading ? [] : this.displayedIndices.map((i) => this.toCard(i)),
+      loading: this.loading && !this.loadError,
       error: !this.loading && this.loadError ? { title: 'تعذّر تحميل المؤشرات', message: 'تحقق من الاتصال ثم حاول مرة أخرى.' } : null,
       empty: { title: 'لا توجد مؤشرات مسجّلة حتى الآن', message: 'تتم إضافة المؤشرات تلقائياً عند رفع كشوف البورصة الرسمية.' }
     };

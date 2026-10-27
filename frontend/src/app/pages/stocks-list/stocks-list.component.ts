@@ -27,7 +27,8 @@ import type { MzStat } from '../../components/ui/ui-small';
       (controlChange)="onControlChange($event)"
       (sortChange)="onSortSelect($event)"
       (advancedClick)="advancedOpen = !advancedOpen; rebuild()"
-      (pageChange)="setPage($event)">
+      (pageChange)="setPage($event)"
+      (retry)="fetchStocks()">
 
       <div resultsExtra class="mz-active-filters">
         <span class="mz-badge pill neutral" *ngFor="let code of indexCodes">المؤشر: {{ code }} <button type="button" class="mz-x" (click)="removeIndex(code)" aria-label="إزالة">×</button></span>
@@ -106,6 +107,7 @@ export class StocksListComponent implements OnInit, OnDestroy {
   totalCount = 0;
   totalPages = 1;
   loading = false;
+  loadError = false;
 
   // KPI summary stats (A_BASE_stocks reference)
   marketTotalStocks: number | null = null;
@@ -436,7 +438,8 @@ export class StocksListComponent implements OnInit, OnDestroy {
         legend: [{ label: 'متوافق', tone: 'good' }, { label: 'غير متوافق', tone: 'bad' }]
       },
       cards: this.displayedStocks.map((s) => stockToCard(s)),
-      loading: this.loading,
+      loading: this.loading && !this.loadError,
+      error: !this.loading && this.loadError ? { title: 'تعذّر تحميل الأسهم', message: 'تحقق من الاتصال بالشبكة ثم حاول مرة أخرى.' } : null,
       empty: {
         title: 'لا توجد نتائج مطابقة للفلاتر المختارة',
         message: 'جرّب تعديل خيارات البحث أو إزالة أحد الفلاتر لتوسيع نطاق النتائج.'
@@ -505,6 +508,7 @@ export class StocksListComponent implements OnInit, OnDestroy {
     if (cached) {
       this.applyStocksResult(cached.data);
       this.loading = false;
+      this.loadError = false;
       this.rebuild();
       this.cache.restoreScroll('stocks-list');
       if (!this.cache.isStale(cacheKey)) {
@@ -512,6 +516,7 @@ export class StocksListComponent implements OnInit, OnDestroy {
       }
     } else {
       this.loading = true;
+      this.loadError = false;
       this.rebuild();
     }
 
@@ -534,6 +539,7 @@ export class StocksListComponent implements OnInit, OnDestroy {
         this.cache.set(cacheKey, res);
         this.applyStocksResult(res);
         this.loading = false;
+        this.loadError = false;
         this.rebuild();
         if (cached) {
           this.cache.restoreScroll('stocks-list');
@@ -545,6 +551,7 @@ export class StocksListComponent implements OnInit, OnDestroy {
           this.totalCount = 0;
           this.totalPages = 1;
           this.loading = false;
+          this.loadError = true;
           this.rebuild();
         }
       }

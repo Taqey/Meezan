@@ -765,8 +765,8 @@ export class SectorsListComponent implements OnInit, OnDestroy {
         text: this.sectors.length + ' قطاعاً بأسهم مصنّفة في قاعدة البيانات',
         note: [this.sessionLabel, this.sourceNote].filter(Boolean).join(' · ') || null
       },
-      cards: this.dataPending ? [] : this.displayedSectors.map((s) => this.toCard(s)),
-      loading: this.loading || (this.sectors.length > 0 && this.dataPending),
+      cards: this.loading ? [] : this.displayedSectors.map((s) => this.toCard(s)),
+      loading: this.loading && !this.loadError,
       error: !this.loading && this.loadError ? { title: 'تعذّر تحميل القطاعات', message: 'تحقق من الاتصال ثم حاول مرة أخرى.' } : null,
       empty: { title: 'لا توجد قطاعات مسجّلة حتى الآن', message: 'يتم استخراج القطاعات تلقائياً عند رفع كشوف المؤشرات من البورصة المصرية.' }
     };

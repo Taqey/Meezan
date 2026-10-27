@@ -90,6 +90,7 @@ export class IndexDetailComponent implements OnInit, OnDestroy {
   allConstituents: ConstituentItemDto[] = [];
   kpisLoading = true;
   loading = true;
+  loadError = false;
   advancedOpen = false;
 
   page = 1;
@@ -291,21 +292,28 @@ export class IndexDetailComponent implements OnInit, OnDestroy {
     const cached = this.cache.get<IndexConstituentsPagedResultDto>(cacheKey);
     if (cached) {
       this.applyResult(cached.data);
+      this.loadError = false;
       if (this.code) {
         this.cache.restoreScroll('index-detail-' + this.code);
       }
       if (!this.cache.isStale(cacheKey)) {
         return;
       }
+    } else {
+      this.loadError = false;
     }
 
     this.api.getIndexConstituents(this.code, queryParams).subscribe({
       next: (data) => {
         this.cache.set(cacheKey, data);
+        this.loadError = false;
         this.applyResult(data);
       },
       error: () => {
-        this.result = null;
+        if (!cached) {
+          this.result = null;
+          this.loadError = true;
+        }
         this.loading = false;
         this.rebuild();
       }
@@ -482,8 +490,10 @@ export class IndexDetailComponent implements OnInit, OnDestroy {
         legend: [{ label: 'متوافق', tone: 'good' }, { label: 'غير متوافق', tone: 'bad' }]
       },
       cards: (this.result?.items || []).map((s) => stockToCard(s, { parent: 'index' })),
-      loading: this.loading,
-      error: !this.loading && !this.result ? { title: 'المؤشر غير موجود', message: 'لم يتم العثور على بيانات هذا المؤشر.' } : null,
+      loading: this.loading && !this.loadError,
+      error: !this.loading && this.loadError
+        ? { title: 'تعذّر تحميل أسهم المؤشر', message: 'تحقق من الاتصال بالشبكة ثم حاول مرة أخرى.' }
+        : (!this.loading && !this.result ? { title: 'المؤشر غير موجود', message: 'لم يتم العثور على بيانات هذا المؤشر.' } : null),
       empty: {
         title: 'لا توجد نتائج مطابقة للفلاتر المختارة',
         message: 'جرّب تعديل خيارات البحث أو إزالة أحد الفلاتر لتوسيع نطاق النتائج.'

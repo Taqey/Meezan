@@ -109,6 +109,7 @@ export class SectorDetailComponent implements OnInit, OnDestroy {
   totalPages = 1;
   loading = true;
   stocksLoading = false;
+  loadError = false;
   advancedOpen = false;
 
   page = 1;
@@ -346,21 +347,31 @@ export class SectorDetailComponent implements OnInit, OnDestroy {
     const cached = this.cache.get<PagedResult<StockListItemDto>>(cacheKey);
     if (cached) {
       this.applyStocksResult(cached.data);
+      this.loadError = false;
       if (this.sectorId) {
         this.cache.restoreScroll('sector-detail-' + this.sectorId);
       }
       if (!this.cache.isStale(cacheKey)) {
         return;
       }
+    } else {
+      this.loadError = false;
     }
 
     this.api.getStocks(queryParams).subscribe({
       next: (res: PagedResult<StockListItemDto>) => {
         this.cache.set(cacheKey, res);
+        this.loadError = false;
         this.applyStocksResult(res);
       },
       error: () => {
         this.stocksLoading = false;
+        if (!cached) {
+          this.stocks = [];
+          this.totalCount = 0;
+          this.totalPages = 1;
+          this.loadError = true;
+        }
         this.rebuild();
       }
     });
@@ -556,8 +567,10 @@ export class SectorDetailComponent implements OnInit, OnDestroy {
         legend: [{ label: 'متوافق', tone: 'good' }, { label: 'غير متوافق', tone: 'bad' }]
       },
       cards: this.displayedStocks.map((s) => stockToCard(s, { parent: 'sector' })),
-      loading: this.stocksLoading,
-      error: !this.loading && !this.sector ? { title: 'القطاع غير موجود', message: 'لم يتم العثور على بيانات هذا القطاع.' } : null,
+      loading: this.stocksLoading && !this.loadError,
+      error: !this.stocksLoading && this.loadError
+        ? { title: 'تعذّر تحميل أسهم القطاع', message: 'تحقق من الاتصال بالشبكة ثم حاول مرة أخرى.' }
+        : (!this.loading && !this.sector ? { title: 'القطاع غير موجود', message: 'لم يتم العثور على بيانات هذا القطاع.' } : null),
       empty: {
         title: 'لا توجد نتائج مطابقة للفلاتر المختارة',
         message: 'جرّب تعديل خيارات البحث أو إزالة أحد الفلاتر لتوسيع نطاق النتائج.'
