@@ -11,7 +11,7 @@ import { IndexSummaryDto, PagedResult, StockListItemDto } from '../../models/api
 import { INDEX_ARABIC_NAMES } from '../../models/api.models';
 import { matchesNonComplianceType, getNonComplianceReasons, normalizeStatusValue } from '../../models/shariah-standards';
 import { MzListingPageComponent, type MzListingConfig } from '../../components/ui/ui-listing-page';
-import { comparisonRibbon, fmtNumber, pctTone, signedPct, statusTag } from '../../components/ui/ui-mappers';
+import { comparisonRibbon, fmtNumber, pctTone, signedPct, statusTag, stockToCard } from '../../components/ui/ui-mappers';
 import type { MzListingCardData } from '../../components/ui/ui-listing';
 import type { MzStat } from '../../components/ui/ui-small';
 
@@ -435,7 +435,7 @@ export class StocksListComponent implements OnInit, OnDestroy {
         text: `${this.totalCount} نتيجة مطابقة (الصفحة ${this.page} من ${this.totalPages || 1})`,
         legend: [{ label: 'متوافق', tone: 'good' }, { label: 'غير متوافق', tone: 'bad' }]
       },
-      cards: this.displayedStocks.map((s) => this.toCard(s)),
+      cards: this.displayedStocks.map((s) => stockToCard(s)),
       loading: this.loading,
       empty: {
         title: 'لا توجد نتائج مطابقة للفلاتر المختارة',
@@ -443,34 +443,6 @@ export class StocksListComponent implements OnInit, OnDestroy {
       },
       page: this.page,
       totalPages: this.totalPages
-    };
-  }
-
-  private toCard(s: StockListItemDto): MzListingCardData {
-    const tag = statusTag(s.shariahStatus);
-    const reasons = normalizeStatusValue(s.shariahStatus) === 'noncompliant'
-      ? getNonComplianceReasons({
-          coreActivityCompliant: s.coreActivityCompliant,
-          categoryAr: s.categoryAr,
-          spHaramEarningPercentage: s.spHaramEarningPercentage,
-          loansPercentage: s.loansPercentage
-        })
-      : [];
-    const indexLabels = (s.indices || []).map((code) =>
-      code === 'Sectoral-Indices' ? (s.sectorNameAr || INDEX_ARABIC_NAMES['Sectoral-Indices'] || 'قطاعي') : (INDEX_ARABIC_NAMES[code] || code));
-    const change = signedPct(s.changePct);
-    return {
-      id: s.ticker,
-      title: s.nameAr || s.ticker,
-      subtitle: `${s.ticker} • ${s.nameEn || '—'}`,
-      favoriteSymbol: s.ticker,
-      badges: change ? [{ label: change, tone: pctTone(s.changePct) === 'negative' ? 'danger' : 'default' }] : [{ label: '—', tone: 'neutral' }],
-      mainValue: fmtNumber(s.closingPrice) ?? '—',
-      mainUnit: s.currency && s.currency.includes('دولار') ? '$' : 'ج.م',
-      ribbon: comparisonRibbon(s.priceComparison, s.fairValueDiffPct, s.closingPrice, s.fairValue),
-      tags: [{ label: tag.label, tone: tag.tone, note: reasons.length ? reasons.join(' · ') : null }],
-      footerItems: [s.sectorNameAr || '', indexLabels.join(' • ')].filter(Boolean),
-      link: ['/stocks', s.ticker]
     };
   }
 

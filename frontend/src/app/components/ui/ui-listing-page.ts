@@ -6,9 +6,11 @@ import {
   MzCardsGridComponent, MzFiltersBarComponent, MzPageHeaderComponent, MzPaginationComponent, MzQuickFilterTabsComponent,
   MzResultsInfoComponent, MzStatsRowComponent, type MzFiltersConfig, type MzLegendItem, type MzListingCardData, type MzTab
 } from './ui-listing';
+import { MzBackLinkComponent } from './ui-details';
 import type { MzStat } from './ui-small';
 
 export interface MzListingConfig {
+  backLink?: { label: string; to: string | unknown[] } | null;
   header: { badge: string; count?: string; title: string; description: string };
   stats?: MzStat[] | null;
   statsLoading?: boolean;
@@ -25,7 +27,7 @@ export interface MzListingConfig {
 }
 
 /**
- * ListingPage template: PageHeader → StatsRow → QuickFilterTabs → FiltersBar → ResultsInfo → CardsGrid → Pagination.
+ * ListingPage template: BackLink → PageHeader → StatsRow → QuickFilterTabs → FiltersBar → ResultsInfo → CardsGrid → Pagination.
  * One config object drives every listing page; only the data differs.
  * Slots: [actions] header actions, [advanced] advanced-filter panel, [view] replaces the cards grid
  * (alternate table / heat-map views), [footer] trailing note.
@@ -34,11 +36,14 @@ export interface MzListingConfig {
   selector: 'mz-listing-page',
   standalone: true,
   imports: [
-    CommonModule, MzPageHeaderComponent, MzStatsRowComponent, MzQuickFilterTabsComponent, MzFiltersBarComponent,
+    CommonModule, MzBackLinkComponent, MzPageHeaderComponent, MzStatsRowComponent, MzQuickFilterTabsComponent, MzFiltersBarComponent,
     MzResultsInfoComponent, MzCardsGridComponent, MzPaginationComponent, LoadingSkeletonsComponent, EmptyStateComponent
   ],
   host: { class: 'mz mz-page', style: 'display:block' },
   template: `
+    <mz-back-link *ngIf="config.backLink" [label]="config.backLink.label" [to]="config.backLink.to"></mz-back-link>
+    <ng-content select="[backLink]"></ng-content>
+
     <mz-page-header [badge]="config.header.badge" [count]="config.header.count || ''" [title]="config.header.title" [description]="config.header.description">
       <ng-container actions><ng-content select="[actions]"></ng-content></ng-container>
     </mz-page-header>
