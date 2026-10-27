@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ToastService } from '../../services/toast.service';
+import { SessionCacheService } from '../../services/session-cache.service';
 import {
   LucideAngularModule,
   Upload,
@@ -1955,7 +1956,8 @@ export class AdminComponent implements OnInit, OnDestroy {
     private api: ApiService,
     private auth: AdminAuthService,
     private route: ActivatedRoute,
-    private toast: ToastService
+    private toast: ToastService,
+    private cache: SessionCacheService
   ) {}
 
   ngOnInit(): void {
@@ -3321,6 +3323,7 @@ export class AdminComponent implements OnInit, OnDestroy {
         this.mgmtMessage = `تم تعيين ${updated.ticker} إلى قطاع ${updated.sectorNameAr || ''}.`;
         const idx = this.mgmtStocks.findIndex((x) => x.id === s.id);
         if (idx >= 0) this.mgmtStocks[idx] = updated;
+        this.cache.clear();
       },
       error: (e) => {
         this.mgmtBusy = false;
@@ -3341,6 +3344,7 @@ export class AdminComponent implements OnInit, OnDestroy {
         this.mgmtMessage = `تمت إزالة ${updated.ticker} من قطاعه.`;
         const idx = this.mgmtStocks.findIndex((x) => x.id === s.id);
         if (idx >= 0) this.mgmtStocks[idx] = updated;
+        this.cache.clear();
       },
       error: (e) => {
         this.mgmtBusy = false;

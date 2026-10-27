@@ -182,8 +182,10 @@ public class StockRepository : IStockRepository
         }
         if (selectedIndexCodes.Count > 0)
         {
+            bool includesSectoral = selectedIndexCodes.Contains("SECTORAL-INDICES");
             query = query.Where(st =>
-                st.IndexConstituents.Any(ic => selectedIndexCodes.Contains(ic.Index!.Code.ToUpper())));
+                st.IndexConstituents.Any(ic => selectedIndexCodes.Contains(ic.Index!.Code.ToUpper()))
+                || (includesSectoral && st.SectorId != null));
         }
 
         // Weight context: when the request targets a single index (via IndexCode or a
@@ -441,7 +443,11 @@ public class StockRepository : IStockRepository
                 finalWeight = st.StoredWeight;
             }
 
-            var indexCodes = indexCodesByStockId.TryGetValue(st.Id, out var codes) ? codes : new List<string>();
+            var indexCodes = indexCodesByStockId.TryGetValue(st.Id, out var codes) ? new List<string>(codes) : new List<string>();
+            if (st.SectorId.HasValue && !indexCodes.Any(c => c.Equals("Sectoral-Indices", StringComparison.OrdinalIgnoreCase)))
+            {
+                indexCodes.Add("Sectoral-Indices");
+            }
 
             return new StockListProjection(
                 st.Ticker,

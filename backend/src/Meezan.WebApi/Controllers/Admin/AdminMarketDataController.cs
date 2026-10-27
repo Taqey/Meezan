@@ -511,16 +511,16 @@ public sealed record ManualMarketDataUpdateRequest(
     decimal? PbRatio,
     decimal? Eps,
     decimal? PeRatio,
-    decimal? SharesOutstanding = null,
-    decimal? EarningsGrowthRate = null,
-    decimal? EpsGrowthRate = null,
-    decimal? FreeCashFlow = null,
     string? Currency,
     decimal? High,
     decimal? Low,
     decimal? Open,
     decimal? ClosingPrice,
     string? SourceLastUpdateText,
+    decimal? SharesOutstanding = null,
+    decimal? EarningsGrowthRate = null,
+    decimal? EpsGrowthRate = null,
+    decimal? FreeCashFlow = null,
     bool RecalculateRatios = true);
 
 public sealed record ManualMarketDataUpdateResponse(
