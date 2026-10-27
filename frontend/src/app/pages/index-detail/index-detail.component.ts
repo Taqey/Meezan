@@ -142,10 +142,13 @@ export class IndexDetailComponent implements OnInit, OnDestroy {
     return list;
   }
 
+  snapshot?: MarketSnapshotDto | null;
+
   ngOnInit(): void {
     this.route.paramMap.subscribe((params) => {
       this.code = params.get('code') || '';
       if (this.code) {
+        this.loadSnapshot();
         this.loadIndexKpis();
       } else {
         this.kpisLoading = false;
@@ -222,6 +225,25 @@ export class IndexDetailComponent implements OnInit, OnDestroy {
         advancedOpen: this.advancedOpen
       });
     }
+  }
+
+  private loadSnapshot(): void {
+    const cached = this.cache.get<MarketSnapshotDto[]>('indices_snapshots');
+    if (cached?.data?.length) {
+      this.snapshot = cached.data.find(s => s.kind === 'Index' && s.code?.toUpperCase() === this.code?.toUpperCase()) ?? null;
+      this.rebuild();
+      return;
+    }
+    this.api.getMarketSnapshots().subscribe({
+      next: (rows) => {
+        if (rows?.length) {
+          this.cache.set('indices_snapshots', rows);
+          this.snapshot = rows.find(s => s.kind === 'Index' && s.code?.toUpperCase() === this.code?.toUpperCase()) ?? null;
+          this.rebuild();
+        }
+      },
+      error: () => {}
+    });
   }
 
   private loadIndexKpis(): void {
@@ -439,13 +461,22 @@ export class IndexDetailComponent implements OnInit, OnDestroy {
 
     const totalCountVal = this.result?.totalCount;
 
+    const snap = this.snapshot;
+    let quoteLine = '';
+    if (snap?.value != null) {
+      const val = Number(snap.value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      const chgPct = snap.changePct != null ? `${snap.changePct > 0 ? '+' : ''}${Number(snap.changePct).toFixed(2)}%` : '—';
+      const chgPts = snap.change != null ? ` (${snap.change > 0 ? '+' : ''}${Number(snap.change).toFixed(2)})` : '';
+      quoteLine = ` · ${val} نقطة (${chgPct}${chgPts})`;
+    }
+
     this.config = {
       backLink: { label: 'العودة إلى المؤشرات', to: '/indices' },
       header: {
         badge: 'مؤشر البورصة الرسمية',
         count: totalCountVal ? `${totalCountVal} سهم` : '',
         title: this.result?.indexNameAr || this.result?.indexCode || this.code,
-        description: `${this.result?.indexNameEn || ''}${this.result?.indexNameEn ? ' · ' : ''}كود المؤشر: ${this.result?.indexCode || this.code}`
+        description: `${this.result?.indexNameEn || ''}${this.result?.indexNameEn ? ' · ' : ''}كود المؤشر: ${this.result?.indexCode || this.code}${quoteLine}`
       },
       stats: this.stats,
       statsLoading: this.kpisLoading,

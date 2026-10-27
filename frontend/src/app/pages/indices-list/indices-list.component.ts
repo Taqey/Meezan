@@ -644,12 +644,19 @@ export class IndicesListComponent implements OnInit, OnDestroy {
     }
     const rate = this.rateOf(idx);
     const change = this.changeOf(idx);
+    const snap = this.officialFor(idx.code);
+    let perfLabel = change !== null ? `${this.perfArrow(change)} ${this.formatSignedPct(change)}` : null;
+    if (snap?.value != null) {
+      const ptsVal = Number(snap.value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      const ptsChg = snap.change != null ? ` (${snap.change > 0 ? '+' : ''}${Number(snap.change).toFixed(2)})` : '';
+      perfLabel = `${ptsVal} نقطة · ${perfLabel || ''}${ptsChg}`;
+    }
     return [
       rate !== null
         ? { label: 'معدل التوافق', value: `${Math.round(rate)}% متوافق` }
         : { label: 'معدل التوافق', value: null },
-      change !== null
-        ? { label: 'الأداء اليومي', value: `${this.perfArrow(change)} ${this.formatSignedPct(change)}`, tone: this.perfTone(change) }
+      perfLabel !== null
+        ? { label: 'الأداء اليومي', value: perfLabel, tone: change !== null ? this.perfTone(change) : undefined }
         : { label: 'الأداء اليومي', value: null }
     ];
   }
