@@ -829,7 +829,7 @@ export class FundsListComponent implements OnInit, OnDestroy {
     return {
       id: fund.code,
       title: fund.nameAr,
-      subtitle: fund.nameEn,
+      subtitle: '',
       icon: this.getFundIcon(rawType),
       logoUrl: fundLogoUrl(fund.localLogoPath, fund.logoUrl),
       featured: fund.isFeatured,

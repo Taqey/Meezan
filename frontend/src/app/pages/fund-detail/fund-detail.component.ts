@@ -166,13 +166,14 @@ async function ensureChartJs(): Promise<typeof import('chart.js') | null> {
             <a *ngFor="let sim of fund.similarFunds" [routerLink]="['/funds', sim.id]"
                class="mz-card mz-lcard" style="min-height: 170px;">
               <div class="mz-lcard-head">
-                <div class="mz-lcard-id">
-                  <img *ngIf="simLogoUrl(sim)" [src]="simLogoUrl(sim)" [alt]="sim.nameAr"
-                       style="width:28px;height:28px;object-fit:contain;border-radius:6px;border:1px solid rgba(188,202,192,.3);padding:2px;background:#fff;"
-                       (error)="onSimLogoError($event)">
+                <div class="mz-lcard-id" style="align-items:center;gap:10px;">
+                  <div *ngIf="simLogoUrl(sim)" style="width:40px;height:40px;flex-shrink:0;border-radius:8px;border:1px solid rgba(188,202,192,.35);padding:2px;background:#fff;display:flex;align-items:center;justify-content:center;">
+                    <img [src]="simLogoUrl(sim)" [alt]="sim.nameAr"
+                         style="width:100%;height:100%;object-fit:contain;border-radius:6px;"
+                         (error)="onSimLogoError($event)">
+                  </div>
                   <div>
                     <h3 class="mz-lcard-title" [attr.title]="sim.nameAr" style="font-size:14px;line-height:20px;">{{ sim.nameAr || '—' }}</h3>
-                    <span class="mz-lcard-sub" [attr.title]="sim.nameEn">{{ sim.nameEn || '—' }}</span>
                   </div>
                 </div>
                 <div class="mz-lcard-badges">
@@ -191,11 +192,18 @@ async function ensureChartJs(): Promise<typeof import('chart.js') | null> {
         <mz-details-section
           eyebrow="التصنيفات والهيكلة"
           title="تصنيفات الصندوق والخصائص القانونية">
-          <div *ngIf="fund.categoryMemberships && fund.categoryMemberships.length > 0" style="display: flex; flex-wrap: wrap; gap: 8px;">
-            <span *ngFor="let cm of fund.categoryMemberships" class="mz-badge" [style.background]="getCategoryColor(cm.source)" style="color: var(--mz-on-surface); padding: 6px 12px; font-size: 12px; gap: 6px;">
-              {{ cm.categoryNameAr }}
-              <small style="opacity: 0.7; font-size: 10px;">{{ cm.source }}</small>
-            </span>
+          <div *ngIf="fund.categoryMemberships && fund.categoryMemberships.length > 0" class="mz-grid cols-3-details" style="gap: 16px;">
+            <div *ngFor="let cm of fund.categoryMemberships"
+                 style="padding: 16px; border-radius: 12px; border: 1px solid rgba(188,202,192,.35); background: var(--mz-surface-low); display: flex; flex-direction: column; justify-content: space-between; gap: 10px;">
+              <div>
+                <span style="font-size: 11px; color: var(--mz-outline); font-weight: 600; display: block; margin-bottom: 4px;">{{ cm.source === 'Auto' ? 'تصنيف آلي' : (cm.source === 'Manual' ? 'تصنيف معتمد' : cm.source) }}</span>
+                <h4 style="margin: 0; font-size: 15px; font-weight: 700; color: var(--mz-on-surface);">{{ cm.categoryNameAr }}</h4>
+              </div>
+              <div style="padding-top: 10px; border-top: 1px solid rgba(188,202,192,.2); display: flex; align-items: center; justify-content: space-between; font-size: 12px; font-weight: 600; color: var(--mz-primary);">
+                <span>تصنيف معتمد</span>
+                <span class="mz-ltr">✓</span>
+              </div>
+            </div>
           </div>
           <p *ngIf="!fund.categoryMemberships || fund.categoryMemberships.length === 0" class="mz-authority-note">
             لا توجد تصنيفات مسجلة لهذا الصندوق.
@@ -702,7 +710,7 @@ export class FundDetailComponent implements OnInit, AfterViewInit, AfterViewChec
       { label: 'تاريخ التأسيس', value: f.inceptionDate ? new Date(f.inceptionDate).toISOString().slice(0, 10) : '—', ltr: true },
       { label: 'الحد الأدنى للاستثمار', value: f.minimumInvestment || '—' },
       { label: 'الرسوم السنوية', value: f.managementFee !== null ? f.managementFee + '%' : '—', ltr: true },
-      { label: 'إجمالي الأصول (AUM)', value: f.aum !== null ? (f.aum / 1e6).toFixed(1) + ' م ' + f.currency : '—', ltr: true },
+      { label: 'إجمالي الأصول (AUM)', value: f.aum !== null ? (f.aum >= 1e9 ? (f.aum / 1e9).toFixed(2) + ' مليار ج.م' : (f.aum / 1e6).toFixed(1) + ' مليون ج.م') : '—', ltr: true },
       { label: 'مستوى المخاطر', value: this.getRiskLabel(f.riskLevel) }
     ];
   }

@@ -189,11 +189,13 @@ export interface MzListingCardData {
         <div class="mz-lcard-head">
           <div class="mz-lcard-id">
             <mz-favorite-button *ngIf="card.favoriteSymbol" [symbol]="card.favoriteSymbol"></mz-favorite-button>
-            <img *ngIf="card.logoUrl && !logoFailed" [src]="card.logoUrl" [alt]="card.title" width="36" height="36" loading="lazy" style="border-radius:8px;object-fit:contain" (error)="logoFailed = true" />
-            <span *ngIf="(!card.logoUrl || logoFailed) && card.icon" class="mz-stat-icon"><lucide-icon [img]="card.icon" [size]="18"></lucide-icon></span>
+            <div *ngIf="card.logoUrl && !logoFailed" class="mz-lcard-logo-wrap" style="width:48px;height:48px;flex-shrink:0;border-radius:10px;border:1px solid rgba(188,202,192,.35);background:#fff;display:flex;align-items:center;justify-content:center;padding:3px;box-shadow:0 1px 2px rgba(0,0,0,0.03);">
+              <img [src]="card.logoUrl" [alt]="card.title" style="width:100%;height:100%;object-fit:contain;border-radius:6px;" loading="lazy" (error)="logoFailed = true" />
+            </div>
+            <span *ngIf="(!card.logoUrl || logoFailed) && card.icon" class="mz-stat-icon" style="width:48px;height:48px;"><lucide-icon [img]="card.icon" [size]="22"></lucide-icon></span>
             <div class="mz-lcard-text">
               <h3 class="mz-lcard-title" [attr.title]="card.title">{{ card.title }}</h3>
-              <span class="mz-lcard-sub" [class.empty]="!card.subtitle">{{ card.subtitle || '&nbsp;' }}</span>
+              <span class="mz-lcard-sub" *ngIf="card.subtitle">{{ card.subtitle }}</span>
             </div>
           </div>
           <div class="mz-lcard-badges" *ngIf="card.badges?.length">

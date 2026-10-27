@@ -61,8 +61,10 @@ export interface MzHeaderTag { label: string; link?: string | unknown[] | null; 
           <span class="mz-ltr" *ngIf="code">{{ code }}</span>
           <span class="mz-ltr" *ngIf="secondaryName">{{ secondaryName }}</span>
         </div>
-        <div class="mz-dheader-titlerow" style="display:flex;align-items:center;gap:12px;">
-          <img *ngIf="logoUrl && !logoFailed" [src]="logoUrl" [alt]="title" width="44" height="44" style="border-radius:10px;object-fit:contain;border:1px solid rgba(188,202,192,.3);padding:3px;background:#fff;" (error)="logoFailed = true" />
+        <div class="mz-dheader-titlerow" style="display:flex;align-items:center;gap:14px;">
+          <div *ngIf="logoUrl && !logoFailed" style="width:56px;height:56px;flex-shrink:0;border-radius:12px;border:1px solid rgba(188,202,192,.35);background:#fff;display:flex;align-items:center;justify-content:center;padding:4px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+            <img [src]="logoUrl" [alt]="title" style="width:100%;height:100%;object-fit:contain;border-radius:8px;" (error)="logoFailed = true" />
+          </div>
           <h1 style="margin:0;">{{ title }}</h1>
           <ng-content select="[titleBadge]"></ng-content>
         </div>
