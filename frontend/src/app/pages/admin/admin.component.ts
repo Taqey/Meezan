@@ -83,6 +83,10 @@ interface EditableMarketForm {
   marketValue: number | null;
   peRatio: number | null;
   pbRatio: number | null;
+  sharesOutstanding: number | null;
+  earningsGrowthRate: number | null;
+  epsGrowthRate: number | null;
+  freeCashFlow: number | null;
   currency: string;
   sourceLastUpdateText: string;
   recalculateRatios: boolean;
@@ -794,6 +798,63 @@ interface EditableMarketForm {
                 <span *ngIf="marketForm.recalculateRatios" style="font-size: 11px; color: var(--primary);">
                   يتم حسابه تلقائياً من (السعر ÷ الدفترية)
                 </span>
+              </div>
+
+              <!-- Shares Outstanding -->
+              <div>
+                <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 6px;">
+                  عدد الأسهم القائمة (Shares Outstanding)
+                </label>
+                <input
+                  type="number"
+                  step="1"
+                  min="0"
+                  [(ngModel)]="marketForm.sharesOutstanding"
+                  name="sharesOutstanding"
+                  placeholder="مثال: 657070000"
+                  class="admin-form input" />
+              </div>
+
+              <!-- Earnings Growth Rate -->
+              <div>
+                <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 6px;">
+                  معدل نمو الأرباح % (Earnings Growth)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  [(ngModel)]="marketForm.earningsGrowthRate"
+                  name="earningsGrowthRate"
+                  placeholder="مثال: 14.2"
+                  class="admin-form input" />
+              </div>
+
+              <!-- EPS Growth Rate -->
+              <div>
+                <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 6px;">
+                  معدل نمو ربحية السهم % (EPS Growth)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  [(ngModel)]="marketForm.epsGrowthRate"
+                  name="epsGrowthRate"
+                  placeholder="مثال: 10.8"
+                  class="admin-form input" />
+              </div>
+
+              <!-- Free Cash Flow -->
+              <div>
+                <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 6px;">
+                  التدفق النقدي الحر (Free Cash Flow) - بالمليون
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  [(ngModel)]="marketForm.freeCashFlow"
+                  name="freeCashFlow"
+                  placeholder="مثال: 412.5"
+                  class="admin-form input" />
               </div>
 
               <!-- Source Note -->
@@ -2638,6 +2699,10 @@ export class AdminComponent implements OnInit, OnDestroy {
       marketValue: data.marketValue ?? null,
       peRatio: data.peRatio ?? null,
       pbRatio: data.pbRatio ?? null,
+      sharesOutstanding: data.sharesOutstanding ?? null,
+      earningsGrowthRate: data.earningsGrowthRate ?? null,
+      epsGrowthRate: data.epsGrowthRate ?? null,
+      freeCashFlow: data.freeCashFlow ?? null,
       currency: data.currency || 'EGP',
       sourceLastUpdateText: 'تعديل يدوي من لوحة الإدارة',
       recalculateRatios: true
@@ -2677,6 +2742,10 @@ export class AdminComponent implements OnInit, OnDestroy {
       eps: this.marketForm.eps,
       peRatio: this.marketForm.peRatio,
       pbRatio: this.marketForm.pbRatio,
+      sharesOutstanding: this.marketForm.sharesOutstanding,
+      earningsGrowthRate: this.marketForm.earningsGrowthRate,
+      epsGrowthRate: this.marketForm.epsGrowthRate,
+      freeCashFlow: this.marketForm.freeCashFlow,
       currency: this.marketForm.currency,
       high: this.marketForm.high,
       low: this.marketForm.low,

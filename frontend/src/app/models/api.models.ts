@@ -210,6 +210,10 @@ export interface MarketDataDto {
   pbRatio?: number | null;
   eps?: number | null;
   peRatio?: number | null;
+  sharesOutstanding?: number | null;
+  earningsGrowthRate?: number | null;
+  epsGrowthRate?: number | null;
+  freeCashFlow?: number | null;
   currency?: string | null;
   high?: number | null;
   low?: number | null;
@@ -536,6 +540,10 @@ export interface ManualMarketDataUpdateRequest {
   pbRatio?: number | null;
   eps?: number | null;
   peRatio?: number | null;
+  sharesOutstanding?: number | null;
+  earningsGrowthRate?: number | null;
+  epsGrowthRate?: number | null;
+  freeCashFlow?: number | null;
   currency?: string | null;
   high?: number | null;
   low?: number | null;

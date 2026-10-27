@@ -10,6 +10,10 @@ public class StockMarketData
     public decimal? PbRatio { get; set; }
     public decimal? Eps { get; set; }
     public decimal? PeRatio { get; set; }
+    public decimal? SharesOutstanding { get; set; }
+    public decimal? EarningsGrowthRate { get; set; }
+    public decimal? EpsGrowthRate { get; set; }
+    public decimal? FreeCashFlow { get; set; }
     public string? Currency { get; set; }
     public decimal? High { get; set; }
     public decimal? Low { get; set; }

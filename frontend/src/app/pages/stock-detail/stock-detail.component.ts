@@ -1242,9 +1242,13 @@ export class StockDetailComponent implements OnInit, OnDestroy {
       { label: 'مضاعف القيمة الدفترية (P/B)', value: md.pbRatio ? Number(md.pbRatio).toFixed(2) + 'x' : '—', ltr: true },
       { label: 'ربحية السهم (EPS)', value: md.eps != null ? Number(md.eps).toFixed(2) + ' ' + cur : '—', ltr: true },
       { label: 'مضاعف الربحية (P/E)', value: md.peRatio ? Number(md.peRatio).toFixed(2) + 'x' : '—', ltr: true },
-      { label: 'القيمة السوقية', value: md.marketValue != null ? Number(md.marketValue).toLocaleString('en-US', { maximumFractionDigits: 0 }) : '—', ltr: true },
+      { label: 'القيمة السوقية', value: md.marketValue != null ? Number(md.marketValue).toLocaleString('en-US', { maximumFractionDigits: 0 }) + ' ' + cur : '—', ltr: true },
       { label: 'أعلى سعر بالجلسة', value: md.high != null ? Number(md.high).toFixed(2) : '—', ltr: true },
-      { label: 'أدنى سعر بالجلسة', value: md.low != null ? Number(md.low).toFixed(2) : '—', ltr: true }
+      { label: 'أدنى سعر بالجلسة', value: md.low != null ? Number(md.low).toFixed(2) : '—', ltr: true },
+      { label: 'معدل نمو الأرباح', value: md.earningsGrowthRate != null ? `${md.earningsGrowthRate > 0 ? '+' : ''}${Number(md.earningsGrowthRate).toFixed(1)}%` : '—', ltr: true },
+      { label: 'معدل نمو ربحية السهم', value: md.epsGrowthRate != null ? `${md.epsGrowthRate > 0 ? '+' : ''}${Number(md.epsGrowthRate).toFixed(1)}%` : '—', ltr: true },
+      { label: 'التدفق النقدي الحر (Free Cash Flow)', value: md.freeCashFlow != null ? `${Number(md.freeCashFlow).toLocaleString('en-US', { maximumFractionDigits: 1 })} مليون ${cur}` : '—', ltr: true },
+      { label: 'عدد الأسهم القائمة', value: md.sharesOutstanding != null ? `${(Number(md.sharesOutstanding) / 1000000).toLocaleString('en-US', { maximumFractionDigits: 2 })} مليون سهم` : '—', ltr: true }
     ];
   }
 
