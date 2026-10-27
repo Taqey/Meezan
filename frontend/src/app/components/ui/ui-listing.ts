@@ -46,7 +46,11 @@ export class MzPageHeaderComponent {
     <section class="mz-stats" [class.cols-3]="stats.length === 3" *ngIf="!loading; else sk">
       <mz-stat-card *ngFor="let s of stats" [stat]="s"></mz-stat-card>
     </section>
-    <ng-template #sk><app-loading-skeletons variant="card" [count]="stats.length || 4"></app-loading-skeletons></ng-template>
+    <ng-template #sk>
+      <section class="mz-stats" [class.cols-3]="stats.length === 3">
+        <app-loading-skeletons variant="stat" [count]="stats.length || 4"></app-loading-skeletons>
+      </section>
+    </ng-template>
   `
 })
 export class MzStatsRowComponent {

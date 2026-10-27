@@ -43,16 +43,16 @@ export interface MzListingConfig {
       <ng-container actions><ng-content select="[actions]"></ng-content></ng-container>
     </mz-page-header>
 
-    <mz-stats-row *ngIf="config.stats?.length" [stats]="config.stats!" [loading]="!!config.statsLoading"></mz-stats-row>
+    <mz-stats-row [stats]="config.stats || []" [loading]="!!config.statsLoading"></mz-stats-row>
 
-    <section class="mz-filters-section" *ngIf="config.tabs?.length || config.filters">
-      <mz-quick-filter-tabs *ngIf="config.tabs?.length" [tabs]="config.tabs!" [active]="config.activeTab || ''" (onChange)="tabChange.emit($event)"></mz-quick-filter-tabs>
+    <section class="mz-filters-section">
+      <mz-quick-filter-tabs [tabs]="config.tabs || []" [active]="config.activeTab || ''" (onChange)="tabChange.emit($event)"></mz-quick-filter-tabs>
       <mz-filters-bar *ngIf="config.filters" [config]="config.filters" (searchChange)="searchChange.emit($event)"
                       (controlChange)="controlChange.emit($event)" (sortChange)="sortChange.emit($event)" (advancedClick)="advancedClick.emit()"></mz-filters-bar>
       <div class="mz-card mz-advanced-panel" *ngIf="config.filters?.advanced?.open"><ng-content select="[advanced]"></ng-content></div>
     </section>
 
-    <mz-results-info *ngIf="config.results" [text]="config.results.text" [note]="config.results.note" [legend]="config.results.legend"><ng-content select="[resultsExtra]"></ng-content></mz-results-info>
+    <mz-results-info [text]="config.results?.text || ''" [note]="config.results?.note" [legend]="config.results?.legend"><ng-content select="[resultsExtra]"></ng-content></mz-results-info>
 
     <app-loading-skeletons *ngIf="config.loading && !config.error" variant="card" [count]="6"></app-loading-skeletons>
     <app-empty-state *ngIf="config.error" [title]="config.error.title" [message]="config.error.message" actionLabel="إعادة المحاولة" (action)="retry.emit()"></app-empty-state>

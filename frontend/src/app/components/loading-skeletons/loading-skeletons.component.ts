@@ -20,11 +20,17 @@ import { CommonModule } from '@angular/common';
         <div class="sk-line sk-price"></div>
       </div>
     </div>
+    <ng-container *ngIf="variant === 'stat'">
+      <div class="mz-card mz-stat" *ngFor="let n of range; trackBy: trackIdx" style="height:100%" aria-hidden="true">
+        <div class="sk-line sk-text" style="width:50%;margin-bottom:8px"></div>
+        <div class="sk-line sk-title" style="width:70%;height:28px"></div>
+      </div>
+    </ng-container>
   `
 })
 export class LoadingSkeletonsComponent {
   @Input() count = 6;
-  @Input() variant: 'card' | 'kpi' = 'card';
+  @Input() variant: 'card' | 'kpi' | 'stat' = 'card';
 
   get range(): number[] {
     return Array.from({ length: Math.max(0, this.count) }, (_, i) => i);

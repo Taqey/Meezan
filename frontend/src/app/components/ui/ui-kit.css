@@ -105,7 +105,23 @@
 .mz-authority-action:hover { background: rgba(0,0,0,0.35); }
 
 /* ---------- Level 3: listing ---------- */
-.mz-page { width: 100%; }
+.mz-page {
+  width: 100%;
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+  box-sizing: border-box;
+}
+@media (min-width: 640px) {
+  .mz-page {
+    padding: 24px 24px 56px;
+  }
+}
+@media (min-width: 1024px) {
+  .mz-page {
+    padding: 32px 32px 64px;
+  }
+}
 .mz-header { display: flex; flex-direction: column; gap: 16px; margin-bottom: 24px; }
 @media (min-width: 768px) { .mz-header { flex-direction: row; align-items: flex-end; justify-content: space-between; } }
 .mz-header-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
@@ -172,6 +188,30 @@
 .mz-state p { margin: 0; font-size: 13px; }
 
 /* ---------- Level 3: details ---------- */
+.mz-details-page,
+app-stock-detail,
+app-fund-detail {
+  display: block;
+  width: 100%;
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+  box-sizing: border-box;
+}
+@media (min-width: 640px) {
+  .mz-details-page,
+  app-stock-detail,
+  app-fund-detail {
+    padding: 24px 24px 56px;
+  }
+}
+@media (min-width: 1024px) {
+  .mz-details-page,
+  app-stock-detail,
+  app-fund-detail {
+    padding: 32px 32px 64px;
+  }
+}
 .mz-backlink { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; color: var(--mz-on-surface-variant); text-decoration: none; margin-bottom: 16px; }
 .mz-backlink:hover { color: var(--mz-primary); }
 .mz-dsection { padding: 20px; }

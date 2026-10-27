@@ -1,4 +1,4 @@
-import { Component, HostListener, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { LucideAngularModule, Layers, ShieldCheck, TrendingUp, Printer } from 'lucide-angular';
@@ -13,10 +13,12 @@ import { ViewSwitcherComponent, type EntityView } from '../../components/view-sw
 import { type KpiData } from '../../components/kpi-strip/kpi-strip.component';
 import { type ChipOption } from '../../components/filter-chips/filter-chips.component';
 import { type EntityStat } from '../../components/entity-card/entity-card.component';
+import { FormsModule } from '@angular/forms';
+import { SessionCacheService } from '../../services/session-cache.service';
 import { EntityTableComponent, type EntityTableColumn, type EntityTableRow } from '../../components/entity-table/entity-table.component';
 import { EntityHeatmapComponent, type HeatTileData } from '../../components/entity-heatmap/entity-heatmap.component';
 
-type IndexSort = 'compliantCount' | 'compliance' | 'performance' | 'name';
+type IndexSort = 'compliantCount' | 'compliance' | 'performance' | 'name' | 'constituents' | 'change';
 type Chip = 'all' | 'compliance' | 'performance' | 'name';
 
 interface IndexStats {
@@ -34,9 +36,17 @@ interface IndexStats {
 @Component({
   selector: 'app-indices-list',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule, MzListingPageComponent, ViewSwitcherComponent, EntityTableComponent, EntityHeatmapComponent],
+  imports: [CommonModule, FormsModule, LucideAngularModule, MzListingPageComponent, ViewSwitcherComponent, EntityTableComponent, EntityHeatmapComponent],
     template: `
-    <mz-listing-page [config]="config" [customView]="view !== 'grid'" (tabChange)="setChip($event)" (retry)="load()">
+    <mz-listing-page
+      [config]="config"
+      [customView]="view !== 'grid'"
+      (tabChange)="setChip($event)"
+      (searchChange)="onSearchInput($event)"
+      (controlChange)="onControlChange($event)"
+      (sortChange)="onSortChangeSelect($event)"
+      (advancedClick)="advancedOpen = !advancedOpen; rebuild()"
+      (retry)="load(true)">
       <ng-container actions>
         <app-view-switcher [view]="view" (viewChange)="setView($event)"></app-view-switcher>
         <button type="button" class="mz-btn" (click)="printReport()">
@@ -51,10 +61,21 @@ interface IndexStats {
         </app-entity-table>
         <app-entity-heatmap *ngIf="indices.length && view === 'heatmap' && !statsLoading" [tiles]="heatTiles"></app-entity-heatmap>
       </ng-container>
+      <div advanced class="mz-adv-grid">
+        <label class="mz-slicer">
+          <span class="mz-slicer-head"><span>الحد الأدنى لعدد الأسهم المكونة</span></span>
+          <select class="mz-select" [(ngModel)]="minConstituents" (change)="refreshDerived()" aria-label="الحد الأدنى لعدد الأسهم">
+            <option [ngValue]="0">الكل</option>
+            <option [ngValue]="30">30 سهم فأكثر</option>
+            <option [ngValue]="70">70 سهم فأكثر</option>
+            <option [ngValue]="100">100 سهم فأكثر</option>
+          </select>
+        </label>
+      </div>
     </mz-listing-page>
   `
 })
-export class IndicesListComponent implements OnInit {
+export class IndicesListComponent implements OnInit, OnDestroy {
   readonly PrintIcon = Printer;
 
   readonly headerCrumbs = [{ label: 'الرئيسية', link: ['/'] }];
@@ -69,69 +90,139 @@ export class IndicesListComponent implements OnInit {
 
   view: EntityView = 'grid';
   chip = 'all';
+  search = '';
+  shariahFilter = '';
+  sortField = 'change';
+  sortDir: 'asc' | 'desc' = 'desc';
+  advancedOpen = false;
+  minConstituents = 0;
+
   sortKey: IndexSort = 'compliantCount';
   tableSortKey = 'compliance';
   tableSortDir: 'asc' | 'desc' = 'desc';
   private printView: EntityView | null = null;
 
-  /**
-   * Per-index stats computed ONCE from the constituents endpoints (cached):
-   * compliant/total counts, compliance rate and mean daily change — the same
-   * verdict/change fields the lists render, so numbers match everywhere.
-   */
   statsLoading = true;
   private indexStats = new Map<string, IndexStats>();
-
-
-  /**
-   * Official published quotes (Mubasher), cached once. Official values win
-   * wherever present; computed aggregates are the fallback — never the
-   * reverse. Empty when the backend never ran a successful fetch.
-   */
   private snapshots: MarketSnapshotDto[] = [];
 
   constructor(
     private api: ApiService,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private cache: SessionCacheService
   ) {}
 
   ngOnInit(): void {
+    const saved = this.cache.getUiState<any>('indices-list');
+    if (saved) {
+      this.search = saved.search || '';
+      this.shariahFilter = saved.shariahFilter || '';
+      this.chip = saved.chip || 'all';
+      this.sortKey = (saved.sortKey || 'compliantCount') as IndexSort;
+      this.sortField = saved.sortField || 'change';
+      this.sortDir = saved.sortDir || 'desc';
+      this.minConstituents = saved.minConstituents || 0;
+      this.view = saved.view || 'grid';
+    }
+
     this.route.queryParams.subscribe((params) => {
       const v = params['view'];
-      this.view = v === 'table' || v === 'heatmap' ? v : 'grid';
+      if (v === 'table' || v === 'heatmap') {
+        this.view = v;
+      }
+      if (params['search'] !== undefined) this.search = params['search'];
+      if (params['shariah'] !== undefined) this.shariahFilter = params['shariah'];
     });
     this.load();
   }
 
-  load(): void {
-    this.loading = true;
+  ngOnDestroy(): void {
+    this.cache.saveScroll('indices-list', window.scrollX, window.scrollY);
+    this.cache.saveUiState('indices-list', {
+      search: this.search,
+      shariahFilter: this.shariahFilter,
+      sortField: this.sortField,
+      sortDir: this.sortDir,
+      minConstituents: this.minConstituents,
+      chip: this.chip,
+      view: this.view
+    });
+  }
+
+  onSearchInput(val: string): void {
+    this.search = val;
+    this.refreshDerived();
+  }
+
+  onControlChange(e: { id: string; value?: string; values?: string[] }): void {
+    if (e.id === 'shariah') {
+      this.shariahFilter = e.value || (e.values ? e.values[0] : '') || '';
+      this.refreshDerived();
+    }
+  }
+
+  onSortChangeSelect(val: string): void {
+    this.sortField = val;
+    this.refreshDerived();
+  }
+
+  load(force = false): void {
+    const cachedData = this.cache.get<IndexSummaryDto[]>('indices_data');
+    const cachedSnaps = this.cache.get<MarketSnapshotDto[]>('indices_snapshots');
+    const cachedStats = this.cache.get<Map<string, IndexStats>>('indices_stats');
+
+    if (!force && cachedData) {
+      this.indices = cachedData.data;
+      if (cachedSnaps) this.snapshots = cachedSnaps.data;
+      if (cachedStats) this.indexStats = cachedStats.data;
+      this.loading = false;
+      this.statsLoading = !cachedStats;
+      this.refreshDerived();
+      this.cache.restoreScroll('indices-list');
+
+      // If not stale, do not refetch; if stale, refresh silently in background
+      if (!this.cache.isStale('indices_data')) {
+        return;
+      }
+    }
+
+    if (!this.indices.length) {
+      this.loading = true;
+      this.rebuild();
+    }
     this.loadError = false;
-    this.rebuild();
+
     this.api.getIndices().subscribe({
       next: (data) => {
         this.indices = data || [];
+        this.cache.set('indices_data', this.indices);
         this.loading = false;
         this.refreshDerived();
         this.loadIndexStats();
         this.loadSnapshots();
+        if (cachedData) {
+          this.cache.restoreScroll('indices-list');
+        }
       },
       error: () => {
-        this.indices = [];
-        this.loading = false;
-        this.loadError = true;
-        this.rebuild();
-        this.statsLoading = false;
+        if (!this.indices.length) {
+          this.indices = [];
+          this.loading = false;
+          this.loadError = true;
+          this.rebuild();
+          this.statsLoading = false;
+        }
       }
     });
   }
-
 
   /** Official quotes, cached once per page load; silent fallback when absent. */
   private loadSnapshots(): void {
     this.api.getMarketSnapshots().subscribe({
       next: (rows) => {
         this.snapshots = rows || [];
+        this.cache.set('indices_snapshots', this.snapshots);
         this.refreshDerived();
       },
       error: () => {
@@ -208,7 +299,7 @@ export class IndicesListComponent implements OnInit {
   setChip(id: string): void {
     const chip: Chip = id === 'compliance' || id === 'performance' || id === 'name' ? id : 'all';
     this.chip = chip;
-    this.sortKey = chip === 'all' ? 'compliantCount' : chip;
+    this.sortField = chip === 'all' ? 'change' : chip === 'performance' ? 'change' : chip;
     this.refreshDerived();
   }
 
@@ -231,16 +322,46 @@ export class IndicesListComponent implements OnInit {
   }
 
   // ── Derived view models (plain fields: no getter churn, no replays) ───
-  private refreshDerived(): void {
+  refreshDerived(): void {
     this.chipOptions = [
       { id: 'all', label: `كل المؤشرات (${this.indices.length})` },
       { id: 'compliance', label: 'الأعلى توافقاً' },
       { id: 'performance', label: 'الأفضل أداءً اليوم' },
       { id: 'name', label: 'أبجدي' }
     ];
-    this.displayedIndices = this.sortIndices([...this.indices], this.sortKey);
-    this.tableRows = this.sortTable([...this.indices]).map((idx) => this.toTableRow(idx));
-    this.heatTiles = this.heatTilesFor([...this.indices]);
+
+    let list = [...this.indices];
+
+    if (this.search && this.search.trim()) {
+      const q = this.search.trim().toLowerCase();
+      list = list.filter((idx) =>
+        (idx.nameAr && idx.nameAr.toLowerCase().includes(q)) ||
+        (idx.nameEn && idx.nameEn.toLowerCase().includes(q)) ||
+        (idx.code && idx.code.toLowerCase().includes(q))
+      );
+    }
+
+    if (this.shariahFilter === 'compliant_100') {
+      list = list.filter((idx) => {
+        const r = this.rateOf(idx);
+        return r !== null && r >= 100;
+      });
+    } else if (this.shariahFilter === 'compliant_70') {
+      list = list.filter((idx) => {
+        const r = this.rateOf(idx);
+        return r !== null && r >= 70;
+      });
+    }
+
+    if (this.minConstituents > 0) {
+      list = list.filter((idx) => idx.constituentsCount >= this.minConstituents);
+    }
+
+    list = this.sortIndices(list, this.sortField);
+
+    this.displayedIndices = list;
+    this.tableRows = this.sortTable([...list]).map((idx) => this.toTableRow(idx));
+    this.heatTiles = this.heatTilesFor([...list]);
     this.kpiList = this.buildKpis();
     this.rebuild();
   }
@@ -300,11 +421,12 @@ export class IndicesListComponent implements OnInit {
     return this.statsFor(idx.code)?.compliant ?? 0;
   }
 
-  private sortIndices(list: IndexSummaryDto[], key: IndexSort): IndexSummaryDto[] {
+  private sortIndices(list: IndexSummaryDto[], key: string): IndexSummaryDto[] {
     switch (key) {
       case 'name':
         return list.sort((a, b) => (a.nameAr || '').localeCompare(b.nameAr || '', 'ar'));
-      case 'performance': {
+      case 'performance':
+      case 'change': {
         const perf = (x: IndexSummaryDto): number => {
           const c = this.changeOf(x);
           return c === null ? -Infinity : c;
@@ -318,6 +440,8 @@ export class IndicesListComponent implements OnInit {
         };
         return list.sort((a, b) => rate(b) - rate(a));
       }
+      case 'constituents':
+        return list.sort((a, b) => b.constituentsCount - a.constituentsCount);
       case 'compliantCount':
       default:
         return list.sort((a, b) => this.compliantOf(b) - this.compliantOf(a));
@@ -479,6 +603,7 @@ export class IndicesListComponent implements OnInit {
           stats.set(key, row);
         });
         this.indexStats = stats;
+        this.cache.set('indices_stats', this.indexStats);
         this.statsLoading = false;
         this.refreshDerived();
       },
@@ -575,6 +700,38 @@ export class IndicesListComponent implements OnInit {
       statsLoading: busy,
       tabs: this.loading || this.loadError ? null : this.chipOptions.map((c) => ({ id: c.id, label: c.label })),
       activeTab: this.chip,
+      filters: {
+        searchValue: this.search,
+        searchPlaceholder: 'ابحث باسم المؤشر أو رمزه (مثال: EGX30 أو EGX70)...',
+        controls: [
+          {
+            id: 'shariah',
+            kind: 'select',
+            label: 'الشرعية',
+            value: this.shariahFilter,
+            options: [
+              { value: '', label: 'الشرعية: الكل' },
+              { value: 'compliant_100', label: 'متوافق 100%' },
+              { value: 'compliant_70', label: 'متوافق جزئياً (>70%)' }
+            ]
+          }
+        ],
+        sort: {
+          label: 'ترتيب النتائج',
+          value: this.sortField,
+          options: [
+            { value: 'change', label: 'الترتيب: نسبة التغير (تنازلي)' },
+            { value: 'compliance', label: 'الترتيب: نسبة التوافق الشرعي' },
+            { value: 'constituents', label: 'الترتيب: عدد الأسهم المكوّنة' },
+            { value: 'name', label: 'الترتيب: أبجدي' }
+          ]
+        },
+        advanced: {
+          label: 'تصفية متقدمة',
+          open: this.advancedOpen,
+          count: this.minConstituents > 0 ? 1 : 0
+        }
+      },
       results: this.loading || this.loadError ? null : {
         text: this.indices.length + ' مؤشراً رسمياً في قاعدة البيانات',
         note: [this.sessionLabel, this.sourceNote].filter(Boolean).join(' · ') || null
