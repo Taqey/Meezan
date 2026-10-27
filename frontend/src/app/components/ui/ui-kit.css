@@ -19,7 +19,7 @@
   --mz-warn: #b47b20;
   --mz-warn-soft: #fff4d9;
   --mz-radius: 12px;
-  font-family: 'IBM Plex Sans Arabic', 'IBM Plex Sans', sans-serif;
+  font-family: 'Cairo', sans-serif;
   color: var(--mz-on-surface);
 }
 .mz *, .mz *::before, .mz *::after { box-sizing: border-box; }
