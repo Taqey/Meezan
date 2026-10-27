@@ -517,7 +517,7 @@ export class SectorDetailComponent implements OnInit, OnDestroy {
         note: this.sectorWeightWarning,
         legend: [{ label: 'متوافق', tone: 'good' }, { label: 'غير متوافق', tone: 'bad' }]
       },
-      cards: this.displayedStocks.map((s) => stockToCard(s)),
+      cards: this.displayedStocks.map((s) => stockToCard(s, { parent: 'sector' })),
       loading: this.stocksLoading,
       error: !this.loading && !this.sector ? { title: 'القطاع غير موجود', message: 'لم يتم العثور على بيانات هذا القطاع.' } : null,
       empty: {

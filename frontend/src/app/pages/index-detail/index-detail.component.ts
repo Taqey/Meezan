@@ -433,7 +433,7 @@ export class IndexDetailComponent implements OnInit, OnDestroy {
         text: `${this.result?.totalCount || 0} سهم مكوّن (الصفحة ${this.page} من ${this.result?.totalPages || 1})`,
         legend: [{ label: 'متوافق', tone: 'good' }, { label: 'غير متوافق', tone: 'bad' }]
       },
-      cards: (this.result?.items || []).map((s) => stockToCard(s)),
+      cards: (this.result?.items || []).map((s) => stockToCard(s, { parent: 'index' })),
       loading: this.loading,
       error: !this.loading && !this.result ? { title: 'المؤشر غير موجود', message: 'لم يتم العثور على بيانات هذا المؤشر.' } : null,
       empty: {

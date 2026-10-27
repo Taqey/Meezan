@@ -44,8 +44,12 @@ export function comparisonRibbon(
 import { INDEX_ARABIC_NAMES, type StockListItemDto, type ConstituentItemDto } from '../../models/api.models';
 import { getNonComplianceReasons, normalizeStatusValue } from '../../models/shariah-standards';
 
+export interface StockToCardOptions {
+  parent?: 'sector' | 'index';
+}
+
 /** Shared stock card mapper: identical configuration across Stocks page, Sector detail, and Index detail. */
-export function stockToCard(s: StockListItemDto | ConstituentItemDto): MzListingCardData {
+export function stockToCard(s: StockListItemDto | ConstituentItemDto, options?: StockToCardOptions): MzListingCardData {
   const tag = statusTag(s.shariahStatus);
   const reasons = normalizeStatusValue(s.shariahStatus) === 'noncompliant'
     ? getNonComplianceReasons({
@@ -55,13 +59,35 @@ export function stockToCard(s: StockListItemDto | ConstituentItemDto): MzListing
         loansPercentage: (s as any).loansPercentage
       })
     : [];
-  const indexLabels = (s.indices || []).map((code) =>
-    code === 'Sectoral-Indices' ? (s.sectorNameAr || INDEX_ARABIC_NAMES['Sectoral-Indices'] || 'قطاعي') : (INDEX_ARABIC_NAMES[code] || code));
   const change = signedPct(s.changePct);
-  const footerItems: string[] = [s.sectorNameAr || '', indexLabels.join(' • ')].filter(Boolean);
-  if (s.weight !== null && s.weight !== undefined && s.weight > 0) {
-    footerItems.push(`الوزن: ${s.weight.toFixed(2)}%`);
+
+  // Footer items resolution based on parent context
+  let footerItems: string[] = [];
+  const hasWeight = s.weight !== null && s.weight !== undefined && !isNaN(Number(s.weight)) && Number(s.weight) > 0;
+  const weightText = hasWeight ? `${Number(s.weight).toFixed(2)}%` : null;
+
+  if (options?.parent === 'sector') {
+    // 1. Sector page: ONLY the stock's weight in that sector labeled "الوزن في القطاع: X%".
+    // Remove sector name and all index badges. Hide if no weight.
+    if (weightText) {
+      footerItems.push(`الوزن في القطاع: ${weightText}`);
+    }
+  } else if (options?.parent === 'index') {
+    // 2. Index page: ONLY sector name and weight in that index labeled "الوزن في المؤشر: X%".
+    // Remove all index badges. Hide weight if no weight.
+    if (s.sectorNameAr) {
+      footerItems.push(s.sectorNameAr);
+    }
+    if (weightText) {
+      footerItems.push(`الوزن في المؤشر: ${weightText}`);
+    }
+  } else {
+    // 4. Main Stocks page: sector name + index badges as in reference.
+    const indexLabels = (s.indices || []).map((code) =>
+      code === 'Sectoral-Indices' ? (s.sectorNameAr || INDEX_ARABIC_NAMES['Sectoral-Indices'] || 'قطاعي') : (INDEX_ARABIC_NAMES[code] || code));
+    footerItems = [s.sectorNameAr || '', indexLabels.join(' • ')].filter(Boolean);
   }
+
   return {
     id: s.ticker,
     title: s.nameAr || s.ticker,
