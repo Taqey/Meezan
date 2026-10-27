@@ -167,8 +167,7 @@ export interface MzListingCardData {
   mainUnit?: string | null;
   metrics?: MzMetric[];
   ribbon?: { text: string; aside?: string | null; tone?: 'good' | 'bad' | 'neutral' } | null;
-  tags?: { label: string; tone: 'good' | 'bad' | 'neutral'; note?: string | null }[];
-  footerItems?: string[];
+  footerItems?: (string | { label: string; title?: string })[];
   sectorBadge?: { label: string; bg: string; color: string } | null;
   favoriteSymbol?: string | null;
   link?: string | unknown[] | null;
@@ -238,7 +237,10 @@ export interface MzListingCardData {
             </span>
           </div>
           <div class="mz-lcard-foot-end">
-            <span *ngFor="let f of card.footerItems">{{ f }}</span>
+            <ng-container *ngFor="let f of card.footerItems">
+              <span *ngIf="isStr(f)">{{ f }}</span>
+              <span *ngIf="!isStr(f)" [attr.title]="f.title || f.label">{{ f.label }}</span>
+            </ng-container>
             <span *ngIf="card.linkLabel" style="color:var(--mz-primary);display:inline-flex;align-items:center;gap:2px">{{ card.linkLabel }}<lucide-icon [img]="LinkIcon" [size]="14"></lucide-icon></span>
           </div>
         </div>
@@ -250,6 +252,10 @@ export class MzListingCardComponent {
   readonly LinkIcon = ChevronLeft;
   @Input() card!: MzListingCardData;
   logoFailed = false;
+
+  isStr(val: unknown): val is string {
+    return typeof val === 'string';
+  }
 }
 
 /* ───────────── CardsGrid ───────────── */

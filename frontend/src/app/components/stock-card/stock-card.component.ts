@@ -6,7 +6,7 @@ import { ComparisonBadgeComponent } from '../comparison-badge/comparison-badge.c
 import { StatusBadgeComponent } from '../status-badge/status-badge.component';
 import { FavoriteToggleComponent } from '../favorite-toggle/favorite-toggle.component';
 import { PriceFlashDirective } from '../../directives/price-flash.directive';
-import { INDEX_ARABIC_NAMES } from '../../models/api.models';
+import { indexShortNameFor } from '../../models/market-icons';
 import {
   getNonComplianceReasons,
   normalizeStatusValue
@@ -101,9 +101,9 @@ export class StockCardComponent {
     if (!this.indices || !this.indices.length) return [];
     return this.indices.map(code => {
       if (code === 'Sectoral-Indices') {
-        return this.sectorNameAr || INDEX_ARABIC_NAMES['Sectoral-Indices'] || 'قطاعي';
+        return this.sectorNameAr || 'المؤشرات القطاعية';
       }
-      return INDEX_ARABIC_NAMES[code] || code;
+      return indexShortNameFor(code) || code;
     });
   }
 

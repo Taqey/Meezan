@@ -54,6 +54,48 @@ const INDEX_ICONS: Record<string, LucideIconData> = {
   'SECTORAL-INDICES': ChartPie
 };
 
+/**
+ * Standard short code map for indices across cards, badges, and filters.
+ * Returns concise code (EGX30, EGX70, EGX100, EGX35-LV, EGX33, EGX30TR, Tamayuz).
+ * Sectoral-Indices keeps its label 'المؤشرات القطاعية'.
+ */
+const INDEX_SHORT_NAMES: Record<string, string> = {
+  'EGX30': 'EGX30',
+  'EGX70': 'EGX70',
+  'EGX100': 'EGX100',
+  'EGX35-LV': 'EGX35-LV',
+  'EGX35LV': 'EGX35-LV',
+  'EGX33': 'EGX33',
+  'SHARIAH': 'EGX33',
+  'EGX30TR': 'EGX30TR',
+  'TAMAYUZ': 'Tamayuz',
+  'SECTORAL-INDICES': 'المؤشرات القطاعية'
+};
+
+const INDEX_FULL_NAMES: Record<string, { ar: string; en: string }> = {
+  'EGX30': { ar: 'المؤشر الرئيسي للبورصة المصرية EGX30', en: 'EGX 30 Index' },
+  'EGX70': { ar: 'مؤشر الشركات الصغيرة والمتوسطة EGX70 EWI', en: 'EGX 70 Equal Weights Index' },
+  'EGX100': { ar: 'المؤشر الأوسع نطاقاً EGX100 EWI', en: 'EGX 100 Equal Weights Index' },
+  'EGX35-LV': { ar: 'مؤشر التذبذب المنخفض EGX35-LV', en: 'EGX 35 Low Volatility Index' },
+  'EGX35LV': { ar: 'مؤشر التذبذب المنخفض EGX35-LV', en: 'EGX 35 Low Volatility Index' },
+  'EGX33': { ar: 'مؤشر الشريعة الإسلامية EGX33', en: 'EGX 33 Shariah Index' },
+  'SHARIAH': { ar: 'مؤشر الشريعة الإسلامية EGX33', en: 'EGX 33 Shariah Index' },
+  'EGX30TR': { ar: 'مؤشر العائد الكلي EGX30TR', en: 'EGX 30 Total Return Index' },
+  'TAMAYUZ': { ar: 'مؤشر الشركات الصغيرة والمتوسطة تميز', en: 'Tamayuz Index' },
+  'SECTORAL-INDICES': { ar: 'المؤشرات القطاعية', en: 'Sectoral Indices' }
+};
+
+export function indexShortNameFor(code?: string | null): string {
+  if (!code) return '';
+  const norm = normalizeIndexCode(code);
+  return INDEX_SHORT_NAMES[norm] ?? code;
+}
+
+export function indexFullNameFor(code?: string | null): { ar: string; en: string } {
+  const norm = normalizeIndexCode(code);
+  return INDEX_FULL_NAMES[norm] ?? { ar: code || '', en: code || '' };
+}
+
 /** Normalized codes of featured indices (green border + official ribbon). */
 const FEATURED_INDEX_CODES = ['EGX33', 'SHARIAH'];
 

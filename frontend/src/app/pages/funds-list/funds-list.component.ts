@@ -772,7 +772,7 @@ export class FundsListComponent implements OnInit, OnDestroy {
         badge: 'الصناديق الاستثمارية',
         count: this.totalCount + ' صندوقاً استثمارياً',
         title: 'الصناديق الاستثمارية المصرية',
-        description: 'استعرض وحلل جميع الصناديق الاستثمارية في السوق المصري مع فلاتر متقدمة للتصنيف، حجم الأصول، مستويات المخاطر، العوائد والرسوم، والرقابة الشرعية.'
+        description: 'استعرض وحلل جميع الصناديق الاستثمارية في السوق المصري، مستويات المخاطر، العوائد والرسوم، والرقابة الشرعية.'
       },
       stats: this.kpiList.map((k) => ({ label: k.label, value: k.value, icon: k.icon, chip: k.sub })),
       statsLoading: this.statsLoading,

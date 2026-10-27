@@ -41,7 +41,8 @@ export function comparisonRibbon(
   return { text: c.label, tone: cls === 'cheap' ? 'good' : cls === 'expensive' ? 'bad' : 'neutral' };
 }
 
-import { INDEX_ARABIC_NAMES, type StockListItemDto, type ConstituentItemDto } from '../../models/api.models';
+import { type StockListItemDto, type ConstituentItemDto } from '../../models/api.models';
+import { indexShortNameFor, indexFullNameFor } from '../../models/market-icons';
 import { getNonComplianceReasons, normalizeStatusValue } from '../../models/shariah-standards';
 import { sectorAccentFor } from '../../models/market-icons';
 
@@ -92,11 +93,13 @@ export function stockToCard(s: StockListItemDto | ConstituentItemDto, options?: 
     }
   } else {
     // 3. Main Stocks page: sector badge once on the start side + real index badges group on the other side.
-    const indexLabels = (s.indices || [])
-      .filter((code) => code && code.toUpperCase() !== 'SECTORAL-INDICES')
-      .map((code) => INDEX_ARABIC_NAMES[code] || code);
-    if (indexLabels.length) {
-      footerItems = [indexLabels.join(' • ')];
+    const validCodes = (s.indices || [])
+      .filter((code) => code && code.toUpperCase() !== 'SECTORAL-INDICES');
+    if (validCodes.length) {
+      footerItems = validCodes.map((code) => ({
+        label: indexShortNameFor(code),
+        title: indexFullNameFor(code).ar
+      }));
     }
   }
 

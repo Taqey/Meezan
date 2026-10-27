@@ -57,6 +57,7 @@ import {
   scholarsDebtMax,
   type ShariahCriterionKey
 } from '../../models/shariah-standards';
+import { indexShortNameFor } from '../../models/market-icons';
 
 /** One board's card: either its real stored opinion, or an explicit "no opinion" state. */
 type ShariahSourceOpinionView = ShariahSourceOpinionDto & { noOpinion: boolean };
@@ -1061,9 +1062,9 @@ export class StockDetailComponent implements OnInit, OnDestroy {
 
   getIndexLabel(code: string): string {
     if (code === 'Sectoral-Indices') {
-      return this.marketData?.sectorNameAr || INDEX_ARABIC_NAMES['Sectoral-Indices'] || 'قطاعي';
+      return this.marketData?.sectorNameAr || 'المؤشرات القطاعية';
     }
-    return INDEX_ARABIC_NAMES[code] || code;
+    return indexShortNameFor(code) || code;
   }
 
   /**

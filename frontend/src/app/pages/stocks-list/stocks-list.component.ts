@@ -8,7 +8,6 @@ import { ApiService } from '../../services/api.service';
 import { SessionCacheService } from '../../services/session-cache.service';
 import { navigateQueryParams } from '../../utils/navigation-utils';
 import { IndexSummaryDto, PagedResult, StockListItemDto } from '../../models/api.models';
-import { INDEX_ARABIC_NAMES } from '../../models/api.models';
 import { matchesNonComplianceType, getNonComplianceReasons, normalizeStatusValue } from '../../models/shariah-standards';
 import { MzListingPageComponent, type MzListingConfig } from '../../components/ui/ui-listing-page';
 import { comparisonRibbon, fmtNumber, pctTone, signedPct, statusTag, stockToCard } from '../../components/ui/ui-mappers';

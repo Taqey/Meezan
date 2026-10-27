@@ -6,7 +6,7 @@ import { EMPTY, Observable, expand, forkJoin, map, reduce } from 'rxjs';
 import { navigateQueryParams } from '../../utils/navigation-utils';
 import { ApiService } from '../../services/api.service';
 import { ConstituentItemDto, IndexSummaryDto, MarketSnapshotDto } from '../../models/api.models';
-import { indexAccentFor, indexIconFor, indexShowsAggregates, isFeaturedIndex } from '../../models/market-icons';
+import { indexAccentFor, indexIconFor, indexShowsAggregates, isFeaturedIndex, indexShortNameFor, indexFullNameFor } from '../../models/market-icons';
 import { MzListingPageComponent, type MzListingConfig } from '../../components/ui/ui-listing-page';
 import type { MzListingCardData } from '../../components/ui/ui-listing';
 import { ViewSwitcherComponent, type EntityView } from '../../components/view-switcher/view-switcher.component';
@@ -745,10 +745,12 @@ export class IndicesListComponent implements OnInit, OnDestroy {
 
   private toCard(idx: IndexSummaryDto): MzListingCardData {
     const featured = this.isFeatured(idx.code);
+    const shortCode = indexShowsAggregates(idx.code) ? indexShortNameFor(idx.code) : idx.nameAr;
+    const fullNames = indexFullNameFor(idx.code);
     return {
       id: idx.code,
-      title: idx.nameAr,
-      subtitle: idx.nameEn,
+      title: shortCode,
+      subtitle: indexShowsAggregates(idx.code) ? `${idx.nameAr} • ${idx.nameEn}` : idx.nameEn,
       icon: this.getIndexIcon(idx.code),
       featured,
       badges: [...(featured ? [{ label: 'المؤشر الشرعي الرسمي', tone: 'default' as const }] : []), { label: idx.constituentsCount + ' سهم مكوّن', tone: 'neutral' as const }],
