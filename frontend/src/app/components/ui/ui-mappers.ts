@@ -91,7 +91,7 @@ export function stockToCard(s: StockListItemDto | ConstituentItemDto, options?: 
   return {
     id: s.ticker,
     title: s.nameAr || s.ticker,
-    subtitle: `${s.ticker} • ${s.nameEn || '—'}`,
+    subtitle: s.ticker || null,
     favoriteSymbol: s.ticker,
     badges: change ? [{ label: change, tone: pctTone(s.changePct) === 'negative' ? 'danger' : 'default' }] : [{ label: '—', tone: 'neutral' }],
     mainValue: fmtNumber(s.closingPrice) ?? '—',

@@ -184,15 +184,15 @@ export interface MzListingCardData {
   host: { class: 'mz', style: 'display:block;min-width:0' },
   template: `
     <a class="mz-card hoverable mz-lcard" [class.featured]="card.featured" [routerLink]="card.link || null">
-      <div>
+      <div class="mz-lcard-body">
         <div class="mz-lcard-head">
           <div class="mz-lcard-id">
             <mz-favorite-button *ngIf="card.favoriteSymbol" [symbol]="card.favoriteSymbol"></mz-favorite-button>
             <img *ngIf="card.logoUrl && !logoFailed" [src]="card.logoUrl" [alt]="card.title" width="36" height="36" loading="lazy" style="border-radius:8px;object-fit:contain" (error)="logoFailed = true" />
             <span *ngIf="(!card.logoUrl || logoFailed) && card.icon" class="mz-stat-icon"><lucide-icon [img]="card.icon" [size]="18"></lucide-icon></span>
-            <div style="min-width:0">
+            <div class="mz-lcard-text">
               <h3 class="mz-lcard-title" [attr.title]="card.title">{{ card.title }}</h3>
-              <span class="mz-lcard-sub" *ngIf="card.subtitle">{{ card.subtitle }}</span>
+              <span class="mz-lcard-sub" [class.empty]="!card.subtitle">{{ card.subtitle || '&nbsp;' }}</span>
             </div>
           </div>
           <div class="mz-lcard-badges" *ngIf="card.badges?.length">
@@ -206,13 +206,23 @@ export interface MzListingCardData {
         <div class="mz-lcard-metrics" *ngIf="card.metrics?.length">
           <mz-metric-item *ngFor="let m of card.metrics" [label]="m.label" [value]="m.value" [tone]="m.tone" [ltr]="!!m.ltr"></mz-metric-item>
         </div>
-        <div class="mz-lcard-ribbon" *ngIf="card.ribbon as r" [ngClass]="r.tone || 'neutral'">
-          <span>{{ r.text }}</span><span *ngIf="r.aside" style="font-size:10px;opacity:.8">{{ r.aside }}</span>
+        <div class="mz-lcard-ribbon-wrap" *ngIf="!card.metrics?.length">
+          <div class="mz-lcard-ribbon" *ngIf="card.ribbon as r" [ngClass]="r.tone || 'neutral'">
+            <span>{{ r.text }}</span><span *ngIf="r.aside" style="font-size:10px;opacity:.8">{{ r.aside }}</span>
+          </div>
+          <div class="mz-lcard-ribbon empty" *ngIf="!card.ribbon">
+            <span>&nbsp;</span>
+          </div>
         </div>
         <div class="mz-lcard-tags" *ngIf="card.tags?.length">
           <ng-container *ngFor="let t of card.tags">
-            <mz-status-tag [tone]="t.tone" [label]="t.label"></mz-status-tag>
-            <span class="mz-lcard-tag-note" *ngIf="t.note">{{ t.note }}</span>
+            <div class="mz-lcard-tag-row">
+              <mz-status-tag [tone]="t.tone" [label]="t.label"></mz-status-tag>
+            </div>
+            <div class="mz-lcard-tag-note" [class.empty]="!t.note" [attr.title]="t.note || ''">
+              <span *ngIf="t.note">{{ t.note }}</span>
+              <span *ngIf="!t.note">&nbsp;</span>
+            </div>
           </ng-container>
         </div>
       </div>
