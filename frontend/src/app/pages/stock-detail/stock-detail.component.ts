@@ -1171,7 +1171,8 @@ export class StockDetailComponent implements OnInit, OnDestroy {
         ' · الحكم المعتمد: ' + this.getVerdictLabel(this.marketData.shariahStatus);
     }
     const verdict = this.getVerdictLabel(this.internalVerdict);
-    const pur = this.showPurificationPct ? ' (نسبة التطهير: ' + this.marketData?.shariahPct + '%)' : '';
+    const purValue = this.spHaramPct != null ? Number(this.spHaramPct).toFixed(2) : (this.marketData?.shariahPct != null ? Number(this.marketData.shariahPct).toFixed(2) : null);
+    const pur = this.showPurificationPct && purValue != null ? ' (نسبة التطهير: ' + purValue + '%)' : '';
     const ov = this.showScholarsHeaderNote ? ' — متوافق وفق فتاوى بعض العلماء الأفراد فقط (نسبة القروض ' + (this.loansPct != null ? Number(this.loansPct).toFixed(2) : '') + '% ≤ 50%)' :
       (this.showFallbackHeaderNote ? ' — متوافق وفق رأي الجهات الشرعية (النسب غير متوفرة)' : '');
     return 'الحكم الداخلي المعتمد: ' + verdict + pur + ov;
