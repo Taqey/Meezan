@@ -56,13 +56,14 @@ export interface MzHeaderTag { label: string; link?: string | unknown[] | null; 
   template: `
     <div class="mz-card mz-dheader">
       <div class="mz-dheader-main">
+        <div class="mz-dheader-code" *ngIf="code || secondaryName || favoriteSymbol">
+          <mz-favorite-button *ngIf="favoriteSymbol" [symbol]="favoriteSymbol"></mz-favorite-button>
+          <span class="mz-ltr" *ngIf="code">{{ code }}</span>
+          <span class="mz-ltr" *ngIf="secondaryName">{{ secondaryName }}</span>
+        </div>
         <div class="mz-dheader-titlerow">
           <h1>{{ title }}</h1>
           <ng-content select="[titleBadge]"></ng-content>
-          <mz-favorite-button *ngIf="favoriteSymbol" [symbol]="favoriteSymbol"></mz-favorite-button>
-        </div>
-        <div class="mz-dheader-code" *ngIf="code || secondaryName">
-          <span class="mz-ltr" *ngIf="code">{{ code }}</span><span class="mz-ltr" *ngIf="secondaryName">{{ secondaryName }}</span>
         </div>
         <div class="mz-dheader-tags" *ngIf="tags?.length">
           <ng-container *ngFor="let t of tags">
