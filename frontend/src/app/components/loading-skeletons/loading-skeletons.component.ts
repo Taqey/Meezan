@@ -22,8 +22,14 @@ import { CommonModule } from '@angular/common';
     </div>
     <ng-container *ngIf="variant === 'stat'">
       <div class="mz-card mz-stat" *ngFor="let n of range; trackBy: trackIdx" style="height:100%" aria-hidden="true">
-        <div class="sk-line sk-text" style="width:50%;margin-bottom:8px"></div>
-        <div class="sk-line sk-title" style="width:70%;height:28px"></div>
+        <div class="mz-stat-top">
+          <div class="sk-line" style="width: 72px; height: 14px;"></div>
+          <div class="sk-line" style="width: 36px; height: 36px; border-radius: 8px; flex-shrink: 0;"></div>
+        </div>
+        <div class="mz-stat-body">
+          <div class="sk-line" style="width: 88px; height: 26px;"></div>
+          <div class="sk-line" style="width: 48px; height: 18px; border-radius: 999px;"></div>
+        </div>
       </div>
     </ng-container>
   `

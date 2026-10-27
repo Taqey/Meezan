@@ -697,7 +697,7 @@ export class IndicesListComponent implements OnInit, OnDestroy {
         description: 'تعرّف على مكونات كل مؤشر معتمد، وتابع أوزان الأسهم داخله وتقييماتها الشرعية والعادلة.'
       },
       stats: this.kpiList.map((k) => ({ label: k.label, value: k.value, icon: k.icon, chip: k.sub })),
-      statsLoading: busy,
+      statsLoading: this.statsLoading,
       tabs: this.loading || this.loadError ? null : this.chipOptions.map((c) => ({ id: c.id, label: c.label })),
       activeTab: this.chip,
       filters: {

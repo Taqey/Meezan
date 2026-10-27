@@ -3564,6 +3564,12 @@ app-shariah-standards .explainer-note {
   animation: shimmer 1.2s linear infinite;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .sk-line {
+    animation: none;
+  }
+}
+
 .sk-title {
   height: 18px;
   width: 45%;
