@@ -216,7 +216,13 @@ export class MzMarketIndicatorsSectionComponent {
   @Input() items: MzIndicator[] = [];
 }
 
-/* ───────────── ShariaAuthoritiesSection ───────────── */
+export interface MzShariaRatio {
+  label: string;
+  value: string;
+  subtext?: string | null;
+  tone?: 'positive' | 'negative' | 'neutral' | null;
+}
+
 @Component({
   selector: 'mz-sharia-authorities-section',
   standalone: true,
@@ -230,10 +236,22 @@ export class MzMarketIndicatorsSectionComponent {
       <div class="mz-authority-grid" *ngIf="authorities.length">
         <mz-authority-card *ngFor="let a of authorities" [authority]="a" (action)="authorityAction.emit(a)"></mz-authority-card>
       </div>
-      <ng-container *ngIf="ratios.length">
-        <h3 class="mz-subtitle">{{ ratiosTitle }}</h3>
-        <div class="mz-infogrid">
-          <mz-metric-item *ngFor="let r of ratios" [label]="r.label" [value]="r.value" [tone]="r.tone" [ltr]="!!r.ltr"></mz-metric-item>
+      <ng-container *ngIf="shariaRatios?.length || ratios?.length">
+        <div class="mz-sharia-ratios-wrap">
+          <div class="mz-sharia-ratios-head">
+            <h3 class="mz-sharia-ratios-title">{{ ratiosTitle }}</h3>
+            <span class="mz-sharia-ratios-meta" *ngIf="ratiosMeta">{{ ratiosMeta }}</span>
+          </div>
+          <div class="mz-sharia-ratios-grid" *ngIf="shariaRatios?.length">
+            <div class="mz-sharia-ratio-card" *ngFor="let r of shariaRatios">
+              <span class="mz-sharia-ratio-label">{{ r.label }}</span>
+              <strong class="mz-sharia-ratio-value">{{ r.value }}</strong>
+              <span class="mz-sharia-ratio-sub" *ngIf="r.subtext" [ngClass]="r.tone || 'neutral'">{{ r.subtext }}</span>
+            </div>
+          </div>
+          <div class="mz-infogrid" *ngIf="!shariaRatios?.length && ratios?.length">
+            <mz-metric-item *ngFor="let r of ratios" [label]="r.label" [value]="r.value" [tone]="r.tone" [ltr]="!!r.ltr"></mz-metric-item>
+          </div>
         </div>
       </ng-container>
       <ng-content></ng-content>
@@ -248,7 +266,9 @@ export class MzShariaAuthoritiesSectionComponent {
   @Input() summaryTone: 'good' | 'bad' | 'neutral' | '' = '';
   @Input() authorities: MzAuthority[] = [];
   @Input() ratiosTitle = '';
+  @Input() ratiosMeta?: string | null;
   @Input() ratios: MzMetric[] = [];
+  @Input() shariaRatios?: MzShariaRatio[] | null;
   @Output() authorityAction = new EventEmitter<MzAuthority>();
 }
 

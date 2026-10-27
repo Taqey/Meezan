@@ -32,7 +32,8 @@ import {
   MzFairMethod,
   MzIndicator,
   MzAuthority,
-  MzMetric
+  MzMetric,
+  MzShariaRatio
 } from '../../components/ui';
 import { StatusBadgeComponent } from '../../components/status-badge/status-badge.component';
 import { FavoriteToggleComponent } from '../../components/favorite-toggle/favorite-toggle.component';
@@ -152,8 +153,9 @@ type EffectiveOpinionView = ShariahSourceOpinionView & { effectiveStatus: string
         [summaryNote]="shariaSummaryNote"
         [summaryTone]="shariaSummaryTone"
         [authorities]="shariaAuthoritiesList"
-        [ratiosTitle]="shouldShowRatiosSection ? 'المعايير والنسب المالية الشرعية التفصيلية (AAOIFI & S&P)' : ''"
-        [ratios]="shariaRatiosList"
+        [ratiosTitle]="shouldShowRatiosSection ? 'المعايير والنسب المالية الشرعية التفصيلية' : ''"
+        [ratiosMeta]="shariaRatiosMetaText"
+        [shariaRatios]="detailedShariaRatiosList"
         (authorityAction)="onAuthorityAction($event)">
         <!-- Fallback note if ratios unavailable -->
         <p *ngIf="shouldShowRatiosSection && !hasShariahMetricsData" class="mz-authority-note" style="margin-top:12px">
@@ -1225,6 +1227,101 @@ export class StockDetailComponent implements OnInit, OnDestroy {
     if (a.name.includes('حلال') || a.actionLabel === 'عرض التفاصيل') {
       this.openStandardsDialog();
     }
+  }
+
+  get shariaRatiosMetaText(): string | null {
+    if (!this.shouldShowRatiosSection) return null;
+    const date = this.marketData?.shariahMetrics?.sourceUpdatedAt;
+    if (date) {
+      try {
+        const d = new Date(date);
+        if (!isNaN(d.getTime())) {
+          const formatted = d.toLocaleDateString('ar-EG', { day: '2-digit', month: '2-digit', year: 'numeric' });
+          const time = d.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+          return `آخر تحديث للمصدر: ${formatted} ${time}`;
+        }
+      } catch { }
+    }
+    return this.marketData?.sourceLastUpdateText ? this.getSourceText(this.marketData.sourceLastUpdateText) : 'بيانات محدثة آلياً';
+  }
+
+  get detailedShariaRatiosList(): MzShariaRatio[] {
+    if (!this.shouldShowRatiosSection || !this.hasShariahMetricsData) return [];
+
+    // 1. Activity Classification
+    const activityVal = this.activityClassificationLabel;
+    const isActivityOk = this.getActivityCompliant();
+    const activitySub = isActivityOk ? 'نشاط متوافق' : 'نشاط غير متوافق';
+    const activityTone: 'positive' | 'negative' = isActivityOk ? 'positive' : 'negative';
+
+    // 2. Purification (AAOIFI)
+    let purVal = '—';
+    let purSub = 'نسبة يسيرة جداً';
+    let purTone: 'neutral' | 'positive' | 'negative' = 'neutral';
+    if (this.aaoifiHaramPerShare != null) {
+      purVal = `${this.aaoifiHaramPerShare} ${this.currencyLabel}/سهم`;
+      purSub = this.aaoifiHaramPerShare === 0 ? 'لا يتطلب تطهير' : 'نسبة يسيرة جداً';
+      purTone = 'neutral';
+    }
+
+    // 3. Impure Income (S&P)
+    let spVal = '—';
+    let spSub = 'أقل من الحد الأقصى (5%)';
+    let spTone: 'positive' | 'negative' = 'positive';
+    if (this.spHaramPct != null) {
+      const pct = Number(this.spHaramPct);
+      spVal = `${pct.toFixed(2)}%`;
+      if (pct <= 5) {
+        spSub = 'أقل من الحد الأقصى (5%)';
+        spTone = 'positive';
+      } else {
+        spSub = 'أعلى من الحد الأقصى (5%)';
+        spTone = 'negative';
+      }
+    }
+
+    // 4. Debt & Interest
+    let debtVal = '—';
+    let debtSub = 'أقل من المعيار (30% / 33%)';
+    let debtTone: 'positive' | 'negative' = 'positive';
+    if (this.loansPct != null) {
+      const debt = Number(this.loansPct);
+      debtVal = `${debt.toFixed(2)}%`;
+      if (debt <= 33.33) {
+        debtSub = 'أقل من المعيار (30% / 33%)';
+        debtTone = 'positive';
+      } else {
+        debtSub = 'أعلى من المعيار (30% / 33%)';
+        debtTone = 'negative';
+      }
+    }
+
+    return [
+      {
+        label: 'تصنيف النشاط',
+        value: activityVal,
+        subtext: activitySub,
+        tone: activityTone
+      },
+      {
+        label: 'تطهير السهم (AAOIFI)',
+        value: purVal,
+        subtext: purSub,
+        tone: purTone
+      },
+      {
+        label: 'نسبة الإيراد المحرم (S&P)',
+        value: spVal,
+        subtext: spSub,
+        tone: spTone
+      },
+      {
+        label: 'نسبة القروض والفوائد',
+        value: debtVal,
+        subtext: debtSub,
+        tone: debtTone
+      }
+    ];
   }
 
   get shariaRatiosList(): MzMetric[] {
