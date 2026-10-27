@@ -1085,13 +1085,9 @@ export class StockDetailComponent implements OnInit, OnDestroy {
     if (!this.marketData) return [];
     const tags: MzHeaderTag[] = [];
     if (this.marketData.sectorNameAr) {
-      tags.push({ label: this.marketData.sectorNameAr, tone: 'neutral' });
-    }
-    if (this.marketData.sectorWeight !== null && this.marketData.sectorWeight !== undefined && this.marketData.sectorWeight > 0) {
-      const isCapped = this.marketData.isSectorWeightCapped;
-      const factor = this.marketData.sectorCappingFactor;
-      const label = 'الوزن في القطاع: ' + Number(this.marketData.sectorWeight).toFixed(2) + '%' + (isCapped && factor ? ' (مسقوف - معامل: ' + Number(factor).toFixed(4) + ')' : '');
-      tags.push({ label, tone: 'neutral' });
+      const hasWeight = this.marketData.sectorWeight !== null && this.marketData.sectorWeight !== undefined && this.marketData.sectorWeight > 0;
+      const weightStr = hasWeight ? ` (${Number(this.marketData.sectorWeight).toFixed(2)}%)` : '';
+      tags.push({ label: `${this.marketData.sectorNameAr}${weightStr}`, tone: 'neutral' });
     }
     for (const idx of this.nonSectoralIndices) {
       const w = idx.weight && idx.weight > 0 ? ' (' + Number(idx.weight).toFixed(2) + '%)' : '';
