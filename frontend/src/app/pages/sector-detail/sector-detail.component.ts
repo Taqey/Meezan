@@ -7,7 +7,7 @@ import { ApiService } from '../../services/api.service';
 import { SessionCacheService } from '../../services/session-cache.service';
 import { navigateQueryParams } from '../../utils/navigation-utils';
 import { IndexSummaryDto, PagedResult, SectorSummaryDto, StockListItemDto } from '../../models/api.models';
-import { matchesNonComplianceType } from '../../models/shariah-standards';
+import { matchesNonComplianceType, normalizeStatusValue } from '../../models/shariah-standards';
 import { MzListingPageComponent, type MzListingConfig } from '../../components/ui/ui-listing-page';
 import { stockToCard } from '../../components/ui/ui-mappers';
 import type { MzStat } from '../../components/ui/ui-small';
@@ -102,6 +102,8 @@ export class SectorDetailComponent implements OnInit, OnDestroy {
   sectorId: number | null = null;
   sector?: SectorSummaryDto | null;
   stocks: StockListItemDto[] = [];
+  allSectorStocks: StockListItemDto[] = [];
+  kpisLoading = true;
   indices: IndexSummaryDto[] = [];
   totalCount = 0;
   totalPages = 1;
@@ -155,8 +157,10 @@ export class SectorDetailComponent implements OnInit, OnDestroy {
       this.sectorId = id ? Number(id) : null;
       if (this.sectorId) {
         this.loadSectorInfo();
+        this.loadSectorKpis();
       } else {
         this.loading = false;
+        this.kpisLoading = false;
         this.rebuild();
       }
     });
@@ -276,8 +280,40 @@ export class SectorDetailComponent implements OnInit, OnDestroy {
     });
   }
 
+  private loadSectorKpis(): void {
+    if (!this.sectorId) {
+      this.kpisLoading = false;
+      this.rebuild();
+      return;
+    }
+    const kpiCacheKey = 'sector_kpis_' + this.sectorId;
+    const cached = this.cache.get<StockListItemDto[]>(kpiCacheKey);
+    if (cached) {
+      this.allSectorStocks = cached.data || [];
+      this.kpisLoading = false;
+      this.rebuild();
+      if (!this.cache.isStale(kpiCacheKey)) {
+        return;
+      }
+    }
+
+    this.api.getStocks({ sectorId: this.sectorId, page: 1, pageSize: 200 }).subscribe({
+      next: (res) => {
+        this.allSectorStocks = res.items || [];
+        this.cache.set(kpiCacheKey, this.allSectorStocks);
+        this.kpisLoading = false;
+        this.rebuild();
+      },
+      error: () => {
+        this.kpisLoading = false;
+        this.rebuild();
+      }
+    });
+  }
+
   retry(): void {
     this.loadSectorInfo();
+    this.loadSectorKpis();
     this.loadStocks();
   }
 
@@ -361,11 +397,13 @@ export class SectorDetailComponent implements OnInit, OnDestroy {
   }
 
   get stats(): MzStat[] {
-    const totalCountVal = this.sector?.stocksCount ?? this.totalCount;
-    const compliantCount = this.sector?.compliantStocksCount;
-    const compliantPct = this.sector?.complianceRatePct;
-    const cheapCount = this.stocks.filter(s => s.priceComparison === 'Cheap').length;
-    const validPerformers = this.stocks.filter(s => s.changePct !== null && s.changePct !== undefined);
+    const totalCountVal = this.sector?.stocksCount ?? (this.allSectorStocks.length || this.totalCount);
+    const compliantCount = this.sector?.compliantStocksCount ?? (this.allSectorStocks.length ? this.allSectorStocks.filter(s => normalizeStatusValue(s.shariahStatus) === 'compliant').length : null);
+    const compliantPct = this.sector?.complianceRatePct ?? (totalCountVal && compliantCount != null ? Math.round((compliantCount / totalCountVal) * 100) : null);
+    const cheapCount = this.allSectorStocks.length
+      ? this.allSectorStocks.filter(s => s.priceComparison === 'Cheap').length
+      : null;
+    const validPerformers = this.allSectorStocks.filter(s => s.changePct !== null && s.changePct !== undefined);
     const top = validPerformers.length
       ? validPerformers.reduce((best, cur) => ((cur.changePct || 0) > (best.changePct || 0) ? cur : best))
       : null;
@@ -385,7 +423,7 @@ export class SectorDetailComponent implements OnInit, OnDestroy {
       },
       {
         label: 'فرص تقييم رخيص',
-        value: this.stocks.length ? String(cheapCount) : '—',
+        value: cheapCount != null ? String(cheapCount) : '—',
         icon: this.TrendingUpIcon,
         chip: 'أرخص'
       },
@@ -470,7 +508,7 @@ export class SectorDetailComponent implements OnInit, OnDestroy {
         description: this.sector?.nameEn || ''
       },
       stats: this.stats,
-      statsLoading: this.loading && !this.sector,
+      statsLoading: this.kpisLoading,
       tabs: [
         { id: 'all', label: 'كل الأسهم' },
         { id: 'compliant', label: 'متوافق شرعاً' },

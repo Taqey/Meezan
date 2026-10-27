@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { EMPTY, expand, map, reduce } from 'rxjs';
 import { LucideAngularModule, Layers, ShieldCheck, TrendingUp, Flame } from 'lucide-angular';
 import { ApiService } from '../../services/api.service';
 import { SessionCacheService } from '../../services/session-cache.service';
@@ -86,6 +87,8 @@ export class IndexDetailComponent implements OnInit, OnDestroy {
 
   code = '';
   result?: IndexConstituentsPagedResultDto | null;
+  allConstituents: ConstituentItemDto[] = [];
+  kpisLoading = true;
   loading = true;
   advancedOpen = false;
 
@@ -141,6 +144,11 @@ export class IndexDetailComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.route.paramMap.subscribe((params) => {
       this.code = params.get('code') || '';
+      if (this.code) {
+        this.loadIndexKpis();
+      } else {
+        this.kpisLoading = false;
+      }
     });
 
     this.route.queryParams.subscribe((params) => {
@@ -215,7 +223,48 @@ export class IndexDetailComponent implements OnInit, OnDestroy {
     }
   }
 
+  private loadIndexKpis(): void {
+    if (!this.code) {
+      this.kpisLoading = false;
+      this.rebuild();
+      return;
+    }
+    const kpiCacheKey = 'index_kpis_' + this.code;
+    const cached = this.cache.get<ConstituentItemDto[]>(kpiCacheKey);
+    if (cached) {
+      this.allConstituents = cached.data || [];
+      this.kpisLoading = false;
+      this.rebuild();
+      if (!this.cache.isStale(kpiCacheKey)) {
+        return;
+      }
+    }
+
+    this.api.getIndexConstituents(this.code, { page: 1, pageSize: 100 }).pipe(
+      expand((res, index) => {
+        const collected = (index + 1) * 100;
+        return collected < (res.totalCount || 0)
+          ? this.api.getIndexConstituents(this.code, { page: index + 2, pageSize: 100 })
+          : EMPTY;
+      }),
+      map((res) => res.items || []),
+      reduce((acc, items) => acc.concat(items), [] as ConstituentItemDto[])
+    ).subscribe({
+      next: (items) => {
+        this.allConstituents = items;
+        this.cache.set(kpiCacheKey, items);
+        this.kpisLoading = false;
+        this.rebuild();
+      },
+      error: () => {
+        this.kpisLoading = false;
+        this.rebuild();
+      }
+    });
+  }
+
   retry(): void {
+    this.loadIndexKpis();
     this.loadConstituents();
   }
 
@@ -277,18 +326,17 @@ export class IndexDetailComponent implements OnInit, OnDestroy {
   }
 
   get stats(): MzStat[] {
-    const totalCount = this.result?.totalCount;
-    const items = this.result?.items || [];
-    const isFullDataset = totalCount != null && totalCount <= items.length;
+    const totalCount = this.allConstituents.length || this.result?.totalCount;
+    const items = this.allConstituents.length ? this.allConstituents : (this.result?.items || []);
 
-    const compliantCount = isFullDataset
+    const compliantCount = this.allConstituents.length
       ? items.filter(s => normalizeStatusValue(s.shariahStatus) === 'compliant').length
       : null;
-    const compliantPct = isFullDataset && totalCount > 0
-      ? Math.round((compliantCount! / totalCount) * 100)
+    const compliantPct = compliantCount != null && totalCount && totalCount > 0
+      ? Math.round((compliantCount / totalCount) * 100)
       : null;
 
-    const cheapCount = isFullDataset
+    const cheapCount = this.allConstituents.length
       ? items.filter(s => s.priceComparison === 'Cheap').length
       : null;
 
@@ -392,7 +440,7 @@ export class IndexDetailComponent implements OnInit, OnDestroy {
         description: `${this.result?.indexNameEn || ''}${this.result?.indexNameEn ? ' · ' : ''}كود المؤشر: ${this.result?.indexCode || this.code}`
       },
       stats: this.stats,
-      statsLoading: this.loading && !this.result,
+      statsLoading: this.kpisLoading,
       tabs: [
         { id: 'all', label: 'كل الأسهم' },
         { id: 'compliant', label: 'متوافق شرعاً' },
