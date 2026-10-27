@@ -169,6 +169,7 @@ export interface MzListingCardData {
   ribbon?: { text: string; aside?: string | null; tone?: 'good' | 'bad' | 'neutral' } | null;
   tags?: { label: string; tone: 'good' | 'bad' | 'neutral'; note?: string | null }[];
   footerItems?: string[];
+  sectorBadge?: { label: string; bg: string; color: string } | null;
   favoriteSymbol?: string | null;
   link?: string | unknown[] | null;
   featured?: boolean;
@@ -221,15 +222,25 @@ export interface MzListingCardData {
             <div class="mz-lcard-tag-row">
               <mz-status-tag [tone]="t.tone" [label]="t.label"></mz-status-tag>
             </div>
-            <div class="mz-lcard-tag-note" [class.empty]="!t.note" [attr.title]="t.note || ''">
-              <span *ngIf="t.note">{{ t.note }}</span>
-              <span *ngIf="!t.note">&nbsp;</span>
+            <div class="mz-lcard-tag-note" *ngIf="t.note" [attr.title]="t.note">
+              <span>{{ t.note }}</span>
             </div>
           </ng-container>
         </div>
-        <div class="mz-lcard-foot" *ngIf="card.footerItems?.length || card.linkLabel">
-          <span *ngFor="let f of card.footerItems">{{ f }}</span>
-          <span *ngIf="card.linkLabel" style="color:var(--mz-primary);display:inline-flex;align-items:center;gap:2px">{{ card.linkLabel }}<lucide-icon [img]="LinkIcon" [size]="14"></lucide-icon></span>
+        <div class="mz-lcard-foot" *ngIf="card.sectorBadge || card.footerItems?.length || card.linkLabel">
+          <div class="mz-lcard-foot-start">
+            <span *ngIf="card.sectorBadge as sb"
+                  class="mz-badge mz-sector-badge"
+                  [attr.title]="sb.label"
+                  [style.background]="sb.bg"
+                  [style.color]="sb.color">
+              {{ sb.label }}
+            </span>
+          </div>
+          <div class="mz-lcard-foot-end">
+            <span *ngFor="let f of card.footerItems">{{ f }}</span>
+            <span *ngIf="card.linkLabel" style="color:var(--mz-primary);display:inline-flex;align-items:center;gap:2px">{{ card.linkLabel }}<lucide-icon [img]="LinkIcon" [size]="14"></lucide-icon></span>
+          </div>
         </div>
       </div>
     </a>

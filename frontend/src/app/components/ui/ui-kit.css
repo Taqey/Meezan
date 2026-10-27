@@ -187,11 +187,11 @@
 .mz-lcard-ribbon.bad { background: rgba(255,218,214,.4); color: var(--mz-on-error-container); }
 .mz-lcard-tags { display: flex; flex-direction: column; gap: 4px; padding-top: 2px; }
 .mz-lcard-tag-row { display: flex; align-items: center; gap: 6px; min-height: 24px; }
-.mz-lcard-tag-note { font-size: 11px; line-height: 15px; color: var(--mz-outline); height: 30px; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
-.mz-lcard-tag-note.empty { visibility: hidden; }
-.mz-lcard-foot { margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(188,202,192,.2); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px; font-size: 11px; color: var(--mz-outline); font-weight: 500; min-height: 24px; }
-.mz-lcard-foot-start { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.mz-lcard-tag-note { font-size: 11px; line-height: 15px; color: var(--mz-outline); overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; margin-top: 2px; }
+.mz-lcard-foot { margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(188,202,192,.2); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px; font-size: 11px; color: var(--mz-outline); font-weight: 500; min-height: 26px; }
+.mz-lcard-foot-start { display: flex; align-items: center; gap: 6px; flex-shrink: 0; min-width: 0; }
 .mz-lcard-foot-end { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.mz-sector-badge { max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 6px; line-height: 16px; border: none; }
 .mz-lcard.featured { border-color: rgba(0,105,72,.45); }
 .mz-pagination { display: flex; align-items: center; justify-content: center; gap: 6px; flex-wrap: wrap; margin: 8px 0 32px; }
 .mz-state { text-align: center; padding: 48px 16px; color: var(--mz-on-surface-variant); }

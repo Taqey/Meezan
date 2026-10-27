@@ -43,6 +43,7 @@ export function comparisonRibbon(
 
 import { INDEX_ARABIC_NAMES, type StockListItemDto, type ConstituentItemDto } from '../../models/api.models';
 import { getNonComplianceReasons, normalizeStatusValue } from '../../models/shariah-standards';
+import { sectorAccentFor } from '../../models/market-icons';
 
 export interface StockToCardOptions {
   parent?: 'sector' | 'index';
@@ -61,33 +62,42 @@ export function stockToCard(s: StockListItemDto | ConstituentItemDto, options?: 
     : [];
   const change = signedPct(s.changePct);
 
-  // Footer items resolution based on parent context
+  // Footer items and sector badge resolution based on parent context
   let footerItems: string[] = [];
+  let sectorBadge: MzListingCardData['sectorBadge'] = null;
   const hasWeight = s.weight !== null && s.weight !== undefined && !isNaN(Number(s.weight)) && Number(s.weight) > 0;
   const weightText = hasWeight ? `${Number(s.weight).toFixed(2)}%` : null;
 
+  if (s.sectorNameAr) {
+    const accent = sectorAccentFor((s as any).sectorNameEn || s.sectorNameAr);
+    sectorBadge = {
+      label: s.sectorNameAr,
+      bg: accent.tint,
+      color: accent.ink
+    };
+  }
+
   if (options?.parent === 'sector') {
     // 1. Sector page: ONLY the stock's weight in that sector labeled "الوزن في القطاع: X%".
-    // Remove sector name and all index badges. Hide if no weight.
+    // Remove sector badge and all index badges.
+    sectorBadge = null;
     if (weightText) {
       footerItems.push(`الوزن في القطاع: ${weightText}`);
     }
   } else if (options?.parent === 'index') {
-    // 2. Index page: ONLY sector name and weight in that index labeled "الوزن في المؤشر: X%".
-    // Remove all index badges. Hide weight if no weight.
-    if (s.sectorNameAr) {
-      footerItems.push(s.sectorNameAr);
-    }
+    // 2. Index page: ONLY sector badge and weight in that index labeled "الوزن في المؤشر: X%".
+    // Remove all index badges.
     if (weightText) {
       footerItems.push(`الوزن في المؤشر: ${weightText}`);
     }
   } else {
-    // 4. Main Stocks page: sector name + real index badges.
-    // Exclude 'Sectoral-Indices' umbrella so sector name is never repeated as an index badge!
+    // 3. Main Stocks page: sector badge once on the start side + real index badges group on the other side.
     const indexLabels = (s.indices || [])
       .filter((code) => code && code.toUpperCase() !== 'SECTORAL-INDICES')
       .map((code) => INDEX_ARABIC_NAMES[code] || code);
-    footerItems = [s.sectorNameAr || '', indexLabels.join(' • ')].filter(Boolean);
+    if (indexLabels.length) {
+      footerItems = [indexLabels.join(' • ')];
+    }
   }
 
   return {
@@ -100,6 +110,7 @@ export function stockToCard(s: StockListItemDto | ConstituentItemDto, options?: 
     mainUnit: s.currency && s.currency.includes('دولار') ? '$' : 'ج.م',
     ribbon: comparisonRibbon(s.priceComparison, s.fairValueDiffPct, s.closingPrice, s.fairValue),
     tags: [{ label: tag.label, tone: tag.tone, note: reasons.length ? reasons.join(' · ') : null }],
+    sectorBadge,
     footerItems,
     link: ['/stocks', s.ticker]
   };

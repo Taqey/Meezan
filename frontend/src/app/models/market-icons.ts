@@ -111,13 +111,54 @@ export function indexShowsAggregates(code?: string | null): boolean {
   return INDEX_CARD_CONFIG[normalizeIndexCode(code)]?.showAggregates ?? true;
 }
 
+const ARABIC_SECTOR_KEYS: Record<string, string> = {
+  'عقارات': 'realestate',
+  'خدمات مالية غير مصرفية': 'non-bankfinancialservices',
+  'أغذية و مشروبات و تبغ': 'foodbeveragesandtobacco',
+  'أغذية ومشروبات وتبغ': 'foodbeveragesandtobacco',
+  'رعاية صحية و ادوية': 'healthcare&pharmaceuticals',
+  'رعاية صحية وأدوية': 'healthcare&pharmaceuticals',
+  'موارد أساسية': 'basicresources',
+  'بنوك': 'banks',
+  'مقاولات و إنشاءات هندسية': 'contracting&constructionengineering',
+  'مقاولات وإنشاءات هندسية': 'contracting&constructionengineering',
+  'مواد البناء': 'buildingmaterials',
+  'سياحة وترفيه': 'travel&leisure',
+  'اتصالات و  اعلام و تكنولوجيا المعلومات': 'itmedia&communicationservices',
+  'اتصالات وإعلام وتكنولوجيا المعلومات': 'itmedia&communicationservices',
+  'منسوجات و سلع معمرة': 'textile&durables',
+  'منسوجات وسلع معمرة': 'textile&durables',
+  'خدمات و منتجات صناعية وسيارات': 'industrialgoodsservicesandautomobiles',
+  'خدمات ومنتجات صناعية وسيارات': 'industrialgoodsservicesandautomobiles',
+  'خدمات تعليمية': 'educationservices',
+  'تجارة و موزعون': 'trade&distributors',
+  'تجارة وموزعون': 'trade&distributors',
+  'طاقة وخدمات مساندة': 'energy&supportservices',
+  'طاقة و خدمات مساندة': 'energy&supportservices',
+  'خدمات النقل والشحن': 'shipping&transportationservices',
+  'ورق ومواد تعبئة و تغليف': 'paper&packaging',
+  'ورق ومواد تعبئة وتغليف': 'paper&packaging',
+  'مرافق': 'utilities'
+};
+
 /**
- * Normalized sector key: lowercase STABLE English name, spaces/commas
- * collapsed ('IT , Media & Communication Services' → 'itmedia&communicationservices').
- * Matched on nameEn (never on the Arabic display text).
+ * Normalized sector key: lowercase STABLE English name or Arabic sector text,
+ * spaces/commas collapsed ('IT , Media & Communication Services' → 'itmedia&communicationservices').
  */
-function normalizeSectorKey(nameEn?: string | null): string {
-  return (nameEn || '').toLowerCase().replace(/[\s,]+/g, '');
+function normalizeSectorKey(name?: string | null): string {
+  if (!name) return '';
+  const trimmed = name.trim();
+  if (ARABIC_SECTOR_KEYS[trimmed]) {
+    return ARABIC_SECTOR_KEYS[trimmed];
+  }
+  // Try clean Arabic normalization (remove extra spaces and Alef hamzas)
+  const cleanAr = trimmed.replace(/\s+/g, ' ').replace(/[إأآ]/g, 'ا');
+  for (const [arKey, enKey] of Object.entries(ARABIC_SECTOR_KEYS)) {
+    if (arKey.replace(/\s+/g, ' ').replace(/[إأآ]/g, 'ا') === cleanAr) {
+      return enKey;
+    }
+  }
+  return trimmed.toLowerCase().replace(/[\s,]+/g, '');
 }
 
 const SECTOR_ICONS: Record<string, LucideIconData> = {
@@ -142,8 +183,8 @@ const SECTOR_ICONS: Record<string, LucideIconData> = {
 };
 
 /** Icon for a sector card; falls back to the generic tag icon. */
-export function sectorIconFor(nameEn?: string | null): LucideIconData {
-  return SECTOR_ICONS[normalizeSectorKey(nameEn)] ?? Tag;
+export function sectorIconFor(name?: string | null): LucideIconData {
+  return SECTOR_ICONS[normalizeSectorKey(name)] ?? Tag;
 }
 
 export interface SectorAccent {
@@ -156,9 +197,9 @@ export interface SectorAccent {
 }
 
 const DEFAULT_SECTOR_ACCENT: SectorAccent = {
-  accent: '#087f5b',
-  tint: '#e4f4ed',
-  ink: '#087f5b'
+  accent: '#64748b',
+  tint: '#f1f5f9',
+  ink: '#334155'
 };
 
 const SECTOR_ACCENTS: Record<string, SectorAccent> = {
@@ -182,7 +223,7 @@ const SECTOR_ACCENTS: Record<string, SectorAccent> = {
   'paper&packaging': { accent: '#ca8a04', tint: '#fef9c3', ink: '#a16207' }
 };
 
-/** Accent triple for a sector card; falls back to the brand green. */
-export function sectorAccentFor(nameEn?: string | null): SectorAccent {
-  return SECTOR_ACCENTS[normalizeSectorKey(nameEn)] ?? DEFAULT_SECTOR_ACCENT;
+/** Accent triple for a sector card or badge; falls back to a neutral gray badge. */
+export function sectorAccentFor(name?: string | null): SectorAccent {
+  return SECTOR_ACCENTS[normalizeSectorKey(name)] ?? DEFAULT_SECTOR_ACCENT;
 }
