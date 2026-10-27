@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink, Router } from '@angular/router';
 import { LucideAngularModule, ArrowLeft, TrendingUp, TrendingDown, AlertCircle, DollarSign, ShieldCheck, Star, Building2, Calendar, PieChart, BarChart3, FileText, ExternalLink, Loader2 } from 'lucide-angular';
 import { ApiService } from '../../services/api.service';
+import { SessionCacheService } from '../../services/session-cache.service';
 import { FundDetailDto, FundPricePointDto, FundAnalysisDto, FundSimilarDto, FundCategoryMembershipDto, FundRiskLevel, FundType } from '../../models/api.models';
 import { FavoriteToggleComponent } from '../../components/favorite-toggle/favorite-toggle.component';
 import {
@@ -417,6 +418,7 @@ export class FundDetailComponent implements OnInit, AfterViewInit, AfterViewChec
     private router: Router,
     private api: ApiService,
     private ngZone: NgZone,
+    private cache: SessionCacheService
   ) {}
 
   ngOnInit(): void {
@@ -453,25 +455,41 @@ export class FundDetailComponent implements OnInit, AfterViewInit, AfterViewChec
   }
 
   loadFund(slug: string): void {
-    this.loading = true;
-    this.destroyChart();
+    const cacheKey = `fund_detail_${slug}`;
+    const cached = this.cache.get<FundDetailDto>(cacheKey);
+
+    if (cached) {
+      this.fund = cached.data;
+      this.lastSyncedAt = cached.data.lastSyncedAt || null;
+      this.heroLogoUrl = this.computeHeroLogo(cached.data);
+      this.loading = false;
+      this.chartHasDataFlag = this.visiblePoints().length > 0;
+      this.chartNeedsRender = true;
+      if (!this.cache.isStale(cacheKey)) {
+        return;
+      }
+    } else {
+      this.loading = true;
+      this.destroyChart();
+    }
+
     this.api.getFundBySlug(slug).pipe(takeUntil(this.destroy$)).subscribe({
       next: (data) => {
+        this.cache.set(cacheKey, data);
         this.fund = data;
         this.lastSyncedAt = data.lastSyncedAt || null;
         this.heroLogoUrl = this.computeHeroLogo(data);
         this.loading = false;
         this.chartHasDataFlag = this.visiblePoints().length > 0;
-        // The canvas lives behind *ngIf="!loading && fund". eventCoalescing defers
-        // change detection to requestAnimationFrame, so a plain setTimeout can run
-        // before the ViewChild resolves; ngAfterViewChecked is the correct hook.
         this.chartNeedsRender = true;
       },
       error: () => {
-        this.fund = null;
-        this.chartHasDataFlag = false;
-        this.chartNeedsRender = false;
-        this.loading = false;
+        if (!cached) {
+          this.fund = null;
+          this.chartHasDataFlag = false;
+          this.chartNeedsRender = false;
+          this.loading = false;
+        }
       }
     });
   }

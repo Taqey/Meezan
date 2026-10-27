@@ -16,6 +16,7 @@ import {
   Minus
 } from 'lucide-angular';
 import { ApiService } from '../../services/api.service';
+import { SessionCacheService } from '../../services/session-cache.service';
 import { ComparisonBadgeComponent } from '../../components/comparison-badge/comparison-badge.component';
 import {
   MzBackLinkComponent,
@@ -325,7 +326,8 @@ export class StockDetailComponent implements OnInit, OnDestroy {
   constructor(
     private route: ActivatedRoute,
     private api: ApiService,
-    private host: ElementRef<HTMLElement>
+    private host: ElementRef<HTMLElement>,
+    private cache: SessionCacheService
   ) { }
 
   ngOnInit(): void {
@@ -347,24 +349,45 @@ export class StockDetailComponent implements OnInit, OnDestroy {
   }
 
   loadStockData(): void {
-    this.loading = true;
+    const cacheKeyMarket = `stock_market_${this.ticker}`;
+    const cacheKeySr = `stock_sr_${this.ticker}`;
+    const cachedMarket = this.cache.get<MarketDataDto>(cacheKeyMarket);
+    const cachedSr = this.cache.get<SupportResistanceDto>(cacheKeySr);
+
+    if (cachedMarket) {
+      this.marketData = cachedMarket.data;
+      if (cachedSr) this.supportResistance = cachedSr.data;
+      this.loading = false;
+      if (!this.cache.isStale(cacheKeyMarket)) {
+        return;
+      }
+    } else {
+      this.loading = true;
+    }
+
     this.api.getMarketData(this.ticker).subscribe({
       next: (data) => {
+        this.cache.set(cacheKeyMarket, data);
         this.marketData = data;
         this.loading = false;
       },
       error: () => {
-        this.marketData = null;
-        this.loading = false;
+        if (!cachedMarket) {
+          this.marketData = null;
+          this.loading = false;
+        }
       }
     });
 
     this.api.getSupportResistance(this.ticker).subscribe({
       next: (sr) => {
+        this.cache.set(cacheKeySr, sr);
         this.supportResistance = sr;
       },
       error: () => {
-        this.supportResistance = null;
+        if (!cachedSr) {
+          this.supportResistance = null;
+        }
       }
     });
   }

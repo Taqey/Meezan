@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { LucideAngularModule, Search, ChevronDown, ShieldCheck, TrendingUp, Star, Building2, DollarSign, AlertCircle, SlidersHorizontal, RotateCcw, X } from 'lucide-angular';
 import { ApiService } from '../../services/api.service';
+import { SessionCacheService } from '../../services/session-cache.service';
 import { FundListItemDto, FundPagedResultDto, FundListFilter, FundType, FundClassificationTreeNode, FundAssetManagerOption } from '../../models/api.models';
 import {
   normFundType,
@@ -159,10 +160,21 @@ export class FundsListComponent implements OnInit, OnDestroy {
   constructor(
     private api: ApiService,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private cache: SessionCacheService
   ) {}
 
   ngOnInit(): void {
+    const saved = this.cache.getUiState<any>('funds-list');
+    if (saved && !this.route.snapshot.queryParamMap.keys.length) {
+      this.filter = saved.filter || this.filter;
+      this.classPath = saved.classPath || [];
+      this.searchText = saved.searchText || '';
+      this.activeChip = saved.activeChip || 'all';
+      this.advancedOpen = saved.advancedOpen || false;
+      this.currentPage = this.filter.page || 1;
+    }
+
     // Pipeline with switchMap so only the latest request response is applied
     this.querySub = this.fundsQuery$.pipe(
       switchMap((filter) => {
@@ -182,6 +194,8 @@ export class FundsListComponent implements OnInit, OnDestroy {
     ).subscribe({
       next: (res: FundPagedResultDto | null) => {
         if (!res) return;
+        const cacheKey = 'funds_query_' + JSON.stringify(this.filter);
+        this.cache.set(cacheKey, res);
         this.funds = res.items;
         this.totalCount = res.totalCount;
         this.totalPages = res.totalPages;
@@ -191,13 +205,13 @@ export class FundsListComponent implements OnInit, OnDestroy {
         this.hasInitialized = true;
         this.loadError = false;
         this.updateLastSyncedAt();
-            this.rebuild();
+        this.rebuild();
       },
       error: () => {
         this.loading = false;
         this.initialLoading = false;
         this.loadError = true;
-            this.rebuild();
+        this.rebuild();
       }
     });
 
@@ -315,6 +329,14 @@ export class FundsListComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.cache.saveScroll('funds-list', window.scrollX, window.scrollY);
+    this.cache.saveUiState('funds-list', {
+      filter: this.filter,
+      classPath: this.classPath,
+      searchText: this.searchText,
+      activeChip: this.activeChip,
+      advancedOpen: this.advancedOpen
+    });
     this.querySub?.unsubscribe();
   }
 
@@ -326,9 +348,24 @@ export class FundsListComponent implements OnInit, OnDestroy {
   private pendingLegacySlug: string | null = null;
 
   loadClassTree(): void {
+    const cachedTree = this.cache.get<FundClassificationTreeNode[]>('funds_class_tree');
+    if (cachedTree) {
+      this.classTree = cachedTree.data;
+      if (this.classPath.length) {
+        const deepest = this.classPath[this.classPath.length - 1];
+        const full = this.pathForSlug(deepest);
+        if (full.length) {
+          this.classPath = full;
+          this.advancedOpen = true;
+        }
+      }
+      if (!this.cache.isStale('funds_class_tree')) return;
+    }
+
     this.api.getClassificationTree().subscribe({
       next: (tree) => {
         this.classTree = tree || [];
+        this.cache.set('funds_class_tree', this.classTree);
         if (this.pendingLegacySlug) {
           const full = this.pathForSlug(this.pendingLegacySlug);
           if (full.length) {
@@ -356,9 +393,16 @@ export class FundsListComponent implements OnInit, OnDestroy {
   }
 
   loadAssetManagers(): void {
+    const cachedManagers = this.cache.get<FundAssetManagerOption[]>('funds_asset_managers');
+    if (cachedManagers) {
+      this.assetManagers = cachedManagers.data;
+      if (!this.cache.isStale('funds_asset_managers')) return;
+    }
+
     this.api.getFundAssetManagers().subscribe({
       next: (managers) => {
         this.assetManagers = (managers || []).filter(m => m.fundCount > 0);
+        this.cache.set('funds_asset_managers', this.assetManagers);
       },
       error: () => {}
     });
@@ -508,11 +552,40 @@ export class FundsListComponent implements OnInit, OnDestroy {
 
   loadFunds(): void {
     this.filter.page = this.currentPage;
+    const cacheKey = 'funds_query_' + JSON.stringify(this.filter);
+    const cached = this.cache.get<FundPagedResultDto>(cacheKey);
+    if (cached) {
+      this.funds = cached.data.items;
+      this.totalCount = cached.data.totalCount;
+      this.totalPages = cached.data.totalPages;
+      this.currentPage = cached.data.page;
+      this.loading = false;
+      this.initialLoading = false;
+      this.hasInitialized = true;
+      this.loadError = false;
+      this.updateLastSyncedAt();
+      this.rebuild();
+      this.cache.restoreScroll('funds-list');
+      if (!this.cache.isStale(cacheKey)) {
+        return;
+      }
+    }
     this.fundsQuery$.next({ ...this.filter });
   }
 
   loadFundStats(): void {
-    this.statsLoading = true;
+    const cached = this.cache.get<KpiData[]>('funds_stats');
+    if (cached) {
+      this.kpiList = cached.data;
+      this.statsLoading = false;
+      this.rebuild();
+      if (!this.cache.isStale('funds_stats')) {
+        return;
+      }
+    } else {
+      this.statsLoading = true;
+    }
+
     this.api.getFundStats().subscribe({
       next: (stats) => {
         this.kpiList = [
@@ -528,6 +601,7 @@ export class FundsListComponent implements OnInit, OnDestroy {
           { icon: this.ShieldCheckIcon, value: String(stats.islamicCount), label: 'متوافق شرعياً (SNDUK)' },
           { icon: this.DollarSignIcon, value: this.formatAum(stats.totalAum), label: 'إجمالي الأصول تحت الإدارة' }
         ];
+        this.cache.set('funds_stats', this.kpiList);
         this.rebuild();
         this.statsLoading = false;
       },
