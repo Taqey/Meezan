@@ -351,20 +351,30 @@ public class RunCombinedScrapeCommandHandler
             if (bucket == ScrapeDataBucket.LiveDaily)
             {
                 var existing = stock.MarketData;
+                var closingPrice = md.ClosingPrice;
+                var shares = existing?.SharesOutstanding;
+                decimal? marketVal = (closingPrice.HasValue && shares.HasValue && shares.Value > 0)
+                    ? closingPrice.Value * shares.Value
+                    : existing?.MarketValue;
+
                 mdEntity = new StockMarketData
                 {
                     StockId = stock.Id,
                     NominalValue = existing?.NominalValue,
-                    MarketValue = existing?.MarketValue,
+                    MarketValue = marketVal,
                     BookValue = existing?.BookValue,
                     PbRatio = existing?.PbRatio,
                     Eps = existing?.Eps,
                     PeRatio = existing?.PeRatio,
+                    SharesOutstanding = shares,
+                    EarningsGrowthRate = existing?.EarningsGrowthRate,
+                    EpsGrowthRate = existing?.EpsGrowthRate,
+                    FreeCashFlow = existing?.FreeCashFlow,
                     Currency = existing?.Currency,
                     High = md.High,
                     Low = md.Low,
                     Open = md.Open,
-                    ClosingPrice = md.ClosingPrice,
+                    ClosingPrice = closingPrice,
                     SourceLastUpdateText = md.SourceLastUpdateText,
                     FetchedAt = fetchedAt,
                     SlowDataFetchedAt = existing?.SlowDataFetchedAt
@@ -375,16 +385,24 @@ public class RunCombinedScrapeCommandHandler
                 var latestClose = stock.MarketData?.ClosingPrice;
                 var peRatio = CalculateRatio(latestClose, md.Eps);
                 var pbRatio = CalculateRatio(latestClose, md.BookValue);
+                var shares = md.SharesOutstanding ?? stock.MarketData?.SharesOutstanding;
+                decimal? marketVal = (latestClose.HasValue && shares.HasValue && shares.Value > 0)
+                    ? latestClose.Value * shares.Value
+                    : (md.MarketValue ?? stock.MarketData?.MarketValue);
 
                 mdEntity = new StockMarketData
                 {
                     StockId = stock.Id,
                     NominalValue = md.NominalValue,
-                    MarketValue = md.MarketValue,
+                    MarketValue = marketVal,
                     BookValue = md.BookValue,
                     PbRatio = pbRatio,
                     Eps = md.Eps,
                     PeRatio = peRatio,
+                    SharesOutstanding = shares,
+                    EarningsGrowthRate = stock.MarketData?.EarningsGrowthRate,
+                    EpsGrowthRate = stock.MarketData?.EpsGrowthRate,
+                    FreeCashFlow = stock.MarketData?.FreeCashFlow,
                     Currency = md.Currency,
                     High = stock.MarketData?.High,
                     Low = stock.MarketData?.Low,

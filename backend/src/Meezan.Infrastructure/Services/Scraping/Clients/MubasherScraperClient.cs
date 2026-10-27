@@ -40,7 +40,8 @@ public partial class MubasherScraperClient : IStockScraperClient
         { "أعلى", "high" },
         { "أدنى", "low" },
         { "فتح", "open" },
-        { "إغلاق سابق", "previous_close" }  // fallback price when live price is 0
+        { "إغلاق سابق", "previous_close" },  // fallback price when live price is 0
+        { "عدد أسهم الشركة الحالي", "shares_outstanding" }
     };
 
     private const string LastUpdateLabel = "آخر تحديث";
@@ -227,6 +228,7 @@ public partial class MubasherScraperClient : IStockScraperClient
             PbRatio: fieldValues.GetValueOrDefault("pb_ratio"),
             Eps: fieldValues.GetValueOrDefault("eps"),
             PeRatio: fieldValues.GetValueOrDefault("pe_ratio"),
+            SharesOutstanding: fieldValues.GetValueOrDefault("shares_outstanding"),
             Currency: currency,
             High: fieldValues.GetValueOrDefault("high"),
             Low: fieldValues.GetValueOrDefault("low"),

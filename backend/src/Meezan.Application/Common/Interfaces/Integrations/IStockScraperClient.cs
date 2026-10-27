@@ -12,12 +12,13 @@ public record ScrapedMarketData(
     decimal? PbRatio,
     decimal? Eps,
     decimal? PeRatio,
-    string? Currency,
-    decimal? High,
-    decimal? Low,
-    decimal? Open,
-    decimal? ClosingPrice,
-    string? SourceLastUpdateText,
+    decimal? SharesOutstanding = null,
+    string? Currency = null,
+    decimal? High = null,
+    decimal? Low = null,
+    decimal? Open = null,
+    decimal? ClosingPrice = null,
+    string? SourceLastUpdateText = null,
     bool IsNotFound = false
 );
 
