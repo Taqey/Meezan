@@ -61,8 +61,9 @@ export interface MzHeaderTag { label: string; link?: string | unknown[] | null; 
           <span class="mz-ltr" *ngIf="code">{{ code }}</span>
           <span class="mz-ltr" *ngIf="secondaryName">{{ secondaryName }}</span>
         </div>
-        <div class="mz-dheader-titlerow">
-          <h1>{{ title }}</h1>
+        <div class="mz-dheader-titlerow" style="display:flex;align-items:center;gap:12px;">
+          <img *ngIf="logoUrl && !logoFailed" [src]="logoUrl" [alt]="title" width="44" height="44" style="border-radius:10px;object-fit:contain;border:1px solid rgba(188,202,192,.3);padding:3px;background:#fff;" (error)="logoFailed = true" />
+          <h1 style="margin:0;">{{ title }}</h1>
           <ng-content select="[titleBadge]"></ng-content>
         </div>
         <div class="mz-dheader-tags" *ngIf="tags?.length">
@@ -83,6 +84,7 @@ export interface MzHeaderTag { label: string; link?: string | unknown[] | null; 
   `
 })
 export class MzDetailsHeaderCardComponent {
+  @Input() logoUrl?: string | null;
   @Input() title = '';
   @Input() code?: string | null;
   @Input() secondaryName?: string | null;
@@ -93,6 +95,7 @@ export class MzDetailsHeaderCardComponent {
   @Input() currency = '';
   @Input() changeText?: string | null;
   @Input() changeTone?: 'positive' | 'negative' | 'muted' | null;
+  logoFailed = false;
 }
 
 /* ───────────── SupportResistanceCard ───────────── */

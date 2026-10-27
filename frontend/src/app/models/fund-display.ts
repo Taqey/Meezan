@@ -227,16 +227,19 @@ export const FUND_LOGO_BASE = '/fund-logos';
  *  3. null — the card falls back to its coloured type icon.
  */
 export function fundLogoUrl(localLogoPath: string | null | undefined, logoUrl: string | null | undefined): string | null {
+  const remote = (logoUrl ?? '').trim();
+  if (remote.length) {
+    if (remote.startsWith('//')) return 'https:' + remote;
+    return remote;
+  }
   const local = (localLogoPath ?? '').trim();
   if (local) {
-    // Guard against a malformed DB value ever turning into a protocol-relative URL.
     if (/^https?:\/\//i.test(local)) return local;
     if (local.startsWith('//')) return 'https:' + local;
     const base = environment.apiBaseUrl.replace(/\/+$/, '');
     return base + FUND_LOGO_BASE + '/' + local.replace(/^\/+/, '').replace(/^funds\//, '');
   }
-  const remote = (logoUrl ?? '').trim();
-  return remote.length ? remote : null;
+  return null;
 }
 
 /** Arabic label for a fund-type-change-log action (backend FundTypeChangeAction enum). */

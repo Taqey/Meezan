@@ -68,6 +68,7 @@ async function ensureChartJs(): Promise<typeof import('chart.js') | null> {
 
       <!-- Details Header Card -->
       <mz-details-header-card
+        [logoUrl]="heroLogoUrl"
         [title]="fund.nameAr"
         [code]="fund.code"
         [secondaryName]="fund.nameEn"
