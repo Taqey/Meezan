@@ -695,12 +695,32 @@ export class FundDetailComponent implements OnInit, AfterViewInit, AfterViewChec
 
   /** Points inside the selected window, ascending by date. */
   private visiblePoints(): FundPricePointDto[] {
-    const all = this.fund?.priceHistory ?? [];
-    if (all.length === 0) return [];
-    if (this.selectedPeriod === 'ALL') return all.slice();
+    const raw = this.fund?.priceHistory ?? [];
+    if (raw.length === 0) return [];
 
+    // 1. Always sort points ascending by date on a safe copy without mutating source data
+    const all = raw
+      .map(p => ({ p, t: new Date(p.date).getTime() }))
+      .filter(item => !isNaN(item.t))
+      .sort((a, b) => a.t - b.t)
+      .map(item => item.p);
+
+    if (all.length === 0) return [];
+    if (this.selectedPeriod === 'ALL') return all;
+
+    const lastPointTime = new Date(all[all.length - 1].date).getTime();
+
+    // 2. Week: points within 7 calendar days up to and including the last point
     if (this.selectedPeriod === '1W') {
-      return all.slice(-7);
+      const cutoffWeek = new Date(lastPointTime);
+      cutoffWeek.setDate(cutoffWeek.getDate() - 7);
+      const weekPoints = all.filter(p => new Date(p.date).getTime() >= cutoffWeek.getTime());
+
+      // If fewer than 2 points, fall back to the last 5 points
+      if (weekPoints.length < 2) {
+        return all.slice(-5);
+      }
+      return weekPoints;
     }
 
     const months = this.selectedPeriod === '1M' ? 1
@@ -709,12 +729,9 @@ export class FundDetailComponent implements OnInit, AfterViewInit, AfterViewChec
       : this.selectedPeriod === '1Y' ? 12
       : this.selectedPeriod === '3Y' ? 36
       : 60;
-    const cutoff = new Date();
+    const cutoff = new Date(lastPointTime);
     cutoff.setMonth(cutoff.getMonth() - months);
-    return all.filter(p => {
-      const d = new Date(p.date);
-      return !isNaN(d.getTime()) && d >= cutoff;
-    });
+    return all.filter(p => new Date(p.date).getTime() >= cutoff.getTime());
   }
 
   /**
@@ -762,15 +779,20 @@ export class FundDetailComponent implements OnInit, AfterViewInit, AfterViewChec
     const context = canvas.getContext('2d');
     if (!context) return;
 
+    // Calculate time span of visible points to choose appropriate date label format
+    const firstTime = new Date(points[0].date).getTime();
+    const lastTime = new Date(points[points.length - 1].date).getTime();
+    const spanDays = Math.max(0, (lastTime - firstTime) / (1000 * 60 * 60 * 24));
+
+    const pad = (n: number) => String(n).padStart(2, '0');
     const labels = points.map(p => {
       const d = new Date(p.date);
-      return isNaN(d.getTime())
-        ? p.date
-        : d.toLocaleDateString('ar-EG', { year: 'numeric', month: '2-digit', day: '2-digit' });
+      if (isNaN(d.getTime())) return p.date;
+      const m = pad(d.getMonth() + 1);
+      const day = pad(d.getDate());
+      return spanDays <= 180 ? `${m}/${day}` : `${d.getFullYear()}/${m}/${day}`;
     });
-    const prices = points.map(p => Number(p.price));
-    const values = prices.slice().reverse();
-    const revLabels = labels.slice().reverse();
+    const values = points.map(p => Number(p.price));
 
     const gradient = context.createLinearGradient(0, 0, 0, 300);
     gradient.addColorStop(0, 'rgba(5, 150, 105, 0.25)');
@@ -779,7 +801,7 @@ export class FundDetailComponent implements OnInit, AfterViewInit, AfterViewChec
     const config: ChartConfiguration<'line'> = {
       type: 'line',
       data: {
-        labels: revLabels,
+        labels,
         datasets: [{
           label: 'سعر الوحدة',
           data: values,
@@ -803,7 +825,16 @@ export class FundDetailComponent implements OnInit, AfterViewInit, AfterViewChec
           tooltip: {
             rtl: true,
             callbacks: {
-              title: items => items[0]?.label ?? '',
+              title: items => {
+                const idx = items[0]?.dataIndex;
+                if (idx != null && points[idx]) {
+                  const d = new Date(points[idx].date);
+                  return isNaN(d.getTime())
+                    ? points[idx].date
+                    : d.toLocaleDateString('ar-EG', { year: 'numeric', month: '2-digit', day: '2-digit' });
+                }
+                return items[0]?.label ?? '';
+              },
               label: ctx => ` ${this.fund?.currency ?? 'ج.م'} ${Number(ctx.parsed.y).toLocaleString('en-US', { minimumFractionDigits: 4, maximumFractionDigits: 4 })}`.trim()
             }
           }
