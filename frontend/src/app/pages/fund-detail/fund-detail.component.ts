@@ -138,27 +138,27 @@ async function ensureChartJs(): Promise<typeof import('chart.js') | null> {
           *ngIf="displaySimilarFunds && displaySimilarFunds.length > 0"
           eyebrow="صناديق مشابهة"
           title="صناديق في نفس الفئة">
-          <div class="mz-grid cols-4" style="margin-bottom:0">
+          <div class="mz-grid cols-4" style="margin-bottom:0; align-items: stretch;">
             <a *ngFor="let sim of displaySimilarFunds" [routerLink]="['/funds', sim.slug || sim.id]"
-               class="mz-card mz-lcard" style="min-height: 170px;">
-              <div class="mz-lcard-head">
-                <div class="mz-lcard-id" style="align-items:center;gap:10px;">
+               class="mz-card hoverable mz-lcard mz-sim-card">
+              <div class="mz-lcard-head" style="align-items:flex-start;gap:10px;margin-bottom:14px;">
+                <div class="mz-lcard-id" style="align-items:flex-start;gap:10px;min-width:0;flex:1;">
                   <div *ngIf="simLogoUrl(sim)" style="width:40px;height:40px;flex-shrink:0;border-radius:8px;border:1px solid rgba(188,202,192,.35);padding:2px;background:#fff;display:flex;align-items:center;justify-content:center;">
                     <img [src]="simLogoUrl(sim)" [alt]="sim.nameAr"
                          style="width:100%;height:100%;object-fit:contain;border-radius:6px;"
                          (error)="onSimLogoError($event)">
                   </div>
-                  <div>
-                    <h3 class="mz-lcard-title" [attr.title]="sim.nameAr" style="font-size:14px;line-height:20px;">{{ sim.nameAr || '—' }}</h3>
+                  <div class="mz-lcard-text">
+                    <h3 class="mz-lcard-title mz-sim-title">{{ sim.nameAr || '—' }}</h3>
                   </div>
                 </div>
-                <div class="mz-lcard-badges">
+                <div class="mz-lcard-badges" style="flex-shrink:0;">
                   <span class="mz-badge neutral"><span class="mz-ltr">{{ sim.code || '—' }}</span></span>
                 </div>
               </div>
-              <div class="mz-lcard-foot" style="margin-top:auto;">
-                <span style="font-weight:600;color:var(--mz-primary);">{{ sim.effectiveClassification?.leafNameAr || sim.effectiveClassification?.rootNameAr || sim.typeNameAr || '—' }}</span>
-                <span style="color:var(--mz-primary);display:inline-flex;align-items:center;gap:2px">عرض الصندوق ←</span>
+              <div class="mz-lcard-foot" style="margin-top:auto;padding-top:12px;flex-wrap:nowrap;">
+                <span style="font-weight:600;color:var(--mz-primary);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ sim.effectiveClassification?.leafNameAr || sim.effectiveClassification?.rootNameAr || sim.typeNameAr || '—' }}</span>
+                <span style="color:var(--mz-primary);display:inline-flex;align-items:center;gap:2px;flex-shrink:0;white-space:nowrap;font-weight:700;">عرض الصندوق ←</span>
               </div>
             </a>
           </div>
@@ -265,16 +265,29 @@ async function ensureChartJs(): Promise<typeof import('chart.js') | null> {
       color: var(--ink);
     }
     .similar-name-ar {
-      font-size: 12px;
+      font-size: 13px;
       color: var(--ink);
       margin-top: 4px;
-      height: 2.8em;
-      line-height: 1.4em;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      line-height: 1.45;
+      white-space: normal;
+      overflow: visible;
+    }
+    .mz-sim-card {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .mz-sim-title {
+      font-size: 14px;
+      line-height: 1.45;
+      font-weight: 700;
+      margin: 0;
+      white-space: normal;
+      overflow: visible;
+      text-overflow: clip;
+      height: auto;
+      display: block;
     }
     .similar-name-en {
       font-size: 11px;

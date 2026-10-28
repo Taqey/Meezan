@@ -286,7 +286,7 @@
 .mz-lcard-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
 .mz-lcard-id { display: flex; align-items: flex-start; gap: 8px; min-width: 0; flex: 1; }
 .mz-lcard-text { display: flex; flex-direction: column; min-width: 0; flex: 1; }
-.mz-lcard-title { margin: 0; font-size: 15px; line-height: 20px; font-weight: 700; color: var(--mz-on-surface); overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; height: 40px; }
+.mz-lcard-title { margin: 0; font-size: 15px; line-height: 1.45; font-weight: 700; color: var(--mz-on-surface); overflow: visible; text-overflow: clip; white-space: normal; display: block; height: auto; min-height: 22px; word-break: break-word; overflow-wrap: break-word; }
 .mz-lcard-sub { font-size: 11px; line-height: 16px; height: 16px; font-weight: 500; color: var(--mz-outline); text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
 .mz-lcard-sub.empty { visibility: hidden; }
 .mz-lcard-badges { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end; flex-shrink: 0; }
