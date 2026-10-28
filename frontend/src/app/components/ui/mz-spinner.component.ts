@@ -108,3 +108,4 @@ export class MzSpinnerComponent implements OnChanges, OnDestroy {
     }
   }
 }
+

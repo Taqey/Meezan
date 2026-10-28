@@ -13,6 +13,7 @@ import {
   FUND_SHARIA_BADGE_TOOLTIP
 } from '../../models/fund-display';
 import { MzListingPageComponent, type MzListingConfig } from '../../components/ui/ui-listing-page';
+import { MzSelectComponent, type MzOption } from '../../components/ui/ui-small';
 import type { MzListingCardData } from '../../components/ui/ui-listing';
 import { ClassificationCascadeComponent } from '../../components/classification-cascade/classification-cascade.component';
 import { type EntityStat } from '../../components/entity-card/entity-card.component';
@@ -23,7 +24,7 @@ import { KpiStripComponent, KpiData } from '../../components/kpi-strip/kpi-strip
 @Component({
   selector: 'app-funds-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule, ClassificationCascadeComponent, MzListingPageComponent],
+  imports: [CommonModule, FormsModule, LucideAngularModule, ClassificationCascadeComponent, MzListingPageComponent, MzSelectComponent],
     template: `
     <mz-listing-page
       [config]="config"
@@ -55,29 +56,30 @@ import { KpiStripComponent, KpiData } from '../../components/kpi-strip/kpi-strip
         </div>
         <div class="mz-slicer">
           <span class="mz-slicer-head"><span>الشركة المسؤولة (مدير الأصول)</span></span>
-          <select class="mz-select" [ngModel]="filter.assetManagerId" (ngModelChange)="onManagerChange($event)" aria-label="الشركة المسؤولة عن الصندوق">
-            <option [ngValue]="undefined">كل الشركات والمديرين</option>
-            <option *ngFor="let mgr of assetManagers" [ngValue]="mgr.id">
-              {{ mgr.nameAr }} ({{ mgr.fundCount }})
-            </option>
-          </select>
+          <mz-select
+            [options]="assetManagerOptions"
+            [value]="filter.assetManagerId ?? null"
+            (valueChange)="onManagerChange($event)"
+            ariaLabel="الشركة المسؤولة عن الصندوق">
+          </mz-select>
         </div>
         <div class="mz-slicer">
           <span class="mz-slicer-head"><span>مستوى المخاطر</span></span>
-          <select class="mz-select" [ngModel]="filter.riskLevel" (ngModelChange)="onRiskChange($event)" aria-label="مستوى المخاطر">
-            <option [ngValue]="undefined">كل المستويات</option>
-            <option value="low">منخفضة</option>
-            <option value="medium">متوسطة</option>
-            <option value="high">عالية</option>
-          </select>
+          <mz-select
+            [options]="riskLevelOptions"
+            [value]="filter.riskLevel ?? null"
+            (valueChange)="onRiskChange($event)"
+            ariaLabel="مستوى المخاطر">
+          </mz-select>
         </div>
         <div class="mz-slicer">
           <span class="mz-slicer-head"><span>الحكم الشرعي (المصدر)</span></span>
-          <select class="mz-select" [ngModel]="filter.isIslamic" (ngModelChange)="onShariaChange($event)" aria-label="الحكم الشرعي">
-            <option [ngValue]="undefined">الكل</option>
-            <option [ngValue]="true">متوافق شرعياً</option>
-            <option [ngValue]="false">غير متوافق</option>
-          </select>
+          <mz-select
+            [options]="shariaOptions"
+            [value]="filter.isIslamic ?? null"
+            (valueChange)="onShariaChange($event)"
+            ariaLabel="الحكم الشرعي">
+          </mz-select>
         </div>
       </div>
 
@@ -156,6 +158,29 @@ export class FundsListComponent implements OnInit, OnDestroy {
   kpiList: KpiData[] = [];
 
   lastSyncedAt: string | null = null;
+
+  get assetManagerOptions(): MzOption[] {
+    return [
+      { value: null, label: 'كل الشركات والمديرين' },
+      ...this.assetManagers.map((mgr) => ({
+        value: mgr.id,
+        label: `${mgr.nameAr} (${mgr.fundCount})`
+      }))
+    ];
+  }
+
+  readonly riskLevelOptions: MzOption[] = [
+    { value: null, label: 'كل المستويات' },
+    { value: 'low', label: 'منخفضة' },
+    { value: 'medium', label: 'متوسطة' },
+    { value: 'high', label: 'عالية' }
+  ];
+
+  readonly shariaOptions: MzOption[] = [
+    { value: null, label: 'الكل' },
+    { value: true, label: 'متوافق شرعياً' },
+    { value: false, label: 'غير متوافق' }
+  ];
 
   constructor(
     private api: ApiService,

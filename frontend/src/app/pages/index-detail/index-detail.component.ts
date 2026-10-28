@@ -11,7 +11,7 @@ import { ConstituentItemDto, IndexConstituentsPagedResultDto, MarketSnapshotDto 
 import { normalizeStatusValue } from '../../models/shariah-standards';
 import { MzListingPageComponent, type MzListingConfig } from '../../components/ui/ui-listing-page';
 import { stockToCard } from '../../components/ui/ui-mappers';
-import type { MzStat } from '../../components/ui/ui-small';
+import { MzSelectComponent, type MzStat, type MzOption } from '../../components/ui/ui-small';
 
 import { ViewSwitcherComponent, type EntityView } from '../../components/view-switcher/view-switcher.component';
 import { TreemapComponent, type TreemapItem } from '../../components/treemap/treemap.component';
@@ -19,7 +19,7 @@ import { TreemapComponent, type TreemapItem } from '../../components/treemap/tre
 @Component({
   selector: 'app-index-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule, MzListingPageComponent, ViewSwitcherComponent, TreemapComponent],
+  imports: [CommonModule, FormsModule, LucideAngularModule, MzListingPageComponent, MzSelectComponent, ViewSwitcherComponent, TreemapComponent],
   template: `
     <mz-listing-page
       [config]="config"
@@ -55,12 +55,12 @@ import { TreemapComponent, type TreemapItem } from '../../components/treemap/tre
       </div>
 
       <div advanced class="mz-adv-grid">
-        <select class="mz-select" [(ngModel)]="minCompliantSources" (change)="onFilterChange()" aria-label="الحد الأدنى للمصادر المتوافقة">
-          <option value="">الجهات المتوافقة: الكل</option>
-          <option value="3">3 جهات فأكثر</option>
-          <option value="5">5 جهات فأكثر</option>
-          <option value="7">إجماع كامل (7 من 7)</option>
-        </select>
+        <mz-select
+          [options]="minCompliantOptions"
+          [(ngModel)]="minCompliantSources"
+          (valueChange)="minCompliantSources = $event; onFilterChange()"
+          ariaLabel="الحد الأدنى للمصادر المتوافقة">
+        </mz-select>
         <div class="mz-slicer">
           <div class="mz-slicer-head"><span>مكرر الربحية (P/E)</span><span>{{ minPe !== null ? minPe : 0 }} - {{ maxPe !== null ? maxPe : 100 }}</span></div>
           <div class="mz-slicer-inputs">
@@ -81,10 +81,12 @@ import { TreemapComponent, type TreemapItem } from '../../components/treemap/tre
         </div>
         <label class="mz-slicer">
           <span class="mz-slicer-head"><span>لكل صفحة</span></span>
-          <select class="mz-select" [(ngModel)]="pageSize" (change)="onPageSizeChange()" aria-label="عدد الأسهم في الصفحة">
-            <option [ngValue]="5">5</option><option [ngValue]="10">10</option><option [ngValue]="20">20</option>
-            <option [ngValue]="50">50</option><option [ngValue]="100">100</option>
-          </select>
+          <mz-select
+            [options]="pageSizeOptions"
+            [(ngModel)]="pageSize"
+            (valueChange)="pageSize = $event; onPageSizeChange()"
+            ariaLabel="عدد الأسهم في الصفحة">
+          </mz-select>
         </label>
       </div>
     </mz-listing-page>
@@ -101,6 +103,21 @@ export class IndexDetailComponent implements OnInit, OnDestroy {
     { value: 'NonCompliant', label: 'غير متوافق' },
     { value: 'Pending', label: 'البيانات غير كافية' },
     { value: 'Blocked', label: 'محظور' }
+  ];
+
+  readonly minCompliantOptions: MzOption[] = [
+    { value: '', label: 'الجهات المتوافقة: الكل' },
+    { value: '3', label: '3 جهات فأكثر' },
+    { value: '5', label: '5 جهات فأكثر' },
+    { value: '7', label: 'إجماع كامل (7 من 7)' }
+  ];
+
+  readonly pageSizeOptions: MzOption[] = [
+    { value: 5, label: '5' },
+    { value: 10, label: '10' },
+    { value: 20, label: '20' },
+    { value: 50, label: '50' },
+    { value: 100, label: '100' }
   ];
 
   code = '';

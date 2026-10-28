@@ -10,7 +10,7 @@ import { SessionCacheService } from '../../services/session-cache.service';
 import { MarketSnapshotDto, SectorSummaryDto, StockListItemDto } from '../../models/api.models';
 import { sectorAccentFor, sectorIconFor } from '../../models/market-icons';
 import { MzListingPageComponent, type MzListingConfig } from '../../components/ui/ui-listing-page';
-import { MzButtonComponent } from '../../components/ui/ui-small';
+import { MzButtonComponent, MzSelectComponent, type MzOption } from '../../components/ui/ui-small';
 import type { MzListingCardData } from '../../components/ui/ui-listing';
 import { ViewSwitcherComponent, type EntityView } from '../../components/view-switcher/view-switcher.component';
 import { type KpiData } from '../../components/kpi-strip/kpi-strip.component';
@@ -25,7 +25,7 @@ type Chip = 'all' | 'compliance' | 'performance' | 'pe' | 'name';
 @Component({
   selector: 'app-sectors-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule, MzListingPageComponent, MzButtonComponent, ViewSwitcherComponent, EntityTableComponent, EntityHeatmapComponent],
+  imports: [CommonModule, FormsModule, LucideAngularModule, MzListingPageComponent, MzButtonComponent, MzSelectComponent, ViewSwitcherComponent, EntityTableComponent, EntityHeatmapComponent],
     template: `
     <mz-listing-page
       [config]="config"
@@ -55,12 +55,12 @@ type Chip = 'all' | 'compliance' | 'performance' | 'pe' | 'name';
       <div advanced class="mz-adv-grid">
         <label class="mz-slicer">
           <span class="mz-slicer-head"><span>الحد الأدنى لعدد الأسهم في القطاع</span></span>
-          <select class="mz-select" [(ngModel)]="minStocks" (change)="refreshDerived()" aria-label="الحد الأدنى لعدد الأسهم">
-            <option [ngValue]="0">الكل</option>
-            <option [ngValue]="5">5 أسهم فأكثر</option>
-            <option [ngValue]="10">10 أسهم فأكثر</option>
-            <option [ngValue]="20">20 سهماً فأكثر</option>
-          </select>
+          <mz-select
+            [options]="minStocksOptions"
+            [(ngModel)]="minStocks"
+            (valueChange)="minStocks = $event; refreshDerived()"
+            ariaLabel="الحد الأدنى لعدد الأسهم">
+          </mz-select>
         </label>
       </div>
     </mz-listing-page>
@@ -90,6 +90,12 @@ export class SectorsListComponent implements OnInit, OnDestroy {
   shariahFilter = '';
   sortField = 'compliantCount';
   minStocks = 0;
+  readonly minStocksOptions: MzOption[] = [
+    { value: 0, label: 'الكل' },
+    { value: 5, label: '5 أسهم فأكثر' },
+    { value: 10, label: '10 أسهم فأكثر' },
+    { value: 20, label: '20 سهماً فأكثر' }
+  ];
   advancedOpen = false;
 
   sortKey: CardSort = 'compliantCount';

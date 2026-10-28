@@ -8,7 +8,7 @@ import { ApiService } from '../../services/api.service';
 import { ConstituentItemDto, IndexSummaryDto, MarketSnapshotDto } from '../../models/api.models';
 import { indexAccentFor, indexIconFor, indexShowsAggregates, isFeaturedIndex, indexShortNameFor, indexFullNameFor } from '../../models/market-icons';
 import { MzListingPageComponent, type MzListingConfig } from '../../components/ui/ui-listing-page';
-import { MzButtonComponent } from '../../components/ui/ui-small';
+import { MzButtonComponent, MzSelectComponent, type MzOption } from '../../components/ui/ui-small';
 import type { MzListingCardData } from '../../components/ui/ui-listing';
 import { ViewSwitcherComponent, type EntityView } from '../../components/view-switcher/view-switcher.component';
 import { type KpiData } from '../../components/kpi-strip/kpi-strip.component';
@@ -39,7 +39,7 @@ interface IndexStats {
 @Component({
   selector: 'app-indices-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule, MzListingPageComponent, MzButtonComponent, ViewSwitcherComponent, EntityTableComponent, TreemapComponent],
+  imports: [CommonModule, FormsModule, LucideAngularModule, MzListingPageComponent, MzButtonComponent, MzSelectComponent, ViewSwitcherComponent, EntityTableComponent, TreemapComponent],
     template: `
     <mz-listing-page
       [config]="config"
@@ -69,12 +69,12 @@ interface IndexStats {
       <div advanced class="mz-adv-grid">
         <label class="mz-slicer">
           <span class="mz-slicer-head"><span>الحد الأدنى لعدد الأسهم المكونة</span></span>
-          <select class="mz-select" [(ngModel)]="minConstituents" (change)="refreshDerived()" aria-label="الحد الأدنى لعدد الأسهم">
-            <option [ngValue]="0">الكل</option>
-            <option [ngValue]="30">30 سهم فأكثر</option>
-            <option [ngValue]="70">70 سهم فأكثر</option>
-            <option [ngValue]="100">100 سهم فأكثر</option>
-          </select>
+          <mz-select
+            [options]="minConstituentsOptions"
+            [(ngModel)]="minConstituents"
+            (valueChange)="minConstituents = $event; refreshDerived()"
+            ariaLabel="الحد الأدنى لعدد الأسهم">
+          </mz-select>
         </label>
       </div>
     </mz-listing-page>
@@ -101,6 +101,12 @@ export class IndicesListComponent implements OnInit, OnDestroy {
   sortDir: 'asc' | 'desc' = 'desc';
   advancedOpen = false;
   minConstituents = 0;
+  readonly minConstituentsOptions: MzOption[] = [
+    { value: 0, label: 'الكل' },
+    { value: 30, label: '30 سهم فأكثر' },
+    { value: 70, label: '70 سهم فأكثر' },
+    { value: 100, label: '100 سهم فأكثر' }
+  ];
 
   sortKey: IndexSort = 'compliantCount';
   tableSortKey = 'compliance';

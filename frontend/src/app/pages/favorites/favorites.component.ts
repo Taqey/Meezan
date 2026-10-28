@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import { LucideAngularModule, Search, Star, Trash2 } from 'lucide-angular';
 import { EMPTY, Observable, expand, map, reduce } from 'rxjs';
 import { ApiService } from '../../services/api.service';
@@ -21,7 +20,6 @@ import {
   imports: [
     CommonModule,
     FormsModule,
-    RouterLink,
     LucideAngularModule,
     MzListingPageComponent,
     MzButtonComponent,
@@ -160,15 +158,13 @@ export class FavoritesComponent implements OnInit {
         description: 'الأسهم التي حفظتها بنجمة، ببياناتها الحية نفسها: الحكم الشرعي ونسبة التغير.'
       },
       filters: count > 0 ? {
-        search: {
-          value: this.search,
-          placeholder: 'ابحث في المفضلة باسم السهم أو رمزه...',
-          ariaLabel: 'البحث في المفضلة'
-        },
+        searchValue: this.search,
+        searchPlaceholder: 'ابحث في المفضلة باسم السهم أو رمزه...',
+        controls: [],
         sort: {
           value: this.sortBy,
           options: this.sortOptions,
-          ariaLabel: 'ترتيب المفضلة'
+          label: 'الترتيب'
         }
       } : null,
       results: count > 0 && !this.loading && !this.loadError ? {

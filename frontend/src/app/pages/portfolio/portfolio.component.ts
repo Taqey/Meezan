@@ -15,8 +15,7 @@ import {
 } from 'lucide-angular';
 import {
   MzPageHeaderComponent,
-  MzBadgeComponent,
-  MzButtonComponent
+  MzBadgeComponent
 } from '../../components/ui';
 
 declare global {
@@ -35,8 +34,7 @@ declare global {
     CommonModule,
     LucideAngularModule,
     MzPageHeaderComponent,
-    MzBadgeComponent,
-    MzButtonComponent
+    MzBadgeComponent
   ],
   encapsulation: ViewEncapsulation.None,
   template: `

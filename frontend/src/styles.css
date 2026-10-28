@@ -1,13 +1,20 @@
 @import './app/components/ui/ui-kit.css';
 
 :root {
-  /* Motion tokens: one easing + one duration scale for the whole site. */
+  /* Motion tokens: unified durations and easing curve across the whole site */
+  --mz-dur-fast: 140ms;
+  --mz-dur-base: 200ms;
+  --mz-dur-slow: 300ms;
+  --mz-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --mz-stagger-step: 40ms;
+  --mz-stagger-max: 400ms;
+
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
-  --dur-fast: 150ms;
-  --dur-med: 250ms;
-  --dur-slow: 400ms;
-  --stagger-step: 55ms;
-  --reveal-y: 16px;
+  --dur-fast: 140ms;
+  --dur-med: 200ms;
+  --dur-slow: 300ms;
+  --stagger-step: 40ms;
+  --reveal-y: 8px;
   color-scheme: light;
   --background: #f7f8f6;
   --foreground: #17231f;

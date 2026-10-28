@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { LucideAngularModule, ArrowRight, ChevronLeft } from 'lucide-angular';
+import { RevealDirective } from '../../directives/reveal.directive';
 import {
   MzBadgeComponent, MzAuthorityCardComponent, MzChipComponent, MzFavoriteButtonComponent, MzIndicatorCardComponent,
   MzMetricItemComponent, type MzAuthority, type MzMetric
@@ -25,10 +26,10 @@ export class MzBackLinkComponent {
 @Component({
   selector: 'mz-details-section',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RevealDirective],
   host: { class: 'mz', style: 'display:block' },
   template: `
-    <section class="mz-card mz-dsection">
+    <section class="mz-card mz-dsection" appReveal>
       <div class="mz-dsection-head" *ngIf="title || eyebrow">
         <div>
           <span class="mz-eyebrow" *ngIf="eyebrow">{{ eyebrow }}</span>

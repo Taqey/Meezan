@@ -13,7 +13,6 @@ import {
   MzDetailsSectionComponent,
   MzBadgeComponent,
   MzButtonComponent,
-  MzChipComponent,
   MzBackLinkComponent
 } from '../../components/ui';
 
@@ -23,14 +22,12 @@ import {
   imports: [
     CommonModule,
     FormsModule,
-    RouterLink,
     LucideAngularModule,
     PortfolioDonutChartComponent,
     MzPageHeaderComponent,
     MzDetailsSectionComponent,
     MzBadgeComponent,
     MzButtonComponent,
-    MzChipComponent,
     MzBackLinkComponent
   ],
   template: `

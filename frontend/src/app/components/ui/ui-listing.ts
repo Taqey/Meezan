@@ -269,14 +269,26 @@ export class MzListingCardComponent {
   imports: [CommonModule, MzListingCardComponent],
   host: { class: 'mz', style: 'display:block' },
   template: `
-    <section class="mz-grid cols-3">
-      <mz-listing-card *ngFor="let c of cards; trackBy: trackCard" [card]="c"></mz-listing-card>
+    <section class="mz-grid cols-3" [class.mz-first-stagger]="isFirstLoad">
+      <mz-listing-card
+        *ngFor="let c of cards; let i = index; trackBy: trackCard"
+        [card]="c"
+        [style.--item-index]="i">
+      </mz-listing-card>
     </section>
   `
 })
 export class MzCardsGridComponent {
   @Input() cards: MzListingCardData[] = [];
+  isFirstLoad = true;
   trackCard = (_: number, c: MzListingCardData) => c.id;
+
+  constructor() {
+    // Stagger animation plays on first mount only; not replayed on filter/page changes
+    setTimeout(() => {
+      this.isFirstLoad = false;
+    }, 600);
+  }
 }
 
 /* ───────────── Pagination ───────────── */
