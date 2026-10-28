@@ -540,7 +540,7 @@ export class MzNumberLineComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 }
 
-/** Feature flag to re-enable the advanced number line visualization later with one change */
+// temporarily disabled until fund descriptions are standardized
 export const SHOW_NUMBER_LINE = false;
 
 @Component({
