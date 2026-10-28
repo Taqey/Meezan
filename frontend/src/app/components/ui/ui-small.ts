@@ -139,8 +139,7 @@ let nextSelectId = 1;
       <div
         #panelRef
         *ngIf="open"
-        class="mz-select-panel"
-        [class.flip-up]="flipUp"
+        class="mz mz-select-panel"
         role="listbox"
         [id]="listboxId"
         [attr.aria-label]="ariaLabel || placeholder">
@@ -290,22 +289,12 @@ export class MzSelectComponent implements ControlValueAccessor, OnDestroy {
       return;
     }
 
+    this.flipUp = false;
+    this.panelEl.classList.remove('flip-up');
+    this.panelEl.style.bottom = 'auto';
+    this.panelEl.style.top = `${Math.round(rect.bottom + 6)}px`;
     const spaceBelow = window.innerHeight - rect.bottom;
-    const spaceAbove = rect.top;
-    const shouldFlip = spaceBelow < 260 && spaceAbove > spaceBelow;
-    this.flipUp = shouldFlip;
-
-    if (shouldFlip) {
-      this.panelEl.classList.add('flip-up');
-      this.panelEl.style.top = 'auto';
-      this.panelEl.style.bottom = `${Math.round(window.innerHeight - rect.top + 6)}px`;
-      this.panelEl.style.maxHeight = `${Math.min(280, Math.max(100, Math.floor(spaceAbove - 16)))}px`;
-    } else {
-      this.panelEl.classList.remove('flip-up');
-      this.panelEl.style.bottom = 'auto';
-      this.panelEl.style.top = `${Math.round(rect.bottom + 6)}px`;
-      this.panelEl.style.maxHeight = `${Math.min(280, Math.max(100, Math.floor(spaceBelow - 16)))}px`;
-    }
+    this.panelEl.style.maxHeight = `${Math.min(280, Math.max(100, Math.floor(spaceBelow - 16)))}px`;
 
     const minWidth = Math.max(140, Math.round(rect.width));
     this.panelEl.style.minWidth = `${minWidth}px`;

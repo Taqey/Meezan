@@ -86,7 +86,11 @@
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: rgba(188, 202, 192, 0.6) transparent;
-  background: var(--mz-surface);
+  background: #ffffff;
+  background-color: #ffffff;
+  opacity: 1;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
   border: 1px solid rgba(188, 202, 192, 0.5);
   border-radius: 12px;
   box-shadow: 0 12px 32px rgba(19, 27, 46, 0.16), 0 2px 8px rgba(19, 27, 46, 0.08);
