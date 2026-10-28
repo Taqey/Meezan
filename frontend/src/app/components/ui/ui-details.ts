@@ -540,67 +540,87 @@ export class MzNumberLineComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 }
 
+/** Feature flag to re-enable the advanced number line visualization later with one change */
+export const SHOW_NUMBER_LINE = false;
+
 @Component({
   selector: 'mz-allocation-breakdown',
   standalone: true,
   imports: [CommonModule, MzNumberLineComponent],
   host: { class: 'mz', style: 'display:block' },
   template: `
-    <div class="mz-alloc-card">
-      <div class="mz-alloc-head">
-        <h4 class="mz-alloc-title">هيكل توزيع الأصول المستهدف (Asset Allocation)</h4>
-        <span class="mz-alloc-badge" *ngIf="badgeText">{{ badgeText }}</span>
-      </div>
-
-      <!-- Advanced Multi-lane NumberLine Scale (when numeric bands exist) -->
-      <ng-container *ngIf="bands.length > 0; else fallbackBar">
-        <mz-number-line
-          [instanceId]="instanceId"
-          [bands]="bands"
-          [activeBandId]="activeId"
-          [ariaLabel]="ariaLabel"
-          (bandHover)="onNumberLineHover($event)">
-        </mz-number-line>
-      </ng-container>
-
-      <!-- Fallback Bar when no numeric limits parsed -->
-      <ng-template #fallbackBar>
-        <div class="mz-alloc-bar" role="img" [attr.aria-label]="ariaLabel">
-          <span *ngFor="let a of items" [style.width.%]="a.pct" [style.background]="a.color"></span>
+    <!-- When SHOW_NUMBER_LINE is enabled, render the advanced multi-lane NumberLine card -->
+    <ng-container *ngIf="showNumberLine; else originalView">
+      <div class="mz-alloc-card">
+        <div class="mz-alloc-head">
+          <h4 class="mz-alloc-title">هيكل توزيع الأصول المستهدف (Asset Allocation)</h4>
+          <span class="mz-alloc-badge" *ngIf="badgeText">{{ badgeText }}</span>
         </div>
-      </ng-template>
 
-      <!-- Asset Allocation Breakdown Cards (below the number line) -->
-      <div class="mz-alloc-grid" *ngIf="cards.length > 0">
-        <div *ngFor="let c of cards"
-             class="mz-alloc-box"
-             [class.is-active]="activeId === c.id"
-             [class.is-dimmed]="activeId && activeId !== c.id"
-             (mouseenter)="onCardHover(c.id)"
-             (mouseleave)="onCardLeave()"
-             (focus)="onCardHover(c.id)"
-             (blur)="onCardLeave()"
-             tabindex="0">
-          <div class="mz-alloc-box-head">
-            <span class="mz-alloc-swatch" [style.background]="c.color"></span>
-            <span class="mz-alloc-box-label">{{ c.label }}</span>
+        <!-- Advanced Multi-lane NumberLine Scale (when numeric bands exist) -->
+        <ng-container *ngIf="bands.length > 0; else fallbackBar">
+          <mz-number-line
+            [instanceId]="instanceId"
+            [bands]="bands"
+            [activeBandId]="activeId"
+            [ariaLabel]="ariaLabel"
+            (bandHover)="onNumberLineHover($event)">
+          </mz-number-line>
+        </ng-container>
+
+        <!-- Fallback Bar when no numeric limits parsed -->
+        <ng-template #fallbackBar>
+          <div class="mz-alloc-bar" role="img" [attr.aria-label]="ariaLabel">
+            <span *ngFor="let a of displayItems" [style.width.%]="a.pct" [style.background]="a.color"></span>
           </div>
-          <p class="mz-alloc-box-val" [style.color]="c.color">{{ c.limitText }}</p>
-          <span *ngIf="c.description" class="mz-alloc-box-sub">{{ c.description }}</span>
+        </ng-template>
+
+        <!-- Asset Allocation Breakdown Cards (below the number line) -->
+        <div class="mz-alloc-grid" *ngIf="cards.length > 0">
+          <div *ngFor="let c of cards"
+               class="mz-alloc-box"
+               [class.is-active]="activeId === c.id"
+               [class.is-dimmed]="activeId && activeId !== c.id"
+               (mouseenter)="onCardHover(c.id)"
+               (mouseleave)="onCardLeave()"
+               (focus)="onCardHover(c.id)"
+               (blur)="onCardLeave()"
+               tabindex="0">
+            <div class="mz-alloc-box-head">
+              <span class="mz-alloc-swatch" [style.background]="c.color"></span>
+              <span class="mz-alloc-box-label">{{ c.label }}</span>
+            </div>
+            <p class="mz-alloc-box-val" [style.color]="c.color">{{ c.limitText }}</p>
+            <span *ngIf="c.description" class="mz-alloc-box-sub">{{ c.description }}</span>
+          </div>
+        </div>
+
+        <!-- Traditional items fallback if cards not passed -->
+        <div class="mz-alloc-items" *ngIf="!cards.length && displayItems.length > 0">
+          <div class="mz-alloc-item" *ngFor="let a of displayItems">
+            <span class="mz-alloc-swatch" [style.background]="a.color"></span>
+            {{ a.label }} <strong class="mz-ltr">{{ a.pct }}%</strong>
+          </div>
         </div>
       </div>
+    </ng-container>
 
-      <!-- Traditional items fallback if cards not passed -->
-      <div class="mz-alloc-items" *ngIf="!cards.length && items.length > 0">
-        <div class="mz-alloc-item" *ngFor="let a of items">
+    <!-- Original Allocation Breakdown View (restored look: bar + cards below) -->
+    <ng-template #originalView>
+      <div class="mz-alloc-bar" role="img" [attr.aria-label]="ariaLabel">
+        <span *ngFor="let a of displayItems" [style.width.%]="a.pct" [style.background]="a.color"></span>
+      </div>
+      <div class="mz-alloc-items">
+        <div class="mz-alloc-item" *ngFor="let a of displayItems">
           <span class="mz-alloc-swatch" [style.background]="a.color"></span>
           {{ a.label }} <strong class="mz-ltr">{{ a.pct }}%</strong>
         </div>
       </div>
-    </div>
+    </ng-template>
   `
 })
 export class MzAllocationBreakdownComponent {
+  readonly showNumberLine = SHOW_NUMBER_LINE;
   @Input() instanceId = 'alloc_default';
   @Input() badgeText = 'معايير الالتزام والسياسة الاستثمارية';
   @Input() bands: MzNumberLineBand[] = [];
@@ -609,6 +629,18 @@ export class MzAllocationBreakdownComponent {
   @Input() ariaLabel = 'هيكل توزيع الأصول المستهدف';
 
   activeId: string | null = null;
+
+  get displayItems(): MzAllocation[] {
+    if (this.items && this.items.length > 0) return this.items;
+    if (this.bands && this.bands.length > 0) {
+      return this.bands.map(b => ({
+        label: b.label,
+        pct: b.min > 0 ? b.min : b.max,
+        color: b.color
+      }));
+    }
+    return [];
+  }
 
   onNumberLineHover(id: string | null): void {
     this.activeId = id;
