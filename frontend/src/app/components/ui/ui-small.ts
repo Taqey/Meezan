@@ -117,10 +117,11 @@ let nextSelectId = 1;
     }
   ],
   template: `
-    <div class="mz-select-wrap" [class.is-open]="open" [class.is-disabled]="disabled" [class.flip-up]="flipUp">
+    <div class="mz-select-wrap" [class.is-open]="open" [class.is-disabled]="disabled" [class.flip-up]="flipUp" [class.compact]="size === 'compact'">
       <button
         type="button"
         class="mz-select-trigger"
+        [class.compact]="size === 'compact'"
         role="combobox"
         [attr.aria-expanded]="open"
         aria-haspopup="listbox"
@@ -171,6 +172,7 @@ export class MzSelectComponent implements ControlValueAccessor {
   @Input() ariaLabel = '';
   @Input() placeholder = '';
   @Input() disabled = false;
+  @Input() size: 'default' | 'compact' = 'default';
   @Output() valueChange = new EventEmitter<any>();
 
   open = false;

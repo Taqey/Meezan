@@ -45,7 +45,7 @@ import { MzSelectComponent } from '../../components/ui/ui-small';
         <div class="mz-adv-col">
           <div class="mz-adv-item" *ngIf="shariahStatuses.includes('NonCompliant')">
             <span class="mz-slicer-head"><span>سبب عدم التوافق</span></span>
-            <mz-select
+            <mz-select size="compact"
               [options]="nonComplianceOptions"
               [(ngModel)]="nonComplianceType"
               (valueChange)="nonComplianceType = $event; onFilterChange()"
@@ -54,7 +54,7 @@ import { MzSelectComponent } from '../../components/ui/ui-small';
           </div>
           <div class="mz-adv-item">
             <span class="mz-slicer-head"><span>الحد الأدنى للمصادر المتوافقة</span></span>
-            <mz-select
+            <mz-select size="compact"
               [options]="minCompliantOptions"
               [(ngModel)]="minCompliantSources"
               (valueChange)="minCompliantSources = $event; onFilterChange()"
@@ -63,7 +63,7 @@ import { MzSelectComponent } from '../../components/ui/ui-small';
           </div>
           <div class="mz-adv-item">
             <span class="mz-slicer-head"><span>النتائج لكل صفحة</span></span>
-            <mz-select
+            <mz-select size="compact"
               [options]="pageSizeOptions"
               [(ngModel)]="pageSize"
               (valueChange)="pageSize = $event; onPageSizeChange()"
