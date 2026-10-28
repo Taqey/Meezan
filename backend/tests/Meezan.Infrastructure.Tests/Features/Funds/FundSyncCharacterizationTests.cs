@@ -37,7 +37,9 @@ public class FundSyncCharacterizationTests : IClassFixture<WebApplicationFactory
             b.ConfigureAppConfiguration((_, cfg) => cfg.AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["Admin:ApiKey"] = "fund-sync-test-key",
-                ["Funds:SchedulerEnabled"] = "false"
+                ["Funds:SchedulerEnabled"] = "false",
+                ["Funds:Cache:WarmupOnStartup"] = "false",
+                ["Redis:Host"] = ""
             }));
             b.ConfigureServices(services =>
             {
@@ -426,6 +428,49 @@ public class FundSyncCharacterizationTests : IClassFixture<WebApplicationFactory
         {
             Assert.Equal("funds/fund-l1.png", (await db.Funds.SingleAsync(f => f.Code == "L1")).LocalLogoPath);
             Assert.True(string.IsNullOrEmpty((await db.Funds.SingleAsync(f => f.Code == "L2")).LocalLogoPath));
+            return 0;
+        });
+    }
+
+    [Fact]
+    public async Task Sync_PreservesAdminEditedNamesAndDescription()
+    {
+        await ConfigureSettingsAsync();
+        ScriptThreeFunds();
+
+        // Initial sync inserts the 3 funds
+        await RunAsync();
+
+        // Admin manually edits fund AAA's NameAr, DisplayName, and DescriptionAr
+        await WithDb(async db =>
+        {
+            var f1 = await db.Funds.SingleAsync(f => f.Code == "AAA");
+            f1.NameAr = "اسم كامل معدل يدويا";
+            f1.DisplayName = "اسم عرض مخصص";
+            f1.DescriptionAr = "وصف مخصص من المشرف";
+            f1.IsNameManuallyEdited = true;
+            f1.IsDescriptionManuallyEdited = true;
+            await db.SaveChangesAsync();
+            return 0;
+        });
+
+        // Run sync again where SNDUK returns original Name and Description
+        await RunAsync();
+
+        await WithDb(async db =>
+        {
+            var f1 = await db.Funds.SingleAsync(f => f.Code == "AAA");
+            Assert.Equal("اسم كامل معدل يدويا", f1.NameAr);
+            Assert.Equal("اسم عرض مخصص", f1.DisplayName);
+            Assert.Equal("وصف مخصص من المشرف", f1.DescriptionAr);
+            Assert.True(f1.IsNameManuallyEdited);
+            Assert.True(f1.IsDescriptionManuallyEdited);
+
+            // Unedited fund BBB still updates normally and has DisplayName populated
+            var f2 = await db.Funds.SingleAsync(f => f.Code == "BBB");
+            Assert.False(f2.IsNameManuallyEdited);
+            Assert.False(f2.IsDescriptionManuallyEdited);
+            Assert.Equal(f2.NameAr, f2.DisplayName);
             return 0;
         });
     }

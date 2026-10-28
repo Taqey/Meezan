@@ -31,7 +31,9 @@ public class AdminFundsSnapshotTests : IAsyncLifetime
             b.ConfigureAppConfiguration((_, cfg) => cfg.AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["Admin:ApiKey"] = AdminKey,
-                ["Funds:SchedulerEnabled"] = "false"
+                ["Funds:SchedulerEnabled"] = "false",
+                ["Funds:Cache:WarmupOnStartup"] = "false",
+                ["Redis:Host"] = ""
             }));
             b.ConfigureServices(services =>
             {
@@ -461,5 +463,67 @@ public class AdminFundsSnapshotTests : IAsyncLifetime
         var res = await client.GetAsync("/api/admin/funds/funds/99999");
         var content = await res.Content.ReadAsStringAsync();
         SnapshotAssert.MatchesStoredSnapshot("Admin_Funds_GetFund_NotFound", (int)res.StatusCode, content);
+    }
+
+    [Fact]
+    public async Task FetchMissingPricesForFund_Unauthenticated_Returns401()
+    {
+        var client = _factory.CreateClient(); // No X-Admin-Key header
+        var res = await client.PostAsync($"/api/admin/funds/funds/{_fundId}/fetch-missing-prices", null);
+        Assert.Equal(System.Net.HttpStatusCode.Unauthorized, res.StatusCode);
+    }
+
+    [Fact]
+    public async Task UpdateFundDetails_Unauthenticated_Returns401()
+    {
+        var client = _factory.CreateClient(); // No X-Admin-Key header
+        var payload = new
+        {
+            NameAr = "اسم كامل",
+            DisplayName = "اسم عرض",
+            DescriptionAr = "وصف"
+        };
+        var res = await client.PatchAsJsonAsync($"/api/admin/funds/funds/{_fundId}", payload);
+        Assert.Equal(System.Net.HttpStatusCode.Unauthorized, res.StatusCode);
+    }
+
+    [Fact]
+    public async Task UpdateFundDetails_Authenticated_UpdatesNamesAndDescription_AndFallbackWorks()
+    {
+        var client = CreateAdminClient();
+        var payload = new
+        {
+            NameAr = "صندوق بلتون وفرة الرسمي الكامل",
+            DisplayName = "بلتون وفرة",
+            DescriptionAr = "الفقرة الأولى من الوصف.\n\nالفقرة الثانية من الوصف."
+        };
+        var res = await client.PatchAsJsonAsync($"/api/admin/funds/funds/{_fundId}", payload);
+        Assert.Equal(System.Net.HttpStatusCode.OK, res.StatusCode);
+
+        // Verify public detail endpoint reflects displayName, fullNameAr, and descriptionAr
+        var publicClient = _factory.CreateClient();
+        var detailRes = await publicClient.GetAsync($"/api/funds/{_fundId}");
+        Assert.Equal(System.Net.HttpStatusCode.OK, detailRes.StatusCode);
+        var detailJson = await detailRes.Content.ReadAsStringAsync();
+        Assert.Contains("بلتون وفرة", detailJson);
+        Assert.Contains("صندوق بلتون وفرة الرسمي الكامل", detailJson);
+        Assert.Contains("الفقرة الأولى من الوصف.", detailJson);
+
+        // Now clear displayName and verify fallback to NameAr
+        var emptyDisplayPayload = new
+        {
+            NameAr = "صندوق بلتون وفرة الرسمي الكامل",
+            DisplayName = "",
+            DescriptionAr = "وصف محدث"
+        };
+        var res2 = await client.PatchAsJsonAsync($"/api/admin/funds/funds/{_fundId}", emptyDisplayPayload);
+        Assert.Equal(System.Net.HttpStatusCode.OK, res2.StatusCode);
+
+        var detailRes2 = await publicClient.GetAsync($"/api/funds/{_fundId}");
+        var detailDoc = System.Text.Json.JsonDocument.Parse(await detailRes2.Content.ReadAsStringAsync());
+        Assert.Equal("صندوق بلتون وفرة الرسمي الكامل", detailDoc.RootElement.GetProperty("displayName").GetString());
+        Assert.Equal("صندوق بلتون وفرة الرسمي الكامل", detailDoc.RootElement.GetProperty("fullNameAr").GetString());
+        Assert.True(detailDoc.RootElement.GetProperty("isNameManuallyEdited").GetBoolean());
+        Assert.True(detailDoc.RootElement.GetProperty("isDescriptionManuallyEdited").GetBoolean());
     }
 }

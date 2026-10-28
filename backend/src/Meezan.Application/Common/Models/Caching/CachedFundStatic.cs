@@ -10,7 +10,10 @@ public sealed class CachedFundStatic
     public string PublicId { get; set; } = string.Empty;
     public string Slug { get; set; } = string.Empty;
     public string NameAr { get; set; } = string.Empty;
+    public string DisplayName { get; set; } = string.Empty;
     public string NameEn { get; set; } = string.Empty;
+    public bool IsNameManuallyEdited { get; set; }
+    public bool IsDescriptionManuallyEdited { get; set; }
     public string Code { get; set; } = string.Empty;
     public FundType Type { get; set; }
     public string TypeNameAr { get; set; } = string.Empty;

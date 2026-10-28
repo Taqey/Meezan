@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { LucideAngularModule, Search, ChevronDown, ShieldCheck, TrendingUp, Star, Building2, DollarSign, AlertCircle, SlidersHorizontal, RotateCcw, X } from 'lucide-angular';
 import { ApiService } from '../../services/api.service';
+import { SessionCacheService } from '../../services/session-cache.service';
 import { FundListItemDto, FundPagedResultDto, FundListFilter, FundType, FundClassificationTreeNode, FundAssetManagerOption } from '../../models/api.models';
 import {
   normFundType,
@@ -11,12 +12,11 @@ import {
   fundLogoUrl,
   FUND_SHARIA_BADGE_TOOLTIP
 } from '../../models/fund-display';
-import { PageHeaderComponent } from '../../components/page-header/page-header.component';
+import { MzListingPageComponent, type MzListingConfig } from '../../components/ui/ui-listing-page';
+import { MzSelectComponent, type MzOption } from '../../components/ui/ui-small';
+import type { MzListingCardData } from '../../components/ui/ui-listing';
 import { ClassificationCascadeComponent } from '../../components/classification-cascade/classification-cascade.component';
-import { EntityCardComponent, EntityStat } from '../../components/entity-card/entity-card.component';
-import { SectionHeaderComponent } from '../../components/section-header/section-header.component';
-import { LoadingSkeletonsComponent } from '../../components/loading-skeletons/loading-skeletons.component';
-import { EmptyStateComponent } from '../../components/empty-state/empty-state.component';
+import { type EntityStat } from '../../components/entity-card/entity-card.component';
 import { FormsModule } from '@angular/forms';
 import { debounceTime, distinctUntilChanged, Subject, switchMap, Subscription, timeout, catchError, of } from 'rxjs';
 import { KpiStripComponent, KpiData } from '../../components/kpi-strip/kpi-strip.component';
@@ -24,691 +24,72 @@ import { KpiStripComponent, KpiData } from '../../components/kpi-strip/kpi-strip
 @Component({
   selector: 'app-funds-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule, PageHeaderComponent, ClassificationCascadeComponent, EntityCardComponent, SectionHeaderComponent, LoadingSkeletonsComponent, EmptyStateComponent, KpiStripComponent],
-  template: `
-    <div class="entity-page">
-      <app-page-header
-        [crumbs]="headerCrumbs"
-        pill="الصناديق الاستثمارية"
-        title="الصناديق الاستثمارية المصرية"
-        description="استعرض وحلل جميع الصناديق الاستثمارية في السوق المصري مع فلاتر متقدمة للتصنيف، حجم الأصول، مستويات المخاطر، العوائد والرسوم، والرقابة الشرعية.">
-      </app-page-header>
+  imports: [CommonModule, FormsModule, LucideAngularModule, ClassificationCascadeComponent, MzListingPageComponent, MzSelectComponent],
+    template: `
+    <mz-listing-page
+      [config]="config"
+      (tabChange)="setChip($event)"
+      (searchChange)="onSearchInput($event)"
+      (sortChange)="onSortChangeSelect($event)"
+      (advancedClick)="toggleAdvanced(); rebuild()"
+      (pageChange)="goToPage($event)"
+      (retry)="loadFunds()">
 
-      <app-kpi-strip [kpis]="kpiList" [loading]="statsLoading"></app-kpi-strip>
+      <div resultsExtra class="mz-active-filters" *ngIf="hasActiveFilters">
+        <span class="mz-badge pill neutral" *ngIf="filter.search">البحث: {{ filter.search }} <button type="button" class="mz-x" (click)="removeSearchFilter()" aria-label="حذف بحث">×</button></span>
+        <span class="mz-badge pill neutral" *ngIf="activeNodeName">التصنيف: {{ activeNodeName }} <button type="button" class="mz-x" (click)="removeNodeFilter()" aria-label="حذف فلتر التصنيف">×</button></span>
+        <span class="mz-badge pill neutral" *ngIf="activeManagerName">المدير: {{ activeManagerName }} <button type="button" class="mz-x" (click)="removeManagerFilter()" aria-label="حذف فلتر المدير">×</button></span>
+        <span class="mz-badge pill neutral" *ngIf="filter.riskLevel">المخاطر: {{ filter.riskLevel === 'low' ? 'منخفضة' : filter.riskLevel === 'medium' ? 'متوسطة' : 'عالية' }} <button type="button" class="mz-x" (click)="removeRiskFilter()" aria-label="حذف فلتر المخاطر">×</button></span>
+        <span class="mz-badge pill neutral" *ngIf="filter.isIslamic !== undefined">الحكم: {{ filter.isIslamic ? 'متوافق شرعاً' : 'غير متوافق' }} <button type="button" class="mz-x" (click)="removeShariaFilter()" aria-label="حذف فلتر التوافق الشرعي">×</button></span>
+        <button type="button" class="mz-btn" style="padding:2px 8px;font-size:11px" (click)="resetFilters()">مسح الفلاتر</button>
+      </div>
 
-      <app-section-header
-        *ngIf="!initialLoading && !loadError"
-        [lead]="totalCount + ' صندوقاً استثمارياً في قاعدة البيانات'"
-        [sourceNote]="sourceNote">
-      </app-section-header>
-
-      <div class="funds-filters-container" *ngIf="!initialLoading || hasInitialized">
-        <!-- Filter Card Header with Title, Subtitle, and Quick Actions -->
-        <div class="filter-card-header">
-          <div class="filter-header-title-wrap">
-            <div class="filter-header-icon-box">
-              <lucide-icon [img]="SlidersIcon" size="18"></lucide-icon>
-            </div>
-            <div>
-              <h2 class="filter-main-title">فلترة وتخصيص الصناديق</h2>
-              <p class="filter-sub-title">حدد المعايير لعرض الصناديق المتوافقة مع أهدافك المالية</p>
-            </div>
-          </div>
-          <div class="filter-header-actions">
-            <button
-              type="button"
-              class="btn-reset-filters"
-              *ngIf="hasActiveFilters"
-              (click)="resetFilters()"
-              aria-label="مسح الفلاتر">
-              <lucide-icon [img]="RotateIcon" size="13"></lucide-icon>
-              <span>مسح الفلاتر</span>
-            </button>
-            <button
-              type="button"
-              class="btn btn-outline btn-advanced-toggle"
-              [class.active]="advancedOpen"
-              (click)="toggleAdvanced()"
-              aria-expanded="advancedOpen">
-              <lucide-icon [img]="SlidersIcon" size="15"></lucide-icon>
-              <span>فلاتر متقدمة</span>
-              <span *ngIf="activeFiltersCount > 0" class="badge-count">{{ activeFiltersCount }}</span>
-              <lucide-icon [img]="ChevronDownIcon" size="14" class="toggle-arrow" [class.rotated]="advancedOpen"></lucide-icon>
-            </button>
-          </div>
+      <div advanced class="mz-adv-grid">
+        <div style="grid-column: 1 / -1">
+          <app-classification-cascade
+            [tree]="classTree"
+            [path]="classPath"
+            rootLabel="نوع الصندوق"
+            allLabel="كل الأنواع"
+            (pathChange)="onClassPathChange($event)">
+          </app-classification-cascade>
         </div>
-
-        <!-- 1. Toolbar Row: Search + Quick Chips + Sort Dropdown -->
-        <div class="filters-toolbar">
-          <div class="search-wrap">
-            <lucide-icon [img]="SearchIcon" size="16"></lucide-icon>
-            <input
-              id="fund-search"
-              [(ngModel)]="searchText"
-              (ngModelChange)="searchChanged.next($event)"
-              placeholder="ابحث بالاسم أو الرمز (مثال: PHF)..."
-              aria-label="البحث عن صندوق" />
-            <button *ngIf="searchText" type="button" class="btn-clear-search" (click)="removeSearchFilter()" aria-label="مسح البحث">
-              <lucide-icon [img]="XIcon" size="14"></lucide-icon>
-            </button>
-          </div>
-
-          <div class="toolbar-chips" role="group" aria-label="فرز سريع">
-            <button
-              *ngFor="let c of quickChips"
-              type="button"
-              class="chip"
-              [class.active]="c.id === activeChip"
-              [attr.aria-pressed]="c.id === activeChip"
-              (click)="setChip(c.id)">
-              {{ c.label }}
-            </button>
-          </div>
-
-          <div class="toolbar-sort">
-            <label class="toolbar-label" for="fund-sort">الترتيب:</label>
-            <div class="sort-select-wrap">
-              <select id="fund-sort" [(ngModel)]="filter.sortBy" (ngModelChange)="onSortChange()" aria-label="حقل الترتيب">
-                <option value="return1y">العائد السنوي (1Y)</option>
-                <option value="return6m">العائد (6M)</option>
-                <option value="return3m">العائد (3M)</option>
-                <option value="return1m">العائد (1M)</option>
-                <option value="aum">الأصول (AUM)</option>
-                <option value="totalScore">الدرجة الكلية</option>
-                <option value="managementFee">الرسوم السنوية</option>
-                <option value="name">الاسم أبجدياً</option>
-              </select>
-              <select [(ngModel)]="filter.sortDir" (ngModelChange)="onSortChange()" aria-label="اتجاه الترتيب" class="sort-dir-select">
-                <option value="desc">تنازلي</option>
-                <option value="asc">تصاعدي</option>
-              </select>
-            </div>
-          </div>
+        <div class="mz-slicer">
+          <span class="mz-slicer-head"><span>الشركة المسؤولة (مدير الأصول)</span></span>
+          <mz-select
+            [options]="assetManagerOptions"
+            [value]="filter.assetManagerId ?? null"
+            (valueChange)="onManagerChange($event)"
+            ariaLabel="الشركة المسؤولة عن الصندوق">
+          </mz-select>
         </div>
-
-        <!-- 2. Stale Node Fallback Notice (Graceful degraded handling) -->
-        <div *ngIf="staleNodeNotice" class="stale-notice">
-          <span>{{ staleNodeNotice }}</span>
-          <button type="button" (click)="staleNodeNotice = null" aria-label="إغلاق التنبيه">
-            <lucide-icon [img]="XIcon" size="13"></lucide-icon>
-          </button>
+        <div class="mz-slicer">
+          <span class="mz-slicer-head"><span>مستوى المخاطر</span></span>
+          <mz-select
+            [options]="riskLevelOptions"
+            [value]="filter.riskLevel ?? null"
+            (valueChange)="onRiskChange($event)"
+            ariaLabel="مستوى المخاطر">
+          </mz-select>
         </div>
-
-        <!-- 3. Collapsible Advanced Filters Panel (CSS animated) -->
-        <div class="advanced-panel-wrapper" [class.open]="advancedOpen">
-          <div class="advanced-panel-inner">
-            <div class="advanced-grid">
-              <!-- Dynamic Classification Tree Cascades -->
-              <div class="cascade-grid-item">
-                <app-classification-cascade
-                  [tree]="classTree"
-                  [path]="classPath"
-                  rootLabel="نوع الصندوق"
-                  allLabel="كل الأنواع"
-                  (pathChange)="onClassPathChange($event)">
-                </app-classification-cascade>
-              </div>
-
-              <!-- Asset Manager Filter (الشركة المسؤولة عن الصندوق) -->
-              <div class="filter-field">
-                <label class="filter-label" for="fund-manager">الشركة المسؤولة (مدير الأصول)</label>
-                <select
-                  id="fund-manager"
-                  [ngModel]="filter.assetManagerId"
-                  (ngModelChange)="onManagerChange($event)"
-                  aria-label="الشركة المسؤولة عن الصندوق">
-                  <option [ngValue]="undefined">كل الشركات والمديرين</option>
-                  <option *ngFor="let mgr of assetManagers" [ngValue]="mgr.id">
-                    {{ mgr.nameAr }} ({{ mgr.fundCount }})
-                  </option>
-                </select>
-              </div>
-
-              <!-- Risk Level Filter -->
-              <div class="filter-field">
-                <label class="filter-label" for="fund-risk">مستوى المخاطر</label>
-                <select id="fund-risk" [ngModel]="filter.riskLevel" (ngModelChange)="onRiskChange($event)" aria-label="مستوى المخاطر">
-                  <option [ngValue]="undefined">كل المستويات</option>
-                  <option value="low">منخفضة</option>
-                  <option value="medium">متوسطة</option>
-                  <option value="high">عالية</option>
-                </select>
-              </div>
-
-              <!-- Sharia Ruling Filter (المصدر) -->
-              <div class="filter-field">
-                <label class="filter-label" for="fund-sharia">الحكم الشرعي (المصدر)</label>
-                <select id="fund-sharia" [ngModel]="filter.isIslamic" (ngModelChange)="onShariaChange($event)" aria-label="الحكم الشرعي">
-                  <option [ngValue]="undefined">الكل</option>
-                  <option [ngValue]="true">متوافق شرعياً</option>
-                  <option [ngValue]="false">غير متوافق</option>
-                </select>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 4. Active Filters Bar with Removable Chips & Clear Button -->
-        <div class="active-filters-bar" *ngIf="hasActiveFilters">
-          <div class="active-chips-list">
-            <span class="active-chips-label">الفلاتر النشطة:</span>
-            <span class="active-chip" *ngIf="filter.search">
-              <span>البحث: {{ filter.search }}</span>
-              <button type="button" (click)="removeSearchFilter()" aria-label="حذف بحث">
-                <lucide-icon [img]="XIcon" size="13"></lucide-icon>
-              </button>
-            </span>
-
-            <span class="active-chip" *ngIf="activeNodeName">
-              <span>التصنيف: {{ activeNodeName }}</span>
-              <button type="button" (click)="removeNodeFilter()" aria-label="حذف فلتر التصنيف">
-                <lucide-icon [img]="XIcon" size="13"></lucide-icon>
-              </button>
-            </span>
-
-            <span class="active-chip" *ngIf="activeManagerName">
-              <span>المدير: {{ activeManagerName }}</span>
-              <button type="button" (click)="removeManagerFilter()" aria-label="حذف فلتر المدير">
-                <lucide-icon [img]="XIcon" size="13"></lucide-icon>
-              </button>
-            </span>
-
-            <span class="active-chip" *ngIf="filter.riskLevel">
-              <span>المخاطر: {{ filter.riskLevel === 'low' ? 'منخفضة' : filter.riskLevel === 'medium' ? 'متوسطة' : 'عالية' }}</span>
-              <button type="button" (click)="removeRiskFilter()" aria-label="حذف فلتر المخاطر">
-                <lucide-icon [img]="XIcon" size="13"></lucide-icon>
-              </button>
-            </span>
-
-            <span class="active-chip" *ngIf="filter.isIslamic !== undefined">
-              <span>الحكم: {{ filter.isIslamic ? 'متوافق شرعياً' : 'غير متوافق' }}</span>
-              <button type="button" (click)="removeShariaFilter()" aria-label="حذف فلتر التوافق الشرعي">
-                <lucide-icon [img]="XIcon" size="13"></lucide-icon>
-              </button>
-            </span>
-          </div>
-
-          <button type="button" class="btn btn-outline btn-sm btn-clear-filters" (click)="resetFilters()">
-            <lucide-icon [img]="RotateIcon" size="14"></lucide-icon>
-            <span>مسح الفلاتر</span>
-          </button>
+        <div class="mz-slicer">
+          <span class="mz-slicer-head"><span>الحكم الشرعي (المصدر)</span></span>
+          <mz-select
+            [options]="shariaOptions"
+            [value]="filter.isIslamic ?? null"
+            (valueChange)="onShariaChange($event)"
+            ariaLabel="الحكم الشرعي">
+          </mz-select>
         </div>
       </div>
 
-      <!-- Results summary header -->
-      <div class="results-head" *ngIf="!initialLoading && !loadError">
-        <span>عرض <strong class="results-count">{{ totalCount }}</strong> نتيجة مطابقة (الصفحة {{ currentPage }} من {{ totalPages || 1 }})</span>
-      </div>
-
-      <!-- Error State -->
-      <app-empty-state
-        *ngIf="loadError"
-        title="تعذّر تحميل الصناديق"
-        message="تحقق من الاتصال ثم حاول مرة أخرى."
-        actionLabel="إعادة المحاولة"
-        (action)="loadFunds()">
-      </app-empty-state>
-
-      <!-- Empty State -->
-      <app-empty-state
-        *ngIf="!initialLoading && !loading && !loadError && funds.length === 0"
-        title="لا توجد صناديق مطابقة للفلاتر المختارة"
-        message="جرّب تعديل خيارات البحث أو إزالة أحد الفلاتر لتوسيع نطاق النتائج.">
-      </app-empty-state>
-
-      <!-- Results Grid Container: Initial skeletons or cards grid with filtering state -->
-      <div class="results-area" [class.is-filtering]="loading && !initialLoading">
-        <app-loading-skeletons *ngIf="initialLoading && !loadError" variant="card" [count]="6"></app-loading-skeletons>
-
-        <div class="entity-grid" *ngIf="funds.length && !loadError">
-          <app-entity-card
-            *ngFor="let fund of funds; let i = index; trackBy: trackFund"
-            [itemIndex]="i"
-            [title]="fund.nameAr"
-            [subtitle]="fund.nameEn"
-            [icon]="getFundIcon(normFundType(fund.type))"
-            [accent]="getFundAccent(normFundType(fund.type)).accent"
-            [tint]="getFundAccent(normFundType(fund.type)).tint"
-            [ink]="getFundAccent(normFundType(fund.type)).ink"
-            [pill]="getClassificationBadge(fund)"
-            [stats]="cardStats(fund)"
-            [link]="['/funds', fund.slug]"
-            [ribbon]="fund.isIslamic ? 'متوافق شرعياً' : null"
-            [ribbonTitle]="fund.isIslamic ? shariaBadgeTooltip : null"
-            [featured]="fund.isFeatured"
-            [logoUrl]="fundLogoUrl(fund.localLogoPath, fund.logoUrl)">
-          </app-entity-card>
-        </div>
-      </div>
-
-      <div *ngIf="!initialLoading && !loadError && totalPages > 1" class="pagination" style="display: flex; justify-content: center; gap: 8px; margin-top: 24px; padding: 0 24px 24px;">
-        <button class="btn btn-outline" (click)="goToPage(currentPage - 1)" [disabled]="currentPage <= 1">
-          <lucide-icon [img]="ChevronDownIcon" size="16"></lucide-icon> السابق
-        </button>
-        <span style="display: flex; align-items: center; padding: 0 16px; color: var(--muted-foreground);">
-          صفحة {{ currentPage }} من {{ totalPages }}
-        </span>
-        <button class="btn btn-outline" (click)="goToPage(currentPage + 1)" [disabled]="currentPage >= totalPages">
-          التالي <lucide-icon [img]="ChevronDownIcon" size="16"></lucide-icon>
-        </button>
-      </div>
-
-      <div class="attribution" style="margin: 24px; padding: 16px; background: var(--muted); border-radius: 12px; text-align: center; font-size: 12px; color: var(--muted-foreground);">
-        المصدر: <a href="https://snduk.com" target="_blank" rel="noopener" style="color: var(--primary); text-decoration: underline;">SNDUK</a> |
+      <div footer class="mz-source-note" style="margin-top:24px">
+        المصدر: <a href="https://snduk.com" target="_blank" rel="noopener" style="color:var(--mz-primary);text-decoration:underline">SNDUK</a> |
         آخر تحديث: {{ lastSyncedAt ? (lastSyncedAt | date:'yyyy-MM-dd HH:mm') : '—' }} |
-        <span style="color: var(--bad);">إخلاء المسؤولية: البيانات للأغراض المعلوماتية فقط ولا تُعد نصيحة استثمارية.</span>
+        <span>إخلاء المسؤولية: البيانات للأغراض المعلوماتية فقط ولا تُعد نصيحة استثمارية.</span>
       </div>
-    </div>
-
-
-  `,
-  styles: [`
-    .funds-filters-container {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      margin: 0 24px 20px;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      box-shadow: 0 1px 4px rgba(23, 35, 31, .04);
-    }
-
-    /* Filter Card Header matching visual reference */
-    .filter-card-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      padding-bottom: 16px;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .filter-header-title-wrap {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .filter-header-icon-box {
-      width: 38px;
-      height: 38px;
-      border-radius: 10px;
-      background: var(--good-soft);
-      color: var(--primary);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-
-    .filter-main-title {
-      font-size: 16px;
-      font-weight: 800;
-      color: var(--foreground);
-      margin: 0;
-      line-height: 1.3;
-    }
-
-    .filter-sub-title {
-      font-size: 12px;
-      color: var(--muted-foreground);
-      margin: 2px 0 0;
-      line-height: 1.4;
-    }
-
-    .filter-header-actions {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-inline-start: auto;
-    }
-
-    .btn-reset-filters {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 12px;
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--muted-foreground);
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-    .btn-reset-filters:hover {
-      color: var(--bad);
-      border-color: var(--bad);
-      background: #fef2f2;
-    }
-
-    .filters-toolbar {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-
-    .filters-toolbar .search-wrap {
-      flex: 1 1 240px;
-      min-width: 200px;
-      height: 40px;
-      margin: 0;
-      position: relative;
-    }
-
-    .btn-clear-search {
-      background: none;
-      border: none;
-      color: var(--muted-foreground);
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 4px;
-    }
-    .btn-clear-search:hover {
-      color: var(--foreground);
-    }
-
-    .toolbar-chips {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      flex-wrap: wrap;
-    }
-
-    .toolbar-sort {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      min-width: 0;
-    }
-
-    .toolbar-label {
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--muted-foreground);
-      white-space: nowrap;
-    }
-
-    .sort-select-wrap {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .sort-select-wrap select {
-      height: 38px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      background: var(--card);
-      padding: 0 8px;
-      font-size: 12.5px;
-      color: var(--foreground);
-      outline-color: var(--primary);
-    }
-
-    .sort-dir-select {
-      width: 78px;
-    }
-
-    .btn-advanced-toggle {
-      height: 36px;
-      gap: 6px;
-      border-radius: 8px;
-      font-size: 12.5px;
-      white-space: nowrap;
-      transition: all 0.2s ease;
-    }
-
-    .btn-advanced-toggle.active {
-      background: var(--good-soft);
-      border-color: var(--primary);
-      color: var(--primary);
-    }
-
-    .toggle-arrow {
-      transition: transform 0.25s ease;
-    }
-    .toggle-arrow.rotated {
-      transform: rotate(180deg);
-    }
-
-    .badge-count {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      background: var(--primary);
-      color: #fff;
-      font-size: 11px;
-      font-weight: 700;
-      border-radius: 999px;
-      min-width: 18px;
-      height: 18px;
-      padding: 0 5px;
-    }
-
-    /* Stale notice fallback alert */
-    .stale-notice {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      background: #fef3c7;
-      border: 1px solid #fde68a;
-      color: #92400e;
-      border-radius: 8px;
-      padding: 6px 12px;
-      font-size: 12.5px;
-    }
-    .stale-notice button {
-      background: none;
-      border: none;
-      color: inherit;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-    }
-
-    /* Collapsible panel with grid transition */
-    .advanced-panel-wrapper {
-      display: grid;
-      grid-template-rows: 0fr;
-      transition: grid-template-rows 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .advanced-panel-wrapper.open {
-      grid-template-rows: 1fr;
-    }
-
-    .advanced-panel-inner {
-      overflow: hidden;
-    }
-
-    .advanced-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 14px;
-      padding-top: 14px;
-      border-top: 1px solid var(--border);
-    }
-
-    .filter-field {
-      min-width: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .filter-label {
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--foreground);
-      display: block;
-      margin-bottom: 2px;
-    }
-
-    .filter-field select,
-    .cascade-grid-item select {
-      width: 100%;
-      height: 38px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      background: var(--card);
-      padding: 0 10px;
-      font-size: 12px;
-      color: var(--foreground);
-      outline-color: var(--primary);
-    }
-
-    /* Active filters strip */
-    .active-filters-bar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      flex-wrap: wrap;
-      padding-top: 12px;
-      border-top: 1px solid var(--border);
-    }
-
-    .active-chips-label {
-      font-size: 12px;
-      color: var(--muted-foreground);
-      font-weight: 600;
-    }
-
-    .active-chips-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      align-items: center;
-    }
-
-    .active-chip {
-      color: var(--primary);
-      background: var(--good-soft);
-      border: 1px solid rgba(8, 127, 91, 0.2);
-      border-radius: 999px;
-      padding: 4px 10px;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 12px;
-      font-weight: 600;
-      transition: background 0.15s ease, transform 0.15s ease;
-    }
-    .active-chip:hover {
-      background: #d1fae5;
-    }
-    .active-chip button {
-      background: none;
-      border: none;
-      color: inherit;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 2px;
-      border-radius: 50%;
-    }
-    .active-chip button:hover {
-      background: rgba(0, 0, 0, 0.08);
-    }
-
-    .btn-clear-filters {
-      gap: 5px;
-      height: 32px;
-      border-radius: 8px;
-      font-size: 12px;
-      color: var(--muted-foreground);
-      transition: all 0.2s ease;
-    }
-    .btn-clear-filters:hover {
-      color: var(--bad);
-      border-color: var(--bad);
-      background: #fef2f2;
-    }
-
-    /* Results Header */
-    .results-head {
-      margin: 0 24px 14px;
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--muted-foreground);
-    }
-    .results-head .results-count {
-      color: var(--foreground);
-      font-weight: 800;
-    }
-
-    /* Results Area & Reduced-Opacity Loading state */
-    .results-area {
-      position: relative;
-      min-height: 200px;
-      transition: opacity 0.2s ease;
-    }
-    .results-area.is-filtering {
-      opacity: 0.55;
-      pointer-events: none;
-    }
-
-    /* Card Grid Responsive rules: auto-fill with 280px minimum keeps all metrics unclipped and cards equal height */
-    :host ::ng-deep .entity-grid {
-      display: grid !important;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important;
-      align-items: stretch !important;
-      gap: 16px !important;
-      margin: 0 24px !important;
-    }
-
-    @media (max-width: 768px) {
-      .funds-filters-container {
-        margin: 0 16px 16px;
-        padding: 14px;
-      }
-      .filter-card-header {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-      .filter-header-actions {
-        width: 100%;
-        justify-content: space-between;
-        margin-inline-start: 0;
-      }
-      .toolbar-sort {
-        width: 100%;
-        justify-content: space-between;
-      }
-      .sort-select-wrap {
-        flex: 1;
-        justify-content: flex-end;
-      }
-      .sort-select-wrap select {
-        flex: 1;
-      }
-      .results-head {
-        margin: 0 16px 12px;
-      }
-      :host ::ng-deep .entity-grid {
-        margin: 0 16px !important;
-      }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      .advanced-panel-wrapper,
-      .toggle-arrow,
-      .active-chip,
-      .btn-advanced-toggle,
-      .results-area {
-        transition: none !important;
-      }
-    }
-  `]
+    </mz-listing-page>
+  `
 })
 export class FundsListComponent implements OnInit, OnDestroy {
   readonly SearchIcon = Search;
@@ -757,7 +138,7 @@ export class FundsListComponent implements OnInit, OnDestroy {
   /** Bound to the search input; debounced into filter.search via searchChanged. */
   searchText = '';
   readonly searchChanged = new Subject<string>();
-  private readonly fundsQuery$ = new Subject<FundListFilter>();
+  private readonly fundsQuery$ = new Subject<FundListFilter & { _silent?: boolean }>();
   private querySub?: Subscription;
 
   currentPage = 1;
@@ -778,24 +159,62 @@ export class FundsListComponent implements OnInit, OnDestroy {
 
   lastSyncedAt: string | null = null;
 
+  get assetManagerOptions(): MzOption[] {
+    return [
+      { value: null, label: 'كل الشركات والمديرين' },
+      ...this.assetManagers.map((mgr) => ({
+        value: mgr.id,
+        label: `${mgr.nameAr} (${mgr.fundCount})`
+      }))
+    ];
+  }
+
+  readonly riskLevelOptions: MzOption[] = [
+    { value: null, label: 'كل المستويات' },
+    { value: 'low', label: 'منخفضة' },
+    { value: 'medium', label: 'متوسطة' },
+    { value: 'high', label: 'عالية' }
+  ];
+
+  readonly shariaOptions: MzOption[] = [
+    { value: null, label: 'الكل' },
+    { value: true, label: 'متوافق شرعياً' },
+    { value: false, label: 'غير متوافق' }
+  ];
+
   constructor(
     private api: ApiService,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private cache: SessionCacheService
   ) {}
 
   ngOnInit(): void {
+    const saved = this.cache.getUiState<any>('funds-list');
+    if (saved && !this.route.snapshot.queryParamMap.keys.length) {
+      this.filter = saved.filter || this.filter;
+      this.classPath = saved.classPath || [];
+      this.searchText = saved.searchText || '';
+      this.activeChip = saved.activeChip || 'all';
+      this.advancedOpen = saved.advancedOpen || false;
+      this.currentPage = this.filter.page || 1;
+    }
+
     // Pipeline with switchMap so only the latest request response is applied
     this.querySub = this.fundsQuery$.pipe(
       switchMap((filter) => {
-        this.loading = true;
-        this.loadError = false;
+        if (!filter._silent) {
+          this.loading = true;
+          this.loadError = false;
+          this.rebuild();
+        }
         return this.api.getFunds(filter).pipe(
           timeout(15000),
           catchError((err) => {
             this.loading = false;
             this.initialLoading = false;
             this.loadError = true;
+            this.rebuild();
             return of(null);
           })
         );
@@ -803,6 +222,8 @@ export class FundsListComponent implements OnInit, OnDestroy {
     ).subscribe({
       next: (res: FundPagedResultDto | null) => {
         if (!res) return;
+        const cacheKey = 'funds_query_' + JSON.stringify(this.filter);
+        this.cache.set(cacheKey, res);
         this.funds = res.items;
         this.totalCount = res.totalCount;
         this.totalPages = res.totalPages;
@@ -812,11 +233,13 @@ export class FundsListComponent implements OnInit, OnDestroy {
         this.hasInitialized = true;
         this.loadError = false;
         this.updateLastSyncedAt();
+        this.rebuild();
       },
       error: () => {
         this.loading = false;
         this.initialLoading = false;
         this.loadError = true;
+        this.rebuild();
       }
     });
 
@@ -934,6 +357,14 @@ export class FundsListComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.cache.saveScroll('funds-list', window.scrollX, window.scrollY);
+    this.cache.saveUiState('funds-list', {
+      filter: this.filter,
+      classPath: this.classPath,
+      searchText: this.searchText,
+      activeChip: this.activeChip,
+      advancedOpen: this.advancedOpen
+    });
     this.querySub?.unsubscribe();
   }
 
@@ -945,9 +376,24 @@ export class FundsListComponent implements OnInit, OnDestroy {
   private pendingLegacySlug: string | null = null;
 
   loadClassTree(): void {
+    const cachedTree = this.cache.get<FundClassificationTreeNode[]>('funds_class_tree');
+    if (cachedTree) {
+      this.classTree = cachedTree.data;
+      if (this.classPath.length) {
+        const deepest = this.classPath[this.classPath.length - 1];
+        const full = this.pathForSlug(deepest);
+        if (full.length) {
+          this.classPath = full;
+          this.advancedOpen = true;
+        }
+      }
+      if (!this.cache.isStale('funds_class_tree')) return;
+    }
+
     this.api.getClassificationTree().subscribe({
       next: (tree) => {
         this.classTree = tree || [];
+        this.cache.set('funds_class_tree', this.classTree);
         if (this.pendingLegacySlug) {
           const full = this.pathForSlug(this.pendingLegacySlug);
           if (full.length) {
@@ -975,9 +421,16 @@ export class FundsListComponent implements OnInit, OnDestroy {
   }
 
   loadAssetManagers(): void {
+    const cachedManagers = this.cache.get<FundAssetManagerOption[]>('funds_asset_managers');
+    if (cachedManagers) {
+      this.assetManagers = cachedManagers.data;
+      if (!this.cache.isStale('funds_asset_managers')) return;
+    }
+
     this.api.getFundAssetManagers().subscribe({
       next: (managers) => {
         this.assetManagers = (managers || []).filter(m => m.fundCount > 0);
+        this.cache.set('funds_asset_managers', this.assetManagers);
       },
       error: () => {}
     });
@@ -1127,11 +580,43 @@ export class FundsListComponent implements OnInit, OnDestroy {
 
   loadFunds(): void {
     this.filter.page = this.currentPage;
+    const cacheKey = 'funds_query_' + JSON.stringify(this.filter);
+    const cached = this.cache.get<FundPagedResultDto>(cacheKey);
+    if (cached) {
+      this.funds = cached.data.items;
+      this.totalCount = cached.data.totalCount;
+      this.totalPages = cached.data.totalPages;
+      this.currentPage = cached.data.page;
+      this.loading = false;
+      this.initialLoading = false;
+      this.hasInitialized = true;
+      this.loadError = false;
+      this.updateLastSyncedAt();
+      this.rebuild();
+      this.cache.restoreScroll('funds-list');
+      if (!this.cache.isStale(cacheKey)) {
+        return;
+      }
+      this.fundsQuery$.next({ ...this.filter, _silent: true });
+      return;
+    }
     this.fundsQuery$.next({ ...this.filter });
   }
 
   loadFundStats(): void {
-    this.statsLoading = true;
+    const cached = this.cache.get<KpiData[]>('funds_stats');
+    if (cached) {
+      this.kpiList = cached.data;
+      this.statsLoading = false;
+      this.rebuild();
+      if (!this.cache.isStale('funds_stats')) {
+        return;
+      }
+    } else {
+      this.statsLoading = true;
+      this.rebuild();
+    }
+
     this.api.getFundStats().subscribe({
       next: (stats) => {
         this.kpiList = [
@@ -1147,9 +632,14 @@ export class FundsListComponent implements OnInit, OnDestroy {
           { icon: this.ShieldCheckIcon, value: String(stats.islamicCount), label: 'متوافق شرعياً (SNDUK)' },
           { icon: this.DollarSignIcon, value: this.formatAum(stats.totalAum), label: 'إجمالي الأصول تحت الإدارة' }
         ];
+        this.cache.set('funds_stats', this.kpiList);
         this.statsLoading = false;
+        this.rebuild();
       },
-      error: () => { this.statsLoading = false; }
+      error: () => {
+        this.statsLoading = false;
+        this.rebuild();
+      }
     });
   }
 
@@ -1291,4 +781,97 @@ export class FundsListComponent implements OnInit, OnDestroy {
       default: return { accent: '#64748b', tint: '#f1f5f9', ink: '#475569' };
     }
   }
+
+  config: MzListingConfig = { header: { badge: '', title: '', description: '' }, cards: [], empty: { title: '', message: '' } };
+
+  onSearchInput(val: string): void {
+    this.searchText = val;
+    this.searchChanged.next(val);
+  }
+
+  onSortChangeSelect(val: string): void {
+    const [field, dir] = val.split(':');
+    this.filter.sortBy = field as any;
+    this.filter.sortDir = dir as any;
+    this.onSortChange();
+  }
+
+  rebuild(): void {
+    const busy = this.initialLoading || (this.loading && !this.initialLoading);
+    this.config = {
+      header: {
+        badge: 'الصناديق الاستثمارية',
+        count: this.totalCount + ' صندوقاً استثمارياً',
+        title: 'الصناديق الاستثمارية المصرية',
+        description: 'استعرض وحلل جميع الصناديق الاستثمارية في السوق المصري، مستويات المخاطر، العوائد والرسوم، والرقابة الشرعية.'
+      },
+      stats: this.kpiList.map((k) => ({ label: k.label, value: k.value, icon: k.icon, chip: k.sub })),
+      statsLoading: this.statsLoading,
+      statsCount: 4,
+      tabs: this.quickChips.map((c) => ({ id: c.id, label: c.label })),
+      activeTab: this.activeChip,
+      filters: {
+        searchValue: this.searchText,
+        searchPlaceholder: 'ابحث بالاسم أو الرمز (مثال: PHF)...',
+        controls: [],
+        sort: {
+          label: 'ترتيب الصناديق',
+          value: (this.filter.sortBy || 'return1y') + ':' + (this.filter.sortDir || 'desc'),
+          options: [
+            { value: 'return1y:desc', label: 'العائد السنوي (1Y) (تنازلي)' },
+            { value: 'return1y:asc', label: 'العائد السنوي (1Y) (تصاعدي)' },
+            { value: 'return6m:desc', label: 'العائد (6M) (تنازلي)' },
+            { value: 'return3m:desc', label: 'العائد (3M) (تنازلي)' },
+            { value: 'return1m:desc', label: 'العائد (1M) (تنازلي)' },
+            { value: 'aum:desc', label: 'الأصول (AUM) (الأعلى)' },
+            { value: 'totalScore:desc', label: 'الدرجة الكلية (الأعلى)' },
+            { value: 'managementFee:asc', label: 'الرسوم السنوية (الأقل)' },
+            { value: 'name:asc', label: 'الاسم أبجدياً' }
+          ]
+        },
+        advanced: {
+          label: 'فلاتر متقدمة',
+          open: this.advancedOpen,
+          count: this.activeFiltersCount
+        }
+      },
+      results: {
+        text: this.totalCount + ' نتيجة مطابقة (الصفحة ' + this.currentPage + ' من ' + (this.totalPages || 1) + ')',
+        note: this.sourceNote
+      },
+      cards: this.funds.map((f) => this.toCard(f)),
+      skeletonCount: this.filter.pageSize || 20,
+      cardType: 'fund',
+      loading: busy,
+      error: !this.initialLoading && this.loadError ? { title: 'تعذّر تحميل الصناديق', message: 'تحقق من الاتصال ثم حاول مرة أخرى.' } : null,
+      empty: { title: 'لا توجد صناديق مطابقة للفلاتر المختارة', message: 'جرّب تعديل خيارات البحث أو إزالة أحد الفلاتر لتوسيع نطاق النتائج.' },
+      page: this.currentPage,
+      totalPages: this.totalPages
+    };
+  }
+
+  private toCard(fund: FundListItemDto): MzListingCardData {
+    const rawType = normFundType(fund.type);
+    const badges: { label: string; tone?: any }[] = [];
+    if (fund.isIslamic) {
+      badges.push({ label: 'متوافق شرعاً', tone: 'default' });
+    }
+    const catBadge = this.getClassificationBadge(fund);
+    if (catBadge) {
+      badges.push({ label: catBadge, tone: 'neutral' });
+    }
+    return {
+      id: fund.code,
+      title: fund.displayName || fund.nameAr,
+      subtitle: '',
+      icon: this.getFundIcon(rawType),
+      logoUrl: fundLogoUrl(fund.localLogoPath, fund.logoUrl),
+      featured: fund.isFeatured,
+      badges,
+      metrics: this.cardStats(fund).map((st) => ({ label: st.label, value: st.value, tone: st.tone })),
+      linkLabel: 'استعراض الصندوق',
+      link: ['/funds', fund.slug]
+    };
+  }
+
 }

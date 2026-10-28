@@ -77,7 +77,9 @@ import {
   ReclassifyResult,
   ClassificationMigrationReport,
   CreateClassificationNodeRequest,
-  UpdateClassificationNodeRequest
+  UpdateClassificationNodeRequest,
+  FetchFundMissingPricesResultDto,
+  UpdateAdminFundDetailsRequest
 } from '../models/api.models';
 
 @Injectable({
@@ -702,6 +704,14 @@ export class ApiService {
 
   getFundAdmin(id: number): Observable<FundListItemDto> {
     return this.http.get<FundListItemDto>(`${this.baseUrl}/api/admin/funds/funds/${id}`);
+  }
+
+  updateFundAdminDetails(id: number, request: UpdateAdminFundDetailsRequest): Observable<FundListItemDto> {
+    return this.http.patch<FundListItemDto>(`${this.baseUrl}/api/admin/funds/funds/${id}`, request);
+  }
+
+  fetchFundMissingPrices(fundId: number): Observable<FetchFundMissingPricesResultDto> {
+    return this.http.post<FetchFundMissingPricesResultDto>(`${this.baseUrl}/api/admin/funds/funds/${fundId}/fetch-missing-prices`, {});
   }
 
   // Cache management

@@ -200,4 +200,16 @@ describe('FundsListComponent classification wiring', () => {
     expect(api.getFunds).toHaveBeenCalledTimes(3);
     expect(api.getFundStats).toHaveBeenCalledTimes(1);
   });
+
+  it('displays displayName on fund cards when set, and falls back to nameAr when displayName is empty', () => {
+    const comp = fixture.componentInstance;
+    const fWithDisplay = { ...fund('F1'), nameAr: 'صندوق بلتون وفرة الرسمي الكامل', displayName: 'بلتون وفرة' };
+    const fFallback = { ...fund('F2'), nameAr: 'صندوق مصر الخير الرسمي', displayName: '' };
+
+    const card1 = (comp as any).toCard(fWithDisplay);
+    const card2 = (comp as any).toCard(fFallback);
+
+    expect(card1.title).toBe('بلتون وفرة');
+    expect(card2.title).toBe('صندوق مصر الخير الرسمي');
+  });
 });

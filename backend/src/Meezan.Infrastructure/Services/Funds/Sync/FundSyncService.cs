@@ -23,6 +23,16 @@ public class FundSyncService : IFundSyncService
     /// </summary>
     public const int RunLeaseMinutes = 30;
 
+    public const int SingleFundCooldownSeconds = 120;
+
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<int, SemaphoreSlim> SingleFundLocks = new();
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<int, DateTime> SingleFundLastRunUtc = new();
+
+    public static void ResetSingleFundCooldownsForTesting()
+    {
+        SingleFundLastRunUtc.Clear();
+    }
+
     public FundSyncService(
         IServiceProvider services,
         ILogger<FundSyncService> logger,
@@ -270,7 +280,14 @@ public class FundSyncService : IFundSyncService
         // Update fields
         fund.PublicId = dto.PublicId;
         fund.Slug = dto.CustomSlug ?? dto.Slug ?? string.Empty;
-        fund.NameAr = dto.Name;
+        if (existing == null || !fund.IsNameManuallyEdited)
+        {
+            fund.NameAr = dto.Name;
+            if (existing == null || string.IsNullOrWhiteSpace(fund.DisplayName))
+            {
+                fund.DisplayName = dto.Name;
+            }
+        }
         fund.NameEn = dto.NameEn ?? string.Empty;
         fund.Code = dto.Code;
         fund.Type = ParseFundType(dto.Type);
@@ -297,7 +314,10 @@ public class FundSyncService : IFundSyncService
         fund.AssetManagerNameEn = dto.AssetManagerNameEn ?? string.Empty;
         fund.AssetManagerCode = dto.AssetManagerCode ?? string.Empty;
         fund.LogoUrl = dto.LogoUrl ?? string.Empty;
-        fund.DescriptionAr = dto.Description ?? string.Empty;
+        if (existing == null || !fund.IsDescriptionManuallyEdited)
+        {
+            fund.DescriptionAr = dto.Description ?? string.Empty;
+        }
         fund.DescriptionEn = dto.DescriptionEn ?? string.Empty;
         fund.InvestmentStrategy = dto.InvestmentStrategy ?? string.Empty;
         fund.InceptionDate = ParseDateTime(dto.InceptionDate);
@@ -335,7 +355,9 @@ public class FundSyncService : IFundSyncService
                 var data = response.Data ?? [];
                 if (data.Length > 0)
                 {
-                    var maxDate = await priceRepo.GetMaxDateAsync(fund.Id, cancellationToken);
+                    var allExistingDates = (await priceRepo.GetByFundIdAsync(fund.Id, cancellationToken))
+                        .Select(p => p.Date.Date)
+                        .ToHashSet();
                     var newPoints = new List<FundPriceHistory>();
 
                     foreach (var point in data)
@@ -343,17 +365,18 @@ public class FundSyncService : IFundSyncService
                         if (!DateTime.TryParse(point.Date, out var date)) continue;
                         if (!decimal.TryParse(point.Price, out var price)) continue;
                         if (price <= 0) continue;
-                        if (maxDate.HasValue && date <= maxDate.Value) continue;
+                        if (allExistingDates.Contains(date.Date)) continue;
 
                         newPoints.Add(new FundPriceHistory
                         {
                             FundId = fund.Id,
-                            Date = date,
+                            Date = date.Date,
                             Price = price,
                             Change = ParseDecimal(point.Change),
                             Performance = ParseDecimal(point.Performance),
                             CreatedAt = DateTime.UtcNow
                         });
+                        allExistingDates.Add(date.Date);
                     }
 
                     if (newPoints.Any())
@@ -691,6 +714,119 @@ public class FundSyncService : IFundSyncService
         catch { return false; }
     }
 
+    public async Task<Meezan.Application.Features.Funds.Sync.Dtos.FundPriceHistoryBackfillResultDto> BackfillPriceHistoryAsync(
+        bool dryRun = true,
+        int? specificFundId = null,
+        CancellationToken cancellationToken = default)
+    {
+        using var scope = _services.CreateScope();
+        var fundRepo = scope.ServiceProvider.GetRequiredService<IFundRepository>();
+        var priceRepo = scope.ServiceProvider.GetRequiredService<IFundPriceHistoryRepository>();
+        var sndukClient = scope.ServiceProvider.GetRequiredService<ISndukFundClient>();
+        var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+
+        var allFunds = await fundRepo.GetAllAsync(cancellationToken);
+        if (specificFundId.HasValue)
+        {
+            allFunds = allFunds.Where(f => f.Id == specificFundId.Value).ToList();
+        }
+
+        var result = new Meezan.Application.Features.Funds.Sync.Dtos.FundPriceHistoryBackfillResultDto
+        {
+            IsDryRun = dryRun,
+            TotalFundsInspected = allFunds.Count
+        };
+
+        int fundsWithGaps = 0;
+        int totalMissingPoints = 0;
+        int totalInserted = 0;
+
+        foreach (var fund in allFunds)
+        {
+            if (cancellationToken.IsCancellationRequested) break;
+            if (fund.SndukId <= 0) continue;
+
+            // Fetch 1M from SNDUK (covers last 30 days)
+            var perfResponse = await sndukClient.GetFundPerformanceAsync(fund.SndukId, "1M", cancellationToken);
+            if (perfResponse == null || perfResponse.Data == null || perfResponse.Data.Length == 0)
+            {
+                // Fallback to 1Y if 1M returned empty
+                perfResponse = await sndukClient.GetFundPerformanceAsync(fund.SndukId, "1Y", cancellationToken);
+            }
+
+            if (perfResponse?.Data == null || perfResponse.Data.Length == 0)
+            {
+                continue;
+            }
+
+            var existingPoints = await priceRepo.GetByFundIdAsync(fund.Id, cancellationToken);
+            var existingDates = existingPoints.Select(p => p.Date.Date).ToHashSet();
+
+            var missingPoints = new List<FundPriceHistory>();
+            var missingDateStrings = new List<string>();
+
+            foreach (var pt in perfResponse.Data)
+            {
+                if (!DateTime.TryParse(pt.Date, out var date)) continue;
+                if (!decimal.TryParse(pt.Price, out var price) || price <= 0) continue;
+
+                if (!existingDates.Contains(date.Date))
+                {
+                    missingPoints.Add(new FundPriceHistory
+                    {
+                        FundId = fund.Id,
+                        Date = date.Date,
+                        Price = price,
+                        Change = ParseDecimal(pt.Change),
+                        Performance = ParseDecimal(pt.Performance),
+                        CreatedAt = DateTime.UtcNow
+                    });
+                    missingDateStrings.Add(date.ToString("yyyy-MM-dd"));
+                    existingDates.Add(date.Date); // avoid duplicates within the source batch
+                }
+            }
+
+            if (missingPoints.Count > 0)
+            {
+                fundsWithGaps++;
+                totalMissingPoints += missingPoints.Count;
+
+                result.FundDetails.Add(new Meezan.Application.Features.Funds.Sync.Dtos.FundPriceHistoryBackfillItemDto
+                {
+                    FundId = fund.Id,
+                    FundCode = fund.Code,
+                    SndukId = fund.SndukId,
+                    MissingCount = missingPoints.Count,
+                    MissingDates = missingDateStrings
+                });
+
+                if (!dryRun)
+                {
+                    await priceRepo.AddRangeAsync(missingPoints, cancellationToken);
+                    totalInserted += missingPoints.Count;
+                }
+            }
+
+            // Courteous rate limit delay between external SNDUK calls (300ms)
+            await Task.Delay(300, cancellationToken);
+        }
+
+        if (!dryRun && totalInserted > 0)
+        {
+            await uow.SaveChangesAsync(cancellationToken);
+        }
+
+        result.FundsWithGaps = fundsWithGaps;
+        result.TotalMissingPointsFound = totalMissingPoints;
+        result.TotalPointsInserted = totalInserted;
+        result.Message = dryRun
+            ? $"Dry run completed. Inspected {result.TotalFundsInspected} funds: found {totalMissingPoints} missing points across {fundsWithGaps} funds."
+            : $"Backfill executed. Inspected {result.TotalFundsInspected} funds: inserted {totalInserted} points across {fundsWithGaps} funds.";
+
+        _logger.LogInformation("FundPriceHistoryBackfill: {Message}", result.Message);
+        return result;
+    }
+
     public async Task<FundSyncLog?> GetLatestRunAsync(CancellationToken cancellationToken = default)
     {
         using var scope = _services.CreateScope();
@@ -979,5 +1115,337 @@ public class FundSyncService : IFundSyncService
         using var scope = _services.CreateScope();
         var logRepo = scope.ServiceProvider.GetRequiredService<IFundSyncLogRepository>();
         return await logRepo.QueryPagedAsync(page, pageSize, cancellationToken);
+    }
+
+    public async Task<FetchFundMissingPricesResultDto> FetchMissingPricesForFundAsync(
+        int fundId,
+        string triggeredBy,
+        bool bypassCooldown = false,
+        CancellationToken cancellationToken = default)
+    {
+        var nowUtc = DateTime.UtcNow;
+        var fundLock = SingleFundLocks.GetOrAdd(fundId, _ => new SemaphoreSlim(1, 1));
+        if (!await fundLock.WaitAsync(0, cancellationToken))
+        {
+            _logger.LogWarning(
+                "SingleFundMissingPrices rejected (already running): FundId={FundId}, User={User}, Time={Time:o}",
+                fundId, triggeredBy, nowUtc);
+            return new FetchFundMissingPricesResultDto
+            {
+                FundId = fundId,
+                AlreadyRunning = true,
+                RanAtUtc = nowUtc,
+                TriggeredBy = triggeredBy,
+                Message = "جاري سحب الأسعار لهذا الصندوق بالفعل، يرجى الانتظار"
+            };
+        }
+
+        try
+        {
+            if (!bypassCooldown && SingleFundLastRunUtc.TryGetValue(fundId, out var lastRun))
+            {
+                var elapsed = (nowUtc - lastRun).TotalSeconds;
+                if (elapsed < SingleFundCooldownSeconds)
+                {
+                    var remaining = (int)Math.Ceiling(SingleFundCooldownSeconds - elapsed);
+                    _logger.LogInformation(
+                        "SingleFundMissingPrices rejected (cooldown {Remaining}s): FundId={FundId}, User={User}, Time={Time:o}",
+                        remaining, fundId, triggeredBy, nowUtc);
+                    return new FetchFundMissingPricesResultDto
+                    {
+                        FundId = fundId,
+                        OnCooldown = true,
+                        CooldownRemainingSeconds = remaining,
+                        RanAtUtc = nowUtc,
+                        TriggeredBy = triggeredBy,
+                        Message = $"يرجى الانتظار {remaining} ثانية قبل إعادة المحاولة لهذا الصندوق"
+                    };
+                }
+            }
+
+            using var scope = _services.CreateScope();
+            var fundRepo = scope.ServiceProvider.GetRequiredService<IFundRepository>();
+            var priceRepo = scope.ServiceProvider.GetRequiredService<IFundPriceHistoryRepository>();
+            var sndukClient = scope.ServiceProvider.GetRequiredService<ISndukFundClient>();
+            var logRepo = scope.ServiceProvider.GetRequiredService<IFundSyncLogRepository>();
+            var detailRepo = scope.ServiceProvider.GetRequiredService<IFundSyncLogDetailRepository>();
+            var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+
+            var fund = await fundRepo.GetByIdAsync(fundId, cancellationToken);
+            if (fund == null)
+            {
+                throw new KeyNotFoundException($"الصندوق رقم {fundId} غير موجود");
+            }
+
+            var result = new FetchFundMissingPricesResultDto
+            {
+                FundId = fund.Id,
+                FundCode = fund.Code,
+                FundNameAr = fund.NameAr,
+                SndukId = fund.SndukId,
+                RanAtUtc = nowUtc,
+                TriggeredBy = triggeredBy
+            };
+
+            if (fund.SndukId <= 0)
+            {
+                result.NothingMissing = true;
+                result.Message = "هذا الصندوق غير مرتبط بمعرف مصدر خارجي (SNDUK)";
+                _logger.LogWarning(
+                    "SingleFundMissingPrices skipped (no SndukId): Fund={Code} ({FundId}), User={User}, Time={Time:o}",
+                    fund.Code, fund.Id, triggeredBy, nowUtc);
+                return result;
+            }
+
+            // 1. Gap detection first: read stored dates and find missing weekday ranges
+            var existingPoints = await priceRepo.GetByFundIdAsync(fund.Id, cancellationToken);
+            var existingDates = existingPoints.Select(p => p.Date.Date).ToHashSet();
+
+            var tz = Meezan.Infrastructure.Services.BackgroundServices.FundSyncBackgroundService.ResolveCairoTimeZone();
+            var todayCairo = TimeZoneInfo.ConvertTimeFromUtc(nowUtc, tz).Date;
+
+            var missingWeekdays = new List<DateTime>();
+            string timeframeToRequest;
+
+            if (existingDates.Count == 0)
+            {
+                timeframeToRequest = "3Y";
+            }
+            else
+            {
+                var firstStoredDate = existingDates.Min();
+                for (var d = firstStoredDate; d <= todayCairo; d = d.AddDays(1))
+                {
+                    if (d.DayOfWeek == DayOfWeek.Friday || d.DayOfWeek == DayOfWeek.Saturday)
+                        continue;
+                    if (!existingDates.Contains(d))
+                        missingWeekdays.Add(d);
+                }
+
+                if (missingWeekdays.Count == 0)
+                {
+                    timeframeToRequest = "1M";
+                }
+                else
+                {
+                    var earliestMissing = missingWeekdays.Min();
+                    var daysBack = (todayCairo - earliestMissing).TotalDays;
+                    timeframeToRequest = daysBack switch
+                    {
+                        <= 28 => "1M",
+                        <= 85 => "3M",
+                        <= 175 => "6M",
+                        <= 360 => "1Y",
+                        _ => "3Y"
+                    };
+                }
+            }
+
+            result.TimeframeRequested = timeframeToRequest;
+            result.MissingRangesFound = FormatDateRanges(missingWeekdays);
+
+            // 2. Request from source only the smallest needed window (with fallback if empty)
+            var perfResponse = await sndukClient.GetFundPerformanceAsync(fund.SndukId, timeframeToRequest, cancellationToken);
+            if ((perfResponse?.Data == null || perfResponse.Data.Length == 0) && timeframeToRequest != "1Y")
+            {
+                perfResponse = await sndukClient.GetFundPerformanceAsync(fund.SndukId, "1Y", cancellationToken);
+                if (perfResponse?.Data != null && perfResponse.Data.Length > 0)
+                {
+                    result.TimeframeRequested = "1Y";
+                }
+            }
+
+            SingleFundLastRunUtc[fundId] = DateTime.UtcNow;
+
+            if (perfResponse?.Data == null || perfResponse.Data.Length == 0)
+            {
+                result.NothingMissing = true;
+                result.Message = "لا تتوفر بيانات تاريخية لهذا الصندوق في المصدر حالياً";
+                await LogSingleFundRunAsync(logRepo, detailRepo, uow, fund, triggeredBy, nowUtc, result, null, cancellationToken);
+                _logger.LogInformation(
+                    "SingleFundMissingPrices no source data: Fund={Code} ({FundId}), User={User}, Time={Time:o}, Ranges={Ranges}, Added=0",
+                    fund.Code, fund.Id, triggeredBy, nowUtc, string.Join(", ", result.MissingRangesFound));
+                return result;
+            }
+
+            var sourceDates = new HashSet<DateTime>();
+            var newPoints = new List<FundPriceHistory>();
+            var addedDates = new List<DateTime>();
+
+            foreach (var pt in perfResponse.Data)
+            {
+                if (!DateTime.TryParse(pt.Date, out var date)) continue;
+                if (!decimal.TryParse(pt.Price, out var price) || price <= 0) continue;
+
+                var d = date.Date;
+                sourceDates.Add(d);
+
+                // Insert ONLY dates that are missing in our data; never touch existing points
+                if (!existingDates.Contains(d))
+                {
+                    newPoints.Add(new FundPriceHistory
+                    {
+                        FundId = fund.Id,
+                        Date = d,
+                        Price = price,
+                        Change = ParseDecimal(pt.Change),
+                        Performance = ParseDecimal(pt.Performance),
+                        CreatedAt = DateTime.UtcNow
+                    });
+                    addedDates.Add(d);
+                    existingDates.Add(d);
+                }
+            }
+
+            addedDates.Sort();
+            result.AddedCount = newPoints.Count;
+            result.AddedDates = addedDates.Select(d => d.ToString("yyyy-MM-dd")).ToList();
+
+            // Dates in the detected missing weekday window that the source itself lacks (holidays/no pricing)
+            if (sourceDates.Count > 0 && missingWeekdays.Count > 0)
+            {
+                var minSourceDate = sourceDates.Min();
+                var maxSourceDate = sourceDates.Max();
+                var sourceLacking = missingWeekdays
+                    .Where(d => d >= minSourceDate && d <= maxSourceDate && !sourceDates.Contains(d))
+                    .OrderBy(d => d)
+                    .ToList();
+                result.SourceMissingDates = FormatDateRanges(sourceLacking);
+            }
+
+            if (result.MissingRangesFound.Count == 0 && addedDates.Count > 0)
+            {
+                result.MissingRangesFound = FormatDateRanges(addedDates);
+            }
+
+            if (newPoints.Count > 0)
+            {
+                await priceRepo.AddRangeAsync(newPoints, cancellationToken);
+                await uow.SaveChangesAsync(cancellationToken);
+
+                var priceCacheInvalidator = scope.ServiceProvider.GetService<IFundPriceCacheInvalidator>();
+                if (priceCacheInvalidator != null)
+                {
+                    await priceCacheInvalidator.InvalidatePriceCacheAsync(cancellationToken);
+                }
+
+                var fundCache = scope.ServiceProvider.GetService<IFundCacheService>();
+                if (fundCache != null)
+                {
+                    await fundCache.InvalidatePricesAsync(cancellationToken);
+                }
+
+                result.NothingMissing = false;
+                var rangesText = string.Join("، ", FormatDateRanges(addedDates));
+                var sourceLackText = result.SourceMissingDates.Count > 0
+                    ? $" (أيام لا تتوفر لها أسعار في المصدر/عطلات: {string.Join("، ", result.SourceMissingDates)})"
+                    : string.Empty;
+                result.Message = $"تمت إضافة {newPoints.Count} سعر ناقص بنجاح للفترات: {rangesText}{sourceLackText}";
+            }
+            else
+            {
+                result.NothingMissing = true;
+                result.Message = "لا توجد أسعار ناقصة";
+            }
+
+            await LogSingleFundRunAsync(logRepo, detailRepo, uow, fund, triggeredBy, nowUtc, result, null, cancellationToken);
+
+            _logger.LogInformation(
+                "SingleFundMissingPrices completed: Fund={Code} ({FundId}), User={User}, Time={Time:o}, Timeframe={Timeframe}, MissingRanges=[{Ranges}], AddedCount={Added}, SourceLacking=[{SourceLacking}]",
+                fund.Code, fund.Id, triggeredBy, nowUtc, result.TimeframeRequested,
+                string.Join(", ", result.MissingRangesFound), result.AddedCount, string.Join(", ", result.SourceMissingDates));
+
+            return result;
+        }
+        catch (Exception ex) when (ex is not KeyNotFoundException)
+        {
+            _logger.LogError(
+                ex,
+                "SingleFundMissingPrices error: FundId={FundId}, User={User}, Time={Time:o}, Error={Error}",
+                fundId, triggeredBy, nowUtc, ex.Message);
+            throw;
+        }
+        finally
+        {
+            fundLock.Release();
+        }
+    }
+
+    private static List<string> FormatDateRanges(IReadOnlyList<DateTime> sortedDates)
+    {
+        var ranges = new List<string>();
+        if (sortedDates.Count == 0) return ranges;
+
+        var ordered = sortedDates.Select(d => d.Date).Distinct().OrderBy(d => d).ToList();
+        var rangeStart = ordered[0];
+        var prev = ordered[0];
+
+        for (int i = 1; i < ordered.Count; i++)
+        {
+            var curr = ordered[i];
+            var gapDays = (curr - prev).TotalDays;
+            var isWeekendBridge = gapDays <= 3 && prev.DayOfWeek == DayOfWeek.Thursday && curr.DayOfWeek == DayOfWeek.Sunday;
+            if (gapDays <= 1 || isWeekendBridge)
+            {
+                prev = curr;
+            }
+            else
+            {
+                ranges.Add(rangeStart == prev
+                    ? rangeStart.ToString("yyyy-MM-dd")
+                    : $"{rangeStart:yyyy-MM-dd} إلى {prev:yyyy-MM-dd}");
+                rangeStart = curr;
+                prev = curr;
+            }
+        }
+
+        ranges.Add(rangeStart == prev
+            ? rangeStart.ToString("yyyy-MM-dd")
+            : $"{rangeStart:yyyy-MM-dd} إلى {prev:yyyy-MM-dd}");
+
+        return ranges;
+    }
+
+    private static async Task LogSingleFundRunAsync(
+        IFundSyncLogRepository logRepo,
+        IFundSyncLogDetailRepository detailRepo,
+        IUnitOfWork uow,
+        Fund fund,
+        string triggeredBy,
+        DateTime startUtc,
+        FetchFundMissingPricesResultDto result,
+        string? error,
+        CancellationToken ct)
+    {
+        var endUtc = DateTime.UtcNow;
+        var log = new FundSyncLog
+        {
+            TriggeredBy = triggeredBy,
+            Mode = "SingleFundMissingPrices",
+            Status = error == null ? FundSyncStatus.Success : FundSyncStatus.Failed,
+            TotalFunds = 1,
+            UpdatedFunds = result.AddedCount > 0 ? 1 : 0,
+            FailedFunds = error == null ? 0 : 1,
+            SkippedFunds = result.AddedCount == 0 && error == null ? 1 : 0,
+            RunAt = startUtc,
+            FinishedAt = endUtc,
+            DurationSeconds = (int)Math.Max(0, (endUtc - startUtc).TotalSeconds),
+            ErrorSummary = error ?? $"[{fund.Code}] Added={result.AddedCount}, Timeframe={result.TimeframeRequested}"
+        };
+
+        await logRepo.AddAsync(log, ct);
+        await uow.SaveChangesAsync(ct);
+
+        var detail = new FundSyncLogDetail
+        {
+            FundSyncLogId = log.Id,
+            FundId = fund.Id,
+            FundCode = fund.Code,
+            Status = error == null ? FundSyncDetailStatus.Success : FundSyncDetailStatus.Failed,
+            ErrorMessage = error ?? result.Message,
+            AttemptedAt = startUtc
+        };
+        await detailRepo.AddRangeAsync(new[] { detail }, ct);
+        await uow.SaveChangesAsync(ct);
     }
 }

@@ -21,7 +21,9 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             cfg.AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["Admin:ApiKey"] = AdminKey,
-                ["Funds:SchedulerEnabled"] = "false"
+                ["Funds:SchedulerEnabled"] = "false",
+                ["Funds:Cache:WarmupOnStartup"] = "false",
+                ["Redis:Host"] = ""
             });
         });
 

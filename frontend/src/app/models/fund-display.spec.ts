@@ -98,9 +98,9 @@ describe('fund-display normalizers', () => {
 describe('fundLogoUrl', () => {
   const base = environment.apiBaseUrl.replace(/\/+$/, '');
 
-  it('builds an absolute URL on the API host (the SPA is a different origin)', () => {
+  it('prefers the real remote logoUrl when present', () => {
     expect(fundLogoUrl('funds/pharos-fund-1.jpg', 'https://snduk/x.png'))
-      .toBe(`${base}/fund-logos/pharos-fund-1.jpg`);
+      .toBe('https://snduk/x.png');
   });
 
   it('strips a leading funds/ segment so the path is not doubled', () => {

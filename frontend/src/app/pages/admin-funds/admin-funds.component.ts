@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
@@ -18,6 +18,7 @@ import {
 } from 'lucide-angular';
 import { ApiService } from '../../services/api.service';
 import { ToastService } from '../../services/toast.service';
+import { SessionCacheService } from '../../services/session-cache.service';
 import { AdminClassificationComponent } from '../admin-classification/admin-classification.component';
 import {
   FundCategory,
@@ -30,7 +31,8 @@ import {
   UpdateCategoryRequest,
   FundTypeDefinition,
   FundTypeChangeLog,
-  AdminTypeFundRow
+  AdminTypeFundRow,
+  FetchFundMissingPricesResultDto
 } from '../../models/api.models';
 import {
   normFundSyncStatus,
@@ -66,7 +68,7 @@ interface FundCategoryRow {
       <div style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;">
         <button type="button" class="btn" data-testid="tab-classification" [class.btn-primary]="section === 'classification'" [class.btn-outline]="section !== 'classification'" (click)="section = 'classification'">التصنيف</button>
         <button type="button" class="btn" [class.btn-primary]="section === 'categories'" [class.btn-outline]="section !== 'categories'" (click)="section = 'categories'">التصنيفات</button>
-        <button type="button" class="btn" [class.btn-primary]="section === 'funds'" [class.btn-outline]="section !== 'funds'" (click)="section = 'funds'">الصناديق</button>
+        <button type="button" class="btn" data-testid="tab-funds" [class.btn-primary]="section === 'funds'" [class.btn-outline]="section !== 'funds'" (click)="section = 'funds'; searchAdminFunds()">الصناديق</button>
         <button type="button" class="btn" [class.btn-primary]="section === 'sync'" [class.btn-outline]="section !== 'sync'" (click)="section = 'sync'; loadSyncHistory()">سجل المزامنة</button>
         <button type="button" class="btn" [class.btn-primary]="section === 'log'" [class.btn-outline]="section !== 'log'" (click)="section = 'log'; loadChangeLog()">سجل التغييرات</button>
       </div>
@@ -260,7 +262,7 @@ interface FundCategoryRow {
             <tbody>
               <tr *ngFor="let run of syncRuns" (click)="toggleRunDetails(run.id)" style="cursor: pointer;" [style.background]="selectedRunId === run.id ? 'var(--muted)' : 'transparent'">
                 <td>{{ run.runAt | date:'yyyy-MM-dd HH:mm' }}</td>
-                <td><span class="chip" [style.background]="run.mode === 'Prices' ? '#ecfdf5' : '#f5f3ff'" [style.color]="run.mode === 'Prices' ? '#059669' : '#7c3aed'">{{ run.mode === 'Prices' ? 'أسعار' : 'شامل' }}</span></td>
+                <td><span class="chip" [style.background]="run.mode === 'Prices' ? '#ecfdf5' : run.mode === 'SingleFundMissingPrices' ? '#eff6ff' : '#f5f3ff'" [style.color]="run.mode === 'Prices' ? '#059669' : run.mode === 'SingleFundMissingPrices' ? '#2563eb' : '#7c3aed'">{{ run.mode === 'Prices' ? 'أسعار' : run.mode === 'SingleFundMissingPrices' ? 'سحب ناقص' : 'شامل' }}</span></td>
                 <td><span [style.color]="syncStatusColor(run.status)" style="font-weight: 600;">{{ syncStatusLabel(run.status) }}</span></td>
                 <td>{{ run.totalFunds }}</td>
                 <td style="color: var(--good);">{{ run.updatedFunds }}</td>
@@ -452,32 +454,182 @@ interface FundCategoryRow {
       <!-- ============ FUNDS ============ -->
       <div *ngIf="section === 'funds'" class="admin-card">
         <h2>صناديق الاستثمار</h2>
-        <p class="muted">ابحث عن صندوق بالاسم أو الكود، ثم بدّل عضويته في التصنيفات من مكان واحد.</p>
+        <p class="muted">ابحث عن صندوق بالاسم أو الكود، أو عدّل الاسم والوصف، أو اسحب الأسعار التاريخية الناقصة، أو عدّل التصنيفات.</p>
         <div style="display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0;">
           <div style="position: relative; flex: 1; min-width: 220px;">
-            <input type="text" [(ngModel)]="fundQuery" (ngModelChange)="searchAdminFunds()" placeholder="ابحث باسم الصندوق أو رمزه..." class="admin-form input" />
+            <input type="text" [(ngModel)]="fundQuery" (ngModelChange)="searchAdminFunds(1)" placeholder="ابحث باسم الصندوق أو رمزه..." class="admin-form input" />
           </div>
-          <button type="button" class="btn btn-outline btn-sm" (click)="searchAdminFunds()">
+          <button type="button" class="btn btn-outline btn-sm" (click)="searchAdminFunds(1)">
             <lucide-icon [img]="SearchIcon" size="14"></lucide-icon> بحث
           </button>
         </div>
         <div class="table-scroll-x" *ngIf="fundResults.length">
           <table class="admin-table">
-            <thead><tr><th>الكود</th><th>الاسم</th><th></th></tr></thead>
+            <thead><tr><th>الكود</th><th>اسم العرض / الاسم الكامل</th><th>إجراءات</th></tr></thead>
             <tbody>
-              <tr *ngFor="let f of fundResults" [style.background]="selectedFundId === f.id ? 'var(--muted)' : 'transparent'">
-                <td><strong style="font-family: monospace;">{{ f.code }}</strong></td>
-                <td>{{ f.nameAr }}</td>
-                <td><button type="button" class="btn btn-outline btn-sm" (click)="openFund(f.id)">التصنيفات</button></td>
-              </tr>
+              <ng-container *ngFor="let f of fundResults">
+                <tr [style.background]="(selectedFundId === f.id || editingFundId === f.id) ? 'var(--muted)' : 'transparent'">
+                  <td><strong style="font-family: monospace;">{{ f.code }}</strong></td>
+                  <td>
+                    <div><strong>{{ f.displayName || f.nameAr }}</strong></div>
+                    <div *ngIf="f.displayName && f.displayName !== f.nameAr" class="muted" style="font-size: 11px;">الاسم الكامل: {{ f.nameAr }}</div>
+                  </td>
+                  <td>
+                    <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
+                      <button type="button" class="btn btn-outline btn-sm"
+                              [attr.data-testid]="'edit-fund-details-' + f.code"
+                              (click)="openFundDetailsEditor(f)">
+                        <lucide-icon [img]="EditIcon" size="13"></lucide-icon> تعديل الاسم والوصف
+                      </button>
+                      <button type="button" class="btn btn-outline btn-sm" (click)="openFund(f.id)">التصنيفات</button>
+                      <button type="button" class="btn btn-primary btn-sm"
+                              [attr.data-testid]="'fetch-missing-prices-' + f.code"
+                              [disabled]="fetchingMissingPrices[f.id]"
+                              (click)="fetchMissingPrices(f.id)">
+                        <lucide-icon [img]="RefreshIcon" size="13"></lucide-icon>
+                        {{ fetchingMissingPrices[f.id] ? 'جارٍ السحب...' : 'سحب الأسعار الناقصة' }}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                <tr *ngIf="missingPricesResults[f.id] || missingPricesErrors[f.id]" [attr.data-testid]="'missing-prices-result-' + f.code">
+                  <td colspan="3" style="padding: 10px 14px; background: var(--surface, #f8fafc); border-bottom: 1px solid var(--border);">
+                    <div *ngIf="missingPricesErrors[f.id]" style="color: var(--bad, #dc2626); font-size: 13px; font-weight: 600;">
+                      {{ missingPricesErrors[f.id] }}
+                    </div>
+                    <div *ngIf="missingPricesResults[f.id] as res" style="font-size: 13px; display: flex; flex-direction: column; gap: 4px;">
+                      <div [style.color]="res.addedCount > 0 ? 'var(--good, #16a34a)' : 'var(--foreground)'" style="font-weight: 600;">
+                        {{ res.message }}
+                      </div>
+                      <div *ngIf="res.missingRangesFound?.length" class="muted" style="font-size: 12px;">
+                        النطاقات الناقصة المرصودة: <span dir="ltr">{{ res.missingRangesFound.join(' , ') }}</span>
+                        (النافذة المطلوبة: <code>{{ res.timeframeRequested }}</code>)
+                      </div>
+                      <div *ngIf="res.addedCount > 0" style="font-size: 12px;">
+                        عدد النقاط المضافة: <strong>{{ res.addedCount }}</strong>
+                        <span *ngIf="res.addedDates?.length" class="muted"> — ({{ res.addedDates.join('، ') }})</span>
+                      </div>
+                      <div *ngIf="res.sourceMissingDates?.length" style="font-size: 12px; color: #b45309;">
+                        تواريخ غير متوفرة في المصدر (عطلات / لا يوجد تسعير): <span dir="ltr">{{ res.sourceMissingDates.join(' , ') }}</span>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              </ng-container>
             </tbody>
           </table>
+        </div>
+        <div style="display: flex; justify-content: center; gap: 8px; margin-top: 12px;" *ngIf="fundTotalPages > 1">
+          <button type="button" class="btn btn-outline btn-sm" (click)="searchAdminFunds(fundPage - 1)" [disabled]="fundPage <= 1">السابق</button>
+          <span class="muted" style="align-self: center; font-size: 12px;">صفحة {{ fundPage }} من {{ fundTotalPages }}</span>
+          <button type="button" class="btn btn-outline btn-sm" (click)="searchAdminFunds(fundPage + 1)" [disabled]="fundPage >= fundTotalPages">التالي</button>
+        </div>
+
+        <!-- Fund Names & Description Editor Panel -->
+        <div *ngIf="editingFundId" data-testid="fund-details-editor-panel" style="margin-top: 20px; padding: 18px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface, #f8fafc);">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 14px;">
+            <div>
+              <h3 style="margin: 0; font-size: 16px;">تعديل الاسم والوصف — <span style="font-family: monospace;">{{ editingFundCode }}</span></h3>
+              <small class="muted">التعديلات اليدوية تُحفظ ولا تُستبدل تلقائياً عند مزامنة المصدر.</small>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <span *ngIf="isFundDetailsDirty" data-testid="unsaved-changes-badge" style="font-size: 12px; padding: 3px 10px; border-radius: 999px; background: #fef3c7; color: #92400e; font-weight: 600;">
+                تغييرات غير محفوظة
+              </span>
+              <button type="button" class="btn btn-outline btn-sm" (click)="closeFundDetailsEditor()">
+                <lucide-icon [img]="XIcon" size="13"></lucide-icon> إغلاق
+              </button>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; margin-bottom: 14px;">
+            <div>
+              <label style="font-size: 13px; font-weight: 700; display: block; margin-bottom: 6px;">الاسم الكامل *</label>
+              <input type="text"
+                     data-testid="input-full-name-ar"
+                     [(ngModel)]="fundDetailsDraft.nameAr"
+                     maxlength="250"
+                     placeholder="الاسم الرسمي الكامل للصندوق..."
+                     class="admin-form input"
+                     style="width: 100%; box-sizing: border-box;" />
+              <small class="muted" style="display: block; margin-top: 4px;">الاسم الرسمي الكامل كما يظهر في قسم "بيانات سريعة" بصفحة الصندوق ({{ fundDetailsDraft.nameAr.length }}/250).</small>
+            </div>
+
+            <div>
+              <label style="font-size: 13px; font-weight: 700; display: block; margin-bottom: 6px;">اسم العرض</label>
+              <input type="text"
+                     data-testid="input-display-name"
+                     [(ngModel)]="fundDetailsDraft.displayName"
+                     maxlength="250"
+                     placeholder="الاسم المختصر للعرض في البطاقات والقوائم (اتركه فارغاً لاستخدام الاسم الكامل)..."
+                     class="admin-form input"
+                     style="width: 100%; box-sizing: border-box;" />
+              <small class="muted" style="display: block; margin-top: 4px;">يظهر في بطاقات الصناديق، القوائم، البحث، وعنوان صفحة الصندوق. إذا تُرك فارغاً يُستخدم الاسم الكامل تلقائياً ({{ fundDetailsDraft.displayName.length }}/250).</small>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; align-items: stretch;">
+            <div style="display: flex; flex-direction: column;">
+              <label style="font-size: 13px; font-weight: 700; display: block; margin-bottom: 6px;">وصف الصندوق</label>
+              <textarea data-testid="input-description-ar"
+                        [(ngModel)]="fundDetailsDraft.descriptionAr"
+                        rows="6"
+                        maxlength="10000"
+                        placeholder="أدخل وصف الصندوق والسياسة الاستثمارية (يدعم تقسيم الفقرات بأسطر جديدة)..."
+                        class="admin-form input"
+                        style="width: 100%; box-sizing: border-box; resize: vertical; font-family: inherit; line-height: 1.7;"></textarea>
+              <small class="muted" style="display: block; margin-top: 4px;">يتم الحفاظ على فواصل الأسطر والفقرات ({{ fundDetailsDraft.descriptionAr.length }}/10000).</small>
+            </div>
+
+            <div style="display: flex; flex-direction: column;">
+              <label style="font-size: 13px; font-weight: 700; display: block; margin-bottom: 6px;">معاينة حية (كما يظهر في صفحة الصندوق)</label>
+              <div data-testid="description-live-preview"
+                   style="flex: 1; background: #ffffff; border: 1px solid rgba(188,202,192,.5); border-radius: 12px; padding: 14px 16px; min-height: 140px;">
+                <div style="font-size: 12px; color: #64748b; margin-bottom: 8px; border-bottom: 1px solid #f1f5f9; padding-bottom: 6px;">
+                  <strong>العنوان المعروض:</strong> {{ fundDetailsDraft.displayName.trim() || fundDetailsDraft.nameAr.trim() || '—' }}
+                  <span style="margin-inline: 8px;">|</span>
+                  <strong>الاسم الكامل:</strong> {{ fundDetailsDraft.nameAr.trim() || '—' }}
+                </div>
+                <h4 style="margin: 0 0 6px; font-size: 13px; font-weight: 700; color: #0f172a;">وصف الصندوق</h4>
+                <p *ngIf="fundDetailsDraft.descriptionAr.trim()"
+                   style="margin: 0; white-space: pre-wrap; font-size: 13px; line-height: 1.8; color: #334155;">{{ fundDetailsDraft.descriptionAr }}</p>
+                <p *ngIf="!fundDetailsDraft.descriptionAr.trim()" class="muted" style="margin: 0; font-size: 12px;">لا يوجد وصف مكتوب حالياً.</p>
+              </div>
+            </div>
+          </div>
+
+          <div *ngIf="fundDetailsSaveError" data-testid="fund-details-save-error" style="margin-top: 12px; padding: 10px 12px; border-radius: 8px; background: #fee2e2; color: #991b1b; font-size: 13px; font-weight: 600;">
+            {{ fundDetailsSaveError }}
+          </div>
+          <div *ngIf="fundDetailsSaveSuccess" data-testid="fund-details-save-success" style="margin-top: 12px; padding: 10px 12px; border-radius: 8px; background: #dcfce7; color: #166534; font-size: 13px; font-weight: 600;">
+            {{ fundDetailsSaveSuccess }}
+          </div>
+
+          <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px;">
+            <button type="button" class="btn btn-outline btn-sm" (click)="revertFundDetailsDraft()" [disabled]="!isFundDetailsDirty || savingFundDetails">
+              <lucide-icon [img]="UndoIcon" size="13"></lucide-icon> تراجع عن التعديلات
+            </button>
+            <button type="button" class="btn btn-primary btn-sm"
+                    data-testid="save-fund-details-btn"
+                    (click)="saveFundDetails()"
+                    [disabled]="savingFundDetails || !fundDetailsDraft.nameAr.trim()">
+              <lucide-icon [img]="SaveIcon" size="13"></lucide-icon>
+              {{ savingFundDetails ? 'جارٍ الحفظ...' : 'حفظ الاسم والوصف' }}
+            </button>
+          </div>
         </div>
 
         <div *ngIf="selectedFundId && fundCatRows.length !== undefined" style="margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border);">
           <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
             <h3 style="margin: 0;">تصنيفات الصندوق المحدد</h3>
-            <div style="display: flex; gap: 8px;">
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button type="button" class="btn btn-primary btn-sm"
+                      data-testid="selected-fund-fetch-missing-prices"
+                      [disabled]="fetchingMissingPrices[selectedFundId]"
+                      (click)="fetchMissingPrices(selectedFundId)">
+                <lucide-icon [img]="RefreshIcon" size="13"></lucide-icon>
+                {{ fetchingMissingPrices[selectedFundId] ? 'جارٍ السحب...' : 'سحب الأسعار الناقصة' }}
+              </button>
               <button type="button" class="btn btn-outline btn-sm" (click)="resetFund(selectedFundId)">
                 <lucide-icon [img]="RotateIcon" size="13"></lucide-icon> إعادة الكل للتلقائي
               </button>
@@ -890,8 +1042,39 @@ export class AdminFundsComponent implements OnInit {
   // Fund view
   fundQuery = '';
   fundResults: FundListItemDto[] = [];
+  fundPage = 1;
+  fundTotalPages = 0;
   selectedFundId: number | null = null;
   fundCatRows: FundCategoryRow[] = [];
+  fetchingMissingPrices: Record<number, boolean> = {};
+  missingPricesResults: Record<number, FetchFundMissingPricesResultDto | null> = {};
+  missingPricesErrors: Record<number, string | null> = {};
+
+  // Fund Names & Description Editor
+  editingFundId: number | null = null;
+  editingFundCode = '';
+  fundDetailsDraft = { nameAr: '', displayName: '', descriptionAr: '' };
+  fundDetailsOriginal = { nameAr: '', displayName: '', descriptionAr: '' };
+  savingFundDetails = false;
+  fundDetailsSaveSuccess: string | null = null;
+  fundDetailsSaveError: string | null = null;
+
+  get isFundDetailsDirty(): boolean {
+    if (!this.editingFundId) return false;
+    return (
+      this.fundDetailsDraft.nameAr !== this.fundDetailsOriginal.nameAr ||
+      this.fundDetailsDraft.displayName !== this.fundDetailsOriginal.displayName ||
+      this.fundDetailsDraft.descriptionAr !== this.fundDetailsOriginal.descriptionAr
+    );
+  }
+
+  @HostListener('window:beforeunload', ['$event'])
+  onBeforeUnload(event: BeforeUnloadEvent): void {
+    if (this.isFundDetailsDirty) {
+      event.preventDefault();
+      event.returnValue = '';
+    }
+  }
 
   // Change log
   changeLog: FundCategoryChangeLog[] = [];
@@ -901,10 +1084,11 @@ export class AdminFundsComponent implements OnInit {
   logTotalPages = 0;
   logCategoryId: number | null = null;
 
-  constructor(private api: ApiService, private toast: ToastService) {}
+  constructor(private api: ApiService, private toast: ToastService, private sessionCache: SessionCacheService) {}
 
   ngOnInit(): void {
     this.loadCategories();
+    this.searchAdminFunds(1);
   }
 
   // ── shared labels ──────────────────────────────────────────────
@@ -1269,15 +1453,156 @@ export class AdminFundsComponent implements OnInit {
   }
 
   // ── fund view ──────────────────────────────────────────────────
-  searchAdminFunds(): void {
+  searchAdminFunds(page = 1): void {
+    this.fundPage = page;
     const q = this.fundQuery.trim();
-    if (!q) {
-      this.fundResults = [];
+    this.api.getAllFundsAdmin(q || undefined, undefined, page, 20).subscribe({
+      next: (res) => {
+        this.fundResults = res.items || [];
+        this.fundTotalPages = res.totalPages || 0;
+      },
+      error: () => {}
+    });
+  }
+
+  fetchMissingPrices(fundId: number): void {
+    if (this.fetchingMissingPrices[fundId]) return;
+    this.fetchingMissingPrices[fundId] = true;
+    this.missingPricesErrors[fundId] = null;
+    this.missingPricesResults[fundId] = null;
+
+    this.api.fetchFundMissingPrices(fundId).subscribe({
+      next: (res) => {
+        this.fetchingMissingPrices[fundId] = false;
+        this.missingPricesResults[fundId] = res;
+        this.toast.show(res.message || 'اكتمل سحب الأسعار الناقصة');
+      },
+      error: (err) => {
+        this.fetchingMissingPrices[fundId] = false;
+        const body = err?.error;
+        const msg = body?.message || err?.message || 'حدث خطأ أثناء سحب الأسعار الناقصة';
+        this.missingPricesErrors[fundId] = msg;
+        this.toast.show(msg);
+      }
+    });
+  }
+
+  openFundDetailsEditor(fund: FundListItemDto): void {
+    if (this.isFundDetailsDirty && this.editingFundId !== fund.id) {
+      if (!confirm('لديك تعديلات غير محفوظة على الاسم أو الوصف. هل تريد تجاهلها والانتقال لصندوق آخر؟')) {
+        return;
+      }
+    }
+    this.editingFundId = fund.id;
+    this.editingFundCode = fund.code;
+    this.fundDetailsSaveSuccess = null;
+    this.fundDetailsSaveError = null;
+
+    // Load full fund record from admin endpoint to ensure descriptionAr and displayName are fresh
+    this.api.getFundAdmin(fund.id).subscribe({
+      next: (full) => {
+        const nameAr = full.nameAr || fund.nameAr || '';
+        const displayName = full.displayName ?? fund.displayName ?? nameAr;
+        const descriptionAr = full.descriptionAr ?? fund.descriptionAr ?? '';
+        this.fundDetailsOriginal = { nameAr, displayName, descriptionAr };
+        this.fundDetailsDraft = { nameAr, displayName, descriptionAr };
+      },
+      error: () => {
+        const nameAr = fund.nameAr || '';
+        const displayName = fund.displayName ?? nameAr;
+        const descriptionAr = fund.descriptionAr ?? '';
+        this.fundDetailsOriginal = { nameAr, displayName, descriptionAr };
+        this.fundDetailsDraft = { nameAr, displayName, descriptionAr };
+      }
+    });
+  }
+
+  closeFundDetailsEditor(): void {
+    if (this.isFundDetailsDirty) {
+      if (!confirm('لديك تعديلات غير محفوظة. هل أنت متأكد من إغلاق المحرر؟')) {
+        return;
+      }
+    }
+    this.editingFundId = null;
+    this.editingFundCode = '';
+    this.fundDetailsSaveSuccess = null;
+    this.fundDetailsSaveError = null;
+  }
+
+  revertFundDetailsDraft(): void {
+    this.fundDetailsDraft = { ...this.fundDetailsOriginal };
+    this.fundDetailsSaveSuccess = null;
+    this.fundDetailsSaveError = null;
+  }
+
+  saveFundDetails(): void {
+    if (!this.editingFundId || this.savingFundDetails) return;
+    const nameAr = this.fundDetailsDraft.nameAr.trim();
+    if (!nameAr) {
+      this.fundDetailsSaveError = 'الاسم الكامل للصندوق مطلوب.';
       return;
     }
-    this.api.getAllFundsAdmin(q, undefined, 1, 10).subscribe({
-      next: (res) => { this.fundResults = res.items || []; },
-      error: () => {}
+    if (nameAr.length > 250) {
+      this.fundDetailsSaveError = 'الاسم الكامل لا يمكن أن يتجاوز 250 حرفاً.';
+      return;
+    }
+    const displayName = this.fundDetailsDraft.displayName.trim();
+    if (displayName.length > 250) {
+      this.fundDetailsSaveError = 'اسم العرض لا يمكن أن يتجاوز 250 حرفاً.';
+      return;
+    }
+    const descriptionAr = this.fundDetailsDraft.descriptionAr;
+    if (descriptionAr.length > 10000) {
+      this.fundDetailsSaveError = 'وصف الصندوق لا يمكن أن يتجاوز 10000 حرف.';
+      return;
+    }
+
+    this.savingFundDetails = true;
+    this.fundDetailsSaveError = null;
+    this.fundDetailsSaveSuccess = null;
+
+    this.api.updateFundAdminDetails(this.editingFundId, {
+      nameAr,
+      displayName,
+      descriptionAr
+    }).subscribe({
+      next: (updated) => {
+        this.savingFundDetails = false;
+        const savedNameAr = updated.nameAr || nameAr;
+        const savedDisplayName = updated.displayName ?? displayName;
+        const savedDesc = updated.descriptionAr ?? descriptionAr;
+        this.fundDetailsOriginal = {
+          nameAr: savedNameAr,
+          displayName: savedDisplayName,
+          descriptionAr: savedDesc
+        };
+        this.fundDetailsDraft = { ...this.fundDetailsOriginal };
+        this.fundDetailsSaveSuccess = 'تم حفظ الاسم والوصف بنجاح وتحديث الكاش.';
+        this.toast.show('تم حفظ تعديلات الصندوق بنجاح');
+
+        // Update row in local table immediately
+        const idx = this.fundResults.findIndex(r => r.id === this.editingFundId);
+        if (idx >= 0) {
+          this.fundResults[idx] = {
+            ...this.fundResults[idx],
+            nameAr: savedNameAr,
+            displayName: savedDisplayName || savedNameAr,
+            fullNameAr: savedNameAr,
+            descriptionAr: savedDesc,
+            isNameManuallyEdited: true,
+            isDescriptionManuallyEdited: true
+          };
+        }
+
+        // Clear frontend session cache so navigating to public fund pages immediately fetches fresh data
+        this.sessionCache.clear();
+      },
+      error: (err) => {
+        this.savingFundDetails = false;
+        const msg = err?.error?.message || err?.message || 'حدث خطأ أثناء حفظ التعديلات.';
+        this.fundDetailsSaveError = msg;
+        this.toast.show(msg);
+      }
     });
   }
 

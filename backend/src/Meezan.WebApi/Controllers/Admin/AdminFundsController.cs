@@ -1,3 +1,4 @@
+using Meezan.Application.Features.Funds.Sync.Commands.BackfillFundPriceHistory;
 using MediatR;
 using Meezan.Application.Common.Models.Caching;
 using Meezan.Application.Features.Funds.Caching.Commands.ClearFundCache;
@@ -19,6 +20,7 @@ using Meezan.Application.Features.Funds.Categories.Queries.GetCategoryFunds;
 using Meezan.Application.Features.Funds.Categories.Queries.GetFundCategoryOverrides;
 using Meezan.Application.Features.Funds.Categories.Queries.GetFundCategoryStatus;
 using Meezan.Application.Features.Funds.Classification.Commands.ResetFundOverrides;
+using Meezan.Application.Features.Funds.Details.Commands.UpdateAdminFundDetails;
 using Meezan.Application.Features.Funds.Details.Queries.GetAdminFundById;
 using Meezan.Application.Features.Funds.Listing.Queries.GetAdminFunds;
 using Meezan.Application.Features.Funds.Sync.Commands.BackfillFundLogos;
@@ -138,6 +140,22 @@ public class AdminFundsController : ControllerBase
     /// Downloads any fund logo that is not yet on disk and fills LocalLogoPath
     /// only for files that really landed. Safe to re-run.
     /// </summary>
+    // POST /api/admin/funds/prices/backfill
+    /// <summary>
+    /// Backfills missing historical price data from SNDUK.
+    /// Supports ?dryRun=true/false and optional ?fundId=int.
+    /// </summary>
+    [HttpPost("prices/backfill")]
+    [ProducesResponseType(typeof(FundPriceHistoryBackfillResultDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> BackfillPrices(
+        [FromQuery] bool dryRun = true,
+        [FromQuery] int? fundId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await _sender.Send(new BackfillFundPriceHistoryCommand(dryRun, fundId), cancellationToken);
+        return result.ToActionResult();
+    }
+
     [HttpPost("logos/backfill")]
     [ProducesResponseType(typeof(BackfillFundLogosResultDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> BackfillLogos(CancellationToken cancellationToken = default)
@@ -366,6 +384,37 @@ public class AdminFundsController : ControllerBase
     {
         var result = await _sender.Send(new GetAdminFundByIdQuery(id), cancellationToken);
         if (result.IsSuccess && result.Value == null) return NotFound();
+        return result.ToActionResult();
+    }
+
+    [HttpPatch("funds/{id:int}")]
+    [ProducesResponseType(typeof(Fund), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UpdateFundDetails(
+        int id,
+        [FromBody] UpdateAdminFundDetailsRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var cmd = new UpdateAdminFundDetailsCommand
+        {
+            Id = id,
+            NameAr = request.NameAr,
+            DisplayName = request.DisplayName,
+            DescriptionAr = request.DescriptionAr
+        };
+        var result = await _sender.Send(cmd, cancellationToken);
+        return result.ToActionResult();
+    }
+
+    [HttpPost("funds/{id:int}/fetch-missing-prices")]
+    [ProducesResponseType(typeof(FetchFundMissingPricesResultDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(FetchFundMissingPricesResultDto), StatusCodes.Status409Conflict)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> FetchMissingPricesForFund(int id, CancellationToken cancellationToken = default)
+    {
+        var triggeredBy = User?.Identity?.Name ?? "Admin";
+        var result = await _sender.Send(new FetchFundMissingPricesCommand(id, triggeredBy), cancellationToken);
         return result.ToActionResult();
     }
 

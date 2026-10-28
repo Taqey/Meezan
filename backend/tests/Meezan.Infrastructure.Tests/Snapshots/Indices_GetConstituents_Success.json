@@ -24,7 +24,8 @@
         "currency": null,
         "sectorNameAr": null,
         "hasShariahBoard": "bool:False",
-        "shariahBoardNote": null
+        "shariahBoardNote": null,
+        "marketCap": null
       }
     ],
     "page": "number:int",

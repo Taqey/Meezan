@@ -29,7 +29,9 @@ public class FundEffectiveClassificationIntegrationTests : IClassFixture<WebAppl
             b.ConfigureAppConfiguration((_, cfg) => cfg.AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["Admin:ApiKey"] = "test-key",
-                ["Funds:SchedulerEnabled"] = "false"
+                ["Funds:SchedulerEnabled"] = "false",
+                ["Funds:Cache:WarmupOnStartup"] = "false",
+                ["Redis:Host"] = ""
             }));
             b.ConfigureServices(services =>
             {

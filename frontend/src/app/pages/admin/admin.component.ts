@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ToastService } from '../../services/toast.service';
+import { SessionCacheService } from '../../services/session-cache.service';
 import {
   LucideAngularModule,
   Upload,
@@ -83,6 +84,10 @@ interface EditableMarketForm {
   marketValue: number | null;
   peRatio: number | null;
   pbRatio: number | null;
+  sharesOutstanding: number | null;
+  earningsGrowthRate: number | null;
+  epsGrowthRate: number | null;
+  freeCashFlow: number | null;
   currency: string;
   sourceLastUpdateText: string;
   recalculateRatios: boolean;
@@ -794,6 +799,63 @@ interface EditableMarketForm {
                 <span *ngIf="marketForm.recalculateRatios" style="font-size: 11px; color: var(--primary);">
                   يتم حسابه تلقائياً من (السعر ÷ الدفترية)
                 </span>
+              </div>
+
+              <!-- Shares Outstanding -->
+              <div>
+                <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 6px;">
+                  عدد الأسهم القائمة (Shares Outstanding)
+                </label>
+                <input
+                  type="number"
+                  step="1"
+                  min="0"
+                  [(ngModel)]="marketForm.sharesOutstanding"
+                  name="sharesOutstanding"
+                  placeholder="مثال: 657070000"
+                  class="admin-form input" />
+              </div>
+
+              <!-- Earnings Growth Rate -->
+              <div>
+                <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 6px;">
+                  معدل نمو الأرباح % (Earnings Growth)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  [(ngModel)]="marketForm.earningsGrowthRate"
+                  name="earningsGrowthRate"
+                  placeholder="مثال: 14.2"
+                  class="admin-form input" />
+              </div>
+
+              <!-- EPS Growth Rate -->
+              <div>
+                <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 6px;">
+                  معدل نمو ربحية السهم % (EPS Growth)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  [(ngModel)]="marketForm.epsGrowthRate"
+                  name="epsGrowthRate"
+                  placeholder="مثال: 10.8"
+                  class="admin-form input" />
+              </div>
+
+              <!-- Free Cash Flow -->
+              <div>
+                <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 6px;">
+                  التدفق النقدي الحر (Free Cash Flow) - بالمليون
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  [(ngModel)]="marketForm.freeCashFlow"
+                  name="freeCashFlow"
+                  placeholder="مثال: 412.5"
+                  class="admin-form input" />
               </div>
 
               <!-- Source Note -->
@@ -1752,6 +1814,10 @@ export class AdminComponent implements OnInit, OnDestroy {
     marketValue: null,
     peRatio: null,
     pbRatio: null,
+    sharesOutstanding: null,
+    earningsGrowthRate: null,
+    epsGrowthRate: null,
+    freeCashFlow: null,
     currency: 'EGP',
     sourceLastUpdateText: 'تعديل يدوي عبر لوحة الإدارة',
     recalculateRatios: true
@@ -1894,7 +1960,8 @@ export class AdminComponent implements OnInit, OnDestroy {
     private api: ApiService,
     private auth: AdminAuthService,
     private route: ActivatedRoute,
-    private toast: ToastService
+    private toast: ToastService,
+    private cache: SessionCacheService
   ) {}
 
   ngOnInit(): void {
@@ -2485,7 +2552,9 @@ export class AdminComponent implements OnInit, OnDestroy {
           this.marketForm = {
             closingPrice: null, high: null, low: null, open: null,
             nominalValue: null, bookValue: null, eps: null, marketValue: null,
-            peRatio: null, pbRatio: null, currency: 'EGP',
+            peRatio: null, pbRatio: null,
+            sharesOutstanding: null, earningsGrowthRate: null, epsGrowthRate: null, freeCashFlow: null,
+            currency: 'EGP',
             sourceLastUpdateText: 'تعديل يدوي من لوحة الإدارة',
             recalculateRatios: true
           };
@@ -2638,6 +2707,10 @@ export class AdminComponent implements OnInit, OnDestroy {
       marketValue: data.marketValue ?? null,
       peRatio: data.peRatio ?? null,
       pbRatio: data.pbRatio ?? null,
+      sharesOutstanding: data.sharesOutstanding ?? null,
+      earningsGrowthRate: data.earningsGrowthRate ?? null,
+      epsGrowthRate: data.epsGrowthRate ?? null,
+      freeCashFlow: data.freeCashFlow ?? null,
       currency: data.currency || 'EGP',
       sourceLastUpdateText: 'تعديل يدوي من لوحة الإدارة',
       recalculateRatios: true
@@ -2677,6 +2750,10 @@ export class AdminComponent implements OnInit, OnDestroy {
       eps: this.marketForm.eps,
       peRatio: this.marketForm.peRatio,
       pbRatio: this.marketForm.pbRatio,
+      sharesOutstanding: this.marketForm.sharesOutstanding,
+      earningsGrowthRate: this.marketForm.earningsGrowthRate,
+      epsGrowthRate: this.marketForm.epsGrowthRate,
+      freeCashFlow: this.marketForm.freeCashFlow,
       currency: this.marketForm.currency,
       high: this.marketForm.high,
       low: this.marketForm.low,
@@ -3252,6 +3329,7 @@ export class AdminComponent implements OnInit, OnDestroy {
         this.mgmtMessage = `تم تعيين ${updated.ticker} إلى قطاع ${updated.sectorNameAr || ''}.`;
         const idx = this.mgmtStocks.findIndex((x) => x.id === s.id);
         if (idx >= 0) this.mgmtStocks[idx] = updated;
+        this.cache.clear();
       },
       error: (e) => {
         this.mgmtBusy = false;
@@ -3272,6 +3350,7 @@ export class AdminComponent implements OnInit, OnDestroy {
         this.mgmtMessage = `تمت إزالة ${updated.ticker} من قطاعه.`;
         const idx = this.mgmtStocks.findIndex((x) => x.id === s.id);
         if (idx >= 0) this.mgmtStocks[idx] = updated;
+        this.cache.clear();
       },
       error: (e) => {
         this.mgmtBusy = false;

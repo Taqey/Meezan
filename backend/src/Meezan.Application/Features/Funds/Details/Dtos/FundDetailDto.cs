@@ -11,7 +11,11 @@ public sealed class FundDetailDto : IFundTypeFields
     public string PublicId { get; set; } = string.Empty;
     public string Slug { get; set; } = string.Empty;
     public string NameAr { get; set; } = string.Empty;
+    public string DisplayName { get; set; } = string.Empty;
+    public string FullNameAr { get; set; } = string.Empty;
     public string NameEn { get; set; } = string.Empty;
+    public bool IsNameManuallyEdited { get; set; }
+    public bool IsDescriptionManuallyEdited { get; set; }
     public string Code { get; set; } = string.Empty;
     public FundType Type { get; set; }
     public string TypeNameAr { get; set; } = string.Empty;
@@ -101,6 +105,8 @@ public sealed class FundSimilarDto
     public int Id { get; set; }
     public string Code { get; set; } = string.Empty;
     public string NameAr { get; set; } = string.Empty;
+    public string DisplayName { get; set; } = string.Empty;
+    public string FullNameAr { get; set; } = string.Empty;
     public string NameEn { get; set; } = string.Empty;
     /// <summary>Local logo path of the similar fund, when one was downloaded.</summary>
     public string LocalLogoPath { get; set; } = string.Empty;

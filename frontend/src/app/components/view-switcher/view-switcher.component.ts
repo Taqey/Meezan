@@ -10,7 +10,7 @@ export type EntityView = 'grid' | 'table' | 'heatmap';
   standalone: true,
   imports: [CommonModule, LucideAngularModule],
   template: `
-    <div class="view-switch" role="group" aria-label="طريقة العرض">
+    <div class="view-switch mz-view-switch" role="group" aria-label="طريقة العرض">
       <button type="button" [class.active]="view === 'grid'" [attr.aria-pressed]="view === 'grid'" (click)="pick('grid')">
         <lucide-icon [img]="GridIcon" size="15"></lucide-icon> شبكة
       </button>

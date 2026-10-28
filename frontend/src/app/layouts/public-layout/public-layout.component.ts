@@ -155,8 +155,10 @@ import {
 
     .brand strong {
       display: block;
-      font-size: 17px;
+      font-size: 18px;
+      font-weight: 800;
       line-height: 18px;
+      letter-spacing: -0.02em;
       direction: rtl;
     }
 
@@ -175,7 +177,7 @@ import {
       gap: 16px;
       color: var(--muted-foreground);
       font-size: 14px;
-      font-weight: 500;
+      font-weight: 600;
     }
 
     .nav-links a {
@@ -183,9 +185,13 @@ import {
       transition: color 0.2s ease;
     }
 
-    .nav-links a:hover,
+    .nav-links a:hover {
+      color: var(--primary);
+    }
+
     .nav-links a.active {
       color: var(--primary);
+      font-weight: 700;
     }
 
     .header-meta {

@@ -1,4 +1,5 @@
 using MediatR;
+using Meezan.Application.Common.Interfaces.Caching;
 using Meezan.Application.Common.Interfaces.Persistence;
 using Meezan.Application.Common.Interfaces.Repositories.Sectors;
 using Meezan.Application.Common.Interfaces.Repositories.Stocks;
@@ -12,15 +13,18 @@ public sealed class AssignSectorCommandHandler : IRequestHandler<AssignSectorCom
     private readonly IStockRepository _stockRepository;
     private readonly ISectorRepository _sectorRepository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IIndexStaticCache _indexCache;
 
     public AssignSectorCommandHandler(
         IStockRepository stockRepository,
         ISectorRepository sectorRepository,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IIndexStaticCache indexCache)
     {
         _stockRepository = stockRepository;
         _sectorRepository = sectorRepository;
         _unitOfWork = unitOfWork;
+        _indexCache = indexCache;
     }
 
     public async Task<Result<StockManagementItemDto>> Handle(AssignSectorCommand request, CancellationToken cancellationToken)
@@ -44,6 +48,9 @@ public sealed class AssignSectorCommandHandler : IRequestHandler<AssignSectorCom
 
         await _stockRepository.UpdateAsync(stock, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // Invalidate Sectoral-Indices cache so membership updates immediately
+        await _indexCache.InvalidateAsync("SECTORAL-INDICES", cancellationToken);
 
         return new StockManagementItemDto(
             stock.Id, stock.Ticker, stock.NameAr, stock.NameEn,

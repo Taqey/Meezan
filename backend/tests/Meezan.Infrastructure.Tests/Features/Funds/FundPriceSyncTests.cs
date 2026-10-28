@@ -33,7 +33,9 @@ public class FundPriceSyncTests : IClassFixture<WebApplicationFactory<Program>>
             b.ConfigureAppConfiguration((_, cfg) => cfg.AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["Admin:ApiKey"] = "price-sync-test-key",
-                ["Funds:SchedulerEnabled"] = "false"
+                ["Funds:SchedulerEnabled"] = "false",
+                ["Funds:Cache:WarmupOnStartup"] = "false",
+                ["Redis:Host"] = ""
             }));
             b.ConfigureServices(services =>
             {

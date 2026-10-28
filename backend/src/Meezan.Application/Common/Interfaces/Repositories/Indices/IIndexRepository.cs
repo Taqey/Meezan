@@ -51,7 +51,8 @@ public record ConstituentProjection(
     string? Currency,
     string? SectorNameAr = null,
     /// <summary>True when the stock is overseen by a Shariah board/committee.</summary>
-    bool HasShariahBoard = false
+    bool HasShariahBoard = false,
+    decimal? MarketCap = null
 );
 
 public record ConstituentListFilter(

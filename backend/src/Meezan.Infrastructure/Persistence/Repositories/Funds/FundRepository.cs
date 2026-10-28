@@ -62,7 +62,10 @@ public class FundRepository : IFundRepository
                 PublicId = f.PublicId,
                 Slug = f.Slug,
                 NameAr = f.NameAr,
+                DisplayName = f.DisplayName,
                 NameEn = f.NameEn,
+                IsNameManuallyEdited = f.IsNameManuallyEdited,
+                IsDescriptionManuallyEdited = f.IsDescriptionManuallyEdited,
                 Code = f.Code,
                 Type = f.Type,
                 TypeNameAr = f.TypeNameAr,
@@ -103,6 +106,7 @@ public class FundRepository : IFundRepository
             var s = filter.Search.Trim();
             query = query.Where(f =>
                 f.NameAr.Contains(s) ||
+                f.DisplayName.Contains(s) ||
                 f.NameEn.Contains(s) ||
                 f.Code.Contains(s));
         }

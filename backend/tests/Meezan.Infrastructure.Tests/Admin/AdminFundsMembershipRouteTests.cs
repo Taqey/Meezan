@@ -33,7 +33,9 @@ public class AdminFundsMembershipRouteTests : IClassFixture<WebApplicationFactor
             b.ConfigureAppConfiguration((_, cfg) => cfg.AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["Admin:ApiKey"] = Key,
-                ["Funds:SchedulerEnabled"] = "false"
+                ["Funds:SchedulerEnabled"] = "false",
+                ["Funds:Cache:WarmupOnStartup"] = "false",
+                ["Redis:Host"] = ""
             }));
             b.ConfigureServices(services =>
             {

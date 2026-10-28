@@ -1,0 +1,861 @@
+<!DOCTYPE html><html dir="rtl" lang="ar"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>ميزان EGX - الصناديق الاستثمارية المصرية</title>
+<!-- Google Fonts: IBM Plex Sans Arabic -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "background": "#faf8ff",
+            "on-primary-container": "#f5fff7",
+            "surface-container": "#eaedff",
+            "outline": "#6d7a72",
+            "primary": "#006948",
+            "on-secondary-fixed": "#002115",
+            "surface": "#faf8ff",
+            "surface-container-high": "#e2e7ff",
+            "primary-container": "#00855d",
+            "on-error-container": "#93000a",
+            "outline-variant": "#bccac0",
+            "primary-fixed": "#85f8c4",
+            "surface-container-lowest": "#ffffff",
+            "on-tertiary-container": "#f5fff6",
+            "on-primary-fixed": "#002114",
+            "inverse-on-surface": "#eef0ff",
+            "on-tertiary": "#ffffff",
+            "error-container": "#ffdad6",
+            "secondary": "#006c4e",
+            "secondary-fixed-dim": "#7bd8b1",
+            "on-error": "#ffffff",
+            "on-secondary": "#ffffff",
+            "tertiary": "#006947",
+            "inverse-primary": "#68dba9",
+            "primary-fixed-dim": "#68dba9",
+            "on-background": "#131b2e",
+            "on-tertiary-fixed": "#002113",
+            "secondary-container": "#97f5cc",
+            "surface-variant": "#dae2fd",
+            "surface-dim": "#d2d9f4",
+            "on-primary": "#ffffff",
+            "on-tertiary-fixed-variant": "#005236",
+            "surface-tint": "#006c4a",
+            "inverse-surface": "#283044",
+            "on-surface-variant": "#3d4a42",
+            "surface-container-highest": "#dae2fd",
+            "error": "#ba1a1a",
+            "on-surface": "#131b2e",
+            "tertiary-container": "#00855b",
+            "on-secondary-fixed-variant": "#00513a",
+            "surface-bright": "#faf8ff",
+            "tertiary-fixed": "#6ffbbe",
+            "secondary-fixed": "#97f5cc",
+            "surface-container-low": "#f2f3ff",
+            "on-primary-fixed-variant": "#005137",
+            "tertiary-fixed-dim": "#4edea3",
+            "on-secondary-container": "#007353"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-2xl": "3rem",
+            "gutter": "1.25rem",
+            "margin-mobile": "1rem",
+            "gutter-mobile": "0.75rem",
+            "space-sm": "0.5rem",
+            "space-xs": "0.25rem",
+            "space-xl": "2rem",
+            "space-md": "1rem",
+            "margin": "2rem",
+            "space-lg": "1.5rem"
+          },
+          "fontFamily": {
+            "metric-md": ["IBM Plex Sans Arabic", "IBM Plex Sans"],
+            "headline-md": ["IBM Plex Sans Arabic", "IBM Plex Sans"],
+            "label-md": ["IBM Plex Sans Arabic", "IBM Plex Sans"],
+            "display-hero-mobile": ["IBM Plex Sans Arabic", "IBM Plex Sans"],
+            "label-xs": ["IBM Plex Sans Arabic", "IBM Plex Sans"],
+            "body-sm": ["IBM Plex Sans Arabic", "IBM Plex Sans"],
+            "headline-lg": ["IBM Plex Sans Arabic", "IBM Plex Sans"],
+            "title-sm": ["IBM Plex Sans Arabic", "IBM Plex Sans"],
+            "display-hero": ["IBM Plex Sans Arabic", "IBM Plex Sans"],
+            "metric-xl": ["IBM Plex Sans Arabic", "IBM Plex Sans"],
+            "body-md": ["IBM Plex Sans Arabic", "IBM Plex Sans"]
+          },
+          "fontSize": {
+            "metric-md": ["22px", { "lineHeight": "28px", "fontWeight": "700" }],
+            "headline-md": ["20px", { "lineHeight": "30px", "fontWeight": "600" }],
+            "label-md": ["12px", { "lineHeight": "18px", "fontWeight": "500" }],
+            "display-hero-mobile": ["26px", { "lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+            "label-xs": ["11px", { "lineHeight": "16px", "fontWeight": "500" }],
+            "body-sm": ["13px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "headline-lg": ["28px", { "lineHeight": "40px", "fontWeight": "700" }],
+            "title-sm": ["16px", { "lineHeight": "24px", "fontWeight": "600" }],
+            "display-hero": ["36px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "metric-xl": ["32px", { "lineHeight": "38px", "fontWeight": "700" }],
+            "body-md": ["14px", { "lineHeight": "22px", "fontWeight": "400" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    body {
+      font-family: 'IBM Plex Sans Arabic', 'IBM Plex Sans', sans-serif;
+      background-color: #faf8ff;
+      color: #131b2e;
+    }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    .fund-card {
+      transition: all 0.2s ease-in-out;
+    }
+    .fund-card:hover {
+      border-color: rgba(0, 105, 72, 0.25);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 15px -3px rgba(15, 23, 42, 0.05), 0 4px 6px -4px rgba(15, 23, 42, 0.02);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex flex-col antialiased selection:bg-secondary-container selection:text-on-secondary-fixed">
+<!-- TopNavBar (Shared Component) -->
+<header class="bg-surface/90 dark:bg-inverse-surface/90 backdrop-blur-md docked full-width top-0 sticky z-50 shadow-sm border-b border-outline-variant/30">
+<div class="flex flex-row-reverse justify-between items-center w-full px-margin max-w-[1360px] mx-auto h-16">
+<!-- Left side of top bar (in RTL layout: Search + Live Market pill + Notification + Profile) -->
+<div class="flex items-center gap-space-sm">
+<div class="hidden sm:flex items-center gap-2 bg-surface-container-low px-3 py-1.5 rounded-full border border-outline-variant/40">
+<span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+<span class="font-label-md text-label-md text-primary font-bold">بيانات السوق مباشرة</span>
+</div>
+<button aria-label="الإشعارات" class="p-2 rounded-full text-on-surface-variant hover:bg-surface-container dark:hover:bg-surface-variant/20 transition-all duration-150 active:scale-[0.98]">
+<span class="material-symbols-outlined text-[20px]" data-icon="notifications">notifications</span>
+</button>
+<button aria-label="المفضلة" class="p-2 rounded-full text-on-surface-variant hover:bg-surface-container dark:hover:bg-surface-variant/20 transition-all duration-150 active:scale-[0.98] relative">
+<span class="material-symbols-outlined text-[20px]" data-icon="bookmark">bookmark</span>
+<span class="absolute top-1 right-1 w-4 h-4 bg-primary text-on-primary rounded-full text-[10px] flex items-center justify-center font-bold">7</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center text-primary font-bold text-label-md border border-primary/20 mr-1">
+          ع.م
+        </div>
+</div>
+<!-- Navigation links (Desktop) -->
+<nav class="hidden lg:flex items-center gap-6">
+<a class="text-on-surface-variant dark:text-inverse-on-surface hover:text-primary dark:hover:text-primary-fixed font-body-md text-body-md transition-colors" href="#">الأسهم</a>
+<!-- Active link: الصناديق -->
+<a class="text-primary dark:text-primary-fixed font-title-sm text-title-sm border-b-2 border-primary dark:border-primary-fixed pb-1" href="#">الصناديق</a>
+<a class="text-on-surface-variant dark:text-inverse-on-surface hover:text-primary dark:hover:text-primary-fixed font-body-md text-body-md transition-colors" href="#">المؤشرات</a>
+<a class="text-on-surface-variant dark:text-inverse-on-surface hover:text-primary dark:hover:text-primary-fixed font-body-md text-body-md transition-colors" href="#">تكوين محفظة</a>
+<a class="text-on-surface-variant dark:text-inverse-on-surface hover:text-primary dark:hover:text-primary-fixed font-body-md text-body-md transition-colors" href="#">المعايير الشرعية</a>
+<a class="text-on-surface-variant dark:text-inverse-on-surface hover:text-primary dark:hover:text-primary-fixed font-body-md text-body-md transition-colors" href="#">المفضلة</a>
+</nav>
+<!-- Brand Logo & Name (Right side in RTL) -->
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-lg bg-primary flex items-center justify-center text-on-primary shadow-sm">
+<span class="material-symbols-outlined text-[22px]" data-icon="balance" style="font-variation-settings: 'FILL' 1;">balance</span>
+</div>
+<div class="flex flex-col">
+<span class="text-headline-md font-headline-md font-bold text-primary tracking-tight">ميزان EGX</span>
+<span class="text-[10px] text-outline font-medium -mt-1">منصة التقييم والامتثال الشرعي</span>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Canvas Container -->
+<main class="flex-grow w-full max-w-[1360px] mx-auto px-margin-mobile md:px-margin py-space-lg flex flex-col gap-6">
+<!-- Hero Title & Context Section -->
+<section class="text-center py-4 flex flex-col items-center justify-center">
+<div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-secondary-container/40 text-primary border border-primary/20 text-label-xs font-label-xs mb-3">
+<span class="material-symbols-outlined text-[15px]" data-icon="account_balance">account_balance</span>
+<span class="">الصناديق الاستثمارية المرخصة</span>
+</div>
+<h1 class="font-headline-lg text-headline-lg md:font-display-hero md:text-display-hero text-on-background font-bold tracking-tight mb-2">
+        الصناديق الاستثمارية المصرية
+      </h1>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-2xl mx-auto leading-relaxed">
+        استعرض وحلل جميع الصناديق الاستثمارية في السوق المصري مع فلاتر متقدمة للتصنيف، حجم الأصول، مستويات المخاطر، العوائد والرقابة الشرعية.
+      </p>
+</section>
+<!-- KPI Summary Ribbon (4 Cards Standard Grid) -->
+<section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-gutter">
+<!-- KPI 1: إجمالي الصناديق -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant/30 p-space-md shadow-sm flex items-center justify-between">
+<div>
+<span class="text-label-md font-label-md text-on-surface-variant block mb-1">إجمالي الصناديق</span>
+<div class="flex items-baseline gap-1">
+<span class="text-metric-xl font-metric-xl text-on-background">172</span>
+<span class="text-label-xs font-label-xs text-outline font-medium">صندوقاً استثمارياً</span>
+</div>
+</div>
+<div class="w-12 h-12 rounded-xl bg-surface-container-low text-primary flex items-center justify-center border border-outline-variant/20">
+<span class="material-symbols-outlined text-[26px]" data-icon="inventory_2">inventory_2</span>
+</div>
+</div>
+<!-- KPI 2: إجمالي الأصول المدارة -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant/30 p-space-md shadow-sm flex items-center justify-between">
+<div>
+<span class="text-label-md font-label-md text-on-surface-variant block mb-1">إجمالي الأصول تحت الإدارة</span>
+<div class="flex items-baseline gap-1">
+<span class="text-metric-xl font-metric-xl text-primary font-bold">363.20</span>
+<span class="text-label-xs font-label-xs text-outline font-medium">مليار ج.م</span>
+</div>
+</div>
+<div class="w-12 h-12 rounded-xl bg-surface-container-low text-primary flex items-center justify-center border border-outline-variant/20">
+<span class="material-symbols-outlined text-[26px]" data-icon="payments">payments</span>
+</div>
+</div>
+<!-- KPI 3: أفضل أداء للصناديق اليوم -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant/30 p-space-md shadow-sm flex items-center justify-between">
+<div>
+<span class="text-label-md font-label-md text-on-surface-variant block mb-1">أفضل أداء للصناديق اليوم</span>
+<div class="flex items-center gap-2">
+<span class="text-metric-xl font-metric-xl text-primary font-bold dir-ltr">+1.49%</span>
+<span class="px-2 py-0.5 rounded text-label-xs font-label-xs bg-surface-container font-bold text-on-surface-variant">SNF</span>
+</div>
+</div>
+<div class="w-12 h-12 rounded-xl bg-surface-container-low text-primary flex items-center justify-center border border-outline-variant/20">
+<span class="material-symbols-outlined text-[26px]" data-icon="trending_up">trending_up</span>
+</div>
+</div>
+<!-- KPI 4: الصناديق المتوافقة شرعاً -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant/30 p-space-md shadow-sm flex items-center justify-between">
+<div>
+<span class="text-label-md font-label-md text-on-surface-variant block mb-1">الصناديق المتوافقة شرعاً</span>
+<div class="flex items-baseline gap-1">
+<span class="text-metric-xl font-metric-xl text-primary font-bold">31</span>
+<span class="text-label-xs font-label-xs text-outline font-medium">صندوقاً شرعياً (SNDUK)</span>
+</div>
+</div>
+<div class="w-12 h-12 rounded-xl bg-secondary-container/40 text-primary flex items-center justify-center border border-primary/20">
+<span class="material-symbols-outlined text-[26px]" data-icon="verified" style="font-variation-settings: 'FILL' 1;">verified</span>
+</div>
+</div>
+</section>
+<!-- Source attribution ribbon -->
+<div class="flex items-center justify-between text-xs sm:text-body-sm text-on-surface-variant mb-3 sm:mb-space-md px-1">
+<span class="font-medium">عرض 172 صندوق استثماري (الصفحة 1 من 9)</span>
+<div class="flex items-center gap-3">
+<span class="flex items-center gap-1"><span class="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-secondary"></span> متوافق شرعاً</span>
+<span class="flex items-center gap-1"><span class="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-error"></span> غير متوافق شرعاً</span>
+</div>
+</div>
+<!-- Filter & Valuation Query Bar -->
+<section class="mb-space-md sm:mb-space-xl space-y-3 sm:space-y-space-md">
+<div class="flex items-center justify-between gap-2">
+<div class="no-scrollbar flex items-center gap-2 py-1 w-full max-w-full overflow-x-auto">
+<button class="whitespace-nowrap px-3.5 py-1.5 sm:px-4 sm:py-2 bg-primary text-on-primary rounded-full text-xs sm:text-label-md font-semibold shadow-sm transition-all">
+كل الصناديق (172)
+</button>
+<button class="whitespace-nowrap px-3.5 py-1.5 sm:px-4 sm:py-2 bg-surface-container-lowest border border-outline-variant/30 text-on-surface hover:border-primary/40 hover:text-primary rounded-full text-xs sm:text-label-md font-medium shadow-sm transition-all">
+متوافقة شرعاً (31)
+</button>
+<button class="whitespace-nowrap px-3.5 py-1.5 sm:px-4 sm:py-2 bg-surface-container-lowest border border-outline-variant/30 text-on-surface hover:border-primary/40 hover:text-primary rounded-full text-xs sm:text-label-md font-medium shadow-sm transition-all">
+أعلى عائداً سنوياً
+</button>
+<button class="whitespace-nowrap px-3.5 py-1.5 sm:px-4 sm:py-2 bg-surface-container-lowest border border-outline-variant/30 text-on-surface hover:border-primary/40 hover:text-primary rounded-full text-xs sm:text-label-md font-medium shadow-sm transition-all">
+صناديق نقدية ودخل ثابت
+</button>
+<button class="whitespace-nowrap px-3.5 py-1.5 sm:px-4 sm:py-2 bg-surface-container-lowest border border-outline-variant/30 text-on-surface hover:border-primary/40 hover:text-primary rounded-full text-xs sm:text-label-md font-medium shadow-sm transition-all">
+الأقل رسوماً ومصاريف
+</button>
+</div>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-3 sm:p-space-md shadow-sm flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 sm:gap-space-md">
+<div class="relative w-full lg:flex-1">
+<div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-outline">
+<span class="material-symbols-outlined text-xl">search</span>
+</div>
+<input class="w-full pr-10 pl-4 py-2 sm:py-2.5 bg-surface text-body-sm sm:text-body-md text-on-surface rounded-xl border border-outline-variant/40 focus:ring-2 focus:ring-primary focus:border-primary transition-all placeholder:text-outline" placeholder="ابحث باسم الصندوق أو مديره (مثال: AZ أو فاروس أو بلتون)..." type="text">
+</div>
+<div class="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 sm:gap-2.5 w-full lg:w-auto">
+<select class="w-full sm:w-auto py-2 px-2.5 bg-surface text-xs sm:text-label-md text-on-surface rounded-lg border border-outline-variant/40 focus:ring-1 focus:ring-primary truncate">
+<option>نوع الصندوق: الكل</option>
+<option>أسهم ونمو</option>
+<option>دخل ثابت ونقدية</option>
+<option>إسلامي متوافق</option>
+<option>قطاعي وعقاري</option>
+</select>
+<select class="w-full sm:w-auto py-2 px-2.5 bg-surface text-xs sm:text-label-md text-on-surface rounded-lg border border-outline-variant/40 focus:ring-1 focus:ring-primary truncate">
+<option>التصنيف الشرعي: الكل</option>
+<option>متوافق شرعاً</option>
+<option>غير متوافق شرعاً</option>
+</select>
+<select class="w-full sm:w-auto py-2 px-2.5 bg-surface text-xs sm:text-label-md text-on-surface rounded-lg border border-outline-variant/40 focus:ring-1 focus:ring-primary truncate">
+<option>الترتيب: العائد السنوي (تنازلي)</option>
+<option>الترتيب: حجم الأصول (AUM)</option>
+<option>الترتيب: التغير اليومي</option>
+<option>الترتيب: الرسوم الإدارية الأقل</option>
+</select>
+<button class="col-span-2 sm:col-span-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-surface-container-low hover:bg-surface-container border border-outline-variant/30 text-on-surface rounded-lg text-xs sm:text-label-md font-medium transition-colors w-full sm:w-auto">
+<span class="material-symbols-outlined text-base sm:text-lg text-primary">tune</span>
+<span class="">تصفية متقدمة</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Results Count Bar -->
+<div class="flex items-center justify-between text-xs sm:text-body-sm text-on-surface-variant mb-3 sm:mb-space-md px-1">
+<span class="font-medium">عرض 172 صندوق استثماري (الصفحة 1 من 9)</span>
+<div class="flex items-center gap-3">
+<span class="flex items-center gap-1"><span class="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-secondary"></span> متوافق شرعاً</span>
+<span class="flex items-center gap-1"><span class="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-error"></span> غير متوافق شرعاً</span>
+</div>
+</div>
+<!-- Funds Cards Grid (3 Columns Desktop, 2 Tablet, 1 Mobile) -->
+<section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter">
+<!-- CARD 1: صندوق استثمار فاروس الأول -->
+<article class="fund-card bg-surface-container-lowest rounded-xl border border-outline-variant/30 p-space-md flex flex-col justify-between relative shadow-xs">
+<div>
+<!-- Header Chips & Icon -->
+<div class="flex items-center justify-between mb-3">
+<div class="flex flex-wrap items-center gap-1.5">
+<span class="px-2.5 py-0.5 rounded text-label-xs font-label-xs bg-surface-container text-primary font-medium">صندوق نشط</span>
+</div>
+<button aria-label="إضافة للمفضلة" class="w-8 h-8 rounded-lg bg-surface-container-low text-primary hover:bg-primary hover:text-on-primary transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]" data-icon="bookmark_border">bookmark_border</span>
+</button>
+</div>
+<!-- Fund Name & Code -->
+<div class="mb-4">
+<h3 class="font-title-sm text-title-sm text-on-background font-bold hover:text-primary cursor-pointer transition-colors">
+              صندوق استثمار فاروس الأول
+            </h3>
+<span class="text-label-xs font-label-xs text-outline tracking-wider font-mono">Pharos Fund 1</span>
+</div>
+<!-- Price & Daily Change -->
+<div class="flex items-baseline justify-between py-2 border-y border-outline-variant/20 mb-3">
+<div>
+<span class="text-label-xs font-label-xs text-outline block">السعر</span>
+<div class="font-headline-md text-headline-md font-bold text-on-background">
+                773.89 <span class="text-label-xs font-normal text-outline">EGP</span>
+</div>
+</div>
+<div class="text-left">
+<span class="text-label-xs font-label-xs text-outline block">التغير اليومي</span>
+<span class="inline-flex items-center text-error font-bold text-body-sm font-body-sm dir-ltr">
+                -1.68%
+              </span>
+</div>
+</div>
+<!-- Key Metrics Grid -->
+<div class="grid grid-cols-2 gap-2 text-right mb-3">
+<div class="bg-surface-container-low/50 p-2 rounded-lg">
+<span class="text-label-xs font-label-xs text-outline block">العائد 1M</span>
+<span class="text-body-sm font-body-sm font-bold text-error dir-ltr">-8.67%</span>
+</div>
+<div class="bg-surface-container-low/50 p-2 rounded-lg">
+<span class="text-label-xs font-label-xs text-outline block">الأصول (AUM)</span>
+<span class="text-body-sm font-body-sm font-bold text-on-surface">1610.0 م EGP</span>
+</div>
+</div>
+</div>
+<!-- Card Footer -->
+<div class="pt-2 border-t border-outline-variant/10 flex items-center justify-between text-label-xs font-label-xs text-outline">
+<span class="">الرسوم السنوية: <strong class="text-on-surface">2%</strong></span>
+<span class="px-2 py-0.5 rounded bg-error-container/40 text-on-error-container font-medium">المخاطر: عالية</span>
+</div>
+</article>
+<!-- CARD 2: صندوق أسهم مباشر -->
+<article class="fund-card bg-surface-container-lowest rounded-xl border border-outline-variant/30 p-space-md flex flex-col justify-between relative shadow-xs">
+<div>
+<!-- Header Chips & Icon -->
+<div class="flex items-center justify-between mb-3">
+<div class="flex flex-wrap items-center gap-1.5">
+<span class="px-2.5 py-0.5 rounded text-label-xs font-label-xs bg-surface-container text-primary font-medium">صندوق نشط</span>
+</div>
+<button aria-label="إضافة للمفضلة" class="w-8 h-8 rounded-lg bg-surface-container-low text-primary hover:bg-primary hover:text-on-primary transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]" data-icon="bookmark_border">bookmark_border</span>
+</button>
+</div>
+<!-- Fund Name & Code -->
+<div class="mb-4">
+<h3 class="font-title-sm text-title-sm text-on-background font-bold hover:text-primary cursor-pointer transition-colors">
+              صندوق أسهم مباشر - للاستثمار في الأسهم المصرية
+            </h3>
+<span class="text-label-xs font-label-xs text-outline tracking-wider font-mono">Mubasher Equity Fund</span>
+</div>
+<!-- Price & Daily Change -->
+<div class="flex items-baseline justify-between py-2 border-y border-outline-variant/20 mb-3">
+<div>
+<span class="text-label-xs font-label-xs text-outline block">السعر</span>
+<div class="font-headline-md text-headline-md font-bold text-on-background">
+                1.959 <span class="text-label-xs font-normal text-outline">EGP</span>
+</div>
+</div>
+<div class="text-left">
+<span class="text-label-xs font-label-xs text-outline block">التغير اليومي</span>
+<span class="inline-flex items-center text-primary font-bold text-body-sm font-body-sm dir-ltr">
+                +0.86%
+              </span>
+</div>
+</div>
+<!-- Key Metrics Grid -->
+<div class="grid grid-cols-2 gap-2 text-right mb-3">
+<div class="bg-surface-container-low/50 p-2 rounded-lg">
+<span class="text-label-xs font-label-xs text-outline block">العائد 1M</span>
+<span class="text-body-sm font-body-sm font-bold text-error dir-ltr">-3.35%</span>
+</div>
+<div class="bg-surface-container-low/50 p-2 rounded-lg">
+<span class="text-label-xs font-label-xs text-outline block">الأصول (AUM)</span>
+<span class="text-body-sm font-body-sm font-bold text-on-surface">20.9 م EGP</span>
+</div>
+</div>
+</div>
+<!-- Card Footer -->
+<div class="pt-2 border-t border-outline-variant/10 flex items-center justify-between text-label-xs font-label-xs text-outline">
+<span class="">الرسوم السنوية: <strong class="text-on-surface">2%</strong></span>
+<span class="px-2 py-0.5 rounded bg-error-container/40 text-on-error-container font-medium">المخاطر: عالية</span>
+</div>
+</article>
+<!-- CARD 3: صندوق أزيموت فرص الشريعة AZ -->
+<article class="fund-card bg-surface-container-lowest rounded-xl border border-outline-variant/30 p-space-md flex flex-col justify-between relative shadow-xs">
+<div>
+<!-- Header Chips & Icon -->
+<div class="flex items-center justify-between mb-3">
+<div class="flex flex-wrap items-center gap-1.5">
+<span class="px-2.5 py-0.5 rounded text-label-xs font-label-xs bg-secondary-container/40 text-primary font-bold flex items-center gap-1 border border-primary/20">
+<span class="material-symbols-outlined text-[13px]" data-icon="verified" style="font-variation-settings: 'FILL' 1;">verified</span>
+                متوافق شرعياً
+              </span>
+<span class="px-2 py-0.5 rounded text-label-xs font-label-xs bg-surface-container text-on-surface-variant font-medium">يتبع مؤشر EGX33</span>
+</div>
+<button aria-label="إضافة للمفضلة" class="w-8 h-8 rounded-lg bg-surface-container-low text-primary hover:bg-primary hover:text-on-primary transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]" data-icon="bookmark_border">bookmark_border</span>
+</button>
+</div>
+<!-- Fund Name & Code -->
+<div class="mb-4">
+<h3 class="font-title-sm text-title-sm text-on-background font-bold hover:text-primary cursor-pointer transition-colors">
+              صندوق أزيموت فرص الشريعة AZ
+            </h3>
+<span class="text-label-xs font-label-xs text-outline tracking-wider font-mono">Azimut Opportunities Shariah AZ</span>
+</div>
+<!-- Price & Daily Change -->
+<div class="flex items-baseline justify-between py-2 border-y border-outline-variant/20 mb-3">
+<div>
+<span class="text-label-xs font-label-xs text-outline block">السعر</span>
+<div class="font-headline-md text-headline-md font-bold text-on-background">
+                1.8712 <span class="text-label-xs font-normal text-outline">EGP</span>
+</div>
+</div>
+<div class="text-left">
+<span class="text-label-xs font-label-xs text-outline block">التغير اليومي</span>
+<span class="inline-flex items-center text-error font-bold text-body-sm font-body-sm dir-ltr">
+                -4.41%
+              </span>
+</div>
+</div>
+<!-- Key Metrics Grid -->
+<div class="grid grid-cols-2 gap-2 text-right mb-3">
+<div class="bg-surface-container-low/50 p-2 rounded-lg">
+<span class="text-label-xs font-label-xs text-outline block">العائد 1M</span>
+<span class="text-body-sm font-body-sm font-bold text-error dir-ltr">-8.28%</span>
+</div>
+<div class="bg-surface-container-low/50 p-2 rounded-lg">
+<span class="text-label-xs font-label-xs text-outline block">الأصول (AUM)</span>
+<span class="text-body-sm font-body-sm font-bold text-on-surface">1109.7 م EGP</span>
+</div>
+</div>
+</div>
+<!-- Card Footer -->
+<div class="pt-2 border-t border-outline-variant/10 flex items-center justify-between text-label-xs font-label-xs text-outline">
+<span class="">الرسوم السنوية: <strong class="text-on-surface">0.8%</strong></span>
+<span class="px-2 py-0.5 rounded bg-error-container/40 text-on-error-container font-medium">المخاطر: عالية</span>
+</div>
+</article>
+<!-- CARD 4: صندوق بلتون وفرة للاستثمار في أسهم مؤشر الشريعة EGX33 -->
+<article class="fund-card bg-surface-container-lowest rounded-xl border border-outline-variant/30 p-space-md flex flex-col justify-between relative shadow-xs">
+<div>
+<!-- Header Chips & Icon -->
+<div class="flex items-center justify-between mb-3">
+<div class="flex flex-wrap items-center gap-1.5">
+<span class="px-2.5 py-0.5 rounded text-label-xs font-label-xs bg-secondary-container/40 text-primary font-bold flex items-center gap-1 border border-primary/20">
+<span class="material-symbols-outlined text-[13px]" data-icon="verified" style="font-variation-settings: 'FILL' 1;">verified</span>
+                متوافق شرعياً
+              </span>
+<span class="px-2 py-0.5 rounded text-label-xs font-label-xs bg-surface-container text-on-surface-variant font-medium">يتبع مؤشر EGX33</span>
+</div>
+<button aria-label="إضافة للمفضلة" class="w-8 h-8 rounded-lg bg-surface-container-low text-primary hover:bg-primary hover:text-on-primary transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]" data-icon="bookmark_border">bookmark_border</span>
+</button>
+</div>
+<!-- Fund Name & Code -->
+<div class="mb-4">
+<h3 class="font-title-sm text-title-sm text-on-background font-bold hover:text-primary cursor-pointer transition-colors">
+              صندوق بلتون وفرة للاستثمار في أسهم مؤشر الشريعة EGX33
+            </h3>
+<span class="text-label-xs font-label-xs text-outline tracking-wider font-mono">Beltone Wafra EGX33 Shariah Fund</span>
+</div>
+<!-- Price & Daily Change -->
+<div class="flex items-baseline justify-between py-2 border-y border-outline-variant/20 mb-3">
+<div>
+<span class="text-label-xs font-label-xs text-outline block">السعر</span>
+<div class="font-headline-md text-headline-md font-bold text-on-background">
+                2.0013 <span class="text-label-xs font-normal text-outline">EGP</span>
+</div>
+</div>
+<div class="text-left">
+<span class="text-label-xs font-label-xs text-outline block">التغير اليومي</span>
+<span class="inline-flex items-center text-error font-bold text-body-sm font-body-sm dir-ltr">
+                -4.55%
+              </span>
+</div>
+</div>
+<!-- Key Metrics Grid -->
+<div class="grid grid-cols-2 gap-2 text-right mb-3">
+<div class="bg-surface-container-low/50 p-2 rounded-lg">
+<span class="text-label-xs font-label-xs text-outline block">العائد 1M</span>
+<span class="text-body-sm font-body-sm font-bold text-error dir-ltr">-8.59%</span>
+</div>
+<div class="bg-surface-container-low/50 p-2 rounded-lg">
+<span class="text-label-xs font-label-xs text-outline block">الأصول (AUM)</span>
+<span class="text-body-sm font-body-sm font-bold text-on-surface">1823.0 م EGP</span>
+</div>
+</div>
+</div>
+<!-- Card Footer -->
+<div class="pt-2 border-t border-outline-variant/10 flex items-center justify-between text-label-xs font-label-xs text-outline">
+<span class="">الرسوم السنوية: <strong class="text-on-surface">0.75%</strong></span>
+<span class="px-2 py-0.5 rounded bg-error-container/40 text-on-error-container font-medium">المخاطر: عالية</span>
+</div>
+</article>
+<!-- CARD 5: صندوق مصر شريعة [كويفي] -->
+<article class="fund-card bg-surface-container-lowest rounded-xl border border-outline-variant/30 p-space-md flex flex-col justify-between relative shadow-xs">
+<div>
+<!-- Header Chips & Icon -->
+<div class="flex items-center justify-between mb-3">
+<div class="flex flex-wrap items-center gap-1.5">
+<span class="px-2.5 py-0.5 rounded text-label-xs font-label-xs bg-secondary-container/40 text-primary font-bold flex items-center gap-1 border border-primary/20">
+<span class="material-symbols-outlined text-[13px]" data-icon="verified" style="font-variation-settings: 'FILL' 1;">verified</span>
+                متوافق شرعياً
+              </span>
+<span class="px-2 py-0.5 rounded text-label-xs font-label-xs bg-surface-container text-on-surface-variant font-medium">يتبع مؤشر EGX33</span>
+</div>
+<button aria-label="إضافة للمفضلة" class="w-8 h-8 rounded-lg bg-surface-container-low text-primary hover:bg-primary hover:text-on-primary transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]" data-icon="bookmark_border">bookmark_border</span>
+</button>
+</div>
+<!-- Fund Name & Code -->
+<div class="mb-4">
+<h3 class="font-title-sm text-title-sm text-on-background font-bold hover:text-primary cursor-pointer transition-colors">
+              صندوق مصر شريعة [كويفي] - للاستثمار في مؤشر الشريعة EGX33
+            </h3>
+<span class="text-label-xs font-label-xs text-outline tracking-wider font-mono">Misr Shariah Equity Fund – CIAM</span>
+</div>
+<!-- Price & Daily Change -->
+<div class="flex items-baseline justify-between py-2 border-y border-outline-variant/20 mb-3">
+<div>
+<span class="text-label-xs font-label-xs text-outline block">السعر</span>
+<div class="font-headline-md text-headline-md font-bold text-on-background">
+                20.696 <span class="text-label-xs font-normal text-outline">EGP</span>
+</div>
+</div>
+<div class="text-left">
+<span class="text-label-xs font-label-xs text-outline block">التغير اليومي</span>
+<span class="inline-flex items-center text-error font-bold text-body-sm font-body-sm dir-ltr">
+                -4.37%
+              </span>
+</div>
+</div>
+<!-- Key Metrics Grid -->
+<div class="grid grid-cols-2 gap-2 text-right mb-3">
+<div class="bg-surface-container-low/50 p-2 rounded-lg">
+<span class="text-label-xs font-label-xs text-outline block">العائد 1M</span>
+<span class="text-body-sm font-body-sm font-bold text-error dir-ltr">-8.20%</span>
+</div>
+<div class="bg-surface-container-low/50 p-2 rounded-lg">
+<span class="text-label-xs font-label-xs text-outline block">الأصول (AUM)</span>
+<span class="text-body-sm font-body-sm font-bold text-on-surface">745.7 م EGP</span>
+</div>
+</div>
+</div>
+<!-- Card Footer -->
+<div class="pt-2 border-t border-outline-variant/10 flex items-center justify-between text-label-xs font-label-xs text-outline">
+<span class="">الرسوم السنوية: <strong class="text-on-surface">1.35%</strong></span>
+<span class="px-2 py-0.5 rounded bg-error-container/40 text-on-error-container font-medium">المخاطر: عالية</span>
+</div>
+</article>
+<!-- CARD 6: صندوق الرائد (استثمار بايونيرز) -->
+<article class="fund-card bg-surface-container-lowest rounded-xl border border-outline-variant/30 p-space-md flex flex-col justify-between relative shadow-xs">
+<div>
+<!-- Header Chips & Icon -->
+<div class="flex items-center justify-between mb-3">
+<div class="flex flex-wrap items-center gap-1.5">
+<span class="px-2.5 py-0.5 rounded text-label-xs font-label-xs bg-surface-container text-primary font-medium">صندوق متوازن</span>
+</div>
+<button aria-label="إضافة للمفضلة" class="w-8 h-8 rounded-lg bg-surface-container-low text-primary hover:bg-primary hover:text-on-primary transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]" data-icon="bookmark_border">bookmark_border</span>
+</button>
+</div>
+<!-- Fund Name & Code -->
+<div class="mb-4">
+<h3 class="font-title-sm text-title-sm text-on-background font-bold hover:text-primary cursor-pointer transition-colors">
+              صندوق الرائد (صندوق استثمار بايونيرز الأول)
+            </h3>
+<span class="text-label-xs font-label-xs text-outline tracking-wider font-mono">Al Raed Fund (Pioneers Fund 1)</span>
+</div>
+<!-- Price & Daily Change -->
+<div class="flex items-baseline justify-between py-2 border-y border-outline-variant/20 mb-3">
+<div>
+<span class="text-label-xs font-label-xs text-outline block">السعر</span>
+<div class="font-headline-md text-headline-md font-bold text-on-background">
+                281.25 <span class="text-label-xs font-normal text-outline">EGP</span>
+</div>
+</div>
+<div class="text-left">
+<span class="text-label-xs font-label-xs text-outline block">التغير اليومي</span>
+<span class="inline-flex items-center text-error font-bold text-body-sm font-body-sm dir-ltr">
+                -2.11%
+              </span>
+</div>
+</div>
+<!-- Key Metrics Grid -->
+<div class="grid grid-cols-2 gap-2 text-right mb-3">
+<div class="bg-surface-container-low/50 p-2 rounded-lg">
+<span class="text-label-xs font-label-xs text-outline block">العائد 1M</span>
+<span class="text-body-sm font-body-sm font-bold text-error dir-ltr">-6.53%</span>
+</div>
+<div class="bg-surface-container-low/50 p-2 rounded-lg">
+<span class="text-label-xs font-label-xs text-outline block">الأصول (AUM)</span>
+<span class="text-body-sm font-body-sm font-bold text-on-surface">24.9 م EGP</span>
+</div>
+</div>
+</div>
+<!-- Card Footer -->
+<div class="pt-2 border-t border-outline-variant/10 flex items-center justify-between text-label-xs font-label-xs text-outline">
+<span class="">الرسوم السنوية: <strong class="text-on-surface">1%</strong></span>
+<span class="px-2 py-0.5 rounded bg-error-container/40 text-on-error-container font-medium">المخاطر: عالية</span>
+</div>
+</article>
+<!-- CARD 7: صندوق سنابل الإسلامي -->
+<article class="fund-card bg-surface-container-lowest rounded-xl border border-outline-variant/30 p-space-md flex flex-col justify-between relative shadow-xs">
+<div>
+<!-- Header Chips & Icon -->
+<div class="flex items-center justify-between mb-3">
+<div class="flex flex-wrap items-center gap-1.5">
+<span class="px-2.5 py-0.5 rounded text-label-xs font-label-xs bg-secondary-container/40 text-primary font-bold flex items-center gap-1 border border-primary/20">
+<span class="material-symbols-outlined text-[13px]" data-icon="verified" style="font-variation-settings: 'FILL' 1;">verified</span>
+                متوافق شرعياً
+              </span>
+<span class="px-2 py-0.5 rounded text-label-xs font-label-xs bg-surface-container text-on-surface-variant font-medium">صندوق نشط</span>
+</div>
+<button aria-label="إضافة للمفضلة" class="w-8 h-8 rounded-lg bg-surface-container-low text-primary hover:bg-primary hover:text-on-primary transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]" data-icon="bookmark_border">bookmark_border</span>
+</button>
+</div>
+<!-- Fund Name & Code -->
+<div class="mb-4">
+<h3 class="font-title-sm text-title-sm text-on-background font-bold hover:text-primary cursor-pointer transition-colors">
+              صندوق سنابل الإسلامي - مصرف أبوظبي الإسلامي وبنك SAIB
+            </h3>
+<span class="text-label-xs font-label-xs text-outline tracking-wider font-mono">Sanabel Islamic Fund - ADIB &amp; SAIB</span>
+</div>
+<!-- Price & Daily Change -->
+<div class="flex items-baseline justify-between py-2 border-y border-outline-variant/20 mb-3">
+<div>
+<span class="text-label-xs font-label-xs text-outline block">السعر</span>
+<div class="font-headline-md text-headline-md font-bold text-on-background">
+                818.2297 <span class="text-label-xs font-normal text-outline">EGP</span>
+</div>
+</div>
+<div class="text-left">
+<span class="text-label-xs font-label-xs text-outline block">التغير اليومي</span>
+<span class="inline-flex items-center text-primary font-bold text-body-sm font-body-sm dir-ltr">
+                +0.21%
+              </span>
+</div>
+</div>
+<!-- Key Metrics Grid -->
+<div class="grid grid-cols-2 gap-2 text-right mb-3">
+<div class="bg-surface-container-low/50 p-2 rounded-lg">
+<span class="text-label-xs font-label-xs text-outline block">العائد 1M</span>
+<span class="text-body-sm font-body-sm font-bold text-error dir-ltr">-3.56%</span>
+</div>
+<div class="bg-surface-container-low/50 p-2 rounded-lg">
+<span class="text-label-xs font-label-xs text-outline block">الأصول (AUM)</span>
+<span class="text-body-sm font-body-sm font-bold text-on-surface">1919.5 م EGP</span>
+</div>
+</div>
+</div>
+<!-- Card Footer -->
+<div class="pt-2 border-t border-outline-variant/10 flex items-center justify-between text-label-xs font-label-xs text-outline">
+<span class="">الرسوم السنوية: <strong class="text-on-surface">1.6%</strong></span>
+<span class="px-2 py-0.5 rounded bg-error-container/40 text-on-error-container font-medium">المخاطر: عالية</span>
+</div>
+</article>
+<!-- CARD 8: صندوق بلتون العقاري -->
+<article class="fund-card bg-surface-container-lowest rounded-xl border border-outline-variant/30 p-space-md flex flex-col justify-between relative shadow-xs">
+<div>
+<!-- Header Chips & Icon -->
+<div class="flex items-center justify-between mb-3">
+<div class="flex flex-wrap items-center gap-1.5">
+<span class="px-2.5 py-0.5 rounded text-label-xs font-label-xs bg-surface-container text-on-surface-variant font-medium">قطاع عقاري</span>
+</div>
+<button aria-label="إضافة للمفضلة" class="w-8 h-8 rounded-lg bg-surface-container-low text-primary hover:bg-primary hover:text-on-primary transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]" data-icon="bookmark_border">bookmark_border</span>
+</button>
+</div>
+<!-- Fund Name & Code -->
+<div class="mb-4">
+<h3 class="font-title-sm text-title-sm text-on-background font-bold hover:text-primary cursor-pointer transition-colors">
+              صندوق بلتون العقاري - للاستثمار في القطاعات العقارية
+            </h3>
+<span class="text-label-xs font-label-xs text-outline tracking-wider font-mono">Beltone Real Estate Fund</span>
+</div>
+<!-- Price & Daily Change -->
+<div class="flex items-baseline justify-between py-2 border-y border-outline-variant/20 mb-3">
+<div>
+<span class="text-label-xs font-label-xs text-outline block">السعر</span>
+<div class="font-headline-md text-headline-md font-bold text-on-background">
+                1.7823 <span class="text-label-xs font-normal text-outline">EGP</span>
+</div>
+</div>
+<div class="text-left">
+<span class="text-label-xs font-label-xs text-outline block">التغير اليومي</span>
+<span class="inline-flex items-center text-error font-bold text-body-sm font-body-sm dir-ltr">
+                -4.06%
+              </span>
+</div>
+</div>
+<!-- Key Metrics Grid -->
+<div class="grid grid-cols-2 gap-2 text-right mb-3">
+<div class="bg-surface-container-low/50 p-2 rounded-lg">
+<span class="text-label-xs font-label-xs text-outline block">العائد 1M</span>
+<span class="text-body-sm font-body-sm font-bold text-error dir-ltr">-12.12%</span>
+</div>
+<div class="bg-surface-container-low/50 p-2 rounded-lg">
+<span class="text-label-xs font-label-xs text-outline block">الأصول (AUM)</span>
+<span class="text-body-sm font-body-sm font-bold text-on-surface">360.7 م EGP</span>
+</div>
+</div>
+</div>
+<!-- Card Footer -->
+<div class="pt-2 border-t border-outline-variant/10 flex items-center justify-between text-label-xs font-label-xs text-outline">
+<span class="">الرسوم السنوية: <strong class="text-on-surface">1.8%</strong></span>
+<span class="px-2 py-0.5 rounded bg-error-container/40 text-on-error-container font-medium">المخاطر: عالية</span>
+</div>
+</article>
+<!-- CARD 9: صندوق سي آي مال ومدفوعات رقمية -->
+<article class="fund-card bg-surface-container-lowest rounded-xl border border-outline-variant/30 p-space-md flex flex-col justify-between relative shadow-xs">
+<div>
+<!-- Header Chips & Icon -->
+<div class="flex items-center justify-between mb-3">
+<div class="flex flex-wrap items-center gap-1.5">
+<span class="px-2.5 py-0.5 rounded text-label-xs font-label-xs bg-surface-container text-on-surface-variant font-medium">قطاع مالي</span>
+</div>
+<button aria-label="إضافة للمفضلة" class="w-8 h-8 rounded-lg bg-surface-container-low text-primary hover:bg-primary hover:text-on-primary transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]" data-icon="bookmark_border">bookmark_border</span>
+</button>
+</div>
+<!-- Fund Name & Code -->
+<div class="mb-4">
+<h3 class="font-title-sm text-title-sm text-on-background font-bold hover:text-primary cursor-pointer transition-colors">
+              صندوق سي آي مال ومدفوعات رقمية القطاعي
+            </h3>
+<span class="text-label-xs font-label-xs text-outline tracking-wider font-mono">CI Financial and Fintech Sectoral Fund</span>
+</div>
+<!-- Price & Daily Change -->
+<div class="flex items-baseline justify-between py-2 border-y border-outline-variant/20 mb-3">
+<div>
+<span class="text-label-xs font-label-xs text-outline block">السعر</span>
+<div class="font-headline-md text-headline-md font-bold text-on-background">
+                20.5691 <span class="text-label-xs font-normal text-outline">EGP</span>
+</div>
+</div>
+<div class="text-left">
+<span class="text-label-xs font-label-xs text-outline block">التغير اليومي</span>
+<span class="inline-flex items-center text-error font-bold text-body-sm font-body-sm dir-ltr">
+                -2.70%
+              </span>
+</div>
+</div>
+<!-- Key Metrics Grid -->
+<div class="grid grid-cols-2 gap-2 text-right mb-3">
+<div class="bg-surface-container-low/50 p-2 rounded-lg">
+<span class="text-label-xs font-label-xs text-outline block">العائد 1M</span>
+<span class="text-body-sm font-body-sm font-bold text-error dir-ltr">-5.11%</span>
+</div>
+<div class="bg-surface-container-low/50 p-2 rounded-lg">
+<span class="text-label-xs font-label-xs text-outline block">الأصول (AUM)</span>
+<span class="text-body-sm font-body-sm font-bold text-on-surface">650.7 م EGP</span>
+</div>
+</div>
+</div>
+<!-- Card Footer -->
+<div class="pt-2 border-t border-outline-variant/10 flex items-center justify-between text-label-xs font-label-xs text-outline">
+<span class="">الرسوم السنوية: <strong class="text-on-surface">2%</strong></span>
+<span class="px-2 py-0.5 rounded bg-error-container/40 text-on-error-container font-medium">المخاطر: عالية</span>
+</div>
+</article>
+</section>
+<!-- Standard Pagination -->
+<div class="flex justify-center items-center py-6">
+<div class="inline-flex items-center gap-1.5 bg-surface-container-lowest p-1.5 rounded-xl border border-outline-variant/30 shadow-xs">
+<button class="px-3 py-1.5 rounded-lg border border-outline-variant/30 text-body-sm font-body-sm text-outline hover:text-on-surface hover:bg-surface-container-low transition-colors flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]" data-icon="chevron_right">chevron_right</span>
+<span class="">السابق</span>
+</button>
+<button class="w-8 h-8 rounded-lg bg-primary text-on-primary font-bold text-label-md flex items-center justify-center">1</button>
+<button class="w-8 h-8 rounded-lg text-on-surface-variant hover:bg-surface-container text-label-md font-medium flex items-center justify-center transition-colors">2</button>
+<button class="w-8 h-8 rounded-lg text-on-surface-variant hover:bg-surface-container text-label-md font-medium flex items-center justify-center transition-colors">3</button>
+<span class="px-1 text-outline">...</span>
+<button class="w-8 h-8 rounded-lg text-on-surface-variant hover:bg-surface-container text-label-md font-medium flex items-center justify-center transition-colors">9</button>
+<button class="px-3 py-1.5 rounded-lg border border-outline-variant/30 text-body-sm font-body-sm text-on-surface hover:bg-surface-container-low transition-colors flex items-center gap-1">
+<span class="">التالي</span>
+<span class="material-symbols-outlined text-[16px]" data-icon="chevron_left">chevron_left</span>
+</button>
+</div>
+</div>
+<!-- Informational Note & Shariah Disclaimer Bar -->
+<div class="bg-surface-container-low rounded-xl border border-outline-variant/20 p-4 text-center text-label-xs font-label-xs text-outline leading-relaxed max-w-4xl mx-auto">
+      المصدر: SNDUK | آخر تحديث: 2024-10-17 21:01 | <span class="text-on-surface-variant font-medium">إخلاء المسؤولية:</span> البيانات للأغراض المعلوماتية فقط ولا تُعد نصيحة استثمارية أو دعوة لشراء وثائق الصناديق. تخضع معايير الامتثال الشرعي لمراجعة لجان الفتوى المعنية.
+    </div>
+</main>
+<!-- Footer (Shared Component) -->
+<footer class="bg-surface-container-low dark:bg-inverse-surface full-width bottom border-t border-outline-variant/30">
+<div class="flex flex-col md:flex-row-reverse justify-between items-center w-full px-margin py-space-lg max-w-[1360px] mx-auto gap-space-md">
+<!-- Logo & System Status in footer -->
+<div class="flex items-center gap-3">
+<div class="w-7 h-7 rounded bg-primary flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined text-[18px]" data-icon="balance" style="font-variation-settings: 'FILL' 1;">balance</span>
+</div>
+<span class="text-title-sm font-title-sm font-bold text-primary dark:text-primary-fixed">ميزان EGX</span>
+</div>
+<!-- Links (Shared JSON) -->
+<nav class="flex flex-wrap justify-center items-center gap-4 text-body-sm font-body-sm">
+<a class="text-on-surface-variant dark:text-inverse-on-surface hover:text-primary dark:hover:text-primary-fixed transition-colors" href="#">عن ميزان</a>
+<span class="text-outline-variant">·</span>
+<a class="text-on-surface-variant dark:text-inverse-on-surface hover:text-primary dark:hover:text-primary-fixed transition-colors" href="#">المعايير الشرعية</a>
+<span class="text-outline-variant">·</span>
+<a class="text-on-surface-variant dark:text-inverse-on-surface hover:text-primary dark:hover:text-primary-fixed transition-colors" href="#">إخلاء المسؤولية المالية</a>
+<span class="text-outline-variant">·</span>
+<a class="text-on-surface-variant dark:text-inverse-on-surface hover:text-primary dark:hover:text-primary-fixed transition-colors" href="#">شروط الاستخدام</a>
+<span class="text-outline-variant">·</span>
+<a class="text-on-surface-variant dark:text-inverse-on-surface hover:text-primary dark:hover:text-primary-fixed transition-colors" href="#">اتصل بنا</a>
+</nav>
+<!-- Copyright text (Shared JSON verbatim) -->
+<div class="text-center md:text-right text-label-xs font-label-xs text-outline max-w-md">
+        © 2024 ميزان EGX. جميع البيانات متوافقة مع ضوابط الشريعة الإسلامية وتخضع للرقابة المالية للبورصة المصرية.
+      </div>
+</div>
+</footer>
+
+
+</body></html>

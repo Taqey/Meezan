@@ -100,6 +100,7 @@ public class GetMarketDataQueryHandler : IRequestHandler<GetMarketDataQuery, Res
                 NameEn: stock.NameEn,
                 SectorNameAr: stock.Sector?.NameAr,
                 SectorNameEn: stock.Sector?.NameEn,
+                SectorId: stock.SectorId,
                 Indices: stock.IndexConstituents
                     .Where(ic => ic.Index != null)
                     .Select(ic => new IndexInStockDto(ic.Index!.Code, ic.Index.NameAr, ic.Index.NameEn, ic.Weight))
@@ -230,6 +231,7 @@ public class GetMarketDataQueryHandler : IRequestHandler<GetMarketDataQuery, Res
             NameEn: stock.NameEn,
             SectorNameAr: stock.Sector?.NameAr,
             SectorNameEn: stock.Sector?.NameEn,
+            SectorId: stock.SectorId,
             Indices: indices,
             ShariahStatus: effectiveStatus?.ToString(),
             // Board-governed: purification is the board's own internal responsibility.
@@ -243,6 +245,10 @@ public class GetMarketDataQueryHandler : IRequestHandler<GetMarketDataQuery, Res
             PbRatio: md.PbRatio,
             Eps: md.Eps,
             PeRatio: md.PeRatio,
+            SharesOutstanding: md.SharesOutstanding,
+            EarningsGrowthRate: md.EarningsGrowthRate,
+            EpsGrowthRate: md.EpsGrowthRate,
+            FreeCashFlow: md.FreeCashFlow,
             Currency: md.Currency,
             High: md.High,
             Low: md.Low,

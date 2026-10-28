@@ -1,4 +1,5 @@
 using MediatR;
+using Meezan.Application.Common.Interfaces.Caching;
 using Meezan.Application.Common.Interfaces.Persistence;
 using Meezan.Application.Common.Interfaces.Repositories.Stocks;
 using Meezan.Application.Common.Results;
@@ -10,13 +11,16 @@ public sealed class RemoveFromSectorCommandHandler : IRequestHandler<RemoveFromS
 {
     private readonly IStockRepository _stockRepository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IIndexStaticCache _indexCache;
 
     public RemoveFromSectorCommandHandler(
         IStockRepository stockRepository,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IIndexStaticCache indexCache)
     {
         _stockRepository = stockRepository;
         _unitOfWork = unitOfWork;
+        _indexCache = indexCache;
     }
 
     public async Task<Result<StockManagementItemDto>> Handle(RemoveFromSectorCommand request, CancellationToken cancellationToken)
@@ -34,6 +38,9 @@ public sealed class RemoveFromSectorCommandHandler : IRequestHandler<RemoveFromS
 
         await _stockRepository.UpdateAsync(stock, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // Invalidate Sectoral-Indices cache so membership updates immediately
+        await _indexCache.InvalidateAsync("SECTORAL-INDICES", cancellationToken);
 
         return new StockManagementItemDto(
             stock.Id, stock.Ticker, stock.NameAr, stock.NameEn,

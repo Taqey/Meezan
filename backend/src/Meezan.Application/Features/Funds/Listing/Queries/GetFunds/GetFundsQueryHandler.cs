@@ -129,6 +129,7 @@ public sealed class GetFundsQueryHandler : IRequestHandler<GetFundsQuery, Result
                 {
                     var q = request.Search.Trim();
                     var match = (sf.NameAr != null && sf.NameAr.Contains(q, StringComparison.OrdinalIgnoreCase))
+                        || (sf.DisplayName != null && sf.DisplayName.Contains(q, StringComparison.OrdinalIgnoreCase))
                         || (sf.NameEn != null && sf.NameEn.Contains(q, StringComparison.OrdinalIgnoreCase))
                         || (sf.Code != null && sf.Code.Contains(q, StringComparison.OrdinalIgnoreCase))
                         || (sf.AssetManagerName != null && sf.AssetManagerName.Contains(q, StringComparison.OrdinalIgnoreCase));
@@ -205,7 +206,12 @@ public sealed class GetFundsQueryHandler : IRequestHandler<GetFundsQuery, Result
                 PublicId = f.PublicId,
                 Slug = f.Slug,
                 NameAr = f.NameAr,
+                DisplayName = !string.IsNullOrWhiteSpace(f.DisplayName) ? f.DisplayName : f.NameAr,
+                FullNameAr = f.NameAr,
                 NameEn = f.NameEn,
+                DescriptionAr = f.DescriptionAr,
+                IsNameManuallyEdited = f.IsNameManuallyEdited,
+                IsDescriptionManuallyEdited = f.IsDescriptionManuallyEdited,
                 Code = f.Code,
                 Type = eff != null && !string.IsNullOrWhiteSpace(eff.RootSlug) ? FundTypeCatalog.EnumFor(eff.RootSlug) : f.Type,
                 TypeNameAr = eff != null && !string.IsNullOrWhiteSpace(eff.RootNameAr) ? eff.RootNameAr : f.TypeNameAr,
@@ -285,7 +291,12 @@ public sealed class GetFundsQueryHandler : IRequestHandler<GetFundsQuery, Result
                 PublicId = f.PublicId,
                 Slug = f.Slug,
                 NameAr = f.NameAr,
+                DisplayName = !string.IsNullOrWhiteSpace(f.DisplayName) ? f.DisplayName : f.NameAr,
+                FullNameAr = f.NameAr,
                 NameEn = f.NameEn,
+                DescriptionAr = f.DescriptionAr,
+                IsNameManuallyEdited = f.IsNameManuallyEdited,
+                IsDescriptionManuallyEdited = f.IsDescriptionManuallyEdited,
                 Code = f.Code,
                 Type = f.Type,
                 TypeNameAr = f.TypeNameAr,

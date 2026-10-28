@@ -12,8 +12,13 @@ public class Fund
 
     // Names
     public string NameAr { get; set; } = string.Empty;
+    public string DisplayName { get; set; } = string.Empty;
     public string NameEn { get; set; } = string.Empty;
     public string Code { get; set; } = string.Empty;
+
+    // Admin manual edit flags (prevent sync overwrite)
+    public bool IsNameManuallyEdited { get; set; }
+    public bool IsDescriptionManuallyEdited { get; set; }
 
     // Type & classification
     public FundType Type { get; set; }

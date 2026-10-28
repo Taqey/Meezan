@@ -31,7 +31,9 @@ public class FundClassificationRouteTests : IClassFixture<WebApplicationFactory<
             b.ConfigureAppConfiguration((_, cfg) => cfg.AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["Admin:ApiKey"] = Key,
-                ["Funds:SchedulerEnabled"] = "false"
+                ["Funds:SchedulerEnabled"] = "false",
+                ["Funds:Cache:WarmupOnStartup"] = "false",
+                ["Redis:Host"] = ""
             }));
             b.ConfigureServices(services =>
             {
@@ -79,7 +81,7 @@ public class FundClassificationRouteTests : IClassFixture<WebApplicationFactory<
     }
 
     /// <summary>
-    /// Seeds 5 funds (equity+EGX30, money market, 2×commodities, unknown-type)
+    /// Seeds 5 funds (equity+EGX30, money market, 2commodities, unknown-type)
     /// then runs the real seed-migrate endpoint.
     /// </summary>
     private async Task SeedAndMigrateAsync()

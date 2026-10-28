@@ -70,7 +70,8 @@ public class GetIndexConstituentsQueryHandler : IRequestHandler<GetIndexConstitu
                 Currency: p.Currency,
                 SectorNameAr: p.SectorNameAr,
                 HasShariahBoard: hasBoard,
-                ShariahBoardNote: Common.Services.Shariah.ShariahBoardDetector.NoteFor(hasBoard)
+                ShariahBoardNote: Common.Services.Shariah.ShariahBoardDetector.NoteFor(hasBoard),
+                MarketCap: p.MarketCap
             );
         }).ToList();
 

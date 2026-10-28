@@ -2,12 +2,13 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { LucideAngularModule, type LucideIconData } from 'lucide-angular';
+import { MzSpinnerComponent } from '../ui/mz-spinner.component';
 
 /** Friendly empty/error block with an optional link or retry action. */
 @Component({
   selector: 'app-empty-state',
   standalone: true,
-  imports: [CommonModule, RouterLink, LucideAngularModule],
+  imports: [CommonModule, RouterLink, LucideAngularModule, MzSpinnerComponent],
   template: `
     <div class="empty-state">
       <lucide-icon *ngIf="icon" [img]="icon" size="32"></lucide-icon>
@@ -16,8 +17,9 @@ import { LucideAngularModule, type LucideIconData } from 'lucide-angular';
       <a *ngIf="actionLink" [routerLink]="actionLink" routerLinkActive="active" class="btn btn-primary">
         {{ actionLabel }}
       </a>
-      <button *ngIf="!actionLink && actionLabel" type="button" class="btn btn-primary" (click)="action.emit()">
-        {{ actionLabel }}
+      <button *ngIf="!actionLink && actionLabel" type="button" class="btn btn-primary" [disabled]="loading" (click)="action.emit()">
+        <mz-spinner *ngIf="loading" [active]="true" [immediate]="true" size="small"></mz-spinner>
+        <span>{{ actionLabel }}</span>
       </button>
     </div>
   `
@@ -28,5 +30,6 @@ export class EmptyStateComponent {
   @Input() message = '';
   @Input() actionLabel?: string | null;
   @Input() actionLink?: string | unknown[] | null;
+  @Input() loading = false;
   @Output() action = new EventEmitter<void>();
 }

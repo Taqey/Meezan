@@ -1,127 +1,72 @@
-import { Component, HostListener, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { LucideAngularModule, Layers, ShieldCheck, Coins, Printer } from 'lucide-angular';
 import { EMPTY, Observable, expand, map, reduce } from 'rxjs';
 import { navigateQueryParams } from '../../utils/navigation-utils';
 import { ApiService } from '../../services/api.service';
+import { SessionCacheService } from '../../services/session-cache.service';
 import { MarketSnapshotDto, SectorSummaryDto, StockListItemDto } from '../../models/api.models';
 import { sectorAccentFor, sectorIconFor } from '../../models/market-icons';
-import { PageHeaderComponent } from '../../components/page-header/page-header.component';
+import { MzListingPageComponent, type MzListingConfig } from '../../components/ui/ui-listing-page';
+import { MzButtonComponent, MzSelectComponent, type MzOption } from '../../components/ui/ui-small';
+import type { MzListingCardData } from '../../components/ui/ui-listing';
 import { ViewSwitcherComponent, type EntityView } from '../../components/view-switcher/view-switcher.component';
-import { KpiStripComponent, type KpiData } from '../../components/kpi-strip/kpi-strip.component';
-import { FilterChipsComponent, type ChipOption } from '../../components/filter-chips/filter-chips.component';
-import { SectionHeaderComponent } from '../../components/section-header/section-header.component';
-import { EntityCardComponent, type EntityStat } from '../../components/entity-card/entity-card.component';
+import { type KpiData } from '../../components/kpi-strip/kpi-strip.component';
+import { type ChipOption } from '../../components/filter-chips/filter-chips.component';
+import { type EntityStat } from '../../components/entity-card/entity-card.component';
 import { EntityTableComponent, type EntityTableColumn, type EntityTableRow } from '../../components/entity-table/entity-table.component';
 import { EntityHeatmapComponent, type HeatTileData } from '../../components/entity-heatmap/entity-heatmap.component';
-import { LoadingSkeletonsComponent } from '../../components/loading-skeletons/loading-skeletons.component';
-import { EmptyStateComponent } from '../../components/empty-state/empty-state.component';
 
-type CardSort = 'compliantCount' | 'name' | 'performance' | 'compliance' | 'pe';
+type CardSort = 'compliantCount' | 'name' | 'performance' | 'compliance' | 'pe' | 'change' | 'stocks';
 type Chip = 'all' | 'compliance' | 'performance' | 'pe' | 'name';
 
 @Component({
   selector: 'app-sectors-list',
   standalone: true,
-  imports: [
-    CommonModule, LucideAngularModule, PageHeaderComponent, ViewSwitcherComponent,
-    KpiStripComponent, FilterChipsComponent, SectionHeaderComponent, EntityCardComponent,
-    EntityTableComponent, EntityHeatmapComponent, LoadingSkeletonsComponent, EmptyStateComponent
-  ],
-  template: `
-    <div class="entity-page">
-      <app-page-header
-        [crumbs]="headerCrumbs"
-        pill="تصنيف قطاعي متوافق مع الشريعة"
-        title="القطاعات الاقتصادية"
-        description="تصفّح الأسهم المتوافقة شرعاً مرتبةً حسب قطاعها الاقتصادي. اختر قطاعاً لعرض أسهمه وتقييماتهم الشرعية والعادلة.">
-        <ng-container toolbar>
-          <app-view-switcher [view]="view" (viewChange)="setView($event)"></app-view-switcher>
-          <button type="button" class="btn btn-outline btn-sm" (click)="printReport()">
-            <lucide-icon [img]="PrintIcon" size="15"></lucide-icon> تقرير PDF
-          </button>
-        </ng-container>
-      </app-page-header>
-
-      <app-kpi-strip [kpis]="kpiList" [loading]="loading || dataPending"></app-kpi-strip>
-
-      <app-filter-chips
-        *ngIf="!loading && !loadError"
-        [chips]="chipOptions"
-        [activeId]="chip"
-        (selected)="setChip($event)">
-      </app-filter-chips>
-
-      <app-section-header
-        *ngIf="!loading && !loadError"
-        [lead]="sectors.length + ' قطاعاً بأسهم مصنّفة في قاعدة البيانات'"
-        [sessionDate]="sessionLabel"
-        [sourceNote]="sourceNote">
-      </app-section-header>
-
-      <app-loading-skeletons *ngIf="loading" variant="card" [count]="6"></app-loading-skeletons>
-
-      <app-empty-state
-        *ngIf="!loading && loadError"
-        title="تعذّر تحميل القطاعات"
-        message="تحقق من الاتصال ثم حاول مرة أخرى."
-        actionLabel="إعادة المحاولة"
-        (action)="load()">
-      </app-empty-state>
-
-      <app-empty-state
-        *ngIf="!loading && !loadError && !sectors.length"
-        [icon]="LayersIcon"
-        title="لا توجد قطاعات مسجّلة حتى الآن"
-        message="يتم استخراج القطاعات تلقائياً عند رفع كشوف المؤشرات من البورصة المصرية.">
-      </app-empty-state>
-
-      <!-- Grid view (waits for both data passes: skeletons, never "—") -->
-      <div class="entity-grid" *ngIf="!loading && !loadError && sectors.length && view === 'grid' && !dataPending">
-        <app-entity-card
-          *ngFor="let s of displayedSectors; let i = index; trackBy: trackSector"
-          [itemIndex]="i"
-          [title]="s.nameAr"
-          [subtitle]="s.nameEn"
-          [icon]="getSectorIcon(s.nameEn)"
-          [accent]="accentFor(s.nameEn).accent"
-          [tint]="accentFor(s.nameEn).tint"
-          [ink]="accentFor(s.nameEn).ink"
-          [pill]="s.stocksCount + ' سهم مصنّف'"
-          [stats]="cardStats(s)"
-          [autoPadStats]="false"
-          [footerText]="'استعرض الـ ' + s.stocksCount + ' سهم'"
-          [link]="['/indices/Sectoral-Indices', s.id]">
-        </app-entity-card>
+  imports: [CommonModule, FormsModule, LucideAngularModule, MzListingPageComponent, MzButtonComponent, MzSelectComponent, ViewSwitcherComponent, EntityTableComponent, EntityHeatmapComponent],
+    template: `
+    <mz-listing-page
+      [config]="config"
+      [customView]="view !== 'grid'"
+      (tabChange)="setChip($event)"
+      (searchChange)="onSearchInput($event)"
+      (controlChange)="onControlChange($event)"
+      (sortChange)="onSortChangeSelect($event)"
+      (advancedClick)="advancedOpen = !advancedOpen; rebuild()"
+      (retry)="load(true)">
+      <ng-container actions>
+        <app-view-switcher [view]="view" (viewChange)="setView($event)"></app-view-switcher>
+        <mz-button [icon]="PrintIcon" [loading]="printing" (clicked)="printReport()">تقرير PDF</mz-button>
+      </ng-container>
+      <ng-container view>
+        <app-entity-table
+          *ngIf="sectors.length && view === 'table' && !dataPending"
+          [columns]="tableColumns" [rows]="tableRows" [sortKey]="tableSortKey" [sortDir]="tableSortDir"
+          (sortChange)="setTableSort($event)" ariaLabel="جدول القطاعات الاقتصادية">
+        </app-entity-table>
+        <app-entity-heatmap
+          *ngIf="sectors.length && view === 'heatmap' && !dataPending"
+          [tiles]="heatTiles"
+          [sizeNote]="hasAnyMarketCap ? 'حجم المربع يعكس القيمة السوقية للقطاع' : null">
+        </app-entity-heatmap>
+      </ng-container>
+      <div advanced class="mz-adv-grid">
+        <label class="mz-slicer">
+          <span class="mz-slicer-head"><span>الحد الأدنى لعدد الأسهم في القطاع</span></span>
+          <mz-select
+            [options]="minStocksOptions"
+            [(ngModel)]="minStocks"
+            (valueChange)="minStocks = $event; refreshDerived()"
+            ariaLabel="الحد الأدنى لعدد الأسهم">
+          </mz-select>
+        </label>
       </div>
-
-      <!-- Waiting skeletons for any view while data settles -->
-      <app-loading-skeletons
-        *ngIf="!loading && !loadError && sectors.length && dataPending"
-        variant="card"
-        [count]="6">
-      </app-loading-skeletons>
-
-      <app-entity-table
-        *ngIf="!loading && !loadError && sectors.length && view === 'table' && !dataPending"
-        [columns]="tableColumns"
-        [rows]="tableRows"
-        [sortKey]="tableSortKey"
-        [sortDir]="tableSortDir"
-        (sortChange)="setTableSort($event)"
-        ariaLabel="جدول القطاعات الاقتصادية">
-      </app-entity-table>
-
-      <app-entity-heatmap
-        *ngIf="!loading && !loadError && sectors.length && view === 'heatmap' && !dataPending"
-        [tiles]="heatTiles"
-        [sizeNote]="hasAnyMarketCap ? 'حجم المربع يعكس القيمة السوقية للقطاع' : null">
-      </app-entity-heatmap>
-    </div>
+    </mz-listing-page>
   `
 })
-export class SectorsListComponent implements OnInit {
+export class SectorsListComponent implements OnInit, OnDestroy {
   readonly PrintIcon = Printer;
   readonly LayersIcon = Layers;
 
@@ -141,6 +86,18 @@ export class SectorsListComponent implements OnInit {
 
   view: EntityView = 'grid';
   chip = 'all';
+  search = '';
+  shariahFilter = '';
+  sortField = 'compliantCount';
+  minStocks = 0;
+  readonly minStocksOptions: MzOption[] = [
+    { value: 0, label: 'الكل' },
+    { value: 5, label: '5 أسهم فأكثر' },
+    { value: 10, label: '10 أسهم فأكثر' },
+    { value: 20, label: '20 سهماً فأكثر' }
+  ];
+  advancedOpen = false;
+
   sortKey: CardSort = 'compliantCount';
   tableSortKey = 'compliance';
   tableSortDir: 'asc' | 'desc' = 'desc';
@@ -203,10 +160,23 @@ export class SectorsListComponent implements OnInit {
   constructor(
     private api: ApiService,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private cache: SessionCacheService
   ) {}
 
   ngOnInit(): void {
+    const saved = this.cache.getUiState<any>('sectors-list');
+    if (saved) {
+      this.search = saved.search || '';
+      this.shariahFilter = saved.shariahFilter || '';
+      this.sortField = saved.sortField || 'compliantCount';
+      this.minStocks = saved.minStocks || 0;
+      this.advancedOpen = saved.advancedOpen || false;
+      this.chip = saved.chip || 'all';
+      this.sortKey = (saved.sortKey || 'compliantCount') as CardSort;
+      this.view = saved.view || 'grid';
+    }
+
     // The subscription fires immediately with the current params; later
     // emissions only switch the view (data loads once here, again on retry).
     this.route.queryParams.subscribe((params) => {
@@ -216,20 +186,81 @@ export class SectorsListComponent implements OnInit {
     this.load();
   }
 
-  load(): void {
-    this.loading = true;
+  ngOnDestroy(): void {
+    this.cache.saveScroll('sectors-list', window.scrollX, window.scrollY);
+    this.cache.saveUiState('sectors-list', {
+      search: this.search,
+      shariahFilter: this.shariahFilter,
+      sortField: this.sortField,
+      minStocks: this.minStocks,
+      advancedOpen: this.advancedOpen,
+      chip: this.chip,
+      sortKey: this.sortKey,
+      view: this.view
+    });
+  }
+
+  onSearchInput(val: string): void {
+    this.search = val;
+    this.refreshDerived();
+  }
+
+  onControlChange(e: { id: string; value?: string; values?: string[] }): void {
+    if (e.id === 'shariah') {
+      this.shariahFilter = e.value || (e.values ? e.values[0] : '') || '';
+      this.refreshDerived();
+    }
+  }
+
+  onSortChangeSelect(val: string): void {
+    this.sortField = val;
+    this.sortKey = val as CardSort;
+    this.refreshDerived();
+  }
+
+  load(force = false): void {
+    const cachedData = this.cache.get<SectorSummaryDto[]>('sectors_data');
+    const cachedSnaps = this.cache.get<MarketSnapshotDto[]>('sectors_snapshots');
+    const cachedStats = this.cache.get<Map<string, any>>('sectors_market_stats');
+
+    if (!force && cachedData) {
+      this.sectors = cachedData.data;
+      if (cachedSnaps) this.snapshots = cachedSnaps.data;
+      if (cachedStats) this.marketStats = cachedStats.data;
+      this.loading = false;
+      this.snapshotsLoading = !cachedSnaps;
+      this.refreshDerived();
+      this.cache.restoreScroll('sectors-list');
+
+      if (!this.cache.isStale('sectors_data')) {
+        return;
+      }
+    }
+
+    if (!this.sectors.length) {
+      this.loading = true;
+      this.rebuild();
+    }
     this.loadError = false;
+
     this.api.getSectors().subscribe({
       next: (data) => {
         this.sectors = data || [];
+        this.cache.set('sectors_data', this.sectors);
         this.loading = false;
         this.refreshDerived();
         this.loadSnapshots();
+        if (cachedData) {
+          this.cache.restoreScroll('sectors-list');
+        }
       },
       error: () => {
-        this.sectors = [];
-        this.loading = false;
-        this.loadError = true;
+        if (!this.sectors.length) {
+          this.sectors = [];
+          this.loading = false;
+          this.loadError = true;
+          this.rebuild();
+        }
       }
     });
   }
@@ -237,9 +268,11 @@ export class SectorsListComponent implements OnInit {
   /** Official quotes, cached once per page load; silent fallback when absent. */
   private loadSnapshots(): void {
     this.snapshotsLoading = true;
+    this.rebuild();
     this.api.getMarketSnapshots().subscribe({
       next: (rows) => {
         this.snapshots = rows || [];
+        this.cache.set('sectors_snapshots', this.snapshots);
         this.snapshotsLoading = false;
         this.refreshDerived();
       },
@@ -276,8 +309,14 @@ export class SectorsListComponent implements OnInit {
     );
   }
 
+  printing = false;
+
   printReport(): void {
-    window.print();
+    this.printing = true;
+    setTimeout(() => {
+      window.print();
+      this.printing = false;
+    }, 320);
   }
 
   @HostListener('window:beforeprint')
@@ -320,7 +359,7 @@ export class SectorsListComponent implements OnInit {
   // ── Derived view models (plain fields: no getter churn, no replays) ───
   private enrichedSectors: SectorSummaryDto[] = [];
 
-  private refreshDerived(): void {
+  refreshDerived(): void {
     const enriched = this.sectors.map((s) => this.withMarketStats(s));
     this.enrichedSectors = enriched;
     this.chipOptions = [
@@ -330,10 +369,31 @@ export class SectorsListComponent implements OnInit {
       { id: 'pe', label: 'الأقل مكرر ربحية' },
       { id: 'name', label: 'أبجدي' }
     ];
-    this.displayedSectors = this.sortSectors([...enriched], this.sortKey);
+
+    let list = [...enriched];
+
+    if (this.search && this.search.trim()) {
+      const q = this.search.trim().toLowerCase();
+      list = list.filter((s) =>
+        (s.nameAr && s.nameAr.toLowerCase().includes(q)) ||
+        (s.nameEn && s.nameEn.toLowerCase().includes(q))
+      );
+    }
+
+    if (this.shariahFilter === 'compliant_100') {
+      list = list.filter((s) => (s.complianceRatePct ?? 0) >= 100);
+    } else if (this.shariahFilter === 'compliant_70') {
+      list = list.filter((s) => (s.complianceRatePct ?? 0) >= 70);
+    }
+
+    if (this.minStocks > 0) {
+      list = list.filter((s) => s.stocksCount >= this.minStocks);
+    }
+
+    this.displayedSectors = this.sortSectors(list, this.sortKey);
     this.tableColumns = this.buildTableColumns();
-    this.tableRows = this.sortTable([...enriched]).map((s) => this.toTableRow(s));
-    const heatBase = [...enriched].sort((a, b) => (b.marketCapTotal ?? -1) - (a.marketCapTotal ?? -1));
+    this.tableRows = this.sortTable([...list]).map((s) => this.toTableRow(s));
+    const heatBase = [...list].sort((a, b) => (b.marketCapTotal ?? -1) - (a.marketCapTotal ?? -1));
     this.heatTiles = heatBase.map((s) => ({
       id: s.id,
       title: s.nameAr,
@@ -347,6 +407,7 @@ export class SectorsListComponent implements OnInit {
       tooltip: this.heatLabel(s)
     }));
     this.kpiList = this.buildKpis();
+    this.rebuild();
   }
 
   private buildTableColumns(): EntityTableColumn[] {
@@ -383,6 +444,7 @@ export class SectorsListComponent implements OnInit {
       case 'name':
         return list.sort((a, b) => (a.nameAr || '').localeCompare(b.nameAr || '', 'ar'));
       case 'performance':
+      case 'change':
         return list.sort((a, b) => (b.averageChangePct ?? -Infinity) - (a.averageChangePct ?? -Infinity));
       case 'compliance':
         return list.sort((a, b) => (b.complianceRatePct ?? -1) - (a.complianceRatePct ?? -1));
@@ -395,6 +457,8 @@ export class SectorsListComponent implements OnInit {
             ? b.averagePeRatio : Infinity;
           return pa - pb;
         });
+      case 'stocks':
+        return list.sort((a, b) => b.stocksCount - a.stocksCount);
       case 'compliantCount':
       default:
         return list.sort((a, b) => (b.compliantStocksCount ?? b.stocksCount) - (a.compliantStocksCount ?? a.stocksCount));
@@ -551,6 +615,7 @@ export class SectorsListComponent implements OnInit {
           }
         }
         this.marketStats = stats;
+        this.cache.set('sectors_market_stats', this.marketStats);
         this.marketLoading = false;
         this.refreshDerived();
         this.resolveSessionDate(stocks);
@@ -658,4 +723,88 @@ export class SectorsListComponent implements OnInit {
     if (value === null || value === undefined) return 'var(--muted-foreground)';
     return Math.abs(Number(value)) >= 2.5 ? '#fff' : 'var(--ink)';
   }
+
+  /** Single config object for the shared ListingPage. */
+  config: MzListingConfig = { header: { badge: '', title: '', description: '' }, cards: [], empty: { title: '', message: '' } };
+
+  rebuild(): void {
+    const tabs = (this.chipOptions.length ? this.chipOptions : [
+      { id: 'all', label: `كل القطاعات (${this.sectors.length || 18})` },
+      { id: 'compliance', label: 'الأعلى توافقاً' },
+      { id: 'performance', label: 'الأفضل أداءً اليوم' },
+      { id: 'pe', label: 'الأقل مكرر ربحية' },
+      { id: 'name', label: 'أبجدي' }
+    ]).map((c) => ({ id: c.id, label: c.label }));
+
+    this.config = {
+      header: {
+        badge: 'تصنيف قطاعي متوافق مع الشريعة',
+        title: 'القطاعات الاقتصادية',
+        description: 'تصفّح الأسهم المتوافقة شرعاً مرتبةً حسب قطاعها الاقتصادي. اختر قطاعاً لعرض أسهمه وتقييماتهم الشرعية والعادلة.'
+      },
+      stats: this.kpiList.map((k) => ({ label: k.label, value: k.value, icon: k.icon, chip: k.sub })),
+      statsLoading: this.loading || this.dataPending,
+      statsCount: 3,
+      tabs,
+      activeTab: this.chip,
+      filters: {
+        searchValue: this.search,
+        searchPlaceholder: 'ابحث باسم القطاع أو الأسهم المندرجة تحته...',
+        controls: [
+          {
+            id: 'shariah',
+            kind: 'select',
+            label: 'الشرعية',
+            value: this.shariahFilter,
+            options: [
+              { value: '', label: 'الشرعية: الكل' },
+              { value: 'compliant_100', label: 'متوافق 100%' },
+              { value: 'compliant_70', label: 'متوافق جزئياً (>70%)' }
+            ]
+          }
+        ],
+        sort: {
+          label: 'ترتيب النتائج',
+          value: this.sortField,
+          options: [
+            { value: 'compliantCount', label: 'الترتيب: عدد الأسهم المتوافقة' },
+            { value: 'performance', label: 'الترتيب: نسبة التغير (تنازلي)' },
+            { value: 'compliance', label: 'الترتيب: نسبة التوافق الشرعي' },
+            { value: 'pe', label: 'الترتيب: الأقل مكرر ربحية' },
+            { value: 'stocks', label: 'الترتيب: عدد الأسهم' },
+            { value: 'name', label: 'الترتيب: أبجدي' }
+          ]
+        },
+        advanced: {
+          label: 'تصفية متقدمة',
+          open: this.advancedOpen,
+          count: this.minStocks > 0 ? 1 : 0
+        }
+      },
+      results: {
+        text: (this.sectors.length || 18) + ' قطاعاً بأسهم مصنّفة في قاعدة البيانات',
+        note: [this.sessionLabel, this.sourceNote].filter(Boolean).join(' · ') || null
+      },
+      cards: this.displayedSectors.map((s) => this.toCard(s)),
+      skeletonCount: this.sectors.length || 18,
+      cardType: 'entity',
+      loading: this.loading && !this.loadError,
+      error: !this.loading && this.loadError ? { title: 'تعذّر تحميل القطاعات', message: 'تحقق من الاتصال ثم حاول مرة أخرى.' } : null,
+      empty: { title: 'لا توجد قطاعات مسجّلة حتى الآن', message: 'يتم استخراج القطاعات تلقائياً عند رفع كشوف المؤشرات من البورصة المصرية.' }
+    };
+  }
+
+  private toCard(s: SectorSummaryDto): MzListingCardData {
+    return {
+      id: s.id,
+      title: s.nameAr,
+      subtitle: s.nameEn,
+      icon: this.getSectorIcon(s.nameEn),
+      badges: [{ label: s.stocksCount + ' سهم مصنّف', tone: 'neutral' }],
+      metrics: this.cardStats(s).map((st) => ({ label: st.label, value: st.value, tone: st.tone })),
+      linkLabel: 'استعرض الـ ' + s.stocksCount + ' سهم',
+      link: ['/indices/Sectoral-Indices', s.id]
+    };
+  }
+
 }

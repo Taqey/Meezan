@@ -1,0 +1,696 @@
+<!DOCTYPE html><html dir="rtl" lang="ar"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>ميزان EGX - المؤشرات الرسمية للبورصة المصرية</title>
+<!-- Google Fonts & Material Symbols -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "background": "#faf8ff",
+            "on-primary-container": "#f5fff7",
+            "surface-container": "#eaedff",
+            "outline": "#6d7a72",
+            "primary": "#006948",
+            "on-secondary-fixed": "#002115",
+            "surface": "#faf8ff",
+            "surface-container-high": "#e2e7ff",
+            "primary-container": "#00855d",
+            "on-error-container": "#93000a",
+            "outline-variant": "#bccac0",
+            "primary-fixed": "#85f8c4",
+            "surface-container-lowest": "#ffffff",
+            "on-tertiary-container": "#f5fff6",
+            "on-primary-fixed": "#002114",
+            "inverse-on-surface": "#eef0ff",
+            "on-tertiary": "#ffffff",
+            "error-container": "#ffdad6",
+            "secondary": "#006c4e",
+            "secondary-fixed-dim": "#7bd8b1",
+            "on-error": "#ffffff",
+            "on-secondary": "#ffffff",
+            "tertiary": "#006947",
+            "inverse-primary": "#68dba9",
+            "primary-fixed-dim": "#68dba9",
+            "on-background": "#131b2e",
+            "on-tertiary-fixed": "#002113",
+            "secondary-container": "#97f5cc",
+            "surface-variant": "#dae2fd",
+            "surface-dim": "#d2d9f4",
+            "on-primary": "#ffffff",
+            "on-tertiary-fixed-variant": "#005236",
+            "surface-tint": "#006c4a",
+            "inverse-surface": "#283044",
+            "on-surface-variant": "#3d4a42",
+            "surface-container-highest": "#dae2fd",
+            "error": "#ba1a1a",
+            "on-surface": "#131b2e",
+            "tertiary-container": "#00855b",
+            "on-secondary-fixed-variant": "#00513a",
+            "surface-bright": "#faf8ff",
+            "tertiary-fixed": "#6ffbbe",
+            "secondary-fixed": "#97f5cc",
+            "surface-container-low": "#f2f3ff",
+            "on-primary-fixed-variant": "#005137",
+            "tertiary-fixed-dim": "#4edea3",
+            "on-secondary-container": "#007353"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-2xl": "3rem",
+            "gutter": "1.25rem",
+            "margin-mobile": "1rem",
+            "gutter-mobile": "0.75rem",
+            "space-sm": "0.5rem",
+            "space-xs": "0.25rem",
+            "space-xl": "2rem",
+            "space-md": "1rem",
+            "margin": "2rem",
+            "space-lg": "1.5rem"
+          },
+          "fontFamily": {
+            "metric-md": ["IBM Plex Sans Arabic", "IBM Plex Sans", "sans-serif"],
+            "headline-md": ["IBM Plex Sans Arabic", "IBM Plex Sans", "sans-serif"],
+            "label-md": ["IBM Plex Sans Arabic", "IBM Plex Sans", "sans-serif"],
+            "display-hero-mobile": ["IBM Plex Sans Arabic", "IBM Plex Sans", "sans-serif"],
+            "label-xs": ["IBM Plex Sans Arabic", "IBM Plex Sans", "sans-serif"],
+            "body-sm": ["IBM Plex Sans Arabic", "IBM Plex Sans", "sans-serif"],
+            "headline-lg": ["IBM Plex Sans Arabic", "IBM Plex Sans", "sans-serif"],
+            "title-sm": ["IBM Plex Sans Arabic", "IBM Plex Sans", "sans-serif"],
+            "display-hero": ["IBM Plex Sans Arabic", "IBM Plex Sans", "sans-serif"],
+            "metric-xl": ["IBM Plex Sans Arabic", "IBM Plex Sans", "sans-serif"],
+            "body-md": ["IBM Plex Sans Arabic", "IBM Plex Sans", "sans-serif"]
+          },
+          "fontSize": {
+            "metric-md": ["22px", { "lineHeight": "28px", "fontWeight": "700" }],
+            "headline-md": ["20px", { "lineHeight": "30px", "fontWeight": "600" }],
+            "label-md": ["12px", { "lineHeight": "18px", "fontWeight": "500" }],
+            "display-hero-mobile": ["26px", { "lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+            "label-xs": ["11px", { "lineHeight": "16px", "fontWeight": "500" }],
+            "body-sm": ["13px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "headline-lg": ["28px", { "lineHeight": "40px", "fontWeight": "700" }],
+            "title-sm": ["16px", { "lineHeight": "24px", "fontWeight": "600" }],
+            "display-hero": ["36px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "metric-xl": ["32px", { "lineHeight": "38px", "fontWeight": "700" }],
+            "body-md": ["14px", { "lineHeight": "22px", "fontWeight": "400" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    body {
+      font-family: 'IBM Plex Sans Arabic', 'IBM Plex Sans', sans-serif;
+      background-color: #faf8ff;
+      color: #131b2e;
+      -webkit-font-smoothing: antialiased;
+    }
+    .material-symbols-outlined {
+      font-family: 'Material Symbols Outlined';
+      font-weight: normal;
+      font-style: normal;
+      font-size: 20px;
+      line-height: 1;
+      letter-spacing: normal;
+      text-transform: none;
+      display: inline-block;
+      white-space: nowrap;
+      word-wrap: normal;
+      direction: ltr;
+      -webkit-font-feature-settings: 'liga';
+      -webkit-font-smoothing: antialiased;
+    }
+    .card-hover-fx {
+      transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+    .card-hover-fx:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px -5px rgba(0, 105, 72, 0.08);
+      border-color: rgba(0, 105, 72, 0.35);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface min-h-screen flex flex-col justify-between selection:bg-primary-fixed selection:text-on-primary-fixed">
+<!-- TOP NAV BAR (Shared Component) -->
+<header class="bg-surface/90 dark:bg-inverse-surface/90 backdrop-blur-md docked full-width top-0 sticky z-50 shadow-sm border-b border-outline-variant/30 dark:border-outline/30">
+<div class="flex flex-row-reverse justify-between items-center w-full px-margin max-w-[1360px] mx-auto h-16">
+<!-- Right: Brand Logo & Navigation Links -->
+<div class="flex items-center gap-space-xl">
+<!-- Brand Emblem -->
+<a class="flex items-center gap-2 group" href="#">
+<div class="w-9 h-9 rounded-lg bg-primary flex items-center justify-center text-on-primary shadow-sm group-hover:bg-primary-container transition-colors">
+<span class="material-symbols-outlined text-white" style="font-variation-settings: 'FILL' 1;">balance</span>
+</div>
+<div class="flex flex-col">
+<span class="text-headline-md font-headline-md font-bold text-primary dark:text-primary-fixed leading-none">ميزان EGX</span>
+</div>
+</a>
+<!-- Main Navigation Links -->
+<nav class="hidden md:flex items-center gap-space-lg">
+<a class="text-on-surface-variant dark:text-inverse-on-surface hover:text-primary dark:hover:text-primary-fixed font-body-md text-body-md transition-colors hover:bg-surface-container dark:hover:bg-surface-variant/20 px-2 py-1 rounded" href="#">الأسهم</a>
+<a class="text-on-surface-variant dark:text-inverse-on-surface hover:text-primary dark:hover:text-primary-fixed font-body-md text-body-md transition-colors hover:bg-surface-container dark:hover:bg-surface-variant/20 px-2 py-1 rounded" href="#">الصناديق</a>
+<!-- Active Tab: المؤشرات -->
+<a class="text-primary dark:text-primary-fixed font-title-sm text-title-sm border-b-2 border-primary dark:border-primary-fixed pb-1" href="#">المؤشرات</a>
+<a class="text-on-surface-variant dark:text-inverse-on-surface hover:text-primary dark:hover:text-primary-fixed font-body-md text-body-md transition-colors hover:bg-surface-container dark:hover:bg-surface-variant/20 px-2 py-1 rounded" href="#">تكوين محفظة</a>
+<a class="text-on-surface-variant dark:text-inverse-on-surface hover:text-primary dark:hover:text-primary-fixed font-body-md text-body-md transition-colors hover:bg-surface-container dark:hover:bg-surface-variant/20 px-2 py-1 rounded" href="#">المعايير الشرعية</a>
+<a class="text-on-surface-variant dark:text-inverse-on-surface hover:text-primary dark:hover:text-primary-fixed font-body-md text-body-md transition-colors hover:bg-surface-container dark:hover:bg-surface-variant/20 px-2 py-1 rounded flex items-center gap-1.5" href="#">
+<span class="">المفضلة</span>
+<span class="w-5 h-5 rounded-full bg-primary text-on-primary text-[11px] font-bold flex items-center justify-center">7</span>
+</a>
+</nav>
+</div>
+<!-- Left: Realtime Status & Auxiliary Controls -->
+<div class="flex items-center gap-space-md">
+<!-- Live Market Status Ribbon Tag -->
+<div class="hidden sm:flex items-center gap-2 bg-surface-container-lowest px-3 py-1.5 rounded-full border border-outline-variant/40 shadow-xs">
+<span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-fixed-dim opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+</span>
+<span class="text-label-xs font-label-xs text-on-surface-variant">بيانات السوق مباشرة</span>
+</div>
+<button aria-label="الإشعارات" class="w-9 h-9 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button aria-label="العناصر المحفوظة" class="w-9 h-9 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined">bookmark</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold text-label-md">
+          ع
+        </div>
+</div>
+</div>
+</header>
+<!-- MAIN CANVAS -->
+<main class="w-full max-w-[1360px] mx-auto px-margin-mobile md:px-margin py-space-xl flex-1 flex flex-col gap-space-xl">
+<!-- PAGE HERO & SUBTITLE -->
+<div class="flex flex-col items-center text-center gap-space-xs max-w-3xl mx-auto pt-2">
+<!-- Tag Pill -->
+<div class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-secondary-container/40 text-on-secondary-container border border-secondary-container/80 text-label-xs font-label-xs mb-1">
+<span class="material-symbols-outlined text-[14px]">verified</span>
+<span class="">المؤشرات الرسمية</span>
+</div>
+<!-- Hero Headline -->
+<h1 class="text-headline-lg md:text-display-hero font-headline-lg md:font-display-hero text-on-surface tracking-tight">
+        المؤشرات الرسمية للبورصة المصرية
+      </h1>
+<!-- Description -->
+<p class="text-body-md font-body-md text-on-surface-variant max-w-2xl leading-relaxed">
+        تعرّف على مكونات كل مؤشر معتمد، وتابع أوزان الأسهم داخله وتقييماتها الشرعية والعادلة.
+      </p>
+</div>
+<!-- VIEW SWITCHER & UTILITY ACTIONS (TOP BAR) -->
+<div class="flex flex-wrap items-center justify-between gap-space-md">
+<!-- View Layout Modes -->
+<div class="inline-flex items-center bg-surface-container-lowest p-1 rounded-xl border border-outline-variant/40 shadow-xs">
+<button class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-surface-container-low text-primary font-title-sm text-[13px] font-semibold border border-outline-variant/40">
+<span class="material-symbols-outlined text-[18px]">grid_view</span>
+<span class="">شبكة</span>
+</button>
+<button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-on-surface-variant hover:text-primary font-body-sm text-body-sm transition-colors">
+<span class="material-symbols-outlined text-[18px]">table_rows</span>
+<span class="">جدول</span>
+</button>
+<button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-on-surface-variant hover:text-primary font-body-sm text-body-sm transition-colors">
+<span class="material-symbols-outlined text-[18px]">local_fire_department</span>
+<span class="">خريطة حرارية</span>
+</button>
+</div>
+<!-- Export Action -->
+<div class="flex items-center gap-space-sm">
+<button class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-surface-container-lowest border border-outline-variant/40 hover:border-primary/40 text-on-surface-variant hover:text-primary transition-all text-body-sm font-body-sm shadow-xs active:scale-[0.98]">
+<span class="material-symbols-outlined text-[18px]">picture_as_pdf</span>
+<span class="">تقرير PDF</span>
+</button>
+</div>
+</div>
+<!-- 4-CARD KPI SUMMARY RIBBON -->
+<section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-space-md">
+<!-- KPI 1: المؤشرات المعتمدة -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md border border-outline-variant/40 shadow-xs flex items-center justify-between">
+<div class="flex flex-col gap-0.5">
+<span class="text-label-md font-label-md text-on-surface-variant">المؤشرات المعتمدة</span>
+<div class="flex items-baseline gap-2">
+<span class="text-metric-xl font-metric-xl text-on-surface">8</span>
+<span class="text-label-xs font-label-xs text-on-surface-variant">مؤشراً رسمياً</span>
+</div>
+</div>
+<div class="w-11 h-11 rounded-xl bg-surface-container-low text-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-[24px]">layers</span>
+</div>
+</div>
+<!-- KPI 2: الأسهم المغطاة -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md border border-outline-variant/40 shadow-xs flex items-center justify-between">
+<div class="flex flex-col gap-0.5">
+<span class="text-label-md font-label-md text-on-surface-variant">الأسهم المغطاة</span>
+<div class="flex items-baseline gap-2">
+<span class="text-metric-xl font-metric-xl text-on-surface">111</span>
+<span class="text-label-xs font-label-xs text-on-surface-variant">سهم فريد مغطى</span>
+</div>
+</div>
+<div class="w-11 h-11 rounded-xl bg-surface-container-low text-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-[24px]">verified_user</span>
+</div>
+</div>
+<!-- KPI 3: أفضل أداء اليوم -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md border border-outline-variant/40 shadow-xs flex items-center justify-between">
+<div class="flex flex-col gap-0.5">
+<span class="text-label-md font-label-md text-on-surface-variant">أفضل أداء اليوم (EGX70)</span>
+<div class="flex items-baseline gap-1.5 text-primary">
+<span class="text-metric-xl font-metric-xl font-bold">+0.23%</span>
+<span class="material-symbols-outlined text-[20px]">trending_up</span>
+</div>
+</div>
+<div class="w-11 h-11 rounded-xl bg-secondary-container/40 text-on-secondary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-[24px]">show_chart</span>
+</div>
+</div>
+<!-- KPI 4: نسبة التوافق الشرعي العام -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md border border-outline-variant/40 shadow-xs flex items-center justify-between">
+<div class="flex flex-col gap-0.5">
+<span class="text-label-md font-label-md text-on-surface-variant">نسبة التوافق الشرعي</span>
+<div class="flex items-baseline gap-2">
+<span class="text-metric-xl font-metric-xl text-on-surface">76%</span>
+<span class="text-label-xs font-label-xs text-primary font-medium">متوافق مع الشريعة</span>
+</div>
+</div>
+<div class="w-11 h-11 rounded-xl bg-surface-container-low text-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-[24px]">balance</span>
+</div>
+</div>
+</section>
+<!-- FILTER & SORT BAR WITH SUMMARY META -->
+<div class="flex flex-col gap-space-md">
+  <!-- Filter & Search Controls Bar -->
+  <div class="bg-surface-container-lowest p-space-md rounded-2xl border border-outline-variant/30 shadow-xs flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-space-md">
+    <!-- Search Input -->
+    <div class="relative flex-1">
+      <span class="material-symbols-outlined absolute right-3.5 top-1/2 -translate-y-1/2 text-outline text-[20px]">search</span>
+      <input type="text" placeholder="ابحث باسم المؤشر أو رمزه (مثال: EGX30 أو EGX70)..." class="w-full pr-11 pl-4 py-2.5 rounded-xl bg-surface-container-low/60 border border-outline-variant/40 focus:border-primary focus:bg-surface-container-lowest text-on-surface placeholder:text-outline text-body-sm font-body-sm outline-none transition-all">
+    </div>
+    <!-- Dropdowns & Advanced Filter Button -->
+    <div class="flex flex-wrap sm:flex-nowrap items-center gap-space-sm">
+      <div class="relative min-w-[150px] flex-1 sm:flex-initial">
+        <select class="w-full appearance-none pr-3.5 pl-8 py-2.5 rounded-xl bg-surface-container-low/60 border border-outline-variant/40 focus:border-primary text-on-surface text-body-sm font-body-sm outline-none cursor-pointer">
+          <option>الشرعية: الكل</option>
+          <option>متوافق 100%</option>
+          <option>متوافق جزئياً (&gt;70%)</option>
+        </select>
+        <span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-outline pointer-events-none text-[18px]">expand_more</span>
+      </div>
+      <div class="relative min-w-[190px] flex-1 sm:flex-initial">
+        <select class="w-full appearance-none pr-3.5 pl-8 py-2.5 rounded-xl bg-surface-container-low/60 border border-outline-variant/40 focus:border-primary text-on-surface text-body-sm font-body-sm outline-none cursor-pointer">
+          <option>الترتيب: نسبة التغير (تنازلي)</option>
+          <option>الترتيب: نسبة التوافق الشرعي</option>
+          <option>الترتيب: عدد الأسهم المكوّنة</option>
+          <option>الترتيب: أبجدي</option>
+        </select>
+        <span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-outline pointer-events-none text-[18px]">expand_more</span>
+      </div>
+      <button type="button" class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-outline-variant/40 bg-surface-container-low/60 hover:bg-surface-container hover:border-primary/40 text-on-surface-variant hover:text-primary text-body-sm font-body-sm font-medium transition-all shadow-xs whitespace-nowrap active:scale-[0.98]">
+        <span class="material-symbols-outlined text-[18px]">tune</span>
+        <span class="">تصفية متقدمة</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Quick Filter Pills & Results Meta Row -->
+  <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-space-sm border-b border-outline-variant/30 pb-space-md">
+    <!-- Scrollable Pills for all screen sizes -->
+    <div class="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-1 md:pb-0 scrollbar-none">
+      <button class="px-4 py-1.5 rounded-full bg-primary text-on-primary font-title-sm text-[13px] font-medium shadow-xs whitespace-nowrap transition-colors">
+        كل المؤشرات (8)
+      </button>
+      <button class="px-4 py-1.5 rounded-full bg-surface-container-lowest border border-outline-variant/40 text-on-surface-variant hover:border-primary/40 hover:text-primary transition-all font-body-sm text-body-sm whitespace-nowrap">
+        الأعلى توافقاً
+      </button>
+      <button class="px-4 py-1.5 rounded-full bg-surface-container-lowest border border-outline-variant/40 text-on-surface-variant hover:border-primary/40 hover:text-primary transition-all font-body-sm text-body-sm whitespace-nowrap">
+        الأفضل أداءً اليوم
+      </button>
+      <button class="px-4 py-1.5 rounded-full bg-surface-container-lowest border border-outline-variant/40 text-on-surface-variant hover:border-primary/40 hover:text-primary transition-all font-body-sm text-body-sm whitespace-nowrap">
+        أبجدي
+      </button>
+    </div>
+    <!-- Results Meta & Status Indicators -->
+    <div class="flex flex-wrap items-center gap-2 text-label-xs font-label-xs text-on-surface-variant">
+      <span class="">عرض <strong>8</strong> مؤشراً رسمياً</span>
+      <span class="text-outline-variant">•</span>
+      <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-primary"></span> متوافق</span>
+      <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-error"></span> تراجع</span>
+      <span class="text-outline-variant">•</span>
+      <span class="">آخر تحديث: جلسة الإثنين، أكتوبر 26</span>
+    </div>
+  </div>
+</div>
+<!-- INDICES BENTO / GRID CARDS (8 STANDARDIZED CARDS) -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-space-lg">
+<!-- CARD 1: EGX33 Shariah (Flagship Islamic Index) -->
+<div class="bg-surface-container-lowest rounded-2xl border-2 border-primary/20 p-space-lg flex flex-col justify-between card-hover-fx relative overflow-hidden group shadow-xs">
+<div class="absolute top-0 right-0 left-0 h-1.5 bg-primary"></div>
+<div>
+<!-- Header Meta -->
+<div class="flex items-center justify-between mb-space-md">
+<div class="flex items-center gap-2">
+<span class="px-2.5 py-0.5 rounded-full bg-primary/10 text-primary text-label-xs font-label-xs font-semibold">
+                المؤشر الشرعي الرسمي
+              </span>
+<span class="px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant text-label-xs font-label-xs">
+                34 سهم مكوّن
+              </span>
+</div>
+<div class="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">upload_file</span>
+</div>
+</div>
+<!-- Titles -->
+<h2 class="text-headline-md font-headline-md text-on-surface group-hover:text-primary transition-colors">مؤشر EGX33</h2>
+<p class="text-label-md font-label-md text-outline mb-space-lg font-sans">EGX 33 Shariah Index</p>
+<!-- Metrics Row -->
+<div class="grid grid-cols-2 gap-space-sm pt-space-sm border-t border-outline-variant/20 mb-space-md">
+<div>
+<span class="text-label-xs font-label-xs text-on-surface-variant block">معدل التوافق</span>
+<div class="flex items-center gap-1.5 mt-0.5">
+<span class="text-title-sm font-title-sm text-primary font-bold">100% متوافق</span>
+<span class="material-symbols-outlined text-primary text-[16px]">check_circle</span>
+</div>
+</div>
+<div>
+<span class="text-label-xs font-label-xs text-on-surface-variant block">الأداء اليومي</span>
+<div class="flex items-center gap-1 mt-0.5 text-error">
+<span class="text-title-sm font-title-sm font-bold">-1.40%</span>
+<span class="material-symbols-outlined text-[16px]">arrow_drop_down</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Action / CTA Link -->
+<a class="inline-flex items-center justify-between text-body-sm font-body-sm font-semibold text-primary pt-space-sm border-t border-outline-variant/30 hover:underline" href="#">
+<span class="">استعرض الـ 34 سهم</span>
+<span class="material-symbols-outlined text-[18px]">arrow_back</span>
+</a>
+</div>
+<!-- CARD 2: EGX70 EWI -->
+<div class="bg-surface-container-lowest rounded-2xl border border-outline-variant/40 p-space-lg flex flex-col justify-between card-hover-fx relative overflow-hidden group shadow-xs">
+<div>
+<!-- Header Meta -->
+<div class="flex items-center justify-between mb-space-md">
+<span class="px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant text-label-xs font-label-xs">
+              70 سهم مكوّن
+            </span>
+<div class="w-9 h-9 rounded-xl bg-surface-container-low text-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">trending_up</span>
+</div>
+</div>
+<!-- Titles -->
+<h2 class="text-headline-md font-headline-md text-on-surface group-hover:text-primary transition-colors">مؤشر الشركات الصغيرة والمتوسطة EGX70 EWI</h2>
+<p class="text-label-md font-label-md text-outline mb-space-lg font-sans">EGX 70 EWI Index</p>
+<!-- Metrics Row -->
+<div class="grid grid-cols-2 gap-space-sm pt-space-sm border-t border-outline-variant/20 mb-space-md">
+<div>
+<span class="text-label-xs font-label-xs text-on-surface-variant block">معدل التوافق</span>
+<span class="text-title-sm font-title-sm text-primary font-bold mt-0.5 block">75% متوافق</span>
+</div>
+<div>
+<span class="text-label-xs font-label-xs text-on-surface-variant block">الأداء اليومي</span>
+<div class="flex items-center gap-1 mt-0.5 text-primary">
+<span class="text-title-sm font-title-sm font-bold">+0.23%</span>
+<span class="material-symbols-outlined text-[16px]">arrow_drop_up</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Action / CTA Link -->
+<a class="inline-flex items-center justify-between text-body-sm font-body-sm font-semibold text-primary pt-space-sm border-t border-outline-variant/30 hover:underline" href="#">
+<span class="">استعرض الـ 70 سهم</span>
+<span class="material-symbols-outlined text-[18px]">arrow_back</span>
+</a>
+</div>
+<!-- CARD 3: EGX100 EWI -->
+<div class="bg-surface-container-lowest rounded-2xl border border-outline-variant/40 p-space-lg flex flex-col justify-between card-hover-fx relative overflow-hidden group shadow-xs">
+<div>
+<!-- Header Meta -->
+<div class="flex items-center justify-between mb-space-md">
+<span class="px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant text-label-xs font-label-xs">
+              101 سهم مكوّن
+            </span>
+<div class="w-9 h-9 rounded-xl bg-surface-container-low text-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">stacks</span>
+</div>
+</div>
+<!-- Titles -->
+<h2 class="text-headline-md font-headline-md text-on-surface group-hover:text-primary transition-colors">المؤشر الأوسع نطاقاً EGX100 EWI</h2>
+<p class="text-label-md font-label-md text-outline mb-space-lg font-sans">EGX 100 EWI Index</p>
+<!-- Metrics Row -->
+<div class="grid grid-cols-2 gap-space-sm pt-space-sm border-t border-outline-variant/20 mb-space-md">
+<div>
+<span class="text-label-xs font-label-xs text-on-surface-variant block">معدل التوافق</span>
+<span class="text-title-sm font-title-sm text-primary font-bold mt-0.5 block">77% متوافق</span>
+</div>
+<div>
+<span class="text-label-xs font-label-xs text-on-surface-variant block">الأداء اليومي</span>
+<div class="flex items-center gap-1 mt-0.5 text-error">
+<span class="text-title-sm font-title-sm font-bold">-0.24%</span>
+<span class="material-symbols-outlined text-[16px]">arrow_drop_down</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Action / CTA Link -->
+<a class="inline-flex items-center justify-between text-body-sm font-body-sm font-semibold text-primary pt-space-sm border-t border-outline-variant/30 hover:underline" href="#">
+<span class="">استعرض الـ 101 سهم</span>
+<span class="material-symbols-outlined text-[18px]">arrow_back</span>
+</a>
+</div>
+<!-- CARD 4: EGX30 (Main Index) -->
+<div class="bg-surface-container-lowest rounded-2xl border border-outline-variant/40 p-space-lg flex flex-col justify-between card-hover-fx relative overflow-hidden group shadow-xs">
+<div>
+<!-- Header Meta -->
+<div class="flex items-center justify-between mb-space-md">
+<span class="px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant text-label-xs font-label-xs">
+              31 سهم مكوّن
+            </span>
+<div class="w-9 h-9 rounded-xl bg-surface-container-low text-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">trophy</span>
+</div>
+</div>
+<!-- Titles -->
+<h2 class="text-headline-md font-headline-md text-on-surface group-hover:text-primary transition-colors">المؤشر الرئيسي للبورصة المصرية EGX30</h2>
+<p class="text-label-md font-label-md text-outline mb-space-lg font-sans">EGX 30 Index</p>
+<!-- Metrics Row -->
+<div class="grid grid-cols-2 gap-space-sm pt-space-sm border-t border-outline-variant/20 mb-space-md">
+<div>
+<span class="text-label-xs font-label-xs text-on-surface-variant block">معدل التوافق</span>
+<span class="text-title-sm font-title-sm text-primary font-bold mt-0.5 block">81% متوافق</span>
+</div>
+<div>
+<span class="text-label-xs font-label-xs text-on-surface-variant block">الأداء اليومي</span>
+<div class="flex items-center gap-1 mt-0.5 text-error">
+<span class="text-title-sm font-title-sm font-bold">-1.66%</span>
+<span class="material-symbols-outlined text-[16px]">arrow_drop_down</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Action / CTA Link -->
+<a class="inline-flex items-center justify-between text-body-sm font-body-sm font-semibold text-primary pt-space-sm border-t border-outline-variant/30 hover:underline" href="#">
+<span class="">استعرض الـ 31 سهم</span>
+<span class="material-symbols-outlined text-[18px]">arrow_back</span>
+</a>
+</div>
+<!-- CARD 5: EGX30TR (Total Return) -->
+<div class="bg-surface-container-lowest rounded-2xl border border-outline-variant/40 p-space-lg flex flex-col justify-between card-hover-fx relative overflow-hidden group shadow-xs">
+<div>
+<!-- Header Meta -->
+<div class="flex items-center justify-between mb-space-md">
+<span class="px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant text-label-xs font-label-xs">
+              31 سهم مكوّن
+            </span>
+<div class="w-9 h-9 rounded-xl bg-surface-container-low text-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">percent</span>
+</div>
+</div>
+<!-- Titles -->
+<h2 class="text-headline-md font-headline-md text-on-surface group-hover:text-primary transition-colors">مؤشر العائد الكلي EGX30TR</h2>
+<p class="text-label-md font-label-md text-outline mb-space-lg font-sans">EGX 30 Total Return Index</p>
+<!-- Metrics Row -->
+<div class="grid grid-cols-2 gap-space-sm pt-space-sm border-t border-outline-variant/20 mb-space-md">
+<div>
+<span class="text-label-xs font-label-xs text-on-surface-variant block">معدل التوافق</span>
+<span class="text-title-sm font-title-sm text-primary font-bold mt-0.5 block">81% متوافق</span>
+</div>
+<div>
+<span class="text-label-xs font-label-xs text-on-surface-variant block">الأداء اليومي</span>
+<div class="flex items-center gap-1 mt-0.5 text-error">
+<span class="text-title-sm font-title-sm font-bold">-1.42%</span>
+<span class="material-symbols-outlined text-[16px]">arrow_drop_down</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Action / CTA Link -->
+<a class="inline-flex items-center justify-between text-body-sm font-body-sm font-semibold text-primary pt-space-sm border-t border-outline-variant/30 hover:underline" href="#">
+<span class="">استعرض الـ 31 سهم</span>
+<span class="material-symbols-outlined text-[18px]">arrow_back</span>
+</a>
+</div>
+<!-- CARD 6: EGX35-LV (Low Volatility) -->
+<div class="bg-surface-container-lowest rounded-2xl border border-outline-variant/40 p-space-lg flex flex-col justify-between card-hover-fx relative overflow-hidden group shadow-xs">
+<div>
+<!-- Header Meta -->
+<div class="flex items-center justify-between mb-space-md">
+<span class="px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant text-label-xs font-label-xs">
+              35 سهم مكوّن
+            </span>
+<div class="w-9 h-9 rounded-xl bg-surface-container-low text-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">shield</span>
+</div>
+</div>
+<!-- Titles -->
+<h2 class="text-headline-md font-headline-md text-on-surface group-hover:text-primary transition-colors">مؤشر التذبذب المنخفض EGX35-LV</h2>
+<p class="text-label-md font-label-md text-outline mb-space-lg font-sans">EGX 35 Low Volatility Index</p>
+<!-- Metrics Row -->
+<div class="grid grid-cols-2 gap-space-sm pt-space-sm border-t border-outline-variant/20 mb-space-md">
+<div>
+<span class="text-label-xs font-label-xs text-on-surface-variant block">معدل التوافق</span>
+<span class="text-title-sm font-title-sm text-primary font-bold mt-0.5 block">74% متوافق</span>
+</div>
+<div>
+<span class="text-label-xs font-label-xs text-on-surface-variant block">الأداء اليومي</span>
+<div class="flex items-center gap-1 mt-0.5 text-error">
+<span class="text-title-sm font-title-sm font-bold">-0.12%</span>
+<span class="material-symbols-outlined text-[16px]">arrow_drop_down</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Action / CTA Link -->
+<a class="inline-flex items-center justify-between text-body-sm font-body-sm font-semibold text-primary pt-space-sm border-t border-outline-variant/30 hover:underline" href="#">
+<span class="">استعرض الـ 35 سهم</span>
+<span class="material-symbols-outlined text-[18px]">arrow_back</span>
+</a>
+</div>
+<!-- CARD 7: Tamayuz Index -->
+<div class="bg-surface-container-lowest rounded-2xl border border-outline-variant/40 p-space-lg flex flex-col justify-between card-hover-fx relative overflow-hidden group shadow-xs">
+<div>
+<!-- Header Meta -->
+<div class="flex items-center justify-between mb-space-md">
+<span class="px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant text-label-xs font-label-xs">
+              4 أسهم مكوّنة
+            </span>
+<div class="w-9 h-9 rounded-xl bg-surface-container-low text-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">rocket_launch</span>
+</div>
+</div>
+<!-- Titles -->
+<h2 class="text-headline-md font-headline-md text-on-surface group-hover:text-primary transition-colors">مؤشر سوق الشركات الصغيرة والمتوسطة تميّز</h2>
+<p class="text-label-md font-label-md text-outline mb-space-lg font-sans">Tamayuz Index</p>
+<!-- Metrics Row -->
+<div class="grid grid-cols-2 gap-space-sm pt-space-sm border-t border-outline-variant/20 mb-space-md">
+<div>
+<span class="text-label-xs font-label-xs text-on-surface-variant block">معدل التوافق</span>
+<span class="text-title-sm font-title-sm text-primary font-bold mt-0.5 block">100% متوافق</span>
+</div>
+<div>
+<span class="text-label-xs font-label-xs text-on-surface-variant block">الأداء اليومي</span>
+<div class="flex items-center gap-1 mt-0.5 text-error">
+<span class="text-title-sm font-title-sm font-bold">-1.72%</span>
+<span class="material-symbols-outlined text-[16px]">arrow_drop_down</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Action / CTA Link -->
+<a class="inline-flex items-center justify-between text-body-sm font-body-sm font-semibold text-primary pt-space-sm border-t border-outline-variant/30 hover:underline" href="#">
+<span class="">استعرض الـ 4 أسهم</span>
+<span class="material-symbols-outlined text-[18px]">arrow_back</span>
+</a>
+</div>
+<!-- CARD 8: Sectoral Indices -->
+<div class="bg-surface-container-lowest rounded-2xl border border-outline-variant/40 p-space-lg flex flex-col justify-between card-hover-fx relative overflow-hidden group shadow-xs">
+<div>
+<!-- Header Meta -->
+<div class="flex items-center justify-between mb-space-md">
+<span class="px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant text-label-xs font-label-xs">
+              231 سهم مكوّن
+            </span>
+<div class="w-9 h-9 rounded-xl bg-surface-container-low text-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">pie_chart</span>
+</div>
+</div>
+<!-- Titles -->
+<h2 class="text-headline-md font-headline-md text-on-surface group-hover:text-primary transition-colors">المؤشرات القطاعية</h2>
+<p class="text-label-md font-label-md text-outline mb-space-lg font-sans">Sectoral Indices</p>
+<!-- Descriptive Text -->
+<p class="text-body-sm font-body-sm text-on-surface-variant pt-space-sm border-t border-outline-variant/20 mb-space-md">
+            توزيع قطاعي متكامل يشمل قطاعات البنوك، العقارات، المواد الأساسية، والرعاية الصحية مع موازين القيمة السوقية.
+          </p>
+</div>
+<!-- Action / CTA Link -->
+<a class="inline-flex items-center justify-between text-body-sm font-body-sm font-semibold text-primary pt-space-sm border-t border-outline-variant/30 hover:underline" href="#">
+<span class="">استعرض القطاعات</span>
+<span class="material-symbols-outlined text-[18px]">arrow_back</span>
+</a>
+</div>
+</div>
+<!-- STANDARD PAGINATION -->
+<div class="flex items-center justify-center gap-2 pt-space-md">
+<button class="px-3.5 py-1.5 rounded-lg border border-outline-variant/40 bg-surface-container-lowest text-on-surface-variant hover:text-primary text-body-sm font-body-sm transition-colors">
+        السابق
+      </button>
+<button class="w-8 h-8 rounded-lg bg-primary text-on-primary font-bold text-body-sm flex items-center justify-center shadow-xs">
+        1
+      </button>
+<button class="w-8 h-8 rounded-lg border border-outline-variant/40 bg-surface-container-lowest text-on-surface-variant hover:text-primary text-body-sm flex items-center justify-center transition-colors">
+        2
+      </button>
+<button class="px-3.5 py-1.5 rounded-lg border border-outline-variant/40 bg-surface-container-lowest text-on-surface-variant hover:text-primary text-body-sm font-body-sm transition-colors">
+        التالي
+      </button>
+</div>
+</main>
+<!-- FOOTER (Shared Component) -->
+<footer class="bg-surface-container-low dark:bg-inverse-surface full-width bottom border-t border-outline-variant/30 dark:border-outline/30 mt-space-2xl">
+<div class="flex flex-col md:flex-row-reverse justify-between items-center w-full px-margin py-space-lg max-w-[1360px] mx-auto gap-space-md text-center md:text-right">
+<!-- Footer Brand & Attribution -->
+<div class="flex flex-col md:flex-row items-center gap-3">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded bg-primary flex items-center justify-center text-white text-[12px]">
+<span class="material-symbols-outlined text-[14px]">balance</span>
+</div>
+<span class="text-title-sm font-title-sm font-bold text-primary dark:text-primary-fixed">ميزان EGX</span>
+</div>
+<span class="text-body-sm font-body-sm text-outline dark:text-inverse-on-surface hidden md:inline">|</span>
+<span class="text-label-xs font-label-xs text-on-surface-variant dark:text-inverse-on-surface">
+          تغطية متكاملة لـ 8 هيئات شرعية • 4 نماذج للقيمة العادلة • متصل بخادم Meezan Backend
+        </span>
+</div>
+<!-- Navigation Links -->
+<nav class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
+<a class="text-on-surface-variant dark:text-inverse-on-surface hover:text-primary dark:hover:text-primary-fixed font-body-sm text-body-sm transition-colors" href="#">عن ميزان</a>
+<a class="text-on-surface-variant dark:text-inverse-on-surface hover:text-primary dark:hover:text-primary-fixed font-body-sm text-body-sm transition-colors" href="#">المعايير الشرعية</a>
+<a class="text-on-surface-variant dark:text-inverse-on-surface hover:text-primary dark:hover:text-primary-fixed font-body-sm text-body-sm transition-colors" href="#">إخلاء المسؤولية المالية</a>
+<a class="text-on-surface-variant dark:text-inverse-on-surface hover:text-primary dark:hover:text-primary-fixed font-body-sm text-body-sm transition-colors" href="#">شروط الاستخدام</a>
+<a class="text-on-surface-variant dark:text-inverse-on-surface hover:text-primary dark:hover:text-primary-fixed font-body-sm text-body-sm transition-colors" href="#">اتصل بنا</a>
+</nav>
+<!-- Copyright Notice -->
+<div class="text-label-xs font-label-xs text-on-surface-variant dark:text-inverse-on-surface">
+        © 2024 ميزان EGX. جميع البيانات متوافقة مع ضوابط الشريعة الإسلامية وتخضع للرقابة المالية للبورصة المصرية.
+      </div>
+</div>
+</footer>
+
+
+</body></html>

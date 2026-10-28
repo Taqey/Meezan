@@ -2,17 +2,19 @@ import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import type { FundClassificationTreeNode } from '../../models/api.models';
+import { MzSelectComponent, type MzOption } from '../ui/ui-small';
 
 export interface CascadeLevel {
   node: FundClassificationTreeNode | null;
   children: FundClassificationTreeNode[];
   label: string;
+  options: MzOption[];
 }
 
 @Component({
   selector: 'app-classification-cascade',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MzSelectComponent],
   template: `
     <div class="cascade-wrap">
       <div *ngFor="let lvl of levels; let i = index; trackBy: trackLevel" class="cascade-level">
@@ -20,22 +22,18 @@ export interface CascadeLevel {
           {{ i === 0 ? rootLabel : lvl.label }}
           <span *ngIf="lvl.node" class="cascade-count">({{ lvl.node.totalFundCount }})</span>
         </label>
-        <select [id]="'cascade-' + i"
-                [ngModel]="lvl.node?.slug ?? ''"
-                (ngModelChange)="pick(i, $event)"
-                [attr.aria-label]="i === 0 ? rootLabel : lvl.label">
-          <option value="">{{ i === 0 ? allLabel : ('كل ' + lvl.label) }}</option>
-          <option *ngFor="let c of lvl.children; trackBy: trackNode" [value]="c.slug">
-            {{ c.nameAr }} ({{ c.totalFundCount }})
-          </option>
-        </select>
+        <mz-select
+          [options]="lvl.options"
+          [value]="lvl.node?.slug ?? ''"
+          (valueChange)="pick(i, $event)"
+          [ariaLabel]="i === 0 ? rootLabel : lvl.label">
+        </mz-select>
       </div>
     </div>
   `,
   styles: [`
     .cascade-wrap { display: contents; }
     .cascade-level { min-width: 0; }
-    .cascade-level select { width: 100%; }
     .cascade-count { font-weight: 400; color: var(--muted-foreground); }
   `]
 })
@@ -53,7 +51,7 @@ export class ClassificationCascadeComponent implements OnChanges {
 
   ngOnChanges(changes: import('@angular/core').SimpleChanges): void {
     if (changes['tree']) this.indexTree();
-    if (changes['tree'] || changes['path'] || changes['rootLabel']) this.buildLevels();
+    if (changes['tree'] || changes['path'] || changes['rootLabel'] || changes['allLabel']) this.buildLevels();
   }
 
   private indexTree(): void {
@@ -72,8 +70,12 @@ export class ClassificationCascadeComponent implements OnChanges {
 
   private buildLevels(): void {
     const rootChildren = (this.childrenMap.get(null) ?? []).filter(c => c.totalFundCount > 0);
+    const rootOptions: MzOption[] = [
+      { value: '', label: this.allLabel },
+      ...rootChildren.map(c => ({ value: c.slug, label: `${c.nameAr} (${c.totalFundCount})` }))
+    ];
     const out: CascadeLevel[] = [
-      { node: null, children: rootChildren, label: this.rootLabel }
+      { node: null, children: rootChildren, label: this.rootLabel, options: rootOptions }
     ];
     const seen = new Set<string>(); // حماية من التكرار
     for (const slug of this.path) {
@@ -83,7 +85,12 @@ export class ClassificationCascadeComponent implements OnChanges {
       out[out.length - 1].node = node;
       const kids = (this.childrenMap.get(node.slug) ?? []).filter(c => c.totalFundCount > 0);
       if (kids.length === 0) break;
-      out.push({ node: null, children: kids, label: node.childrenLabelAr || 'التصنيف الفرعي' });
+      const label = node.childrenLabelAr || 'التصنيف الفرعي';
+      const kidsOptions: MzOption[] = [
+        { value: '', label: `كل ${label}` },
+        ...kids.map(c => ({ value: c.slug, label: `${c.nameAr} (${c.totalFundCount})` }))
+      ];
+      out.push({ node: null, children: kids, label, options: kidsOptions });
     }
     this.levels = out;
   }

@@ -262,6 +262,15 @@ public class ScrapeBatchCommitter : IScrapeBatchCommitter
         existing.Low = data.Low;
         existing.Open = data.Open;
         existing.ClosingPrice = data.ClosingPrice;
+        // Daily market cap recomputation: last price * shares outstanding
+        if (existing.ClosingPrice.HasValue && existing.SharesOutstanding.HasValue && existing.SharesOutstanding.Value > 0)
+        {
+            existing.MarketValue = existing.ClosingPrice.Value * existing.SharesOutstanding.Value;
+        }
+        else if (data.MarketValue.HasValue)
+        {
+            existing.MarketValue = data.MarketValue;
+        }
         existing.SourceLastUpdateText = data.SourceLastUpdateText;
         existing.FetchedAt = data.FetchedAt;
     }
@@ -278,7 +287,19 @@ public class ScrapeBatchCommitter : IScrapeBatchCommitter
         }
 
         existing.NominalValue = data.NominalValue;
-        existing.MarketValue = data.MarketValue;
+        if (data.SharesOutstanding.HasValue)
+        {
+            existing.SharesOutstanding = data.SharesOutstanding;
+        }
+        // If shares outstanding and closing price exist, recalculate fresh market cap
+        if (existing.ClosingPrice.HasValue && existing.SharesOutstanding.HasValue && existing.SharesOutstanding.Value > 0)
+        {
+            existing.MarketValue = existing.ClosingPrice.Value * existing.SharesOutstanding.Value;
+        }
+        else if (data.MarketValue.HasValue)
+        {
+            existing.MarketValue = data.MarketValue;
+        }
         existing.BookValue = data.BookValue;
         existing.PbRatio = data.PbRatio;
         existing.Eps = data.Eps;

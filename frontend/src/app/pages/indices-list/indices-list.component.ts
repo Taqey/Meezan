@@ -1,4 +1,4 @@
-import { Component, HostListener, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { LucideAngularModule, Layers, ShieldCheck, TrendingUp, Printer } from 'lucide-angular';
@@ -6,19 +6,20 @@ import { EMPTY, Observable, expand, forkJoin, map, reduce } from 'rxjs';
 import { navigateQueryParams } from '../../utils/navigation-utils';
 import { ApiService } from '../../services/api.service';
 import { ConstituentItemDto, IndexSummaryDto, MarketSnapshotDto } from '../../models/api.models';
-import { indexAccentFor, indexIconFor, indexShowsAggregates, isFeaturedIndex } from '../../models/market-icons';
-import { PageHeaderComponent } from '../../components/page-header/page-header.component';
+import { indexAccentFor, indexIconFor, indexShowsAggregates, isFeaturedIndex, indexShortNameFor, indexFullNameFor } from '../../models/market-icons';
+import { MzListingPageComponent, type MzListingConfig } from '../../components/ui/ui-listing-page';
+import { MzButtonComponent, MzSelectComponent, type MzOption } from '../../components/ui/ui-small';
+import type { MzListingCardData } from '../../components/ui/ui-listing';
 import { ViewSwitcherComponent, type EntityView } from '../../components/view-switcher/view-switcher.component';
-import { KpiStripComponent, type KpiData } from '../../components/kpi-strip/kpi-strip.component';
-import { FilterChipsComponent, type ChipOption } from '../../components/filter-chips/filter-chips.component';
-import { SectionHeaderComponent } from '../../components/section-header/section-header.component';
-import { EntityCardComponent, type EntityStat } from '../../components/entity-card/entity-card.component';
+import { type KpiData } from '../../components/kpi-strip/kpi-strip.component';
+import { type ChipOption } from '../../components/filter-chips/filter-chips.component';
+import { type EntityStat } from '../../components/entity-card/entity-card.component';
+import { FormsModule } from '@angular/forms';
+import { SessionCacheService } from '../../services/session-cache.service';
 import { EntityTableComponent, type EntityTableColumn, type EntityTableRow } from '../../components/entity-table/entity-table.component';
-import { EntityHeatmapComponent, type HeatTileData } from '../../components/entity-heatmap/entity-heatmap.component';
-import { LoadingSkeletonsComponent } from '../../components/loading-skeletons/loading-skeletons.component';
-import { EmptyStateComponent } from '../../components/empty-state/empty-state.component';
+import { TreemapComponent, type TreemapItem } from '../../components/treemap/treemap.component';
 
-type IndexSort = 'compliantCount' | 'compliance' | 'performance' | 'name';
+type IndexSort = 'compliantCount' | 'compliance' | 'performance' | 'name' | 'constituents' | 'change';
 type Chip = 'all' | 'compliance' | 'performance' | 'name';
 
 interface IndexStats {
@@ -31,102 +32,55 @@ interface IndexStats {
   weightedDen: number;
   /** Set of unique ticker codes in this index (for de-duplication). */
   tickers: Set<string>;
+  /** Sum of market caps of constituents. */
+  marketCapSum: number;
 }
 
 @Component({
   selector: 'app-indices-list',
   standalone: true,
-  imports: [
-    CommonModule, LucideAngularModule, PageHeaderComponent, ViewSwitcherComponent,
-    KpiStripComponent, FilterChipsComponent, SectionHeaderComponent, EntityCardComponent,
-    EntityTableComponent, EntityHeatmapComponent, LoadingSkeletonsComponent, EmptyStateComponent
-  ],
-  template: `
-    <div class="entity-page">
-      <app-page-header
-        [crumbs]="headerCrumbs"
-        pill="المؤشرات الرسمية"
-        title="المؤشرات الرسمية للبورصة المصرية"
-        description="تعرّف على مكونات كل مؤشر معتمد، وتابع أوزان الأسهم داخله وتقييماتها الشرعية والعادلة.">
-        <ng-container toolbar>
-          <app-view-switcher [view]="view" (viewChange)="setView($event)"></app-view-switcher>
-          <button type="button" class="btn btn-outline btn-sm" (click)="printReport()">
-            <lucide-icon [img]="PrintIcon" size="15"></lucide-icon> تقرير PDF
-          </button>
-        </ng-container>
-      </app-page-header>
-
-      <app-kpi-strip [kpis]="kpiList" [loading]="loading || statsLoading"></app-kpi-strip>
-
-      <app-filter-chips
-        *ngIf="!loading && !loadError"
-        [chips]="chipOptions"
-        [activeId]="chip"
-        (selected)="setChip($event)">
-      </app-filter-chips>
-
-      <app-section-header
-        *ngIf="!loading && !loadError"
-        [lead]="indices.length + ' مؤشراً رسمياً في قاعدة البيانات'"
-        [sessionDate]="sessionLabel"
-        [sourceNote]="sourceNote">
-      </app-section-header>
-
-      <app-loading-skeletons *ngIf="(loading || statsLoading) && !loadError" variant="card" [count]="6"></app-loading-skeletons>
-
-      <app-empty-state
-        *ngIf="!loading && loadError"
-        title="تعذّر تحميل المؤشرات"
-        message="تحقق من الاتصال ثم حاول مرة أخرى."
-        actionLabel="إعادة المحاولة"
-        (action)="load()">
-      </app-empty-state>
-
-      <app-empty-state
-        *ngIf="!loading && !loadError && !indices.length"
-        title="لا توجد مؤشرات مسجّلة حتى الآن"
-        message="تتم إضافة المؤشرات تلقائياً عند رفع كشوف البورصة الرسمية.">
-      </app-empty-state>
-
-      <!-- Grid view -->
-      <div class="entity-grid" *ngIf="!loading && !loadError && indices.length && view === 'grid' && !statsLoading">
-        <app-entity-card
-          *ngFor="let idx of displayedIndices; let i = index; trackBy: trackIndex"
-          [itemIndex]="i"
-          [title]="idx.nameAr"
-          [subtitle]="idx.nameEn"
-          [icon]="getIndexIcon(idx.code)"
-          [accent]="accentFor(idx.code).accent"
-          [tint]="accentFor(idx.code).tint"
-          [ink]="accentFor(idx.code).ink"
-          [pill]="idx.constituentsCount + ' سهم مكوّن'"
-          [stats]="cardStats(idx)"
-          [autoPadStats]="false"
-          [footerText]="footerFor(idx)"
-          [link]="linkFor(idx)"
-          [ribbon]="isFeatured(idx.code) ? 'المؤشر الشرعي الرسمي' : null"
-          [featured]="isFeatured(idx.code)">
-        </app-entity-card>
+  imports: [CommonModule, FormsModule, LucideAngularModule, MzListingPageComponent, MzButtonComponent, MzSelectComponent, ViewSwitcherComponent, EntityTableComponent, TreemapComponent],
+    template: `
+    <mz-listing-page
+      [config]="config"
+      [customView]="view !== 'grid'"
+      (tabChange)="setChip($event)"
+      (searchChange)="onSearchInput($event)"
+      (controlChange)="onControlChange($event)"
+      (sortChange)="onSortChangeSelect($event)"
+      (advancedClick)="advancedOpen = !advancedOpen; rebuild()"
+      (retry)="load(true)">
+      <ng-container actions>
+        <app-view-switcher [view]="view" (viewChange)="setView($event)"></app-view-switcher>
+        <mz-button [icon]="PrintIcon" [loading]="printing" (clicked)="printReport()">تقرير PDF</mz-button>
+      </ng-container>
+      <ng-container view>
+        <app-entity-table
+          *ngIf="indices.length && view === 'table' && !statsLoading"
+          [columns]="tableColumns" [rows]="tableRows" [sortKey]="tableSortKey" [sortDir]="tableSortDir"
+          (sortChange)="setTableSort($event)" ariaLabel="جدول المؤشرات الرسمية">
+        </app-entity-table>
+        <app-treemap
+          *ngIf="indices.length && view === 'heatmap' && !statsLoading"
+          [items]="treemapItems"
+          sizeNote="حجم كل مربع يمثل إجمالي القيمة السوقية لأسهم المؤشر">
+        </app-treemap>
+      </ng-container>
+      <div advanced class="mz-adv-grid">
+        <label class="mz-slicer">
+          <span class="mz-slicer-head"><span>الحد الأدنى لعدد الأسهم المكونة</span></span>
+          <mz-select
+            [options]="minConstituentsOptions"
+            [(ngModel)]="minConstituents"
+            (valueChange)="minConstituents = $event; refreshDerived()"
+            ariaLabel="الحد الأدنى لعدد الأسهم">
+          </mz-select>
+        </label>
       </div>
-
-      <app-entity-table
-        *ngIf="!loading && !loadError && indices.length && view === 'table' && !statsLoading"
-        [columns]="tableColumns"
-        [rows]="tableRows"
-        [sortKey]="tableSortKey"
-        [sortDir]="tableSortDir"
-        (sortChange)="setTableSort($event)"
-        ariaLabel="جدول المؤشرات الرسمية">
-      </app-entity-table>
-
-      <app-entity-heatmap
-        *ngIf="!loading && !loadError && indices.length && view === 'heatmap' && !statsLoading"
-        [tiles]="heatTiles">
-      </app-entity-heatmap>
-    </div>
+    </mz-listing-page>
   `
 })
-export class IndicesListComponent implements OnInit {
+export class IndicesListComponent implements OnInit, OnDestroy {
   readonly PrintIcon = Printer;
 
   readonly headerCrumbs = [{ label: 'الرئيسية', link: ['/'] }];
@@ -134,74 +88,152 @@ export class IndicesListComponent implements OnInit {
   indices: IndexSummaryDto[] = [];
   displayedIndices: IndexSummaryDto[] = [];
   tableRows: EntityTableRow[] = [];
-  heatTiles: HeatTileData[] = [];
+  treemapItems: TreemapItem[] = [];
   kpiList: KpiData[] = [];
   loading = true;
   loadError = false;
 
   view: EntityView = 'grid';
   chip = 'all';
+  search = '';
+  shariahFilter = '';
+  sortField = 'change';
+  sortDir: 'asc' | 'desc' = 'desc';
+  advancedOpen = false;
+  minConstituents = 0;
+  readonly minConstituentsOptions: MzOption[] = [
+    { value: 0, label: 'الكل' },
+    { value: 30, label: '30 سهم فأكثر' },
+    { value: 70, label: '70 سهم فأكثر' },
+    { value: 100, label: '100 سهم فأكثر' }
+  ];
+
   sortKey: IndexSort = 'compliantCount';
   tableSortKey = 'compliance';
   tableSortDir: 'asc' | 'desc' = 'desc';
   private printView: EntityView | null = null;
 
-  /**
-   * Per-index stats computed ONCE from the constituents endpoints (cached):
-   * compliant/total counts, compliance rate and mean daily change — the same
-   * verdict/change fields the lists render, so numbers match everywhere.
-   */
   statsLoading = true;
   private indexStats = new Map<string, IndexStats>();
-
-
-  /**
-   * Official published quotes (Mubasher), cached once. Official values win
-   * wherever present; computed aggregates are the fallback — never the
-   * reverse. Empty when the backend never ran a successful fetch.
-   */
   private snapshots: MarketSnapshotDto[] = [];
 
   constructor(
     private api: ApiService,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private cache: SessionCacheService
   ) {}
 
   ngOnInit(): void {
+    const saved = this.cache.getUiState<any>('indices-list');
+    if (saved) {
+      this.search = saved.search || '';
+      this.shariahFilter = saved.shariahFilter || '';
+      this.chip = saved.chip || 'all';
+      this.sortKey = (saved.sortKey || 'compliantCount') as IndexSort;
+      this.sortField = saved.sortField || 'change';
+      this.sortDir = saved.sortDir || 'desc';
+      this.minConstituents = saved.minConstituents || 0;
+      this.view = saved.view || 'grid';
+    }
+
     this.route.queryParams.subscribe((params) => {
       const v = params['view'];
-      this.view = v === 'table' || v === 'heatmap' ? v : 'grid';
+      if (v === 'table' || v === 'heatmap') {
+        this.view = v;
+      }
+      if (params['search'] !== undefined) this.search = params['search'];
+      if (params['shariah'] !== undefined) this.shariahFilter = params['shariah'];
     });
     this.load();
   }
 
-  load(): void {
-    this.loading = true;
+  ngOnDestroy(): void {
+    this.cache.saveScroll('indices-list', window.scrollX, window.scrollY);
+    this.cache.saveUiState('indices-list', {
+      search: this.search,
+      shariahFilter: this.shariahFilter,
+      sortField: this.sortField,
+      sortDir: this.sortDir,
+      minConstituents: this.minConstituents,
+      chip: this.chip,
+      view: this.view
+    });
+  }
+
+  onSearchInput(val: string): void {
+    this.search = val;
+    this.refreshDerived();
+  }
+
+  onControlChange(e: { id: string; value?: string; values?: string[] }): void {
+    if (e.id === 'shariah') {
+      this.shariahFilter = e.value || (e.values ? e.values[0] : '') || '';
+      this.refreshDerived();
+    }
+  }
+
+  onSortChangeSelect(val: string): void {
+    this.sortField = val;
+    this.refreshDerived();
+  }
+
+  load(force = false): void {
+    const cachedData = this.cache.get<IndexSummaryDto[]>('indices_data');
+    const cachedSnaps = this.cache.get<MarketSnapshotDto[]>('indices_snapshots');
+    const cachedStats = this.cache.get<Map<string, IndexStats>>('indices_stats');
+
+    if (!force && cachedData) {
+      this.indices = cachedData.data;
+      if (cachedSnaps) this.snapshots = cachedSnaps.data;
+      if (cachedStats) this.indexStats = cachedStats.data;
+      this.loading = false;
+      this.statsLoading = !cachedStats;
+      this.refreshDerived();
+      this.cache.restoreScroll('indices-list');
+
+      // If not stale, do not refetch; if stale, refresh silently in background
+      if (!this.cache.isStale('indices_data')) {
+        return;
+      }
+    }
+
+    if (!this.indices.length) {
+      this.loading = true;
+      this.rebuild();
+    }
     this.loadError = false;
+
     this.api.getIndices().subscribe({
       next: (data) => {
         this.indices = data || [];
+        this.cache.set('indices_data', this.indices);
         this.loading = false;
         this.refreshDerived();
         this.loadIndexStats();
         this.loadSnapshots();
+        if (cachedData) {
+          this.cache.restoreScroll('indices-list');
+        }
       },
       error: () => {
-        this.indices = [];
-        this.loading = false;
-        this.loadError = true;
-        this.statsLoading = false;
+        if (!this.indices.length) {
+          this.indices = [];
+          this.loading = false;
+          this.loadError = true;
+          this.rebuild();
+          this.statsLoading = false;
+        }
       }
     });
   }
-
 
   /** Official quotes, cached once per page load; silent fallback when absent. */
   private loadSnapshots(): void {
     this.api.getMarketSnapshots().subscribe({
       next: (rows) => {
         this.snapshots = rows || [];
+        this.cache.set('indices_snapshots', this.snapshots);
         this.refreshDerived();
       },
       error: () => {
@@ -252,10 +284,17 @@ export class IndicesListComponent implements OnInit {
       { view: view === 'grid' ? null : view },
       'merge'
     );
+    this.rebuild();
   }
 
+  printing = false;
+
   printReport(): void {
-    window.print();
+    this.printing = true;
+    setTimeout(() => {
+      window.print();
+      this.printing = false;
+    }, 320);
   }
 
   @HostListener('window:beforeprint')
@@ -278,7 +317,7 @@ export class IndicesListComponent implements OnInit {
   setChip(id: string): void {
     const chip: Chip = id === 'compliance' || id === 'performance' || id === 'name' ? id : 'all';
     this.chip = chip;
-    this.sortKey = chip === 'all' ? 'compliantCount' : chip;
+    this.sortField = chip === 'all' ? 'change' : chip === 'performance' ? 'change' : chip;
     this.refreshDerived();
   }
 
@@ -301,17 +340,48 @@ export class IndicesListComponent implements OnInit {
   }
 
   // ── Derived view models (plain fields: no getter churn, no replays) ───
-  private refreshDerived(): void {
+  refreshDerived(): void {
     this.chipOptions = [
       { id: 'all', label: `كل المؤشرات (${this.indices.length})` },
       { id: 'compliance', label: 'الأعلى توافقاً' },
       { id: 'performance', label: 'الأفضل أداءً اليوم' },
       { id: 'name', label: 'أبجدي' }
     ];
-    this.displayedIndices = this.sortIndices([...this.indices], this.sortKey);
-    this.tableRows = this.sortTable([...this.indices]).map((idx) => this.toTableRow(idx));
-    this.heatTiles = this.heatTilesFor([...this.indices]);
+
+    let list = [...this.indices];
+
+    if (this.search && this.search.trim()) {
+      const q = this.search.trim().toLowerCase();
+      list = list.filter((idx) =>
+        (idx.nameAr && idx.nameAr.toLowerCase().includes(q)) ||
+        (idx.nameEn && idx.nameEn.toLowerCase().includes(q)) ||
+        (idx.code && idx.code.toLowerCase().includes(q))
+      );
+    }
+
+    if (this.shariahFilter === 'compliant_100') {
+      list = list.filter((idx) => {
+        const r = this.rateOf(idx);
+        return r !== null && r >= 100;
+      });
+    } else if (this.shariahFilter === 'compliant_70') {
+      list = list.filter((idx) => {
+        const r = this.rateOf(idx);
+        return r !== null && r >= 70;
+      });
+    }
+
+    if (this.minConstituents > 0) {
+      list = list.filter((idx) => idx.constituentsCount >= this.minConstituents);
+    }
+
+    list = this.sortIndices(list, this.sortField);
+
+    this.displayedIndices = list;
+    this.tableRows = this.sortTable([...list]).map((idx) => this.toTableRow(idx));
+    this.treemapItems = this.treemapItemsFor([...list]);
     this.kpiList = this.buildKpis();
+    this.rebuild();
   }
 
   private statsFor(code: string): IndexStats | null {
@@ -369,11 +439,12 @@ export class IndicesListComponent implements OnInit {
     return this.statsFor(idx.code)?.compliant ?? 0;
   }
 
-  private sortIndices(list: IndexSummaryDto[], key: IndexSort): IndexSummaryDto[] {
+  private sortIndices(list: IndexSummaryDto[], key: string): IndexSummaryDto[] {
     switch (key) {
       case 'name':
         return list.sort((a, b) => (a.nameAr || '').localeCompare(b.nameAr || '', 'ar'));
-      case 'performance': {
+      case 'performance':
+      case 'change': {
         const perf = (x: IndexSummaryDto): number => {
           const c = this.changeOf(x);
           return c === null ? -Infinity : c;
@@ -387,6 +458,8 @@ export class IndicesListComponent implements OnInit {
         };
         return list.sort((a, b) => rate(b) - rate(a));
       }
+      case 'constituents':
+        return list.sort((a, b) => b.constituentsCount - a.constituentsCount);
       case 'compliantCount':
       default:
         return list.sort((a, b) => this.compliantOf(b) - this.compliantOf(a));
@@ -447,23 +520,49 @@ export class IndicesListComponent implements OnInit {
     };
   }
 
-  /** Heat tiles skip umbrella entries (no tile at all). */
-  private heatTilesFor(list: IndexSummaryDto[]): HeatTileData[] {
-    return list.filter((idx) => indexShowsAggregates(idx.code)).map((idx) => this.toHeatTile(idx));
-  }
+  /** TradingView-style treemap tiles: tile area = constituent market cap (or constituent count / weight as proportional fallback), excludes umbrella Sectoral-Indices */
+  private treemapItemsFor(list: IndexSummaryDto[]): TreemapItem[] {
+    return list
+      .filter((idx) => indexShowsAggregates(idx.code))
+      .map((idx) => {
+        const change = this.changeOf(idx);
+        const stats = this.statsFor(idx.code);
+        const snap = this.officialFor(idx.code);
+        // Use marketCapSum if available, otherwise constituent count * 1000, fallback to 10
+        const cap = stats?.marketCapSum && stats.marketCapSum > 0
+          ? stats.marketCapSum
+          : (idx.constituentsCount ? idx.constituentsCount * 1000 : 10);
+        const shortCode = indexShortNameFor(idx.code);
+        const fullName = indexFullNameFor(idx.code);
 
-  private toHeatTile(idx: IndexSummaryDto): HeatTileData {
-    const change = this.changeOf(idx);
-    return {
-      id: idx.code,
-      title: idx.nameAr,
-      valueText: change !== null ? `${this.perfArrow(change)} ${this.formatSignedPct(change)}` : null,
-      grow: 1,
-      color: this.heatColor(change),
-      ink: this.heatInk(change),
-      link: this.linkFor(idx),
-      tooltip: `${idx.nameAr} — ${idx.constituentsCount} سهم`
-    };
+        let subLabel = '';
+        if (snap?.value != null) {
+          const ptsVal = Number(snap.value).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+          const ptsChg = snap.change != null
+            ? ` (${snap.change > 0 ? '+' : ''}${Number(snap.change).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })})`
+            : '';
+          subLabel = `${ptsVal} نقطة${ptsChg}`;
+        }
+
+        const capFormatted = stats?.marketCapSum && stats.marketCapSum > 0
+          ? `${(stats.marketCapSum / 1_000_000_000).toFixed(1)} مليار ج.م`
+          : `${idx.constituentsCount} سهم`;
+
+        const changeFormatted = change !== null ? this.formatSignedPct(change) : '—';
+        const pointsFormatted = snap?.value != null
+          ? `${Number(snap.value).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} نقطة`
+          : '—';
+
+        return {
+          id: idx.code,
+          label: shortCode,
+          subLabel: subLabel,
+          value: cap,
+          changePct: change,
+          link: this.linkFor(idx),
+          tooltip: `${fullName} (${shortCode})\n${stats?.marketCapSum ? 'القيمة السوقية: ' + capFormatted : 'الأسهم: ' + capFormatted}\nالتغير: ${changeFormatted}\nالنقاط: ${pointsFormatted}`
+        };
+      });
   }
 
   // ── KPIs ────────────────────────────────────────────────────────────
@@ -515,6 +614,7 @@ export class IndicesListComponent implements OnInit {
       return;
     }
     this.statsLoading = true;
+    this.rebuild();
     // Umbrella entries are skipped entirely: nothing is calculated for them.
     const targets = this.indices.filter((idx) => indexShowsAggregates(idx.code));
     if (!targets.length) {
@@ -529,11 +629,14 @@ export class IndicesListComponent implements OnInit {
         const stats = new Map<string, IndexStats>();
         results.forEach((items, i) => {
           const key = (targets[i]?.code || '').trim();
-          const row: IndexStats = { total: 0, compliant: 0, changeSum: 0, changeN: 0, weightedSum: 0, weightedDen: 0, tickers: new Set<string>() };
+          const row: IndexStats = { total: 0, compliant: 0, changeSum: 0, changeN: 0, weightedSum: 0, weightedDen: 0, tickers: new Set<string>(), marketCapSum: 0 };
           for (const it of items) {
             row.total++;
             if (it.ticker) row.tickers.add(it.ticker);
             if (this.isCompliantStatus(it.shariahStatus)) row.compliant++;
+            if (it.marketCap !== null && it.marketCap !== undefined) {
+              row.marketCapSum += Number(it.marketCap);
+            }
             if (it.changePct !== null && it.changePct !== undefined) {
               const change = Number(it.changePct);
               row.changeSum += change;
@@ -547,6 +650,7 @@ export class IndicesListComponent implements OnInit {
           stats.set(key, row);
         });
         this.indexStats = stats;
+        this.cache.set('indices_stats', this.indexStats);
         this.statsLoading = false;
         this.refreshDerived();
       },
@@ -587,12 +691,21 @@ export class IndicesListComponent implements OnInit {
     }
     const rate = this.rateOf(idx);
     const change = this.changeOf(idx);
+    const snap = this.officialFor(idx.code);
+    let perfLabel = change !== null ? `${this.perfArrow(change)} ${this.formatSignedPct(change)}` : null;
+    if (snap?.value != null) {
+      const ptsVal = Number(snap.value).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 2 });
+      const ptsChg = snap.change != null
+        ? ` (${snap.change > 0 ? '+' : ''}${Number(snap.change).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 2 })})`
+        : '';
+      perfLabel = `${ptsVal} نقطة · ${perfLabel || ''}${ptsChg}`;
+    }
     return [
       rate !== null
         ? { label: 'معدل التوافق', value: `${Math.round(rate)}% متوافق` }
         : { label: 'معدل التوافق', value: null },
-      change !== null
-        ? { label: 'الأداء اليومي', value: `${this.perfArrow(change)} ${this.formatSignedPct(change)}`, tone: this.perfTone(change) }
+      perfLabel !== null
+        ? { label: 'الأداء اليومي', value: perfLabel, tone: change !== null ? this.perfTone(change) : undefined }
         : { label: 'الأداء اليومي', value: null }
     ];
   }
@@ -627,4 +740,91 @@ export class IndicesListComponent implements OnInit {
     if (value === null || value === undefined) return 'var(--muted-foreground)';
     return Math.abs(Number(value)) >= 2.5 ? '#fff' : 'var(--ink)';
   }
+
+  /** Single config object for the shared ListingPage. */
+  config: MzListingConfig = { header: { badge: '', title: '', description: '' }, cards: [], empty: { title: '', message: '' } };
+
+  rebuild(): void {
+    const tabs = (this.chipOptions.length ? this.chipOptions : [
+      { id: 'all', label: `كل المؤشرات (${this.indices.length || 8})` },
+      { id: 'compliance', label: 'الأعلى توافقاً' },
+      { id: 'performance', label: 'الأفضل أداءً اليوم' },
+      { id: 'name', label: 'أبجدي' }
+    ]).map((c) => ({ id: c.id, label: c.label }));
+
+    this.config = {
+      header: {
+        badge: 'المؤشرات الرسمية',
+        title: 'المؤشرات الرسمية للبورصة المصرية',
+        description: 'تعرّف على مكونات كل مؤشر معتمد، وتابع أوزان الأسهم داخله وتقييماتها الشرعية والعادلة.'
+      },
+      stats: this.kpiList.map((k) => ({ label: k.label, value: k.value, icon: k.icon, chip: k.sub })),
+      statsLoading: this.statsLoading,
+      statsCount: 3,
+      tabs,
+      activeTab: this.chip,
+      filters: {
+        searchValue: this.search,
+        searchPlaceholder: 'ابحث باسم المؤشر أو رمزه (مثال: EGX30 أو EGX70)...',
+        controls: [
+          {
+            id: 'shariah',
+            kind: 'select',
+            label: 'الشرعية',
+            value: this.shariahFilter,
+            options: [
+              { value: '', label: 'الشرعية: الكل' },
+              { value: 'compliant_100', label: 'متوافق 100%' },
+              { value: 'compliant_70', label: 'متوافق جزئياً (>70%)' }
+            ]
+          }
+        ],
+        sort: {
+          label: 'ترتيب النتائج',
+          value: this.sortField,
+          options: [
+            { value: 'change', label: 'الترتيب: نسبة التغير (تنازلي)' },
+            { value: 'compliance', label: 'الترتيب: نسبة التوافق الشرعي' },
+            { value: 'constituents', label: 'الترتيب: عدد الأسهم المكوّنة' },
+            { value: 'name', label: 'الترتيب: أبجدي' }
+          ]
+        },
+        advanced: {
+          label: 'تصفية متقدمة',
+          open: this.advancedOpen,
+          count: this.minConstituents > 0 ? 1 : 0
+        }
+      },
+      results: {
+        text: this.view === 'heatmap'
+          ? `${this.treemapItems.length} مؤشرات معروضة في الخريطة الحرارية`
+          : (this.indices.length || 8) + ' مؤشراً رسمياً في قاعدة البيانات',
+        note: [this.sessionLabel, this.sourceNote].filter(Boolean).join(' · ') || null
+      },
+      cards: this.displayedIndices.map((i) => this.toCard(i)),
+      skeletonCount: this.indices.length || 8,
+      cardType: 'index',
+      loading: this.loading && !this.loadError,
+      error: !this.loading && this.loadError ? { title: 'تعذّر تحميل المؤشرات', message: 'تحقق من الاتصال ثم حاول مرة أخرى.' } : null,
+      empty: { title: 'لا توجد مؤشرات مسجّلة حتى الآن', message: 'تتم إضافة المؤشرات تلقائياً عند رفع كشوف البورصة الرسمية.' }
+    };
+  }
+
+  private toCard(idx: IndexSummaryDto): MzListingCardData {
+    const featured = this.isFeatured(idx.code);
+    const shortCode = indexShowsAggregates(idx.code) ? indexShortNameFor(idx.code) : idx.nameAr;
+    const fullNames = indexFullNameFor(idx.code);
+    return {
+      id: idx.code,
+      title: shortCode,
+      subtitle: indexShowsAggregates(idx.code) ? `${idx.nameAr} • ${idx.nameEn}` : idx.nameEn,
+      icon: this.getIndexIcon(idx.code),
+      featured,
+      badges: [...(featured ? [{ label: 'المؤشر الشرعي الرسمي', tone: 'default' as const }] : []), { label: idx.constituentsCount + ' سهم مكوّن', tone: 'neutral' as const }],
+      metrics: this.cardStats(idx).map((st) => ({ label: st.label, value: st.value, tone: st.tone })),
+      linkLabel: this.footerFor(idx),
+      link: this.linkFor(idx)
+    };
+  }
+
 }

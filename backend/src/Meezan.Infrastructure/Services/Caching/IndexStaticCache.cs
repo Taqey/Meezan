@@ -145,6 +145,40 @@ public sealed class IndexStaticCache : IIndexStaticCache
         }
     }
 
+    public async Task InvalidateAsync(string? indexCode = null, CancellationToken ct = default)
+    {
+        if (!string.IsNullOrWhiteSpace(indexCode))
+        {
+            var key = indexCode.Trim().ToUpperInvariant();
+            var l1Key = $"{_prefix}:L1:index_static:{key}";
+            _l1.Remove(l1Key);
+            if (RedisUsable)
+            {
+                try
+                {
+                    await _redis!.GetDatabase().KeyDeleteAsync(L2Key(key)).WaitAsync(RedisCallTimeout, ct);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Redis key delete failed for index static cache key {Key}", key);
+                }
+            }
+        }
+        else
+        {
+            // Invalidate Sectoral-Indices and other common indices
+            var defaultKeys = new[] { "SECTORAL-INDICES", "EGX30", "EGX70", "EGX100", "EGX33", "TAMAYUZ" };
+            foreach (var k in defaultKeys)
+            {
+                _l1.Remove($"{_prefix}:L1:index_static:{k}");
+                if (RedisUsable)
+                {
+                    try { await _redis!.GetDatabase().KeyDeleteAsync(L2Key(k)); } catch { }
+                }
+            }
+        }
+    }
+
     private async Task TryWriteL2Async(string key, IndexStaticEntry entry, CancellationToken ct)
     {
         if (!RedisUsable) return;
@@ -176,28 +210,49 @@ public sealed class IndexStaticCache : IIndexStaticCache
             .FirstOrDefaultAsync(ct);
         if (idx == null) return null;
 
-        var rows = await db.IndexConstituents.AsNoTracking()
-            .Where(ic => ic.IndexId == idx.Id && ic.Stock != null && ic.Stock.DataStatus == StockDataStatus.Active)
-            .Select(ic => new IndexStaticRow
-            {
-                StockId = ic.StockId,
-                Ticker = ic.Stock!.Ticker,
-                NameAr = ic.Stock.NameAr,
-                NameEn = ic.Stock.NameEn,
-                SectorNameAr = ic.Stock.Sector != null ? ic.Stock.Sector.NameAr : null,
-                Weight = ic.Weight
-            })
-            .ToListAsync(ct);
+        var rows = upperCode == "SECTORAL-INDICES"
+            ? await db.Stocks.AsNoTracking()
+                .Where(s => s.SectorId != null && s.DataStatus == StockDataStatus.Active && s.IsActive)
+                .Select(s => new IndexStaticRow
+                {
+                    StockId = s.Id,
+                    Ticker = s.Ticker,
+                    NameAr = s.NameAr,
+                    NameEn = s.NameEn,
+                    SectorNameAr = s.Sector != null ? s.Sector.NameAr : null,
+                    Weight = null // Dynamic sector weight
+                })
+                .ToListAsync(ct)
+            : await db.IndexConstituents.AsNoTracking()
+                .Where(ic => ic.IndexId == idx.Id && ic.Stock != null && ic.Stock.DataStatus == StockDataStatus.Active)
+                .Select(ic => new IndexStaticRow
+                {
+                    StockId = ic.StockId,
+                    Ticker = ic.Stock!.Ticker,
+                    NameAr = ic.Stock.NameAr,
+                    NameEn = ic.Stock.NameEn,
+                    SectorNameAr = ic.Stock.Sector != null ? ic.Stock.Sector.NameAr : null,
+                    Weight = ic.Weight
+                })
+                .ToListAsync(ct);
 
+        var stockIds = rows.Select(r => r.StockId).ToList();
         var codePairs = await db.IndexConstituents.AsNoTracking()
-            .Where(c => c.Index != null
-                && db.IndexConstituents.Any(x => x.IndexId == idx.Id && x.StockId == c.StockId))
+            .Where(c => c.Index != null && stockIds.Contains(c.StockId))
             .Select(c => new { c.StockId, Code = c.Index!.Code })
             .ToListAsync(ct);
 
         ct.ThrowIfCancellationRequested();
         var codesByStock = codePairs.ToLookup(p => p.StockId, p => p.Code);
-        foreach (var r in rows) r.IndexCodes = codesByStock[r.StockId].Distinct().ToList();
+        foreach (var r in rows)
+        {
+            var codes = codesByStock[r.StockId].Distinct().ToList();
+            if (upperCode == "SECTORAL-INDICES" && !codes.Contains("Sectoral-Indices"))
+            {
+                codes.Add("Sectoral-Indices");
+            }
+            r.IndexCodes = codes;
+        }
 
         return new IndexStaticEntry
         {

@@ -1,123 +1,97 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import { LucideAngularModule, Search, Star, Trash2 } from 'lucide-angular';
 import { EMPTY, Observable, expand, map, reduce } from 'rxjs';
 import { ApiService } from '../../services/api.service';
 import { FavoritesService } from '../../services/favorites.service';
-import { StockCardComponent } from '../../components/stock-card/stock-card.component';
 import { StockListItemDto } from '../../models/api.models';
+import {
+  MzListingPageComponent,
+  MzButtonComponent,
+  MzBadgeComponent,
+  stockToCard,
+  type MzListingConfig
+} from '../../components/ui';
 
 @Component({
   selector: 'app-favorites',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, LucideAngularModule, StockCardComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    LucideAngularModule,
+    MzListingPageComponent,
+    MzButtonComponent,
+    MzBadgeComponent
+  ],
   template: `
-    <div class="page-intro">
-      <div>
-        <span class="eyebrow">قائمتك الخاصة · {{ favCount }} سهم</span>
-        <h1>المفضلة</h1>
-        <p>الأسهم التي حفظتها بنجمة، ببياناتها الحية نفسها: الحكم الشرعي ونسبة التغير.</p>
-      </div>
-      <div class="intro-note">
-        <lucide-icon [img]="StarIcon" size="17"></lucide-icon>
-        <span>تُحفظ على هذا الجهاز فقط</span>
-      </div>
-    </div>
+    <mz-listing-page
+      [config]="listingConfig"
+      (searchChange)="search = $event"
+      (sortChange)="onSortChange($event)"
+      (retry)="reload()">
+      <ng-container actions>
+        <mz-badge tone="default" [pill]="true">
+          <lucide-icon [img]="StarIcon" [size]="14"></lucide-icon>
+          <span>تُحفظ على هذا الجهاز فقط</span>
+        </mz-badge>
+        <ng-container *ngIf="favCount > 0">
+          <mz-button
+            *ngIf="!confirmingClear"
+            variant="default"
+            [icon]="TrashIcon"
+            (clicked)="confirmingClear = true">
+            مسح الكل
+          </mz-button>
+          <span *ngIf="confirmingClear" class="fav-clear-confirm">
+            <span class="fav-clear-label">تأكيد مسح كل المفضلة؟</span>
+            <mz-button variant="primary" (clicked)="clearAll()">تأكيد</mz-button>
+            <mz-button variant="default" (clicked)="confirmingClear = false">تراجع</mz-button>
+          </span>
+        </ng-container>
+      </ng-container>
 
-    <div class="storage-note" *ngIf="!favorites.persisted()">
-      <span>التخزين غير متاح في هذا المتصفح — ستعمل المفضلة لهذه الجلسة فقط ولن تُحفظ.</span>
-    </div>
-
-    <!-- Empty favorites -->
-    <div *ngIf="!loading && !loadError && favCount === 0" class="empty-state">
-      <lucide-icon [img]="StarIcon" size="32"></lucide-icon>
-      <h3>لا توجد أسهم في المفضلة بعد</h3>
-      <p>اضغط على النجمة في أي سهم لحفظه هنا ومتابعته.</p>
-      <a routerLink="/stocks" class="btn btn-primary">تصفح الأسهم</a>
-    </div>
-
-    <ng-container *ngIf="favCount > 0">
-      <!-- Controls: search + sort + clear -->
-      <div class="filters fav-controls">
-        <div class="search-wrap">
-          <lucide-icon [img]="SearchIcon" size="17"></lucide-icon>
-          <input
-            [(ngModel)]="search"
-            placeholder="ابحث في المفضلة باسم السهم أو رمزه..."
-            aria-label="البحث في المفضلة" />
-        </div>
-        <select [(ngModel)]="sortBy" aria-label="ترتيب المفضلة">
-          <option value="name">الترتيب: الاسم</option>
-          <option value="changePct">الترتيب: نسبة التغير</option>
-          <option value="shariahStatus">الترتيب: الحكم الشرعي</option>
-        </select>
-        <button
-          *ngIf="!confirmingClear"
-          type="button"
-          class="btn btn-outline btn-sm"
-          (click)="confirmingClear = true">
-          <lucide-icon [img]="TrashIcon" size="15"></lucide-icon> مسح الكل
-        </button>
-        <span *ngIf="confirmingClear" class="clear-confirm">
-          <span>تأكيد مسح كل المفضلة؟</span>
-          <button type="button" class="btn btn-primary btn-sm" (click)="clearAll()">تأكيد</button>
-          <button type="button" class="btn btn-outline btn-sm" (click)="confirmingClear = false">تراجع</button>
-        </span>
+      <div resultsExtra *ngIf="!favorites.persisted()" class="fav-storage-warn">
+        <span>التخزين غير متاح في هذا المتصفح — ستعمل المفضلة لهذه الجلسة فقط ولن تُحفظ.</span>
       </div>
 
-      <!-- Loading skeletons -->
-      <div *ngIf="loading" class="stock-grid" aria-hidden="true">
-        <div class="skeleton-card" *ngFor="let n of [1, 2, 3]">
-          <div class="sk-line sk-title"></div>
-          <div class="sk-line sk-text"></div>
-          <div class="sk-line sk-price"></div>
-          <div class="sk-line sk-badges"></div>
-        </div>
+      <div footer *ngIf="!loading && !loadError && favCount === 0" class="fav-empty-cta">
+        <mz-button variant="primary" link="/stocks">تصفح الأسهم</mz-button>
       </div>
-
-      <!-- Error -->
-      <div *ngIf="!loading && loadError" class="empty-state">
-        <lucide-icon [img]="SearchIcon" size="32"></lucide-icon>
-        <h3>تعذّر تحميل بيانات الأسهم</h3>
-        <p>تحقق من الاتصال ثم حاول مرة أخرى.</p>
-        <button type="button" class="btn btn-primary" (click)="reload()">إعادة المحاولة</button>
-      </div>
-
-      <!-- Cards -->
-      <div class="stock-grid" *ngIf="!loading && !loadError && visibleStocks.length">
-        <app-stock-card
-          *ngFor="let s of visibleStocks; let i = index; trackBy: trackStockByTicker"
-          [style.--item-index]="i"
-          [ticker]="s.ticker"
-          [nameAr]="s.nameAr"
-          [nameEn]="s.nameEn"
-          [closingPrice]="s.closingPrice"
-          [changePct]="s.changePct"
-          [fairValue]="s.fairValue"
-          [priceComparison]="s.priceComparison"
-          [fairValueDiffPct]="s.fairValueDiffPct"
-          [shariahStatus]="s.shariahStatus"
-          [indices]="s.indices"
-          [currency]="s.currency"
-          [sectorNameAr]="s.sectorNameAr"
-          [coreActivityCompliant]="s.coreActivityCompliant"
-          [categoryAr]="s.categoryAr"
-          [spHaramEarningPercentage]="s.spHaramEarningPercentage"
-          [loansPercentage]="s.loansPercentage"
-          [showFavorite]="true">
-        </app-stock-card>
-      </div>
-
-      <!-- No search match -->
-      <div *ngIf="!loading && !loadError && !visibleStocks.length" class="empty-state">
-        <lucide-icon [img]="SearchIcon" size="32"></lucide-icon>
-        <h3>لا توجد نتائج مطابقة للبحث في المفضلة</h3>
-        <p>جرّب كلمة بحث مختلفة.</p>
-      </div>
-    </ng-container>
-  `
+    </mz-listing-page>
+  `,
+  styles: [`
+    .fav-clear-confirm {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      background: var(--mz-surface-low, #f2f3ff);
+      border: 1px solid rgba(188, 202, 192, 0.4);
+      padding: 4px 10px;
+      border-radius: 12px;
+    }
+    .fav-clear-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--mz-on-surface, #131b2e);
+    }
+    .fav-storage-warn {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--mz-warn, #b47b20);
+      background: var(--mz-warn-soft, #fff4d9);
+      padding: 6px 12px;
+      border-radius: 8px;
+    }
+    .fav-empty-cta {
+      display: flex;
+      justify-content: center;
+      margin-top: -20px;
+      margin-bottom: 32px;
+    }
+  `]
 })
 export class FavoritesComponent implements OnInit {
   readonly SearchIcon = Search;
@@ -129,6 +103,12 @@ export class FavoritesComponent implements OnInit {
   confirmingClear = false;
   loading = false;
   loadError = false;
+
+  readonly sortOptions = [
+    { value: 'name', label: 'الترتيب: الاسم' },
+    { value: 'changePct', label: 'الترتيب: نسبة التغير' },
+    { value: 'shariahStatus', label: 'الترتيب: الحكم الشرعي' }
+  ];
 
   private allStocks: StockListItemDto[] = [];
 
@@ -165,6 +145,55 @@ export class FavoritesComponent implements OnInit {
     });
   }
 
+  get listingConfig(): MzListingConfig {
+    const count = this.favCount;
+    const visible = this.visibleStocks;
+    const cards = visible.map((s) => stockToCard(s));
+
+    return {
+      header: {
+        badge: 'قائمتك الخاصة',
+        count: `${count} سهم`,
+        title: 'المفضلة',
+        description: 'الأسهم التي حفظتها بنجمة، ببياناتها الحية نفسها: الحكم الشرعي ونسبة التغير.'
+      },
+      filters: count > 0 ? {
+        searchValue: this.search,
+        searchPlaceholder: 'ابحث في المفضلة باسم السهم أو رمزه...',
+        controls: [],
+        sort: {
+          value: this.sortBy,
+          options: this.sortOptions,
+          label: 'الترتيب'
+        }
+      } : null,
+      results: count > 0 && !this.loading && !this.loadError ? {
+        text: `عرض ${visible.length} من أصل ${count} سهم في المفضلة`
+      } : null,
+      cards,
+      skeletonCount: Math.max(1, Math.min(count || 4, 8)),
+      cardType: 'stock',
+      loading: this.loading,
+      error: !this.loading && this.loadError ? {
+        title: 'تعذّر تحميل بيانات الأسهم',
+        message: 'تحقق من الاتصال ثم حاول مرة أخرى.'
+      } : null,
+      empty: count === 0 ? {
+        title: 'لا توجد أسهم في المفضلة بعد',
+        message: 'اضغط على النجمة في أي سهم لحفظه هنا ومتابعته.'
+      } : {
+        title: 'لا توجد نتائج مطابقة للبحث في المفضلة',
+        message: 'جرّب كلمة بحث مختلفة.'
+      }
+    };
+  }
+
+  onSortChange(val: string): void {
+    if (val === 'name' || val === 'changePct' || val === 'shariahStatus') {
+      this.sortBy = val;
+    }
+  }
+
   reload(): void {
     if (this.favCount === 0) {
       this.allStocks = [];
@@ -193,11 +222,6 @@ export class FavoritesComponent implements OnInit {
     this.confirmingClear = false;
   }
 
-  /**
-   * Stable identity for favorite cards. visibleStocks is a getter returning a
-   * fresh array every change-detection cycle; without trackBy, each cycle
-   * would remount every card and replay its entrance animation.
-   */
   trackStockByTicker(_index: number, s: StockListItemDto): string {
     return s.ticker;
   }

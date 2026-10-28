@@ -181,6 +181,7 @@ export interface MarketDataDto {
   nameEn?: string | null;
   sectorNameAr?: string | null;
   sectorNameEn?: string | null;
+  sectorId?: number | null;
   indices: IndexInStockDto[];
   shariahStatus?: string | null;
   /** Purification percentage — never populated for board-governed stocks. */
@@ -210,6 +211,10 @@ export interface MarketDataDto {
   pbRatio?: number | null;
   eps?: number | null;
   peRatio?: number | null;
+  sharesOutstanding?: number | null;
+  earningsGrowthRate?: number | null;
+  epsGrowthRate?: number | null;
+  freeCashFlow?: number | null;
   currency?: string | null;
   high?: number | null;
   low?: number | null;
@@ -376,6 +381,7 @@ export interface ConstituentItemDto {
   /** Stock overseen by a Sharia board/committee (unified simplified display). */
   hasShariahBoard?: boolean;
   shariahBoardNote?: string | null;
+  marketCap?: number | null;
 }
 
 export interface IndexConstituentsPagedResultDto {
@@ -536,6 +542,10 @@ export interface ManualMarketDataUpdateRequest {
   pbRatio?: number | null;
   eps?: number | null;
   peRatio?: number | null;
+  sharesOutstanding?: number | null;
+  earningsGrowthRate?: number | null;
+  epsGrowthRate?: number | null;
+  freeCashFlow?: number | null;
   currency?: string | null;
   high?: number | null;
   low?: number | null;
@@ -683,7 +693,12 @@ export interface FundListItemDto {
   publicId: string;
   slug: string;
   nameAr: string;
+  displayName?: string | null;
+  fullNameAr?: string | null;
   nameEn: string;
+  descriptionAr?: string | null;
+  isNameManuallyEdited?: boolean;
+  isDescriptionManuallyEdited?: boolean;
   code: string;
   type: FundType;
   typeNameAr: string;
@@ -789,8 +804,12 @@ export interface FundAnalysisDto {
 
 export interface FundSimilarDto {
   id: number;
+  /** URL-friendly slug for routing (e.g. /funds/:slug). */
+  slug?: string | null;
   code: string;
   nameAr: string;
+  displayName?: string | null;
+  fullNameAr?: string | null;
   nameEn: string;
   /** Local logo path (served from the API host) when a file was downloaded. */
   localLogoPath?: string | null;
@@ -1269,6 +1288,31 @@ export interface RefreshMarketSnapshotsResult {
   failed: number;
   totalTargets: number;
   duration?: string | any;
+}
+
+export interface FetchFundMissingPricesResultDto {
+  fundId: number;
+  fundCode: string;
+  fundNameAr: string;
+  sndukId: number;
+  timeframeRequested: string;
+  addedCount: number;
+  missingRangesFound: string[];
+  addedDates: string[];
+  sourceMissingDates: string[];
+  nothingMissing: boolean;
+  onCooldown: boolean;
+  alreadyRunning: boolean;
+  cooldownRemainingSeconds: number;
+  message: string;
+  ranAtUtc: string;
+  triggeredBy: string;
+}
+
+export interface UpdateAdminFundDetailsRequest {
+  nameAr: string;
+  displayName?: string | null;
+  descriptionAr?: string | null;
 }
 
 
