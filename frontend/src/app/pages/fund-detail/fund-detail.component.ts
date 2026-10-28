@@ -700,16 +700,7 @@ export class FundDetailComponent implements OnInit, AfterViewInit, AfterViewChec
     if (this.selectedPeriod === 'ALL') return all.slice();
 
     if (this.selectedPeriod === '1W') {
-      const latestTime = all.reduce((max, p) => {
-        const t = new Date(p.date).getTime();
-        return !isNaN(t) && t > max ? t : max;
-      }, 0);
-      const cutoff = latestTime ? new Date(latestTime) : new Date();
-      cutoff.setDate(cutoff.getDate() - 7);
-      return all.filter(p => {
-        const d = new Date(p.date);
-        return !isNaN(d.getTime()) && d >= cutoff;
-      });
+      return all.slice(-7);
     }
 
     const months = this.selectedPeriod === '1M' ? 1
