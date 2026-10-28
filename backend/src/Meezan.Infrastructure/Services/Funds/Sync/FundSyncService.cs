@@ -335,7 +335,9 @@ public class FundSyncService : IFundSyncService
                 var data = response.Data ?? [];
                 if (data.Length > 0)
                 {
-                    var maxDate = await priceRepo.GetMaxDateAsync(fund.Id, cancellationToken);
+                    var allExistingDates = (await priceRepo.GetByFundIdAsync(fund.Id, cancellationToken))
+                        .Select(p => p.Date.Date)
+                        .ToHashSet();
                     var newPoints = new List<FundPriceHistory>();
 
                     foreach (var point in data)
@@ -343,17 +345,18 @@ public class FundSyncService : IFundSyncService
                         if (!DateTime.TryParse(point.Date, out var date)) continue;
                         if (!decimal.TryParse(point.Price, out var price)) continue;
                         if (price <= 0) continue;
-                        if (maxDate.HasValue && date <= maxDate.Value) continue;
+                        if (allExistingDates.Contains(date.Date)) continue;
 
                         newPoints.Add(new FundPriceHistory
                         {
                             FundId = fund.Id,
-                            Date = date,
+                            Date = date.Date,
                             Price = price,
                             Change = ParseDecimal(point.Change),
                             Performance = ParseDecimal(point.Performance),
                             CreatedAt = DateTime.UtcNow
                         });
+                        allExistingDates.Add(date.Date);
                     }
 
                     if (newPoints.Any())
@@ -689,6 +692,119 @@ public class FundSyncService : IFundSyncService
             return File.Exists(Path.Combine(root, relativePath.Replace('/', Path.DirectorySeparatorChar)));
         }
         catch { return false; }
+    }
+
+    public async Task<Meezan.Application.Features.Funds.Sync.Dtos.FundPriceHistoryBackfillResultDto> BackfillPriceHistoryAsync(
+        bool dryRun = true,
+        int? specificFundId = null,
+        CancellationToken cancellationToken = default)
+    {
+        using var scope = _services.CreateScope();
+        var fundRepo = scope.ServiceProvider.GetRequiredService<IFundRepository>();
+        var priceRepo = scope.ServiceProvider.GetRequiredService<IFundPriceHistoryRepository>();
+        var sndukClient = scope.ServiceProvider.GetRequiredService<ISndukFundClient>();
+        var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+
+        var allFunds = await fundRepo.GetAllAsync(cancellationToken);
+        if (specificFundId.HasValue)
+        {
+            allFunds = allFunds.Where(f => f.Id == specificFundId.Value).ToList();
+        }
+
+        var result = new Meezan.Application.Features.Funds.Sync.Dtos.FundPriceHistoryBackfillResultDto
+        {
+            IsDryRun = dryRun,
+            TotalFundsInspected = allFunds.Count
+        };
+
+        int fundsWithGaps = 0;
+        int totalMissingPoints = 0;
+        int totalInserted = 0;
+
+        foreach (var fund in allFunds)
+        {
+            if (cancellationToken.IsCancellationRequested) break;
+            if (fund.SndukId <= 0) continue;
+
+            // Fetch 1M from SNDUK (covers last 30 days)
+            var perfResponse = await sndukClient.GetFundPerformanceAsync(fund.SndukId, "1M", cancellationToken);
+            if (perfResponse == null || perfResponse.Data == null || perfResponse.Data.Length == 0)
+            {
+                // Fallback to 1Y if 1M returned empty
+                perfResponse = await sndukClient.GetFundPerformanceAsync(fund.SndukId, "1Y", cancellationToken);
+            }
+
+            if (perfResponse?.Data == null || perfResponse.Data.Length == 0)
+            {
+                continue;
+            }
+
+            var existingPoints = await priceRepo.GetByFundIdAsync(fund.Id, cancellationToken);
+            var existingDates = existingPoints.Select(p => p.Date.Date).ToHashSet();
+
+            var missingPoints = new List<FundPriceHistory>();
+            var missingDateStrings = new List<string>();
+
+            foreach (var pt in perfResponse.Data)
+            {
+                if (!DateTime.TryParse(pt.Date, out var date)) continue;
+                if (!decimal.TryParse(pt.Price, out var price) || price <= 0) continue;
+
+                if (!existingDates.Contains(date.Date))
+                {
+                    missingPoints.Add(new FundPriceHistory
+                    {
+                        FundId = fund.Id,
+                        Date = date.Date,
+                        Price = price,
+                        Change = ParseDecimal(pt.Change),
+                        Performance = ParseDecimal(pt.Performance),
+                        CreatedAt = DateTime.UtcNow
+                    });
+                    missingDateStrings.Add(date.ToString("yyyy-MM-dd"));
+                    existingDates.Add(date.Date); // avoid duplicates within the source batch
+                }
+            }
+
+            if (missingPoints.Count > 0)
+            {
+                fundsWithGaps++;
+                totalMissingPoints += missingPoints.Count;
+
+                result.FundDetails.Add(new Meezan.Application.Features.Funds.Sync.Dtos.FundPriceHistoryBackfillItemDto
+                {
+                    FundId = fund.Id,
+                    FundCode = fund.Code,
+                    SndukId = fund.SndukId,
+                    MissingCount = missingPoints.Count,
+                    MissingDates = missingDateStrings
+                });
+
+                if (!dryRun)
+                {
+                    await priceRepo.AddRangeAsync(missingPoints, cancellationToken);
+                    totalInserted += missingPoints.Count;
+                }
+            }
+
+            // Courteous rate limit delay between external SNDUK calls (300ms)
+            await Task.Delay(300, cancellationToken);
+        }
+
+        if (!dryRun && totalInserted > 0)
+        {
+            await uow.SaveChangesAsync(cancellationToken);
+        }
+
+        result.FundsWithGaps = fundsWithGaps;
+        result.TotalMissingPointsFound = totalMissingPoints;
+        result.TotalPointsInserted = totalInserted;
+        result.Message = dryRun
+            ? $"Dry run completed. Inspected {result.TotalFundsInspected} funds: found {totalMissingPoints} missing points across {fundsWithGaps} funds."
+            : $"Backfill executed. Inspected {result.TotalFundsInspected} funds: inserted {totalInserted} points across {fundsWithGaps} funds.";
+
+        _logger.LogInformation("FundPriceHistoryBackfill: {Message}", result.Message);
+        return result;
     }
 
     public async Task<FundSyncLog?> GetLatestRunAsync(CancellationToken cancellationToken = default)

@@ -1,3 +1,4 @@
+using Meezan.Application.Features.Funds.Sync.Commands.BackfillFundPriceHistory;
 using MediatR;
 using Meezan.Application.Common.Models.Caching;
 using Meezan.Application.Features.Funds.Caching.Commands.ClearFundCache;
@@ -138,6 +139,22 @@ public class AdminFundsController : ControllerBase
     /// Downloads any fund logo that is not yet on disk and fills LocalLogoPath
     /// only for files that really landed. Safe to re-run.
     /// </summary>
+    // POST /api/admin/funds/prices/backfill
+    /// <summary>
+    /// Backfills missing historical price data from SNDUK.
+    /// Supports ?dryRun=true/false and optional ?fundId=int.
+    /// </summary>
+    [HttpPost("prices/backfill")]
+    [ProducesResponseType(typeof(FundPriceHistoryBackfillResultDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> BackfillPrices(
+        [FromQuery] bool dryRun = true,
+        [FromQuery] int? fundId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await _sender.Send(new BackfillFundPriceHistoryCommand(dryRun, fundId), cancellationToken);
+        return result.ToActionResult();
+    }
+
     [HttpPost("logos/backfill")]
     [ProducesResponseType(typeof(BackfillFundLogosResultDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> BackfillLogos(CancellationToken cancellationToken = default)
