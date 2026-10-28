@@ -20,6 +20,7 @@ using Meezan.Application.Features.Funds.Categories.Queries.GetCategoryFunds;
 using Meezan.Application.Features.Funds.Categories.Queries.GetFundCategoryOverrides;
 using Meezan.Application.Features.Funds.Categories.Queries.GetFundCategoryStatus;
 using Meezan.Application.Features.Funds.Classification.Commands.ResetFundOverrides;
+using Meezan.Application.Features.Funds.Details.Commands.UpdateAdminFundDetails;
 using Meezan.Application.Features.Funds.Details.Queries.GetAdminFundById;
 using Meezan.Application.Features.Funds.Listing.Queries.GetAdminFunds;
 using Meezan.Application.Features.Funds.Sync.Commands.BackfillFundLogos;
@@ -383,6 +384,26 @@ public class AdminFundsController : ControllerBase
     {
         var result = await _sender.Send(new GetAdminFundByIdQuery(id), cancellationToken);
         if (result.IsSuccess && result.Value == null) return NotFound();
+        return result.ToActionResult();
+    }
+
+    [HttpPatch("funds/{id:int}")]
+    [ProducesResponseType(typeof(Fund), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UpdateFundDetails(
+        int id,
+        [FromBody] UpdateAdminFundDetailsRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var cmd = new UpdateAdminFundDetailsCommand
+        {
+            Id = id,
+            NameAr = request.NameAr,
+            DisplayName = request.DisplayName,
+            DescriptionAr = request.DescriptionAr
+        };
+        var result = await _sender.Send(cmd, cancellationToken);
         return result.ToActionResult();
     }
 

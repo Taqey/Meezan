@@ -280,7 +280,14 @@ public class FundSyncService : IFundSyncService
         // Update fields
         fund.PublicId = dto.PublicId;
         fund.Slug = dto.CustomSlug ?? dto.Slug ?? string.Empty;
-        fund.NameAr = dto.Name;
+        if (existing == null || !fund.IsNameManuallyEdited)
+        {
+            fund.NameAr = dto.Name;
+            if (existing == null || string.IsNullOrWhiteSpace(fund.DisplayName))
+            {
+                fund.DisplayName = dto.Name;
+            }
+        }
         fund.NameEn = dto.NameEn ?? string.Empty;
         fund.Code = dto.Code;
         fund.Type = ParseFundType(dto.Type);
@@ -307,7 +314,10 @@ public class FundSyncService : IFundSyncService
         fund.AssetManagerNameEn = dto.AssetManagerNameEn ?? string.Empty;
         fund.AssetManagerCode = dto.AssetManagerCode ?? string.Empty;
         fund.LogoUrl = dto.LogoUrl ?? string.Empty;
-        fund.DescriptionAr = dto.Description ?? string.Empty;
+        if (existing == null || !fund.IsDescriptionManuallyEdited)
+        {
+            fund.DescriptionAr = dto.Description ?? string.Empty;
+        }
         fund.DescriptionEn = dto.DescriptionEn ?? string.Empty;
         fund.InvestmentStrategy = dto.InvestmentStrategy ?? string.Empty;
         fund.InceptionDate = ParseDateTime(dto.InceptionDate);

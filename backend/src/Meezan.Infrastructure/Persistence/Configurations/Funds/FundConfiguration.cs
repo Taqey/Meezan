@@ -30,6 +30,18 @@ public class FundConfiguration : IEntityTypeConfiguration<Fund>
             .IsRequired()
             .HasMaxLength(250);
 
+        builder.Property(e => e.DisplayName)
+            .HasMaxLength(250)
+            .HasDefaultValue(string.Empty);
+
+        builder.Property(e => e.IsNameManuallyEdited)
+            .IsRequired()
+            .HasDefaultValue(false);
+
+        builder.Property(e => e.IsDescriptionManuallyEdited)
+            .IsRequired()
+            .HasDefaultValue(false);
+
         builder.Property(e => e.NameEn)
             .HasMaxLength(250);
 

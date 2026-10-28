@@ -76,7 +76,7 @@ async function ensureChartJs(): Promise<typeof import('chart.js') | null> {
       <!-- Details Header Card -->
       <mz-details-header-card
         [logoUrl]="heroLogoUrl"
-        [title]="fund.nameAr"
+        [title]="fund.displayName || fund.nameAr"
         [code]="fund.code"
         [secondaryName]="fund.nameEn"
         [favoriteSymbol]="fund.code"
@@ -175,7 +175,7 @@ async function ensureChartJs(): Promise<typeof import('chart.js') | null> {
                          (error)="onSimLogoError($event)">
                   </div>
                   <div class="mz-lcard-text">
-                    <h3 class="mz-lcard-title mz-sim-title">{{ sim.nameAr || '—' }}</h3>
+                    <h3 class="mz-lcard-title mz-sim-title">{{ sim.displayName || sim.nameAr || '—' }}</h3>
                   </div>
                 </div>
                 <div class="mz-lcard-badges" style="flex-shrink:0;">
@@ -571,6 +571,8 @@ export class FundDetailComponent implements OnInit, AfterViewInit, AfterViewChec
       slug: m.fund.slug ?? null,
       code: m.fund.code,
       nameAr: m.fund.nameAr,
+      displayName: m.fund.displayName || m.fund.nameAr,
+      fullNameAr: m.fund.fullNameAr || m.fund.nameAr,
       nameEn: m.fund.nameEn,
       localLogoPath: m.fund.localLogoPath ?? null,
       logoUrl: m.fund.logoUrl ?? null,
@@ -952,6 +954,7 @@ export class FundDetailComponent implements OnInit, AfterViewInit, AfterViewChec
     const f = this.fund;
     const mgrName = f.assetManagerName && f.assetManagerName.trim() ? f.assetManagerName : '—';
     return [
+      { label: 'الاسم الكامل', value: f.fullNameAr || f.nameAr || '—' },
       { label: 'كود الصندوق', value: f.code, ltr: true },
       {
         label: 'المدير',

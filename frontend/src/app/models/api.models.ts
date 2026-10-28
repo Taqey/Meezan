@@ -693,7 +693,12 @@ export interface FundListItemDto {
   publicId: string;
   slug: string;
   nameAr: string;
+  displayName?: string | null;
+  fullNameAr?: string | null;
   nameEn: string;
+  descriptionAr?: string | null;
+  isNameManuallyEdited?: boolean;
+  isDescriptionManuallyEdited?: boolean;
   code: string;
   type: FundType;
   typeNameAr: string;
@@ -803,6 +808,8 @@ export interface FundSimilarDto {
   slug?: string | null;
   code: string;
   nameAr: string;
+  displayName?: string | null;
+  fullNameAr?: string | null;
   nameEn: string;
   /** Local logo path (served from the API host) when a file was downloaded. */
   localLogoPath?: string | null;
@@ -1300,6 +1307,12 @@ export interface FetchFundMissingPricesResultDto {
   message: string;
   ranAtUtc: string;
   triggeredBy: string;
+}
+
+export interface UpdateAdminFundDetailsRequest {
+  nameAr: string;
+  displayName?: string | null;
+  descriptionAr?: string | null;
 }
 
 

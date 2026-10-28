@@ -445,6 +445,7 @@ export class FundManagerDetailComponent implements OnInit, OnDestroy {
       list = list.filter(f =>
         f.code.toLowerCase().includes(q) ||
         (f.nameAr && f.nameAr.toLowerCase().includes(q)) ||
+        (f.displayName && f.displayName.toLowerCase().includes(q)) ||
         (f.nameEn && f.nameEn.toLowerCase().includes(q))
       );
     }
@@ -774,7 +775,7 @@ export class FundManagerDetailComponent implements OnInit, OnDestroy {
 
     return {
       id: fund.code,
-      title: fund.nameAr,
+      title: fund.displayName || fund.nameAr,
       subtitle: '',
       icon: this.getFundIcon(rawType),
       logoUrl: fundLogoUrl(fund.localLogoPath, fund.logoUrl),
