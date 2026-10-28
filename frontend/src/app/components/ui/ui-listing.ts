@@ -44,7 +44,7 @@ export class MzPageHeaderComponent {
   host: { class: 'mz', style: 'display:block' },
   template: `
     <section class="mz-stats" [class.cols-3]="(stats.length || count) === 3" *ngIf="!loading; else sk">
-      <mz-stat-card *ngFor="let s of stats" [stat]="s"></mz-stat-card>
+      <mz-stat-card *ngFor="let s of stats; trackBy: trackStat" [stat]="s"></mz-stat-card>
     </section>
     <ng-template #sk>
       <section class="mz-stats" [class.cols-3]="(stats.length || count) === 3">
@@ -57,6 +57,10 @@ export class MzStatsRowComponent {
   @Input() stats: MzStat[] = [];
   @Input() loading = false;
   @Input() count = 4;
+
+  trackStat(index: number, s: MzStat): string {
+    return s.label || String(index);
+  }
 }
 
 /* ───────────── QuickFilterTabs ───────────── */
