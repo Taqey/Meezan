@@ -180,6 +180,7 @@ export class FundsListComponent implements OnInit, OnDestroy {
       switchMap((filter) => {
         this.loading = true;
         this.loadError = false;
+        this.rebuild();
         return this.api.getFunds(filter).pipe(
           timeout(15000),
           catchError((err) => {
@@ -584,6 +585,7 @@ export class FundsListComponent implements OnInit, OnDestroy {
       }
     } else {
       this.statsLoading = true;
+      this.rebuild();
     }
 
     this.api.getFundStats().subscribe({
@@ -776,6 +778,7 @@ export class FundsListComponent implements OnInit, OnDestroy {
       },
       stats: this.kpiList.map((k) => ({ label: k.label, value: k.value, icon: k.icon, chip: k.sub })),
       statsLoading: this.statsLoading,
+      statsCount: 4,
       tabs: this.quickChips.map((c) => ({ id: c.id, label: c.label })),
       activeTab: this.activeChip,
       filters: {
@@ -808,6 +811,8 @@ export class FundsListComponent implements OnInit, OnDestroy {
         note: this.sourceNote
       },
       cards: this.funds.map((f) => this.toCard(f)),
+      skeletonCount: this.filter.pageSize || 20,
+      cardType: 'fund',
       loading: busy,
       error: !this.initialLoading && this.loadError ? { title: 'تعذّر تحميل الصناديق', message: 'تحقق من الاتصال ثم حاول مرة أخرى.' } : null,
       empty: { title: 'لا توجد صناديق مطابقة للفلاتر المختارة', message: 'جرّب تعديل خيارات البحث أو إزالة أحد الفلاتر لتوسيع نطاق النتائج.' },

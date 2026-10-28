@@ -391,6 +391,7 @@ export class StocksListComponent implements OnInit, OnDestroy {
       },
       stats: this.kpiStats,
       statsLoading: this.kpisLoading,
+      statsCount: 4,
       tabs: [
         { id: 'all', label: 'كل الأسهم' },
         { id: 'compliant', label: 'متوافق شرعاً' },
@@ -437,6 +438,8 @@ export class StocksListComponent implements OnInit, OnDestroy {
         legend: [{ label: 'متوافق', tone: 'good' }, { label: 'غير متوافق', tone: 'bad' }]
       },
       cards: this.displayedStocks.map((s) => stockToCard(s)),
+      skeletonCount: this.pageSize,
+      cardType: 'stock',
       loading: this.loading && !this.loadError,
       error: !this.loading && this.loadError ? { title: 'تعذّر تحميل الأسهم', message: 'تحقق من الاتصال بالشبكة ثم حاول مرة أخرى.' } : null,
       empty: {

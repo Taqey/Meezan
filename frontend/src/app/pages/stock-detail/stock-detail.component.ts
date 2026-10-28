@@ -37,6 +37,7 @@ import {
 } from '../../components/ui';
 import { StatusBadgeComponent } from '../../components/status-badge/status-badge.component';
 import { FavoriteToggleComponent } from '../../components/favorite-toggle/favorite-toggle.component';
+import { LoadingSkeletonsComponent } from '../../components/loading-skeletons/loading-skeletons.component';
 import { RevealDirective } from '../../directives/reveal.directive';
 import {
   IndexInStockDto,
@@ -75,6 +76,7 @@ type EffectiveOpinionView = ShariahSourceOpinionView & { effectiveStatus: string
     RouterLink,
     LucideAngularModule,
     ComparisonBadgeComponent,
+    LoadingSkeletonsComponent,
     RevealDirective,
     MzBackLinkComponent,
     MzDetailsHeaderCardComponent,
@@ -85,9 +87,7 @@ type EffectiveOpinionView = ShariahSourceOpinionView & { effectiveStatus: string
     MzDetailsSectionComponent
   ],
   template: `
-    <div *ngIf="loading" class="empty-state">
-      <p>جارٍ تحميل بيانات السهم والتقييمات من قاعدة البيانات...</p>
-    </div>
+    <app-loading-skeletons *ngIf="loading" variant="details"></app-loading-skeletons>
 
     <div *ngIf="!loading && !marketData" class="empty-state">
       <h3>لم يتم العثور على بيانات لهذا السهم</h3>

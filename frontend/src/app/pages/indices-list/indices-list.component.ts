@@ -734,7 +734,13 @@ export class IndicesListComponent implements OnInit, OnDestroy {
   config: MzListingConfig = { header: { badge: '', title: '', description: '' }, cards: [], empty: { title: '', message: '' } };
 
   rebuild(): void {
-    const busy = this.loading || this.statsLoading;
+    const tabs = (this.chipOptions.length ? this.chipOptions : [
+      { id: 'all', label: `كل المؤشرات (${this.indices.length || 8})` },
+      { id: 'compliance', label: 'الأعلى توافقاً' },
+      { id: 'performance', label: 'الأفضل أداءً اليوم' },
+      { id: 'name', label: 'أبجدي' }
+    ]).map((c) => ({ id: c.id, label: c.label }));
+
     this.config = {
       header: {
         badge: 'المؤشرات الرسمية',
@@ -743,7 +749,8 @@ export class IndicesListComponent implements OnInit, OnDestroy {
       },
       stats: this.kpiList.map((k) => ({ label: k.label, value: k.value, icon: k.icon, chip: k.sub })),
       statsLoading: this.statsLoading,
-      tabs: this.loading || this.loadError ? null : this.chipOptions.map((c) => ({ id: c.id, label: c.label })),
+      statsCount: 3,
+      tabs,
       activeTab: this.chip,
       filters: {
         searchValue: this.search,
@@ -777,13 +784,15 @@ export class IndicesListComponent implements OnInit, OnDestroy {
           count: this.minConstituents > 0 ? 1 : 0
         }
       },
-      results: this.loading || this.loadError ? null : {
+      results: {
         text: this.view === 'heatmap'
           ? `${this.treemapItems.length} مؤشرات معروضة في الخريطة الحرارية`
-          : this.indices.length + ' مؤشراً رسمياً في قاعدة البيانات',
+          : (this.indices.length || 8) + ' مؤشراً رسمياً في قاعدة البيانات',
         note: [this.sessionLabel, this.sourceNote].filter(Boolean).join(' · ') || null
       },
-      cards: this.loading ? [] : this.displayedIndices.map((i) => this.toCard(i)),
+      cards: this.displayedIndices.map((i) => this.toCard(i)),
+      skeletonCount: this.indices.length || 8,
+      cardType: 'index',
       loading: this.loading && !this.loadError,
       error: !this.loading && this.loadError ? { title: 'تعذّر تحميل المؤشرات', message: 'تحقق من الاتصال ثم حاول مرة أخرى.' } : null,
       empty: { title: 'لا توجد مؤشرات مسجّلة حتى الآن', message: 'تتم إضافة المؤشرات تلقائياً عند رفع كشوف البورصة الرسمية.' }

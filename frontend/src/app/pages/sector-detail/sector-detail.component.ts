@@ -544,6 +544,7 @@ export class SectorDetailComponent implements OnInit, OnDestroy {
       },
       stats: this.stats,
       statsLoading: this.kpisLoading,
+      statsCount: 4,
       tabs: [
         { id: 'all', label: 'كل الأسهم' },
         { id: 'compliant', label: 'متوافق شرعاً' },
@@ -593,6 +594,8 @@ export class SectorDetailComponent implements OnInit, OnDestroy {
         legend: [{ label: 'متوافق', tone: 'good' }, { label: 'غير متوافق', tone: 'bad' }]
       },
       cards: this.displayedStocks.map((s) => stockToCard(s, { parent: 'sector' })),
+      skeletonCount: this.pageSize,
+      cardType: 'stock',
       loading: this.stocksLoading && !this.loadError,
       error: !this.stocksLoading && this.loadError
         ? { title: 'تعذّر تحميل أسهم القطاع', message: 'تحقق من الاتصال بالشبكة ثم حاول مرة أخرى.' }

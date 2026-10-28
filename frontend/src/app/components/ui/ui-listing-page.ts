@@ -14,11 +14,14 @@ export interface MzListingConfig {
   header: { badge: string; count?: string; title: string; description: string };
   stats?: MzStat[] | null;
   statsLoading?: boolean;
+  statsCount?: number;
   tabs?: MzTab[] | null;
   activeTab?: string;
   filters?: MzFiltersConfig | null;
   results?: { text: string; note?: string | null; legend?: MzLegendItem[] | null } | null;
   cards: MzListingCardData[];
+  skeletonCount?: number;
+  cardType?: 'stock' | 'fund' | 'entity' | 'index';
   loading?: boolean;
   error?: { title: string; message: string } | null;
   empty: { title: string; message: string };
@@ -48,7 +51,7 @@ export interface MzListingConfig {
       <ng-container actions><ng-content select="[actions]"></ng-content></ng-container>
     </mz-page-header>
 
-    <mz-stats-row [stats]="config.stats || []" [loading]="!!config.statsLoading"></mz-stats-row>
+    <mz-stats-row [stats]="config.stats || []" [loading]="!!config.statsLoading" [count]="config.statsCount || 4"></mz-stats-row>
 
     <section class="mz-filters-section">
       <mz-quick-filter-tabs [tabs]="config.tabs || []" [active]="config.activeTab || ''" (onChange)="tabChange.emit($event)"></mz-quick-filter-tabs>
@@ -59,7 +62,7 @@ export interface MzListingConfig {
 
     <mz-results-info [text]="config.results?.text || ''" [note]="config.results?.note" [legend]="config.results?.legend"><ng-content select="[resultsExtra]"></ng-content></mz-results-info>
 
-    <app-loading-skeletons *ngIf="config.loading && !config.error" variant="card" [count]="6"></app-loading-skeletons>
+    <app-loading-skeletons *ngIf="config.loading && !config.error" variant="card" [count]="config.skeletonCount || 20" [cardType]="config.cardType || 'stock'"></app-loading-skeletons>
     <app-empty-state *ngIf="config.error" [title]="config.error.title" [message]="config.error.message" actionLabel="إعادة المحاولة" (action)="retry.emit()"></app-empty-state>
 
     <ng-container *ngIf="!config.loading && !config.error">

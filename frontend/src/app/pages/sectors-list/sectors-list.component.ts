@@ -717,6 +717,14 @@ export class SectorsListComponent implements OnInit, OnDestroy {
   config: MzListingConfig = { header: { badge: '', title: '', description: '' }, cards: [], empty: { title: '', message: '' } };
 
   rebuild(): void {
+    const tabs = (this.chipOptions.length ? this.chipOptions : [
+      { id: 'all', label: `كل القطاعات (${this.sectors.length || 18})` },
+      { id: 'compliance', label: 'الأعلى توافقاً' },
+      { id: 'performance', label: 'الأفضل أداءً اليوم' },
+      { id: 'pe', label: 'الأقل مكرر ربحية' },
+      { id: 'name', label: 'أبجدي' }
+    ]).map((c) => ({ id: c.id, label: c.label }));
+
     this.config = {
       header: {
         badge: 'تصنيف قطاعي متوافق مع الشريعة',
@@ -725,7 +733,8 @@ export class SectorsListComponent implements OnInit, OnDestroy {
       },
       stats: this.kpiList.map((k) => ({ label: k.label, value: k.value, icon: k.icon, chip: k.sub })),
       statsLoading: this.loading || this.dataPending,
-      tabs: this.loading || this.loadError ? null : this.chipOptions.map((c) => ({ id: c.id, label: c.label })),
+      statsCount: 3,
+      tabs,
       activeTab: this.chip,
       filters: {
         searchValue: this.search,
@@ -761,11 +770,13 @@ export class SectorsListComponent implements OnInit, OnDestroy {
           count: this.minStocks > 0 ? 1 : 0
         }
       },
-      results: this.loading || this.loadError ? null : {
-        text: this.sectors.length + ' قطاعاً بأسهم مصنّفة في قاعدة البيانات',
+      results: {
+        text: (this.sectors.length || 18) + ' قطاعاً بأسهم مصنّفة في قاعدة البيانات',
         note: [this.sessionLabel, this.sourceNote].filter(Boolean).join(' · ') || null
       },
-      cards: this.loading ? [] : this.displayedSectors.map((s) => this.toCard(s)),
+      cards: this.displayedSectors.map((s) => this.toCard(s)),
+      skeletonCount: this.sectors.length || 18,
+      cardType: 'entity',
       loading: this.loading && !this.loadError,
       error: !this.loading && this.loadError ? { title: 'تعذّر تحميل القطاعات', message: 'تحقق من الاتصال ثم حاول مرة أخرى.' } : null,
       empty: { title: 'لا توجد قطاعات مسجّلة حتى الآن', message: 'يتم استخراج القطاعات تلقائياً عند رفع كشوف المؤشرات من البورصة المصرية.' }

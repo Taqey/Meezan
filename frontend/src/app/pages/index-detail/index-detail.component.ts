@@ -507,6 +507,7 @@ export class IndexDetailComponent implements OnInit, OnDestroy {
       },
       stats: this.stats,
       statsLoading: this.kpisLoading,
+      statsCount: 4,
       tabs: [
         { id: 'all', label: 'كل الأسهم' },
         { id: 'compliant', label: 'متوافق شرعاً' },
@@ -550,6 +551,8 @@ export class IndexDetailComponent implements OnInit, OnDestroy {
         legend: [{ label: 'متوافق', tone: 'good' }, { label: 'غير متوافق', tone: 'bad' }]
       },
       cards: (this.result?.items || []).map((s) => stockToCard(s, { parent: 'index' })),
+      skeletonCount: this.pageSize,
+      cardType: 'stock',
       loading: this.loading && !this.loadError,
       error: !this.loading && this.loadError
         ? { title: 'تعذّر تحميل أسهم المؤشر', message: 'تحقق من الاتصال بالشبكة ثم حاول مرة أخرى.' }

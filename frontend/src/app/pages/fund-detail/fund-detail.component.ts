@@ -6,6 +6,7 @@ import { ApiService } from '../../services/api.service';
 import { SessionCacheService } from '../../services/session-cache.service';
 import { FundDetailDto, FundListItemDto, FundPagedResultDto, FundPricePointDto, FundAnalysisDto, FundSimilarDto, FundCategoryMembershipDto, FundRiskLevel, FundType } from '../../models/api.models';
 import { FavoriteToggleComponent } from '../../components/favorite-toggle/favorite-toggle.component';
+import { LoadingSkeletonsComponent } from '../../components/loading-skeletons/loading-skeletons.component';
 import {
   MzBackLinkComponent,
   MzDetailsHeaderCardComponent,
@@ -46,16 +47,14 @@ async function ensureChartJs(): Promise<typeof import('chart.js') | null> {
     CommonModule,
     RouterLink,
     LucideAngularModule,
+    LoadingSkeletonsComponent,
     MzBackLinkComponent,
     MzDetailsHeaderCardComponent,
     MzDetailsSectionComponent,
     MzInfoGridComponent
   ],
   template: `
-    <div *ngIf="loading" class="empty-state">
-      <lucide-icon [img]="Loader2Icon" size="32" class="animate-spin"></lucide-icon>
-      <p>جارٍ تحميل بيانات الصندوق...</p>
-    </div>
+    <app-loading-skeletons *ngIf="loading" variant="details"></app-loading-skeletons>
 
     <div *ngIf="!loading && !fund" class="empty-state">
       <h3>لم يتم العثور على هذا الصندوق</h3>

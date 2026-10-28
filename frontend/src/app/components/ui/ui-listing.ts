@@ -43,12 +43,12 @@ export class MzPageHeaderComponent {
   imports: [CommonModule, MzStatCardComponent, LoadingSkeletonsComponent],
   host: { class: 'mz', style: 'display:block' },
   template: `
-    <section class="mz-stats" [class.cols-3]="stats.length === 3" *ngIf="!loading; else sk">
+    <section class="mz-stats" [class.cols-3]="(stats.length || count) === 3" *ngIf="!loading; else sk">
       <mz-stat-card *ngFor="let s of stats" [stat]="s"></mz-stat-card>
     </section>
     <ng-template #sk>
-      <section class="mz-stats" [class.cols-3]="stats.length === 3">
-        <app-loading-skeletons variant="stat" [count]="stats.length || 4"></app-loading-skeletons>
+      <section class="mz-stats" [class.cols-3]="(stats.length || count) === 3">
+        <app-loading-skeletons variant="stat" [count]="stats.length || count"></app-loading-skeletons>
       </section>
     </ng-template>
   `
@@ -56,6 +56,7 @@ export class MzPageHeaderComponent {
 export class MzStatsRowComponent {
   @Input() stats: MzStat[] = [];
   @Input() loading = false;
+  @Input() count = 4;
 }
 
 /* ───────────── QuickFilterTabs ───────────── */
