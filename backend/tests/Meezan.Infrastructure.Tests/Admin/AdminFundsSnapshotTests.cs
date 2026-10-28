@@ -464,4 +464,12 @@ public class AdminFundsSnapshotTests : IAsyncLifetime
         var content = await res.Content.ReadAsStringAsync();
         SnapshotAssert.MatchesStoredSnapshot("Admin_Funds_GetFund_NotFound", (int)res.StatusCode, content);
     }
+
+    [Fact]
+    public async Task FetchMissingPricesForFund_Unauthenticated_Returns401()
+    {
+        var client = _factory.CreateClient(); // No X-Admin-Key header
+        var res = await client.PostAsync($"/api/admin/funds/funds/{_fundId}/fetch-missing-prices", null);
+        Assert.Equal(System.Net.HttpStatusCode.Unauthorized, res.StatusCode);
+    }
 }

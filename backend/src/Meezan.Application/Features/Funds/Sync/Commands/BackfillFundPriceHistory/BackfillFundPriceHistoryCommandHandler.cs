@@ -30,3 +30,50 @@ public sealed class BackfillFundPriceHistoryCommandHandler
         }
     }
 }
+
+public sealed class FetchFundMissingPricesCommandHandler
+    : IRequestHandler<FetchFundMissingPricesCommand, Result<FetchFundMissingPricesResultDto>>
+{
+    private readonly IFundSyncService _syncService;
+
+    public FetchFundMissingPricesCommandHandler(IFundSyncService syncService)
+    {
+        _syncService = syncService;
+    }
+
+    public async Task<Result<FetchFundMissingPricesResultDto>> Handle(
+        FetchFundMissingPricesCommand request,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var result = await _syncService.FetchMissingPricesForFundAsync(
+                request.FundId,
+                request.TriggeredBy,
+                request.BypassCooldown,
+                cancellationToken);
+
+            if (result.AlreadyRunning)
+            {
+                return Error.Conflict("FundMissingPricesAlreadyRunning", result.Message, result);
+            }
+
+            if (result.OnCooldown)
+            {
+                return Error.Conflict("FundMissingPricesCooldown", result.Message, result);
+            }
+
+            return result;
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return Error.NotFound("FundNotFound", ex.Message);
+        }
+        catch (Exception ex)
+        {
+            return Error.Validation("FetchFundMissingPricesError", ex.Message);
+        }
+    }
+}
+
+

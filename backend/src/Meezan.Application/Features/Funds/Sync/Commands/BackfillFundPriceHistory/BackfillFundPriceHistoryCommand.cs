@@ -7,3 +7,8 @@ namespace Meezan.Application.Features.Funds.Sync.Commands.BackfillFundPriceHisto
 
 public sealed record BackfillFundPriceHistoryCommand(bool DryRun = true, int? SpecificFundId = null)
     : IRequest<Result<FundPriceHistoryBackfillResultDto>>, IInvalidatesFundPrices;
+
+public sealed record FetchFundMissingPricesCommand(int FundId, string TriggeredBy = "Admin", bool BypassCooldown = false)
+    : IRequest<Result<FetchFundMissingPricesResultDto>>;
+
+

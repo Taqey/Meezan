@@ -386,6 +386,17 @@ public class AdminFundsController : ControllerBase
         return result.ToActionResult();
     }
 
+    [HttpPost("funds/{id:int}/fetch-missing-prices")]
+    [ProducesResponseType(typeof(FetchFundMissingPricesResultDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(FetchFundMissingPricesResultDto), StatusCodes.Status409Conflict)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> FetchMissingPricesForFund(int id, CancellationToken cancellationToken = default)
+    {
+        var triggeredBy = User?.Identity?.Name ?? "Admin";
+        var result = await _sender.Send(new FetchFundMissingPricesCommand(id, triggeredBy), cancellationToken);
+        return result.ToActionResult();
+    }
+
     // ========== FUND CACHE MANAGEMENT ==========
 
     [HttpGet("cache/status")]

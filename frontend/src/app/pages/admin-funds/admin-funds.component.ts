@@ -30,7 +30,8 @@ import {
   UpdateCategoryRequest,
   FundTypeDefinition,
   FundTypeChangeLog,
-  AdminTypeFundRow
+  AdminTypeFundRow,
+  FetchFundMissingPricesResultDto
 } from '../../models/api.models';
 import {
   normFundSyncStatus,
@@ -66,7 +67,7 @@ interface FundCategoryRow {
       <div style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;">
         <button type="button" class="btn" data-testid="tab-classification" [class.btn-primary]="section === 'classification'" [class.btn-outline]="section !== 'classification'" (click)="section = 'classification'">التصنيف</button>
         <button type="button" class="btn" [class.btn-primary]="section === 'categories'" [class.btn-outline]="section !== 'categories'" (click)="section = 'categories'">التصنيفات</button>
-        <button type="button" class="btn" [class.btn-primary]="section === 'funds'" [class.btn-outline]="section !== 'funds'" (click)="section = 'funds'">الصناديق</button>
+        <button type="button" class="btn" data-testid="tab-funds" [class.btn-primary]="section === 'funds'" [class.btn-outline]="section !== 'funds'" (click)="section = 'funds'; searchAdminFunds()">الصناديق</button>
         <button type="button" class="btn" [class.btn-primary]="section === 'sync'" [class.btn-outline]="section !== 'sync'" (click)="section = 'sync'; loadSyncHistory()">سجل المزامنة</button>
         <button type="button" class="btn" [class.btn-primary]="section === 'log'" [class.btn-outline]="section !== 'log'" (click)="section = 'log'; loadChangeLog()">سجل التغييرات</button>
       </div>
@@ -260,7 +261,7 @@ interface FundCategoryRow {
             <tbody>
               <tr *ngFor="let run of syncRuns" (click)="toggleRunDetails(run.id)" style="cursor: pointer;" [style.background]="selectedRunId === run.id ? 'var(--muted)' : 'transparent'">
                 <td>{{ run.runAt | date:'yyyy-MM-dd HH:mm' }}</td>
-                <td><span class="chip" [style.background]="run.mode === 'Prices' ? '#ecfdf5' : '#f5f3ff'" [style.color]="run.mode === 'Prices' ? '#059669' : '#7c3aed'">{{ run.mode === 'Prices' ? 'أسعار' : 'شامل' }}</span></td>
+                <td><span class="chip" [style.background]="run.mode === 'Prices' ? '#ecfdf5' : run.mode === 'SingleFundMissingPrices' ? '#eff6ff' : '#f5f3ff'" [style.color]="run.mode === 'Prices' ? '#059669' : run.mode === 'SingleFundMissingPrices' ? '#2563eb' : '#7c3aed'">{{ run.mode === 'Prices' ? 'أسعار' : run.mode === 'SingleFundMissingPrices' ? 'سحب ناقص' : 'شامل' }}</span></td>
                 <td><span [style.color]="syncStatusColor(run.status)" style="font-weight: 600;">{{ syncStatusLabel(run.status) }}</span></td>
                 <td>{{ run.totalFunds }}</td>
                 <td style="color: var(--good);">{{ run.updatedFunds }}</td>
@@ -452,32 +453,80 @@ interface FundCategoryRow {
       <!-- ============ FUNDS ============ -->
       <div *ngIf="section === 'funds'" class="admin-card">
         <h2>صناديق الاستثمار</h2>
-        <p class="muted">ابحث عن صندوق بالاسم أو الكود، ثم بدّل عضويته في التصنيفات من مكان واحد.</p>
+        <p class="muted">ابحث عن صندوق بالاسم أو الكود، أو اسحب الأسعار التاريخية الناقصة، أو عدّل التصنيفات.</p>
         <div style="display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0;">
           <div style="position: relative; flex: 1; min-width: 220px;">
-            <input type="text" [(ngModel)]="fundQuery" (ngModelChange)="searchAdminFunds()" placeholder="ابحث باسم الصندوق أو رمزه..." class="admin-form input" />
+            <input type="text" [(ngModel)]="fundQuery" (ngModelChange)="searchAdminFunds(1)" placeholder="ابحث باسم الصندوق أو رمزه..." class="admin-form input" />
           </div>
-          <button type="button" class="btn btn-outline btn-sm" (click)="searchAdminFunds()">
+          <button type="button" class="btn btn-outline btn-sm" (click)="searchAdminFunds(1)">
             <lucide-icon [img]="SearchIcon" size="14"></lucide-icon> بحث
           </button>
         </div>
         <div class="table-scroll-x" *ngIf="fundResults.length">
           <table class="admin-table">
-            <thead><tr><th>الكود</th><th>الاسم</th><th></th></tr></thead>
+            <thead><tr><th>الكود</th><th>الاسم</th><th>إجراءات</th></tr></thead>
             <tbody>
-              <tr *ngFor="let f of fundResults" [style.background]="selectedFundId === f.id ? 'var(--muted)' : 'transparent'">
-                <td><strong style="font-family: monospace;">{{ f.code }}</strong></td>
-                <td>{{ f.nameAr }}</td>
-                <td><button type="button" class="btn btn-outline btn-sm" (click)="openFund(f.id)">التصنيفات</button></td>
-              </tr>
+              <ng-container *ngFor="let f of fundResults">
+                <tr [style.background]="selectedFundId === f.id ? 'var(--muted)' : 'transparent'">
+                  <td><strong style="font-family: monospace;">{{ f.code }}</strong></td>
+                  <td>{{ f.nameAr }}</td>
+                  <td>
+                    <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
+                      <button type="button" class="btn btn-outline btn-sm" (click)="openFund(f.id)">التصنيفات</button>
+                      <button type="button" class="btn btn-primary btn-sm"
+                              [attr.data-testid]="'fetch-missing-prices-' + f.code"
+                              [disabled]="fetchingMissingPrices[f.id]"
+                              (click)="fetchMissingPrices(f.id)">
+                        <lucide-icon [img]="RefreshIcon" size="13"></lucide-icon>
+                        {{ fetchingMissingPrices[f.id] ? 'جارٍ السحب...' : 'سحب الأسعار الناقصة' }}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                <tr *ngIf="missingPricesResults[f.id] || missingPricesErrors[f.id]" [attr.data-testid]="'missing-prices-result-' + f.code">
+                  <td colspan="3" style="padding: 10px 14px; background: var(--surface, #f8fafc); border-bottom: 1px solid var(--border);">
+                    <div *ngIf="missingPricesErrors[f.id]" style="color: var(--bad, #dc2626); font-size: 13px; font-weight: 600;">
+                      {{ missingPricesErrors[f.id] }}
+                    </div>
+                    <div *ngIf="missingPricesResults[f.id] as res" style="font-size: 13px; display: flex; flex-direction: column; gap: 4px;">
+                      <div [style.color]="res.addedCount > 0 ? 'var(--good, #16a34a)' : 'var(--foreground)'" style="font-weight: 600;">
+                        {{ res.message }}
+                      </div>
+                      <div *ngIf="res.missingRangesFound?.length" class="muted" style="font-size: 12px;">
+                        النطاقات الناقصة المرصودة: <span dir="ltr">{{ res.missingRangesFound.join(' , ') }}</span>
+                        (النافذة المطلوبة: <code>{{ res.timeframeRequested }}</code>)
+                      </div>
+                      <div *ngIf="res.addedCount > 0" style="font-size: 12px;">
+                        عدد النقاط المضافة: <strong>{{ res.addedCount }}</strong>
+                        <span *ngIf="res.addedDates?.length" class="muted"> — ({{ res.addedDates.join('، ') }})</span>
+                      </div>
+                      <div *ngIf="res.sourceMissingDates?.length" style="font-size: 12px; color: #b45309;">
+                        تواريخ غير متوفرة في المصدر (عطلات / لا يوجد تسعير): <span dir="ltr">{{ res.sourceMissingDates.join(' , ') }}</span>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              </ng-container>
             </tbody>
           </table>
+        </div>
+        <div style="display: flex; justify-content: center; gap: 8px; margin-top: 12px;" *ngIf="fundTotalPages > 1">
+          <button type="button" class="btn btn-outline btn-sm" (click)="searchAdminFunds(fundPage - 1)" [disabled]="fundPage <= 1">السابق</button>
+          <span class="muted" style="align-self: center; font-size: 12px;">صفحة {{ fundPage }} من {{ fundTotalPages }}</span>
+          <button type="button" class="btn btn-outline btn-sm" (click)="searchAdminFunds(fundPage + 1)" [disabled]="fundPage >= fundTotalPages">التالي</button>
         </div>
 
         <div *ngIf="selectedFundId && fundCatRows.length !== undefined" style="margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border);">
           <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
             <h3 style="margin: 0;">تصنيفات الصندوق المحدد</h3>
-            <div style="display: flex; gap: 8px;">
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button type="button" class="btn btn-primary btn-sm"
+                      data-testid="selected-fund-fetch-missing-prices"
+                      [disabled]="fetchingMissingPrices[selectedFundId]"
+                      (click)="fetchMissingPrices(selectedFundId)">
+                <lucide-icon [img]="RefreshIcon" size="13"></lucide-icon>
+                {{ fetchingMissingPrices[selectedFundId] ? 'جارٍ السحب...' : 'سحب الأسعار الناقصة' }}
+              </button>
               <button type="button" class="btn btn-outline btn-sm" (click)="resetFund(selectedFundId)">
                 <lucide-icon [img]="RotateIcon" size="13"></lucide-icon> إعادة الكل للتلقائي
               </button>
@@ -890,8 +939,13 @@ export class AdminFundsComponent implements OnInit {
   // Fund view
   fundQuery = '';
   fundResults: FundListItemDto[] = [];
+  fundPage = 1;
+  fundTotalPages = 0;
   selectedFundId: number | null = null;
   fundCatRows: FundCategoryRow[] = [];
+  fetchingMissingPrices: Record<number, boolean> = {};
+  missingPricesResults: Record<number, FetchFundMissingPricesResultDto | null> = {};
+  missingPricesErrors: Record<number, string | null> = {};
 
   // Change log
   changeLog: FundCategoryChangeLog[] = [];
@@ -905,6 +959,7 @@ export class AdminFundsComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadCategories();
+    this.searchAdminFunds(1);
   }
 
   // ── shared labels ──────────────────────────────────────────────
@@ -1269,15 +1324,37 @@ export class AdminFundsComponent implements OnInit {
   }
 
   // ── fund view ──────────────────────────────────────────────────
-  searchAdminFunds(): void {
+  searchAdminFunds(page = 1): void {
+    this.fundPage = page;
     const q = this.fundQuery.trim();
-    if (!q) {
-      this.fundResults = [];
-      return;
-    }
-    this.api.getAllFundsAdmin(q, undefined, 1, 10).subscribe({
-      next: (res) => { this.fundResults = res.items || []; },
+    this.api.getAllFundsAdmin(q || undefined, undefined, page, 20).subscribe({
+      next: (res) => {
+        this.fundResults = res.items || [];
+        this.fundTotalPages = res.totalPages || 0;
+      },
       error: () => {}
+    });
+  }
+
+  fetchMissingPrices(fundId: number): void {
+    if (this.fetchingMissingPrices[fundId]) return;
+    this.fetchingMissingPrices[fundId] = true;
+    this.missingPricesErrors[fundId] = null;
+    this.missingPricesResults[fundId] = null;
+
+    this.api.fetchFundMissingPrices(fundId).subscribe({
+      next: (res) => {
+        this.fetchingMissingPrices[fundId] = false;
+        this.missingPricesResults[fundId] = res;
+        this.toast.show(res.message || 'اكتمل سحب الأسعار الناقصة');
+      },
+      error: (err) => {
+        this.fetchingMissingPrices[fundId] = false;
+        const body = err?.error;
+        const msg = body?.message || err?.message || 'حدث خطأ أثناء سحب الأسعار الناقصة';
+        this.missingPricesErrors[fundId] = msg;
+        this.toast.show(msg);
+      }
     });
   }
 

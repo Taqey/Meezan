@@ -1283,4 +1283,23 @@ export interface RefreshMarketSnapshotsResult {
   duration?: string | any;
 }
 
+export interface FetchFundMissingPricesResultDto {
+  fundId: number;
+  fundCode: string;
+  fundNameAr: string;
+  sndukId: number;
+  timeframeRequested: string;
+  addedCount: number;
+  missingRangesFound: string[];
+  addedDates: string[];
+  sourceMissingDates: string[];
+  nothingMissing: boolean;
+  onCooldown: boolean;
+  alreadyRunning: boolean;
+  cooldownRemainingSeconds: number;
+  message: string;
+  ranAtUtc: string;
+  triggeredBy: string;
+}
+
 
