@@ -316,9 +316,6 @@ export class IndexDetailComponent implements OnInit, OnDestroy {
   }
 
   loadConstituents(): void {
-    this.loading = true;
-    this.rebuild();
-
     const queryParams = {
       page: this.page,
       pageSize: this.pageSize,
@@ -346,7 +343,9 @@ export class IndexDetailComponent implements OnInit, OnDestroy {
         return;
       }
     } else {
+      this.loading = true;
       this.loadError = false;
+      this.rebuild();
     }
 
     this.api.getIndexConstituents(this.code, queryParams).subscribe({

@@ -347,9 +347,6 @@ export class SectorDetailComponent implements OnInit, OnDestroy {
   }
 
   loadStocks(): void {
-    this.stocksLoading = true;
-    this.rebuild();
-
     const queryParams = {
       sectorId: this.sectorId ?? undefined,
       page: this.isNonComplianceFiltered ? 1 : this.page,
@@ -379,7 +376,9 @@ export class SectorDetailComponent implements OnInit, OnDestroy {
         return;
       }
     } else {
+      this.stocksLoading = true;
       this.loadError = false;
+      this.rebuild();
     }
 
     this.api.getStocks(queryParams).subscribe({

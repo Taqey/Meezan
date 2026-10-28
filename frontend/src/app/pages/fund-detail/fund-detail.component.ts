@@ -16,7 +16,8 @@ import {
   MzCardsGridComponent,
   MzHeaderTag,
   MzIndicator,
-  MzListingCardData
+  MzListingCardData,
+  MzSpinnerComponent
 } from '../../components/ui';
 import { Subject, forkJoin, takeUntil } from 'rxjs';
 import { fundLogoUrl } from '../../models/fund-display';
@@ -51,10 +52,14 @@ async function ensureChartJs(): Promise<typeof import('chart.js') | null> {
     MzBackLinkComponent,
     MzDetailsHeaderCardComponent,
     MzDetailsSectionComponent,
-    MzInfoGridComponent
+    MzInfoGridComponent,
+    MzSpinnerComponent
   ],
   template: `
-    <app-loading-skeletons *ngIf="loading" variant="details"></app-loading-skeletons>
+    <div *ngIf="loading" class="mz-cards-area-wrap">
+      <app-loading-skeletons variant="details"></app-loading-skeletons>
+      <mz-spinner [active]="true" size="large" [overlay]="true" [showLabel]="true" label="جارٍ تحميل بيانات الصندوق..."></mz-spinner>
+    </div>
 
     <div *ngIf="!loading && !fund" class="empty-state">
       <h3>لم يتم العثور على هذا الصندوق</h3>

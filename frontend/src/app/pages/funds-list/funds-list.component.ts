@@ -136,7 +136,7 @@ export class FundsListComponent implements OnInit, OnDestroy {
   /** Bound to the search input; debounced into filter.search via searchChanged. */
   searchText = '';
   readonly searchChanged = new Subject<string>();
-  private readonly fundsQuery$ = new Subject<FundListFilter>();
+  private readonly fundsQuery$ = new Subject<FundListFilter & { _silent?: boolean }>();
   private querySub?: Subscription;
 
   currentPage = 1;
@@ -178,9 +178,11 @@ export class FundsListComponent implements OnInit, OnDestroy {
     // Pipeline with switchMap so only the latest request response is applied
     this.querySub = this.fundsQuery$.pipe(
       switchMap((filter) => {
-        this.loading = true;
-        this.loadError = false;
-        this.rebuild();
+        if (!filter._silent) {
+          this.loading = true;
+          this.loadError = false;
+          this.rebuild();
+        }
         return this.api.getFunds(filter).pipe(
           timeout(15000),
           catchError((err) => {
@@ -570,6 +572,8 @@ export class FundsListComponent implements OnInit, OnDestroy {
       if (!this.cache.isStale(cacheKey)) {
         return;
       }
+      this.fundsQuery$.next({ ...this.filter, _silent: true });
+      return;
     }
     this.fundsQuery$.next({ ...this.filter });
   }

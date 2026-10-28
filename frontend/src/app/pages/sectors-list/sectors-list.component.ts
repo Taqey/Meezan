@@ -10,6 +10,7 @@ import { SessionCacheService } from '../../services/session-cache.service';
 import { MarketSnapshotDto, SectorSummaryDto, StockListItemDto } from '../../models/api.models';
 import { sectorAccentFor, sectorIconFor } from '../../models/market-icons';
 import { MzListingPageComponent, type MzListingConfig } from '../../components/ui/ui-listing-page';
+import { MzButtonComponent } from '../../components/ui/ui-small';
 import type { MzListingCardData } from '../../components/ui/ui-listing';
 import { ViewSwitcherComponent, type EntityView } from '../../components/view-switcher/view-switcher.component';
 import { type KpiData } from '../../components/kpi-strip/kpi-strip.component';
@@ -24,7 +25,7 @@ type Chip = 'all' | 'compliance' | 'performance' | 'pe' | 'name';
 @Component({
   selector: 'app-sectors-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule, MzListingPageComponent, ViewSwitcherComponent, EntityTableComponent, EntityHeatmapComponent],
+  imports: [CommonModule, FormsModule, LucideAngularModule, MzListingPageComponent, MzButtonComponent, ViewSwitcherComponent, EntityTableComponent, EntityHeatmapComponent],
     template: `
     <mz-listing-page
       [config]="config"
@@ -37,9 +38,7 @@ type Chip = 'all' | 'compliance' | 'performance' | 'pe' | 'name';
       (retry)="load(true)">
       <ng-container actions>
         <app-view-switcher [view]="view" (viewChange)="setView($event)"></app-view-switcher>
-        <button type="button" class="mz-btn" (click)="printReport()">
-          <lucide-icon [img]="PrintIcon" size="15"></lucide-icon> تقرير PDF
-        </button>
+        <mz-button [icon]="PrintIcon" [loading]="printing" (clicked)="printReport()">تقرير PDF</mz-button>
       </ng-container>
       <ng-container view>
         <app-entity-table
@@ -304,8 +303,14 @@ export class SectorsListComponent implements OnInit, OnDestroy {
     );
   }
 
+  printing = false;
+
   printReport(): void {
-    window.print();
+    this.printing = true;
+    setTimeout(() => {
+      window.print();
+      this.printing = false;
+    }, 320);
   }
 
   @HostListener('window:beforeprint')

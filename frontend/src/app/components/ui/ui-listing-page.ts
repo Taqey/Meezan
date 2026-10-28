@@ -7,6 +7,7 @@ import {
   MzResultsInfoComponent, MzStatsRowComponent, type MzFiltersConfig, type MzLegendItem, type MzListingCardData, type MzTab
 } from './ui-listing';
 import { MzBackLinkComponent } from './ui-details';
+import { MzSpinnerComponent } from './mz-spinner.component';
 import type { MzStat } from './ui-small';
 
 export interface MzListingConfig {
@@ -40,7 +41,7 @@ export interface MzListingConfig {
   standalone: true,
   imports: [
     CommonModule, MzBackLinkComponent, MzPageHeaderComponent, MzStatsRowComponent, MzQuickFilterTabsComponent, MzFiltersBarComponent,
-    MzResultsInfoComponent, MzCardsGridComponent, MzPaginationComponent, LoadingSkeletonsComponent, EmptyStateComponent
+    MzResultsInfoComponent, MzCardsGridComponent, MzPaginationComponent, LoadingSkeletonsComponent, EmptyStateComponent, MzSpinnerComponent
   ],
   host: { class: 'mz mz-page', style: 'display:block' },
   template: `
@@ -62,16 +63,28 @@ export interface MzListingConfig {
 
     <mz-results-info [text]="config.results?.text || ''" [note]="config.results?.note" [legend]="config.results?.legend"><ng-content select="[resultsExtra]"></ng-content></mz-results-info>
 
-    <app-loading-skeletons *ngIf="config.loading && !config.error" variant="card" [count]="config.skeletonCount || 20" [cardType]="config.cardType || 'stock'"></app-loading-skeletons>
-    <app-empty-state *ngIf="config.error" [title]="config.error.title" [message]="config.error.message" actionLabel="إعادة المحاولة" (action)="retry.emit()"></app-empty-state>
-
-    <ng-container *ngIf="!config.loading && !config.error">
-      <ng-content select="[view]"></ng-content>
-      <ng-container *ngIf="!customView">
-        <mz-cards-grid *ngIf="config.cards.length" [cards]="config.cards"></mz-cards-grid>
-        <app-empty-state *ngIf="!config.cards.length" [title]="config.empty.title" [message]="config.empty.message"></app-empty-state>
+    <div class="mz-cards-area-wrap">
+      <!-- Initial load (no cards yet): show exact placeholders AND smooth spinner -->
+      <ng-container *ngIf="config.loading && !config.error && !config.cards.length">
+        <app-loading-skeletons variant="card" [count]="config.skeletonCount || 20" [cardType]="config.cardType || 'stock'"></app-loading-skeletons>
+        <mz-spinner [active]="true" size="large" [overlay]="true" [showLabel]="true" label="جارٍ التحميل..."></mz-spinner>
       </ng-container>
-    </ng-container>
+
+      <!-- Error state -->
+      <app-empty-state *ngIf="config.error" [title]="config.error.title" [message]="config.error.message" actionLabel="إعادة المحاولة" [loading]="!!config.loading" (action)="retry.emit()"></app-empty-state>
+
+      <!-- Loaded OR refreshing with existing cards dimmed -->
+      <ng-container *ngIf="!config.error && (!config.loading || config.cards.length > 0)">
+        <div class="mz-cards-content" [class.is-dimmed]="!!config.loading && config.cards.length > 0">
+          <ng-content select="[view]"></ng-content>
+          <ng-container *ngIf="!customView">
+            <mz-cards-grid *ngIf="config.cards.length" [cards]="config.cards"></mz-cards-grid>
+            <app-empty-state *ngIf="!config.cards.length && !config.loading" [title]="config.empty.title" [message]="config.empty.message"></app-empty-state>
+          </ng-container>
+        </div>
+        <mz-spinner [active]="!!config.loading && config.cards.length > 0" size="large" [overlay]="true" [showLabel]="true" label="جارٍ تحديث النتائج..."></mz-spinner>
+      </ng-container>
+    </div>
 
     <mz-pagination *ngIf="!customView && (config.totalPages || 1) > 1" [page]="config.page || 1" [totalPages]="config.totalPages || 1" (pageChange)="pageChange.emit($event)"></mz-pagination>
     <ng-content select="[footer]"></ng-content>

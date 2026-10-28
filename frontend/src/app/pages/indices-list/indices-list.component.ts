@@ -8,6 +8,7 @@ import { ApiService } from '../../services/api.service';
 import { ConstituentItemDto, IndexSummaryDto, MarketSnapshotDto } from '../../models/api.models';
 import { indexAccentFor, indexIconFor, indexShowsAggregates, isFeaturedIndex, indexShortNameFor, indexFullNameFor } from '../../models/market-icons';
 import { MzListingPageComponent, type MzListingConfig } from '../../components/ui/ui-listing-page';
+import { MzButtonComponent } from '../../components/ui/ui-small';
 import type { MzListingCardData } from '../../components/ui/ui-listing';
 import { ViewSwitcherComponent, type EntityView } from '../../components/view-switcher/view-switcher.component';
 import { type KpiData } from '../../components/kpi-strip/kpi-strip.component';
@@ -38,7 +39,7 @@ interface IndexStats {
 @Component({
   selector: 'app-indices-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule, MzListingPageComponent, ViewSwitcherComponent, EntityTableComponent, TreemapComponent],
+  imports: [CommonModule, FormsModule, LucideAngularModule, MzListingPageComponent, MzButtonComponent, ViewSwitcherComponent, EntityTableComponent, TreemapComponent],
     template: `
     <mz-listing-page
       [config]="config"
@@ -51,9 +52,7 @@ interface IndexStats {
       (retry)="load(true)">
       <ng-container actions>
         <app-view-switcher [view]="view" (viewChange)="setView($event)"></app-view-switcher>
-        <button type="button" class="mz-btn" (click)="printReport()">
-          <lucide-icon [img]="PrintIcon" size="15"></lucide-icon> تقرير PDF
-        </button>
+        <mz-button [icon]="PrintIcon" [loading]="printing" (clicked)="printReport()">تقرير PDF</mz-button>
       </ng-container>
       <ng-container view>
         <app-entity-table
@@ -282,8 +281,14 @@ export class IndicesListComponent implements OnInit, OnDestroy {
     this.rebuild();
   }
 
+  printing = false;
+
   printReport(): void {
-    window.print();
+    this.printing = true;
+    setTimeout(() => {
+      window.print();
+      this.printing = false;
+    }, 320);
   }
 
   @HostListener('window:beforeprint')

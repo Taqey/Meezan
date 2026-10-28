@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { LucideAngularModule, Search, ChevronDown, Star, FileText, type LucideIconData } from 'lucide-angular';
 import { FavoriteToggleComponent } from '../favorite-toggle/favorite-toggle.component';
+import { MzSpinnerComponent } from './mz-spinner.component';
 
 export type Tone = 'positive' | 'negative' | 'muted' | null | undefined;
 
@@ -24,25 +25,29 @@ export class MzIconComponent {
 @Component({
   selector: 'mz-button',
   standalone: true,
-  imports: [CommonModule, RouterLink, LucideAngularModule],
+  imports: [CommonModule, RouterLink, LucideAngularModule, MzSpinnerComponent],
   host: { class: 'mz', style: 'display:inline-flex' },
   template: `
     <a *ngIf="link; else btn" class="mz-btn" [ngClass]="variant" [routerLink]="link">
       <lucide-icon *ngIf="icon" [img]="icon" [size]="15"></lucide-icon><ng-content></ng-content>
     </a>
     <ng-template #btn>
-      <button class="mz-btn" [ngClass]="[variant, block ? 'block' : '']" [attr.type]="'button'" [disabled]="disabled"
+      <button class="mz-btn" [ngClass]="[variant, block ? 'block' : '']" [attr.type]="type" [disabled]="disabled || loading"
+              [attr.aria-busy]="loading || null"
               [attr.aria-pressed]="pressed ?? null" [attr.aria-expanded]="expanded ?? null" (click)="pressed_.emit($event)">
-        <lucide-icon *ngIf="icon" [img]="icon" [size]="15"></lucide-icon><ng-content></ng-content>
+        <mz-spinner *ngIf="loading" [active]="true" [immediate]="true" size="small"></mz-spinner>
+        <lucide-icon *ngIf="icon && !loading" [img]="icon" [size]="15"></lucide-icon><ng-content></ng-content>
       </button>
     </ng-template>
   `
 })
 export class MzButtonComponent {
   @Input() variant: 'default' | 'primary' | 'soft' = 'default';
+  @Input() type: 'button' | 'submit' | 'reset' = 'button';
   @Input() icon?: LucideIconData | null;
   @Input() link?: string | unknown[] | null;
   @Input() disabled = false;
+  @Input() loading = false;
   @Input() block = false;
   @Input() pressed?: boolean | null;
   @Input() expanded?: boolean | null;

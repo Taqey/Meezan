@@ -33,7 +33,8 @@ import {
   MzIndicator,
   MzAuthority,
   MzMetric,
-  MzShariaRatio
+  MzShariaRatio,
+  MzSpinnerComponent
 } from '../../components/ui';
 import { StatusBadgeComponent } from '../../components/status-badge/status-badge.component';
 import { FavoriteToggleComponent } from '../../components/favorite-toggle/favorite-toggle.component';
@@ -84,10 +85,14 @@ type EffectiveOpinionView = ShariahSourceOpinionView & { effectiveStatus: string
     MzFairValueCardComponent,
     MzMarketIndicatorsSectionComponent,
     MzShariaAuthoritiesSectionComponent,
-    MzDetailsSectionComponent
+    MzDetailsSectionComponent,
+    MzSpinnerComponent
   ],
   template: `
-    <app-loading-skeletons *ngIf="loading" variant="details"></app-loading-skeletons>
+    <div *ngIf="loading" class="mz-cards-area-wrap">
+      <app-loading-skeletons variant="details"></app-loading-skeletons>
+      <mz-spinner [active]="true" size="large" [overlay]="true" [showLabel]="true" label="جارٍ تحميل بيانات السهم..."></mz-spinner>
+    </div>
 
     <div *ngIf="!loading && !marketData" class="empty-state">
       <h3>لم يتم العثور على بيانات لهذا السهم</h3>
