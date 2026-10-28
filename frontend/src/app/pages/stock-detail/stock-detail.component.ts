@@ -1289,13 +1289,30 @@ export class StockDetailComponent implements OnInit, OnDestroy {
 
     // 2. Purification Ratio (نسبة التطهير = نسبة الإيراد المحرم)
     let purVal = '—';
-    let purSub = 'نسبة يسيرة جداً';
+    let purSub = 'غير متوفر';
     let purTone: 'neutral' | 'positive' | 'negative' = 'neutral';
     if (this.spHaramPct != null) {
       const pct = Number(this.spHaramPct);
       purVal = `${pct.toFixed(2)}%`;
-      purSub = pct === 0 ? 'لا يتطلب تطهير' : 'نسبة يسيرة جداً';
-      purTone = 'neutral';
+      if (pct <= 0) {
+        purSub = 'لا يتطلب تطهير';
+        purTone = 'positive';
+      } else if (pct <= 1) {
+        purSub = 'نسبة يسيرة جداً';
+        purTone = 'positive';
+      } else if (pct <= 5) {
+        purSub = 'نسبة يسيرة';
+        purTone = 'positive';
+      } else if (pct <= 10) {
+        purSub = 'نسبة متوسطة';
+        purTone = 'neutral';
+      } else if (pct <= 20) {
+        purSub = 'نسبة مرتفعة نسبياً';
+        purTone = 'neutral';
+      } else {
+        purSub = 'نسبة مرتفعة جداً (تجاوزت الحد)';
+        purTone = 'negative';
+      }
     }
 
     // 3. Impure Income Ratio (نسبة الإيراد المحرم)

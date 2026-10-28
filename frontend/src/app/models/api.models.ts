@@ -799,6 +799,8 @@ export interface FundAnalysisDto {
 
 export interface FundSimilarDto {
   id: number;
+  /** URL-friendly slug for routing (e.g. /funds/:slug). */
+  slug?: string | null;
   code: string;
   nameAr: string;
   nameEn: string;
