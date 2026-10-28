@@ -1,7 +1,8 @@
-import { Component, EventEmitter, HostListener, ElementRef, Input, Output } from '@angular/core';
+import { Component, EventEmitter, HostListener, ElementRef, Input, Output, forwardRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { LucideAngularModule, Search, ChevronDown, Star, FileText, type LucideIconData } from 'lucide-angular';
+import { LucideAngularModule, Search, ChevronDown, Check, Star, FileText, type LucideIconData } from 'lucide-angular';
 import { FavoriteToggleComponent } from '../favorite-toggle/favorite-toggle.component';
 import { MzSpinnerComponent } from './mz-spinner.component';
 
@@ -99,25 +100,208 @@ export class MzSearchInputComponent {
   @Output() valueChange = new EventEmitter<string>();
 }
 
-export interface MzOption { value: string | number | boolean | null; label: string; }
+export interface MzOption { value: any; label: string; disabled?: boolean; }
+
+let nextSelectId = 1;
 
 @Component({
   selector: 'mz-select',
   standalone: true,
-  imports: [CommonModule],
-  host: { class: 'mz', style: 'display:block' },
+  imports: [CommonModule, LucideAngularModule],
+  host: { class: 'mz mz-select-host', style: 'display:block' },
+  providers: [
+    {
+      provide: NG_VALUE_ACCESSOR,
+      useExisting: forwardRef(() => MzSelectComponent),
+      multi: true
+    }
+  ],
   template: `
-    <select class="mz-select" [attr.aria-label]="ariaLabel" (change)="onChange($any($event.target).selectedIndex)">
-      <option *ngFor="let o of options; let i = index" [selected]="o.value === value">{{ o.label }}</option>
-    </select>
+    <div class="mz-select-wrap" [class.is-open]="open" [class.is-disabled]="disabled" [class.flip-up]="flipUp">
+      <button
+        type="button"
+        class="mz-select-trigger"
+        role="combobox"
+        [attr.aria-expanded]="open"
+        aria-haspopup="listbox"
+        [attr.aria-controls]="listboxId"
+        [attr.aria-label]="ariaLabel || placeholder || selectedLabel"
+        [disabled]="disabled"
+        (click)="toggleOpen()"
+        (keydown)="onTriggerKeydown($event)">
+        <span class="mz-select-label" [class.is-placeholder]="!hasSelection && !!placeholder">{{ selectedLabel }}</span>
+        <span class="mz-select-chevron" [class.rotated]="open">
+          <lucide-icon [img]="ChevronIcon" [size]="15"></lucide-icon>
+        </span>
+      </button>
+
+      <div
+        *ngIf="open"
+        class="mz-select-panel"
+        role="listbox"
+        [id]="listboxId"
+        [attr.aria-label]="ariaLabel || placeholder">
+        <button
+          *ngFor="let o of options; let i = index"
+          type="button"
+          role="option"
+          class="mz-select-option"
+          [class.is-selected]="isEqual(o.value, value)"
+          [class.is-active]="i === activeIndex"
+          [disabled]="!!o.disabled"
+          [attr.aria-selected]="isEqual(o.value, value)"
+          (mouseenter)="activeIndex = i"
+          (click)="selectIndex(i, $event)">
+          <span class="mz-select-option-text">{{ o.label }}</span>
+          <span class="mz-select-option-check" *ngIf="isEqual(o.value, value)">
+            <lucide-icon [img]="CheckIcon" [size]="15"></lucide-icon>
+          </span>
+        </button>
+      </div>
+    </div>
   `
 })
-export class MzSelectComponent {
+export class MzSelectComponent implements ControlValueAccessor {
+  readonly ChevronIcon = ChevronDown;
+  readonly CheckIcon = Check;
+  readonly listboxId = `mz-select-listbox-${nextSelectId++}`;
+
   @Input() options: MzOption[] = [];
-  @Input() value: MzOption['value'] = null;
+  @Input() value: any = null;
   @Input() ariaLabel = '';
-  @Output() valueChange = new EventEmitter<MzOption['value']>();
-  onChange(i: number): void { this.valueChange.emit(this.options[i]?.value ?? null); }
+  @Input() placeholder = '';
+  @Input() disabled = false;
+  @Output() valueChange = new EventEmitter<any>();
+
+  open = false;
+  flipUp = false;
+  activeIndex = -1;
+
+  private onChangeCallback: (v: any) => void = () => {};
+  private onTouchedCallback: () => void = () => {};
+
+  constructor(private el: ElementRef<HTMLElement>) {}
+
+  get hasSelection(): boolean {
+    return this.options.some((o) => this.isEqual(o.value, this.value));
+  }
+
+  get selectedLabel(): string {
+    const found = this.options.find((o) => this.isEqual(o.value, this.value));
+    if (found) return found.label;
+    if (this.placeholder) return this.placeholder;
+    return this.options[0]?.label ?? '';
+  }
+
+  isEqual(a: any, b: any): boolean {
+    if (a === b) return true;
+    if (a == null && b === '') return true;
+    if (a === '' && b == null) return true;
+    return false;
+  }
+
+  writeValue(val: any): void {
+    this.value = val;
+  }
+
+  registerOnChange(fn: any): void {
+    this.onChangeCallback = fn;
+  }
+
+  registerOnTouched(fn: any): void {
+    this.onTouchedCallback = fn;
+  }
+
+  setDisabledState(isDisabled: boolean): void {
+    this.disabled = isDisabled;
+  }
+
+  toggleOpen(): void {
+    if (this.disabled || !this.options.length) return;
+    if (this.open) {
+      this.close();
+    } else {
+      this.openDropdown();
+    }
+  }
+
+  openDropdown(): void {
+    if (this.disabled || !this.options.length) return;
+    const rect = this.el.nativeElement.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const spaceAbove = rect.top;
+    this.flipUp = spaceBelow < 260 && spaceAbove > spaceBelow;
+    const idx = this.options.findIndex((o) => this.isEqual(o.value, this.value));
+    this.activeIndex = idx >= 0 ? idx : 0;
+    this.open = true;
+  }
+
+  close(): void {
+    if (!this.open) return;
+    this.open = false;
+    this.onTouchedCallback();
+  }
+
+  selectIndex(i: number, event?: Event): void {
+    if (event) event.stopPropagation();
+    const opt = this.options[i];
+    if (!opt || opt.disabled) return;
+    this.value = opt.value;
+    this.onChangeCallback(opt.value);
+    this.valueChange.emit(opt.value);
+    this.close();
+  }
+
+  onTriggerKeydown(e: KeyboardEvent): void {
+    if (this.disabled) return;
+    if (!this.open) {
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        this.openDropdown();
+      }
+      return;
+    }
+
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      this.close();
+    } else if (e.key === 'Tab') {
+      this.close();
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      this.moveActive(1);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      this.moveActive(-1);
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      this.activeIndex = 0;
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      this.activeIndex = Math.max(0, this.options.length - 1);
+    } else if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      if (this.activeIndex >= 0 && this.activeIndex < this.options.length) {
+        this.selectIndex(this.activeIndex);
+      }
+    }
+  }
+
+  private moveActive(delta: number): void {
+    const len = this.options.length;
+    if (!len) return;
+    let next = this.activeIndex + delta;
+    if (next < 0) next = len - 1;
+    if (next >= len) next = 0;
+    this.activeIndex = next;
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(e: MouseEvent): void {
+    if (this.open && !this.el.nativeElement.contains(e.target as Node)) {
+      this.close();
+    }
+  }
 }
 
 /** Star toggle bound to the shared favorites service. */

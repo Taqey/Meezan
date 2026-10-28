@@ -1,6 +1,23 @@
 import { Component, ElementRef, OnInit, OnDestroy, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { LucideAngularModule, PieChart, Layers, ArrowLeftRight, Download, Copy, RotateCcw, Plus, Trash2, UploadCloud, Info } from 'lucide-angular';
+import {
+  LucideAngularModule,
+  PieChart,
+  Layers,
+  ArrowLeftRight,
+  Download,
+  Copy,
+  RotateCcw,
+  Plus,
+  Trash2,
+  UploadCloud,
+  Info
+} from 'lucide-angular';
+import {
+  MzPageHeaderComponent,
+  MzBadgeComponent,
+  MzButtonComponent
+} from '../../components/ui';
 
 declare global {
   interface Window {
@@ -14,47 +31,49 @@ declare global {
 @Component({
   selector: 'app-portfolio',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule],
+  imports: [
+    CommonModule,
+    LucideAngularModule,
+    MzPageHeaderComponent,
+    MzBadgeComponent,
+    MzButtonComponent
+  ],
   encapsulation: ViewEncapsulation.None,
   template: `
-    <div class="portfolio-page">
+    <div class="mz mz-page portfolio-page">
       <!-- Page Header -->
-      <div class="page-intro">
-        <div class="intro-main">
-          <span class="eyebrow">أدوات الاستثمار المحترفة · Meezan Tools</span>
-          <div class="title-row">
-            <h1>تكوين محفظة استثمارية</h1>
-            <div class="intro-note">
-              <lucide-icon [img]="PieChartIcon" size="17"></lucide-icon>
-              <span>تحليل كمي وأكاديمي متقدم</span>
-            </div>
-          </div>
-          <p>
-            أداة محاكاة وبناء المحفظة الاستثمارية المثلى بالاعتماد على بيانات الأسعار التاريخية، بنموذجي مؤشر السوق المنفرد (Single Index Model) والارتباط الثابت (Constant Correlation Model).
-          </p>
-        </div>
-      </div>
+      <mz-page-header
+        badge="أدوات الاستثمار المحترفة · Meezan Tools"
+        title="تكوين محفظة استثمارية"
+        description="أداة محاكاة وبناء المحفظة الاستثمارية المثلى بالاعتماد على بيانات الأسعار التاريخية، بنموذجي مؤشر السوق المنفرد (Single Index Model) والارتباط الثابت (Constant Correlation Model).">
+        <ng-container actions>
+          <mz-badge tone="default" [pill]="true">
+            <lucide-icon [img]="PieChartIcon" [size]="15"></lucide-icon>
+            <span>تحليل كمي وأكاديمي متقدم</span>
+          </mz-badge>
+        </ng-container>
+      </mz-page-header>
 
       <!-- Main Container -->
       <div class="portfolio-container">
         <!-- Sub-tabs Navigation -->
         <div class="portfolio-subtabs" role="tablist">
-          <button id="tabBtnPf" class="subtab-btn active" type="button" role="tab">
-            <lucide-icon [img]="PieChartIcon" size="18"></lucide-icon>
+          <button id="tabBtnPf" class="mz-chip subtab-btn active" type="button" role="tab">
+            <lucide-icon [img]="PieChartIcon" [size]="16"></lucide-icon>
             <span>أفضل أسهم للمحفظة</span>
           </button>
-          <button id="tabBtnSec" class="subtab-btn" type="button" role="tab">
-            <lucide-icon [img]="LayersIcon" size="18"></lucide-icon>
+          <button id="tabBtnSec" class="mz-chip subtab-btn" type="button" role="tab">
+            <lucide-icon [img]="LayersIcon" [size]="16"></lucide-icon>
             <span>اختيار الأفضل لكل قطاع</span>
           </button>
         </div>
 
         <!-- Tab 1: Portfolio -->
         <div id="tab-portfolio" class="tabpage active">
-          <section class="card detail-card" id="pfCard">
+          <section class="mz-card mz-dsection detail-card" id="pfCard">
             <div class="card-heading">
               <div>
-                <span class="eyebrow">المحفظة المثلى</span>
+                <span class="mz-eyebrow">المحفظة المثلى</span>
                 <h2 id="t-pfTitle">أفضل أسهم للمحفظة</h2>
               </div>
             </div>
@@ -67,7 +86,7 @@ declare global {
                     <lucide-icon [img]="UploadCloudIcon" size="32"></lucide-icon>
                   </div>
                   <p id="t-pfDzS">اسحب ملفات الأسهم هنا (ملف لكل شركة)، أو</p>
-                  <button class="primary" type="button" id="pfBtnStocks">
+                  <button class="mz-btn primary" type="button" id="pfBtnStocks">
                     <span id="t-pfUpS">اختر ملفات الأسهم</span>
                   </button>
                   <input type="file" id="pfFileStocks" accept=".csv,.xlsx,.xls" style="display:none" multiple>
@@ -78,7 +97,7 @@ declare global {
                     <lucide-icon [img]="UploadCloudIcon" size="32"></lucide-icon>
                   </div>
                   <p id="t-pfDzI">اسحب ملف مؤشر السوق هنا، أو</p>
-                  <button class="ghost" type="button" id="pfBtnIndex">
+                  <button class="mz-btn" type="button" id="pfBtnIndex">
                     <span id="t-pfUpI">اختر ملف المؤشر</span>
                   </button>
                   <input type="file" id="pfFileIndex" accept=".csv,.xlsx,.xls" style="display:none">
@@ -90,7 +109,7 @@ declare global {
               <div class="inputsrow">
                 <span class="field">
                   <label id="t-pfRf" for="pfRf">معدل العائد الخالي من المخاطر (% سنوياً):</label>
-                  <input class="rfinput" type="number" id="pfRf" step="any" placeholder="مثال: 25">
+                  <input class="mz-input rfinput" type="number" id="pfRf" step="any" placeholder="مثال: 25">
                 </span>
               </div>
               <div class="hint" id="t-pfRfHint">مثال: عائد أذون الخزانة المصرية لأجل 91 يوماً</div>
@@ -99,7 +118,7 @@ declare global {
               <div id="pfMsg"></div>
 
               <div class="btnrow action-row">
-                <button id="pfGo" class="primary bigbtn" type="button" disabled>
+                <button id="pfGo" class="mz-btn primary bigbtn" type="button" disabled>
                   <lucide-icon [img]="PieChartIcon" size="20"></lucide-icon>
                   <span id="t-pfGo">تكوين المحفظة</span>
                 </button>
@@ -184,19 +203,19 @@ declare global {
 
               <!-- Result Actions -->
               <div class="btnrow export-row">
-                <button id="pfDl" class="ghost" type="button">
+                <button id="pfDl" class="mz-btn" type="button">
                   <lucide-icon [img]="DownloadIcon" size="16"></lucide-icon>
                   <span id="t-pfDl">تحميل Excel</span>
                 </button>
-                <button id="pfXlsx" class="ghost" type="button">
+                <button id="pfXlsx" class="mz-btn" type="button">
                   <lucide-icon [img]="DownloadIcon" size="16"></lucide-icon>
                   <span id="t-pfXlsx">تصدير Excel منسق</span>
                 </button>
-                <button id="pfCopy" class="ghost" type="button">
+                <button id="pfCopy" class="mz-btn" type="button">
                   <lucide-icon [img]="CopyIcon" size="16"></lucide-icon>
                   <span id="t-pfCopy">نسخ النتائج</span>
                 </button>
-                <button id="pfStart" class="danger" type="button">
+                <button id="pfStart" class="mz-btn danger" type="button">
                   <lucide-icon [img]="RotateCcwIcon" size="16"></lucide-icon>
                   <span id="t-pfStart">البدء من جديد</span>
                 </button>
@@ -217,10 +236,10 @@ declare global {
 
         <!-- Tab 2: Sectors -->
         <div id="tab-sectors" class="tabpage">
-          <section class="card detail-card" id="secCard">
+          <section class="mz-card mz-dsection detail-card" id="secCard">
             <div class="card-heading">
               <div>
-                <span class="eyebrow">مقارنة القطاعات</span>
+                <span class="mz-eyebrow">مقارنة القطاعات</span>
                 <h2 id="t-secTitle">اختيار الأفضل لكل قطاع</h2>
               </div>
             </div>
@@ -231,7 +250,7 @@ declare global {
                 <lucide-icon [img]="UploadCloudIcon" size="32"></lucide-icon>
               </div>
               <p id="t-secDzI">اسحب ملف مؤشر السوق هنا، أو</p>
-              <button class="ghost" type="button" id="secBtnIndex">
+              <button class="mz-btn" type="button" id="secBtnIndex">
                 <span id="t-secUpI">اختر ملف المؤشر</span>
               </button>
               <input type="file" id="secFileIndex" accept=".csv,.xlsx,.xls" style="display:none">
@@ -242,7 +261,7 @@ declare global {
             <div class="inputsrow">
               <span class="field">
                 <label id="t-secRf" for="secRf">معدل العائد الخالي من المخاطر (% سنوياً):</label>
-                <input class="rfinput" type="number" id="secRf" step="any" placeholder="مثال: 25">
+                <input class="mz-input rfinput" type="number" id="secRf" step="any" placeholder="مثال: 25">
               </span>
             </div>
             <div class="hint" id="t-secRfHint">مثال: عائد أذون الخزانة المصرية لأجل 91 يوماً</div>
@@ -255,7 +274,7 @@ declare global {
             <div id="secList"></div>
 
             <div class="btnrow add-sector-row">
-              <button id="secAdd" class="ghost" type="button">
+              <button id="secAdd" class="mz-btn" type="button">
                 <lucide-icon [img]="PlusIcon" size="16"></lucide-icon>
                 <span id="t-secAdd">إضافة قطاع جديد</span>
               </button>
@@ -264,7 +283,7 @@ declare global {
             <div id="secMsg"></div>
 
             <div class="btnrow action-row">
-              <button id="secGo" class="primary bigbtn" type="button" disabled>
+              <button id="secGo" class="mz-btn primary bigbtn" type="button" disabled>
                 <lucide-icon [img]="LayersIcon" size="20"></lucide-icon>
                 <span id="t-secGo">تحديد السهم الأفضل في كل قطاع</span>
               </button>
@@ -278,15 +297,15 @@ declare global {
             </div>
 
             <div class="btnrow export-row">
-              <button id="secDl" class="ghost" type="button" disabled>
+              <button id="secDl" class="mz-btn" type="button" disabled>
                 <lucide-icon [img]="DownloadIcon" size="16"></lucide-icon>
                 <span id="t-secDl">تحميل Excel</span>
               </button>
-              <button id="secCopy" class="ghost" type="button" disabled>
+              <button id="secCopy" class="mz-btn" type="button" disabled>
                 <lucide-icon [img]="CopyIcon" size="16"></lucide-icon>
                 <span id="t-secCopy">نسخ الجدول</span>
               </button>
-              <button id="secSend" class="primary" type="button" disabled>
+              <button id="secSend" class="mz-btn primary" type="button" disabled>
                 <lucide-icon [img]="ArrowLeftRightIcon" size="16"></lucide-icon>
                 <span id="t-secSend">إرسال الفائزين إلى تبويب المحفظة</span>
               </button>
