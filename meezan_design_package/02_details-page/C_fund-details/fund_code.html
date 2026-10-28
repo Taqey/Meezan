@@ -1,0 +1,474 @@
+<!DOCTYPE html><html dir="rtl" lang="ar" style=""><svg class="inline-defs-container" aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden"></svg><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>BWA - صندوق بلتون وفرة للاستثمار في أسهم مؤشر الشريعة EGX33 | ميزان EGX</title>
+<!-- Google Fonts: Cairo & Tajawal -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&amp;family=Tajawal:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<!-- Tailwind CSS CDN with Forms & Container Plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#ecfdf5',
+              100: '#d1fae5',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857',
+              800: '#065f46',
+              900: '#064e3b'
+            },
+            surface: {
+              50: '#f8fafc',
+              100: '#f1f5f9',
+              200: '#e2e8f0',
+              card: '#ffffff'
+            }
+          },
+          fontFamily: {
+            sans: ['Cairo', 'Tajawal', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+<style data-purpose="custom-styling">
+    body {
+      font-family: 'Cairo', 'Tajawal', sans-serif;
+      background-color: #f8fafc;
+      color: #1e293b;
+    }
+    .badge-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.2rem 0.65rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      height: 6px;
+      width: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background-color: #cbd5e1;
+      border-radius: 9999px;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased selection:bg-brand-500 selection:text-white">
+<!-- BEGIN: MainNavbar -->
+<header class="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-slate-200">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+<!-- Right Side: Logo & Main Navigation -->
+<div class="flex items-center gap-8">
+<a aria-label="الصفحة الرئيسية ميزان EGX" class="flex items-center gap-2.5 group" href="#">
+<div class="w-10 h-10 rounded-xl bg-brand-600 flex items-center justify-center text-white shadow-sm shadow-brand-500/30 group-hover:bg-brand-700 transition-colors">
+<svg class="w-6 h-6 fill-current" viewBox="0 0 24 24">
+<path d="M12 2a1 1 0 0 1 1 1v1.055a9.004 9.004 0 0 1 7.945 7.945H22a1 1 0 1 1 0 2h-1.055A9.004 9.004 0 0 1 13 21.945V23a1 1 0 1 1-2 0v-1.055A9.004 9.004 0 0 1 3.055 14H2a1 1 0 1 1 0-2h1.055A9.004 9.004 0 0 1 11 4.055V3a1 1 0 0 1 1-1zm0 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14z"></path>
+</svg>
+</div>
+<div class="flex flex-col text-right">
+<span class="font-bold text-lg leading-tight tracking-tight text-slate-800">ميزان <span class="text-brand-600">EGX</span></span>
+<span class="text-[10px] text-slate-400 font-semibold tracking-wider">سوق المال الإسلامي</span>
+</div>
+</a>
+<nav aria-label="شريط التنقل الرئيسي" class="hidden md:flex items-center gap-1 font-medium text-sm text-slate-600">
+<a class="px-3 py-2 rounded-lg hover:text-brand-600 hover:bg-slate-50 transition-colors" href="#">الأسهم</a>
+<a aria-current="page" class="px-3 py-2 rounded-lg text-brand-700 bg-brand-50 font-bold" href="#">الصناديق</a>
+<a class="px-3 py-2 rounded-lg hover:text-brand-600 hover:bg-slate-50 transition-colors" href="#">المؤشرات</a>
+<a class="px-3 py-2 rounded-lg hover:text-brand-600 hover:bg-slate-50 transition-colors" href="#">تكوين محفظة استثمارية</a>
+<a class="px-3 py-2 rounded-lg hover:text-brand-600 hover:bg-slate-50 transition-colors" href="#">المعايير الشرعية</a>
+<a class="px-3 py-2 rounded-lg hover:text-brand-600 hover:bg-slate-50 transition-colors flex items-center gap-1.5" href="#">
+<span class="">المفضلة</span>
+<span class="w-5 h-5 bg-brand-500 text-white rounded-full text-xs flex items-center justify-center font-bold">7</span>
+</a>
+</nav>
+</div>
+<!-- Left Side: Market Status Indicator -->
+<div class="flex items-center gap-3">
+<div class="flex items-center gap-2 bg-emerald-50 text-emerald-700 text-xs px-3 py-1.5 rounded-full border border-emerald-200/60 font-medium">
+<span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+</span>
+<span class="">بيانات السوق مباشرة من البورصة المصرية</span>
+</div>
+</div>
+</div>
+</header>
+<!-- END: MainNavbar -->
+<!-- BEGIN: MainContent -->
+<main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full space-y-6"><!-- BEGIN: BackButton & HeaderSummary -->
+<section class="space-y-4" data-purpose="fund-header-section">
+  <!-- Back Link -->
+  <div>
+    <a class="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-700 hover:text-brand-800 transition-colors group" href="#">
+      <svg class="w-4 h-4 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path d="M9 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+      </svg>
+      <span class="">العودة إلى الصناديق</span>
+    </a>
+  </div>
+  <!-- Fund Title, Badges & Price Box -->
+  <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+    <!-- Title and Attributes -->
+    <div class="space-y-3">
+      <div class="flex items-center gap-3 flex-wrap">
+        <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-3"><span class="">صندوق بلتون وفرة</span><span class="inline-flex items-center gap-1 text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-md text-xs font-semibold mr-1"><svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path></svg>متوافق شرعياً</span><button aria-label="إضافة للمفضلة" class="text-slate-300 hover:text-amber-400 transition-colors mr-auto sm:mr-0" type="button"><svg class="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"></path></svg></button></h1>
+      </div>
+      <p class="text-xs text-slate-400 font-medium tracking-wide">Beltone Wafra Fund • BWA EGX33</p><div class="flex flex-wrap items-center gap-2 pt-1"><a href="#" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-slate-100 hover:bg-brand-50 text-slate-700 hover:text-brand-700 border border-slate-200 hover:border-brand-500 font-medium text-xs transition-colors group"><svg class="w-3.5 h-3.5 text-slate-400 group-hover:text-brand-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg><span class="">بلتون لإدارة صناديق الاستثمار</span><svg class="w-3 h-3 text-slate-400 group-hover:text-brand-600 transition-transform group-hover:-translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg></a></div>
+      <!-- Badges & Taxonomy Tags -->
+      
+    </div>
+    <!-- Current Value Display -->
+    <div class="flex flex-col items-start lg:items-end justify-center min-w-[180px] bg-slate-50/80 lg:bg-transparent p-4 lg:p-0 rounded-xl border lg:border-none border-slate-100">
+      <span class="text-xs font-medium text-slate-500 mb-0.5">السعر الحالي للوثيقة</span>
+      <div class="flex items-baseline gap-2">
+        <span class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight font-mono">2.0013</span>
+        <span class="text-xs font-bold text-slate-500">EGP</span>
+      </div>
+      <div class="flex items-center gap-1 text-rose-600 font-bold text-sm mt-1 dir-ltr">
+        <span class="font-mono">-4.55%</span>
+        <svg class="w-3.5 h-3.5 stroke-current" fill="none" viewBox="0 0 24 24">
+          <path d="M19 14l-7 7m0 0l-7-7m7 7V3" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path>
+        </svg>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- END: BackButton & HeaderSummary -->
+
+<!-- BEGIN: FundDetailsAndOverview (Second Section) -->
+<section class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8 space-y-6" data-purpose="fund-core-information">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-4">
+    <div>
+      <span class="text-xs text-brand-700 font-bold tracking-wider uppercase block mb-1">بيانات سريعة</span>
+      <h2 class="text-xl font-extrabold text-slate-900">تفاصيل الصندوق ومعلومات التأسيس</h2>
+    </div>
+    <a class="inline-flex items-center gap-2 bg-emerald-50 hover:bg-emerald-100 text-brand-800 border border-emerald-200 font-bold py-2 px-4 rounded-xl transition-colors text-xs self-start sm:self-auto" href="#" rel="noopener noreferrer" target="_blank">
+      <svg class="w-4 h-4 text-brand-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+      </svg>
+      <span class="">عرض نشرة الإصدار الرسمية</span>
+      <span class="bg-brand-100 text-brand-800 px-1.5 py-0.5 rounded text-[10px] font-mono">PDF</span>
+    </a>
+  </div>
+  <!-- Core Metrics Grid -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+    <div class="bg-slate-50/70 border border-slate-200/80 rounded-xl p-4 text-center">
+      <span class="text-xs font-medium text-slate-500 block mb-1.5">كود الصندوق</span>
+      <span class="text-base font-bold text-slate-800 tracking-wide font-mono">BWA</span>
+    </div>
+    <div class="bg-slate-50/70 border border-slate-200/80 rounded-xl p-4 text-center">
+      <span class="text-xs font-medium text-slate-500 block mb-1.5">المدير</span>
+      <span class="text-base font-bold text-slate-800">بلتون لإدارة صناديق الاستثمار</span>
+    </div>
+    <div class="bg-slate-50/70 border border-slate-200/80 rounded-xl p-4 text-center">
+      <span class="text-xs font-medium text-slate-500 block mb-1.5">العملة</span>
+      <span class="text-base font-bold text-slate-800 font-mono">EGP</span>
+    </div>
+    <div class="bg-slate-50/70 border border-slate-200/80 rounded-xl p-4 text-center">
+      <span class="text-xs font-medium text-slate-500 block mb-1.5">تاريخ التأسيس</span>
+      <span class="text-base font-bold text-slate-800 font-mono">2024-07-30</span>
+    </div>
+    <div class="bg-slate-50/70 border border-slate-200/80 rounded-xl p-4 text-center">
+      <span class="text-xs font-medium text-slate-500 block mb-1.5">الحد الأدنى للاستثمار</span>
+      <span class="text-base font-bold text-slate-800">10 وثائق</span>
+    </div>
+    <div class="bg-slate-50/70 border border-slate-200/80 rounded-xl p-4 text-center">
+      <span class="text-xs font-medium text-slate-500 block mb-1.5">الرسوم السنوية</span>
+      <span class="text-base font-bold text-slate-800 font-mono">0.75%</span>
+    </div>
+    <div class="bg-slate-50/70 border border-slate-200/80 rounded-xl p-4 text-center"><span class="text-xs font-medium text-slate-500 block mb-1.5">إجمالي الأصول (AUM)</span><span class="text-base font-bold text-slate-800 tracking-tight font-mono">1.82 مليار ج.م</span></div>
+    <div class="bg-slate-50/70 border border-slate-200/80 rounded-xl p-4 text-center">
+      <span class="text-xs font-medium text-slate-500 block mb-1.5">مستوى المخاطر</span>
+      <span class="text-base font-bold text-slate-800">متوسطة إلى مرتفعة</span>
+    </div>
+  </div>
+</section>
+<!-- END: FundDetailsAndOverview -->
+
+<!-- BEGIN: HistoricalPerformanceChart (Third Section) -->
+<section class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8 space-y-6" data-purpose="performance-chart-card">
+  <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div>
+      <span class="text-xs text-brand-700 font-bold uppercase tracking-wider block mb-1">الأداء التاريخي</span>
+      <h2 class="text-xl font-extrabold text-slate-900">رسم بياني للأسعار وتطور العائد</h2>
+    </div>
+    <!-- Period Filters -->
+    <div class="inline-flex p-1 bg-slate-100 rounded-xl text-xs font-semibold text-slate-600">
+      <button class="px-3 py-1.5 rounded-lg hover:text-slate-900 transition-colors" type="button">1 شهر</button>
+      <button class="px-3 py-1.5 rounded-lg hover:text-slate-900 transition-colors" type="button">3 أشهر</button>
+      <button class="px-3 py-1.5 rounded-lg hover:text-slate-900 transition-colors" type="button">6 أشهر</button>
+      <button class="px-3 py-1.5 bg-white text-brand-700 font-bold rounded-lg shadow-sm" type="button">سنة</button>
+      <button class="px-3 py-1.5 rounded-lg hover:text-slate-900 transition-colors" type="button">3 سنين</button>
+      <button class="px-3 py-1.5 rounded-lg hover:text-slate-900 transition-colors" type="button">5 سنين</button>
+    </div>
+  </div>
+  <!-- Vector SVG Chart Container -->
+  <div class="w-full bg-slate-50/50 rounded-xl p-4 border border-slate-100">
+    <div class="h-64 sm:h-72 w-full relative">
+      <svg class="w-full h-full overflow-visible" preserveAspectRatio="none" viewBox="0 0 1000 300">
+        <defs>
+          <linearGradient id="chartGradient" x1="0" x2="0" y1="0" y2="1">
+            <stop class="" offset="0%" stop-color="#059669" stop-opacity="0.25"></stop>
+            <stop class="" offset="100%" stop-color="#059669" stop-opacity="0.0"></stop>
+          </linearGradient>
+        </defs>
+        <line stroke="#e2e8f0" stroke-dasharray="4" stroke-width="1" x1="0" x2="950" y1="30" y2="30"></line>
+        <text fill="#94a3b8" font-family="monospace" font-size="11" x="965" y="34">2.5</text>
+        <line stroke="#e2e8f0" stroke-dasharray="4" stroke-width="1" x1="0" x2="950" y1="100" y2="100"></line>
+        <text fill="#94a3b8" font-family="monospace" font-size="11" x="965" y="104">2.0</text>
+        <line stroke="#e2e8f0" stroke-dasharray="4" stroke-width="1" x1="0" x2="950" y1="170" y2="170"></line>
+        <text fill="#94a3b8" font-family="monospace" font-size="11" x="965" y="174">1.5</text>
+        <line stroke="#e2e8f0" stroke-dasharray="4" stroke-width="1" x1="0" x2="950" y1="240" y2="240"></line>
+        <text fill="#94a3b8" font-family="monospace" font-size="11" x="965" y="244">1.0</text>
+        <path d="M 10 95 C 30 85, 50 70, 70 80 C 90 90, 110 65, 130 65 C 150 65, 170 85, 190 75 C 210 65, 230 75, 250 85 C 270 95, 290 120, 310 115 C 330 110, 350 125, 370 125 C 390 125, 410 115, 430 120 C 450 125, 470 145, 490 140 C 510 135, 530 155, 550 160 C 570 165, 590 185, 610 180 C 630 175, 650 190, 670 195 C 690 200, 710 215, 730 210 C 750 205, 770 215, 790 220 C 810 225, 830 225, 850 235 C 870 240, 900 240, 930 245 L 930 280 L 10 280 Z" fill="url(#chartGradient)"></path>
+        <path class="" d="M 10 95 C 30 85, 50 70, 70 80 C 90 90, 110 65, 130 65 C 150 65, 170 85, 190 75 C 210 65, 230 75, 250 85 C 270 95, 290 120, 310 115 C 330 110, 350 125, 370 125 C 390 125, 410 115, 430 120 C 450 125, 470 145, 490 140 C 510 135, 530 155, 550 160 C 570 165, 590 185, 610 180 C 630 175, 650 190, 670 195 C 690 200, 710 215, 730 210 C 750 205, 770 215, 790 220 C 810 225, 830 225, 850 235 C 870 240, 900 240, 930 245" fill="none" stroke="#059669" stroke-linecap="round" stroke-width="2.5"></path>
+      </svg>
+    </div>
+    <div class="flex justify-between items-center text-[10px] text-slate-400 font-mono mt-2 pt-2 border-t border-slate-100">
+      <span class="">2024/10/10</span>
+      <span class="">2024/12/02</span>
+      <span class="">2025/01/20</span>
+      <span class="">2025/03/10</span>
+      <span class="">2025/05/01</span>
+      <span class="">2025/06/20</span>
+      <span class="">2025/08/11</span>
+      <span class="">2025/10/01</span>
+      <span class="">2025/11/20</span>
+    </div>
+  </div>
+</section>
+<!-- END: HistoricalPerformanceChart -->
+
+<!-- BEGIN: StrategyAndAssetAllocation (Fourth Section) -->
+<section class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8 space-y-6" data-purpose="strategy-and-allocation">
+  <div class="border-b border-slate-100 pb-4">
+    <span class="text-xs text-brand-700 font-bold uppercase tracking-wider block mb-1">الاستراتيجية والمحفظة</span>
+    <h2 class="text-xl font-extrabold text-slate-900">استراتيجية وهيكل الاستثمار</h2>
+  </div>
+  <!-- Description Text Block -->
+  <div class="space-y-3 text-sm leading-relaxed text-slate-600">
+    <p class="">
+      صندوق بلتون ذو العائد التراكمي للاستثمار في أسهم مؤشر الشريعة EGX33 - والمعروف اختصاراً باسم بلتون وفرة هو صندوق أسهم مفتوح متوافق مع الشريعة الإسلامية. يندرج تحت صندوق بلتون متعدد الإصدارات "ثروات"، ويهدف إلى محاكاة أداء مؤشر EGX33 Shariah Index في البورصة المصرية.
+    </p>
+    <p class="">
+      يقدم الصندوق للمستثمر تعرضاً مباشراً لأكبر 33 شركة متوافقة مع الشريعة في السوق المصري والتي تمثل نحو 16 قطاعاً مختلفاً، ما يوفر تنويعاً قطاعياً واسعاً داخل محفظة واحدة تعتمد نموذج تتبع المؤشر (Index Tracking).
+    </p>
+  </div>
+  <!-- Visual Asset Allocation Bar & Breakdown -->
+  <div class="bg-slate-50/70 border border-slate-200/80 rounded-xl p-5 space-y-4">
+    <div class="flex items-center justify-between">
+      <h4 class="font-bold text-slate-800 text-sm">هيكل توزيع الأصول المستهدف (Asset Allocation)</h4>
+      <span class="text-xs text-brand-700 font-semibold">معايير الالتزام الشرعي</span>
+    </div>
+    <!-- Progress visualization -->
+    <div class="w-full h-3 bg-slate-200 rounded-full flex overflow-hidden">
+      <div class="bg-brand-600 h-full" style="width: 90%;" title="أسهم مؤشر EGX33 Shariah (≥ 90%)"></div>
+      <div class="bg-emerald-400 h-full" style="width: 10%;" title="سيولة وصكوك واستثمارات متوافقة (≤ 10%)"></div>
+    </div>
+    <!-- Grid breakdown cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 text-xs">
+      <div class="bg-white border border-slate-200/80 rounded-lg p-3 space-y-1">
+        <div class="flex items-center gap-1.5">
+          <span class="w-2.5 h-2.5 rounded-full bg-brand-600"></span>
+          <span class="font-bold text-slate-800">أسهم مؤشر EGX33</span>
+        </div>
+        <p class="font-mono font-bold text-brand-700 text-sm">≥ 90% من صافي الأصول</p>
+        <span class="text-slate-400 text-[11px] block">موزعة على أكبر 33 شركة متوافقة شرعاً</span>
+      </div>
+      <div class="bg-white border border-slate-200/80 rounded-lg p-3 space-y-1">
+        <div class="flex items-center gap-1.5">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+          <span class="font-bold text-slate-800">أدوات سيولة وصكوك</span>
+        </div>
+        <p class="font-mono font-bold text-emerald-700 text-sm">≤ 10% أدوات سيولة</p>
+        <span class="text-slate-400 text-[11px] block">استثمارات سائلة متوافقة مع الضوابط</span>
+      </div>
+      <div class="bg-white border border-slate-200/80 rounded-lg p-3 space-y-1">
+        <div class="flex items-center gap-1.5">
+          <span class="w-2.5 h-2.5 rounded-full bg-slate-400"></span>
+          <span class="font-bold text-slate-800">استثمارات مكملة</span>
+        </div>
+        <p class="font-bold text-slate-700 text-sm">حسابات وودائع بنكية</p>
+        <span class="text-slate-400 text-[11px] block">حسابات جارية وودائع بالبنوك الإسلامية</span>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- END: StrategyAndAssetAllocation -->
+
+<!-- BEGIN: CategoriesAffiliation (Fifth Section) -->
+<section class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8 space-y-4" data-purpose="taxonomy-section"><div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 gap-3"><div><span class="text-xs text-brand-700 font-bold uppercase tracking-wider block mb-1">التصنيفات والهيكلة</span><h2 class="text-xl font-extrabold text-slate-900">تصنيفات الصندوق والخصائص القانونية</h2></div></div><div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2"><a href="#" class="p-5 rounded-xl border border-slate-200/80 bg-slate-50/60 hover:bg-white hover:border-brand-500 hover:shadow-sm transition-all group flex flex-col justify-between"><div class="space-y-2"><span class="text-xs text-slate-500 font-medium block">نوع الصندوق والأصل</span><h3 class="text-base font-bold text-slate-900 group-hover:text-brand-600 transition-colors leading-snug">صندوق أسهم متوافق مع الشريعة</h3><p class="text-xs text-slate-500 leading-relaxed">استثمار مباشر في الأسهم المتوافقة كلياً مع الضوابط الشرعية المعتمدة للبورصة المصرية.</p></div><div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-brand-700"><span class="">استعراض صناديق الأسهم</span><span class="transition-transform group-hover:-translate-x-1">←</span></div></a><a href="#" class="p-5 rounded-xl border border-slate-200/80 bg-slate-50/60 hover:bg-white hover:border-brand-500 hover:shadow-sm transition-all group flex flex-col justify-between"><div class="space-y-2"><span class="text-xs text-slate-500 font-medium block">النمط الاستثماري</span><h3 class="text-base font-bold text-slate-900 group-hover:text-brand-600 transition-colors leading-snug">صندوق مؤشر سلبي (تتبع المؤشر)</h3><p class="text-xs text-slate-500 leading-relaxed">نموذج استثماري غير نشط (Index Tracking) يحاكي بدقة حركة مؤشر الأسهم بهدف خفض التكلفة.</p></div><div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-brand-700"><span class="">استعراض صناديق المؤشرات</span><span class="transition-transform group-hover:-translate-x-1">←</span></div></a><a href="#" class="p-5 rounded-xl border border-slate-200/80 bg-slate-50/60 hover:bg-white hover:border-brand-500 hover:shadow-sm transition-all group flex flex-col justify-between"><div class="space-y-2"><span class="text-xs text-slate-500 font-medium block">المؤشر والقطاع المستهدف</span><h3 class="text-base font-bold text-slate-900 group-hover:text-brand-600 transition-colors leading-snug">مؤشر الشريعة EGX33</h3><p class="text-xs text-slate-500 leading-relaxed">تغطية استثمارية لأكبر 33 شركة مقيدة ومتوافقة شرعياً عبر مختلف القطاعات الحيوية بالسوق.</p></div><div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-brand-700"><span class="">تفاصيل مؤشر EGX33</span><span class="transition-transform group-hover:-translate-x-1">←</span></div></a></div></section>
+<!-- END: CategoriesAffiliation -->
+
+<!-- BEGIN: SimilarFunds (Sixth Section) -->
+<section class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8 space-y-6" data-purpose="similar-funds-section">
+  <div>
+    <span class="text-xs text-brand-700 font-bold uppercase tracking-wider block mb-1">صناديق مشابهة</span>
+    <h2 class="text-xl font-extrabold text-slate-900">صناديق في نفس الفئة</h2>
+  </div>
+  <!-- Card Grid -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <!-- Fund 1 -->
+    <a class="border border-slate-200 hover:border-brand-500 rounded-xl p-4 flex flex-col justify-between hover:shadow-md transition-all group bg-white" href="#">
+      <div class="space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-mono font-bold text-brand-700 bg-brand-50 px-2 py-0.5 rounded">ASO</span>
+          <div class="w-2.5 h-2.5 rounded-full bg-emerald-500" title="متوافق"></div>
+        </div>
+        <h4 class="font-bold text-slate-800 text-sm group-hover:text-brand-600 transition-colors">صندوق أزيموت فرص الشريعة AZ</h4>
+        <p class="text-[11px] text-slate-400 font-mono truncate">Azimut Opportunities Shariah AZ</p>
+      </div>
+      <div class="pt-4 mt-3 border-t border-slate-100 flex items-center justify-between text-xs text-brand-600 font-bold">
+        <span class="">عرض الصندوق</span>
+        <span class="transition-transform group-hover:-translate-x-1">←</span>
+      </div>
+    </a>
+    <!-- Fund 2 -->
+    <a class="border border-slate-200 hover:border-brand-500 rounded-xl p-4 flex flex-col justify-between hover:shadow-md transition-all group bg-white" href="#">
+      <div class="space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-mono font-bold text-brand-700 bg-brand-50 px-2 py-0.5 rounded">BEF</span>
+          <div class="w-2.5 h-2.5 rounded-full bg-emerald-500" title="متوافق"></div>
+        </div>
+        <h4 class="font-bold text-slate-800 text-sm group-hover:text-brand-600 transition-colors">صندوق استثمار بنك البركة ذو العائد الدوري</h4>
+        <p class="text-[11px] text-slate-400 font-mono truncate">Al Baraka Bank Islamic Fund</p>
+      </div>
+      <div class="pt-4 mt-3 border-t border-slate-100 flex items-center justify-between text-xs text-brand-600 font-bold">
+        <span class="">عرض الصندوق</span>
+        <span class="transition-transform group-hover:-translate-x-1">←</span>
+      </div>
+    </a>
+    <!-- Fund 3 -->
+    <a class="border border-slate-200 hover:border-brand-500 rounded-xl p-4 flex flex-col justify-between hover:shadow-md transition-all group bg-white" href="#">
+      <div class="space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-mono font-bold text-brand-700 bg-brand-50 px-2 py-0.5 rounded">NHF</span>
+          <div class="w-2.5 h-2.5 rounded-full bg-emerald-500" title="متوافق"></div>
+        </div>
+        <h4 class="font-bold text-slate-800 text-sm group-hover:text-brand-600 transition-colors">صندوق هلال - بنك نكست (المتوافق مع الشريعة)</h4>
+        <p class="text-[11px] text-slate-400 font-mono truncate">Helal Fund - Bank NXT (Sharia Compliant)</p>
+      </div>
+      <div class="pt-4 mt-3 border-t border-slate-100 flex items-center justify-between text-xs text-brand-600 font-bold">
+        <span class="">عرض الصندوق</span>
+        <span class="transition-transform group-hover:-translate-x-1">←</span>
+      </div>
+    </a>
+    <!-- Fund 4 -->
+    <a class="border border-slate-200 hover:border-brand-500 rounded-xl p-4 flex flex-col justify-between hover:shadow-md transition-all group bg-white" href="#">
+      <div class="space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-mono font-bold text-brand-700 bg-brand-50 px-2 py-0.5 rounded">KSF</span>
+          <div class="w-2.5 h-2.5 rounded-full bg-emerald-500" title="متوافق"></div>
+        </div>
+        <h4 class="font-bold text-slate-800 text-sm group-hover:text-brand-600 transition-colors">صندوق كنز شريعة EGX33 - للاستثمار في الأسهم</h4>
+        <p class="text-[11px] text-slate-400 font-mono truncate">Kenz EGX33 Shariah Fund</p>
+      </div>
+      <div class="pt-4 mt-3 border-t border-slate-100 flex items-center justify-between text-xs text-brand-600 font-bold">
+        <span class="">عرض الصندوق</span>
+        <span class="transition-transform group-hover:-translate-x-1">←</span>
+      </div>
+    </a>
+    <!-- Fund 5 -->
+    <a class="border border-slate-200 hover:border-brand-500 rounded-xl p-4 flex flex-col justify-between hover:shadow-md transition-all group bg-white" href="#">
+      <div class="space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-mono font-bold text-brand-700 bg-brand-50 px-2 py-0.5 rounded">SSF</span>
+          <div class="w-2.5 h-2.5 rounded-full bg-emerald-500" title="متوافق"></div>
+        </div>
+        <h4 class="font-bold text-slate-800 text-sm group-hover:text-brand-600 transition-colors">صندوق سنابل الإسلامي - مصرف أبوظبي الإسلامي وبنك SAIB</h4>
+        <p class="text-[11px] text-slate-400 font-mono truncate">Sanabel Islamic Fund - ADIB Egypt &amp; SAIB</p>
+      </div>
+      <div class="pt-4 mt-3 border-t border-slate-100 flex items-center justify-between text-xs text-brand-600 font-bold">
+        <span class="">عرض الصندوق</span>
+        <span class="transition-transform group-hover:-translate-x-1">←</span>
+      </div>
+    </a>
+    <!-- Fund 6 -->
+    <a class="border border-slate-200 hover:border-brand-500 rounded-xl p-4 flex flex-col justify-between hover:shadow-md transition-all group bg-white" href="#">
+      <div class="space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-mono font-bold text-brand-700 bg-brand-50 px-2 py-0.5 rounded">BSF</span>
+          <div class="w-2.5 h-2.5 rounded-full bg-emerald-500" title="متوافق"></div>
+        </div>
+        <h4 class="font-bold text-slate-800 text-sm group-hover:text-brand-600 transition-colors">صندوق بشائر - صندوق البنك الأهلي وبنك البركة مصر</h4>
+        <p class="text-[11px] text-slate-400 font-mono truncate">Bashayer Islamic fund - NBE &amp; El Baraka Bank</p>
+      </div>
+      <div class="pt-4 mt-3 border-t border-slate-100 flex items-center justify-between text-xs text-brand-600 font-bold">
+        <span class="">عرض الصندوق</span>
+        <span class="transition-transform group-hover:-translate-x-1">←</span>
+      </div>
+    </a>
+    <!-- Fund 7 -->
+    <a class="border border-slate-200 hover:border-brand-500 rounded-xl p-4 flex flex-col justify-between hover:shadow-md transition-all group bg-white" href="#">
+      <div class="space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-mono font-bold text-brand-700 bg-brand-50 px-2 py-0.5 rounded">FIF</span>
+          <div class="w-2.5 h-2.5 rounded-full bg-emerald-500" title="متوافق"></div>
+        </div>
+        <h4 class="font-bold text-slate-800 text-sm group-hover:text-brand-600 transition-colors">صندوق استثمار بنك فيصل الإسلامي</h4>
+        <p class="text-[11px] text-slate-400 font-mono truncate">Faisal Islamic Bank of Egypt Fund</p>
+      </div>
+      <div class="pt-4 mt-3 border-t border-slate-100 flex items-center justify-between text-xs text-brand-600 font-bold">
+        <span class="">عرض الصندوق</span>
+        <span class="transition-transform group-hover:-translate-x-1">←</span>
+      </div>
+    </a>
+    <!-- Fund 8 -->
+    <a class="border border-slate-200 hover:border-brand-500 rounded-xl p-4 flex flex-col justify-between hover:shadow-md transition-all group bg-white" href="#">
+      <div class="space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-mono font-bold text-brand-700 bg-brand-50 px-2 py-0.5 rounded">FCA</span>
+          <div class="w-2.5 h-2.5 rounded-full bg-emerald-500" title="متوافق"></div>
+        </div>
+        <h4 class="font-bold text-slate-800 text-sm group-hover:text-brand-600 transition-colors">صندوق أمان المتوافق مع الشريعة - استثمار بنك فيصل وبنك CIB</h4>
+        <p class="text-[11px] text-slate-400 font-mono truncate">Aman Fund - Faisal &amp; CIB shariah compliant</p>
+      </div>
+      <div class="pt-4 mt-3 border-t border-slate-100 flex items-center justify-between text-xs text-brand-600 font-bold">
+        <span class="">عرض الصندوق</span>
+        <span class="transition-transform group-hover:-translate-x-1">←</span>
+      </div>
+    </a>
+  </div>
+</section>
+<!-- END: SimilarFunds -->
+
+<!-- BEGIN: DisclaimerAndAttribution (Seventh Section) -->
+<footer class="text-center py-4 space-y-2" data-purpose="disclaimer-note">
+  <p class="text-xs text-slate-500 leading-relaxed">
+    المصدر: <span class="font-bold text-slate-700">SNDUK</span> | آخر تحديث: 2026-10-17 21:00 | <span class="text-slate-400">إخلاء المسؤولية: البيانات لأغراض معلوماتية فقط ولا تُعد نصيحة استثمارية.</span>
+  </p>
+</footer>
+<!-- END: DisclaimerAndAttribution --></main>
+<!-- END: MainContent -->
+<!-- BEGIN: MainFooter -->
+<footer class="bg-white border-t border-slate-200 mt-auto">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+<!-- Right: Copyright -->
+<div>
+<span class="">© 2026 ميزان EGX. جميع الحقوق محفوظة.</span>
+</div>
+<!-- Center / Left: Engine & Coverage Badge -->
+<div class="flex items-center gap-3">
+<span class="bg-slate-100 text-slate-600 px-3 py-1 rounded-full border border-slate-200 font-medium">
+          تغطية متكاملة لـ 8 هيئات شرعية • 4 نماذج للقيمة العادلة • متصل بخادم Meezan Backend
+        </span>
+<div class="w-7 h-7 rounded-lg bg-brand-600 text-white flex items-center justify-center font-bold">
+<svg class="w-4 h-4 fill-current" viewBox="0 0 24 24">
+<path d="M12 2a1 1 0 0 1 1 1v1.055a9.004 9.004 0 0 1 7.945 7.945H22a1 1 0 1 1 0 2h-1.055A9.004 9.004 0 0 1 13 21.945V23a1 1 0 1 1-2 0v-1.055A9.004 9.004 0 0 1 3.055 14H2a1 1 0 1 1 0-2h1.055A9.004 9.004 0 0 1 11 4.055V3a1 1 0 0 1 1-1z"></path>
+</svg>
+</div>
+</div>
+</div>
+</footer>
+<!-- END: MainFooter -->
+
+
+</body></html>

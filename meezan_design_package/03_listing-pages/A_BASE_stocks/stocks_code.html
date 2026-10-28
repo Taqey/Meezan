@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+
+<html class="scroll-smooth" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>ميزان EGX - تقييم الأسهم المصرية والشرعية</title>
+<!-- IBM Plex Sans Arabic Font -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS with Forms and Container Queries -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "background": "#faf8ff",
+            "on-primary-container": "#f5fff7",
+            "surface-container": "#eaedff",
+            "outline": "#6d7a72",
+            "primary": "#006948",
+            "on-secondary-fixed": "#002115",
+            "surface": "#faf8ff",
+            "surface-container-high": "#e2e7ff",
+            "primary-container": "#00855d",
+            "on-error-container": "#93000a",
+            "outline-variant": "#bccac0",
+            "primary-fixed": "#85f8c4",
+            "surface-container-lowest": "#ffffff",
+            "on-tertiary-container": "#f5fff6",
+            "on-primary-fixed": "#002114",
+            "inverse-on-surface": "#eef0ff",
+            "on-tertiary": "#ffffff",
+            "error-container": "#ffdad6",
+            "secondary": "#006c4e",
+            "secondary-fixed-dim": "#7bd8b1",
+            "on-error": "#ffffff",
+            "on-secondary": "#ffffff",
+            "tertiary": "#006947",
+            "inverse-primary": "#68dba9",
+            "primary-fixed-dim": "#68dba9",
+            "on-background": "#131b2e",
+            "on-tertiary-fixed": "#002113",
+            "secondary-container": "#97f5cc",
+            "surface-variant": "#dae2fd",
+            "surface-dim": "#d2d9f4",
+            "on-primary": "#ffffff",
+            "on-tertiary-fixed-variant": "#005236",
+            "surface-tint": "#006c4a",
+            "inverse-surface": "#283044",
+            "on-surface-variant": "#3d4a42",
+            "surface-container-highest": "#dae2fd",
+            "error": "#ba1a1a",
+            "on-surface": "#131b2e",
+            "tertiary-container": "#00855b",
+            "on-secondary-fixed-variant": "#00513a",
+            "surface-bright": "#faf8ff",
+            "tertiary-fixed": "#6ffbbe",
+            "secondary-fixed": "#97f5cc",
+            "surface-container-low": "#f2f3ff",
+            "on-primary-fixed-variant": "#005137",
+            "tertiary-fixed-dim": "#4edea3",
+            "on-secondary-container": "#007353"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-2xl": "3rem",
+            "gutter": "1.25rem",
+            "margin-mobile": "1rem",
+            "gutter-mobile": "0.75rem",
+            "space-sm": "0.5rem",
+            "space-xs": "0.25rem",
+            "space-xl": "2rem",
+            "space-md": "1rem",
+            "margin": "2rem",
+            "space-lg": "1.5rem"
+          },
+          "fontFamily": {
+            "metric-md": ["IBM Plex Sans Arabic", "IBM Plex Sans", "sans-serif"],
+            "headline-md": ["IBM Plex Sans Arabic", "IBM Plex Sans", "sans-serif"],
+            "label-md": ["IBM Plex Sans Arabic", "IBM Plex Sans", "sans-serif"],
+            "display-hero-mobile": ["IBM Plex Sans Arabic", "IBM Plex Sans", "sans-serif"],
+            "label-xs": ["IBM Plex Sans Arabic", "IBM Plex Sans", "sans-serif"],
+            "body-sm": ["IBM Plex Sans Arabic", "IBM Plex Sans", "sans-serif"],
+            "headline-lg": ["IBM Plex Sans Arabic", "IBM Plex Sans", "sans-serif"],
+            "title-sm": ["IBM Plex Sans Arabic", "IBM Plex Sans", "sans-serif"],
+            "display-hero": ["IBM Plex Sans Arabic", "IBM Plex Sans", "sans-serif"],
+            "metric-xl": ["IBM Plex Sans Arabic", "IBM Plex Sans", "sans-serif"],
+            "body-md": ["IBM Plex Sans Arabic", "IBM Plex Sans", "sans-serif"]
+          },
+          "fontSize": {
+            "metric-md": ["22px", { "lineHeight": "28px", "fontWeight": "700" }],
+            "headline-md": ["20px", { "lineHeight": "30px", "fontWeight": "600" }],
+            "label-md": ["12px", { "lineHeight": "18px", "fontWeight": "500" }],
+            "display-hero-mobile": ["26px", { "lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+            "label-xs": ["11px", { "lineHeight": "16px", "fontWeight": "500" }],
+            "body-sm": ["13px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "headline-lg": ["28px", { "lineHeight": "40px", "fontWeight": "700" }],
+            "title-sm": ["16px", { "lineHeight": "24px", "fontWeight": "600" }],
+            "display-hero": ["36px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "metric-xl": ["32px", { "lineHeight": "38px", "fontWeight": "700" }],
+            "body-md": ["14px", { "lineHeight": "22px", "fontWeight": "400" }]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    body {
+      font-family: 'IBM Plex Sans Arabic', sans-serif;
+      background-color: #faf8ff;
+      color: #131b2e;
+    }
+    /* Hide scrollbar for mobile overflow tabs */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex flex-col antialiased selection:bg-secondary-container selection:text-on-secondary-container overflow-x-hidden">
+<!-- TopNavBar (Responsive & Mobile-Adaptive) -->
+<header class="bg-surface/95 dark:bg-inverse-surface/95 backdrop-blur-md text-primary dark:text-inverse-primary docked full-width top-0 sticky z-50 shadow-sm border-b border-outline-variant/20">
+<div class="flex flex-row-reverse justify-between items-center w-full px-4 sm:px-margin max-w-[1360px] mx-auto h-16">
+<!-- Right: Brand Logo & Desktop Links -->
+<div class="flex items-center gap-3 sm:gap-space-lg">
+<a class="flex items-center gap-2 shrink-0" href="#">
+<div class="bg-primary text-on-primary w-8 h-8 rounded-lg flex items-center justify-center font-bold text-lg shadow-sm">
+<span class="material-symbols-outlined text-xl" data-icon="account_balance">account_balance</span>
+</div>
+<span class="text-lg sm:text-headline-md font-bold text-primary dark:text-primary-fixed">ميزان EGX</span>
+</a>
+<!-- Desktop Navigation Links -->
+<nav class="hidden md:flex items-center gap-space-md pt-1">
+<!-- Active: الأسهم -->
+<a class="text-primary dark:text-primary-fixed font-title-sm text-title-sm border-b-2 border-primary dark:border-primary-fixed pb-1" href="#">الأسهم</a>
+<a class="text-on-surface-variant dark:text-inverse-on-surface hover:text-primary dark:hover:text-primary-fixed font-body-md text-body-md transition-colors" href="#">الصناديق</a>
+<a class="text-on-surface-variant dark:text-inverse-on-surface hover:text-primary dark:hover:text-primary-fixed font-body-md text-body-md transition-colors" href="#">المؤشرات</a>
+<a class="text-on-surface-variant dark:text-inverse-on-surface hover:text-primary dark:hover:text-primary-fixed font-body-md text-body-md transition-colors" href="#">تكوين محفظة</a>
+<a class="text-on-surface-variant dark:text-inverse-on-surface hover:text-primary dark:hover:text-primary-fixed font-body-md text-body-md transition-colors" href="#">المعايير الشرعية</a>
+<a class="flex items-center gap-1 text-on-surface-variant dark:text-inverse-on-surface hover:text-primary dark:hover:text-primary-fixed font-body-md text-body-md transition-colors" href="#">
+<span class="">المفضلة</span>
+<span class="bg-primary text-on-primary text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">7</span>
+</a>
+</nav>
+</div>
+<!-- Left: Status Indicator & Trailing Action -->
+<div class="flex items-center gap-1.5 sm:gap-space-md">
+<div class="hidden lg:flex items-center gap-2 px-3 py-1 bg-surface-container-low rounded-full border border-outline-variant/30">
+<span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+<span class="text-label-xs font-label-xs text-on-surface-variant">بيانات السوق مباشرة</span>
+</div>
+<button aria-label="الإشعارات" class="p-2 text-on-surface-variant hover:bg-surface-container rounded-full transition-all duration-150 active:scale-[0.98]">
+<span class="material-symbols-outlined text-xl" data-icon="notifications">notifications</span>
+</button>
+<button aria-label="المحفوظات" class="p-2 text-on-surface-variant hover:bg-surface-container rounded-full transition-all duration-150 active:scale-[0.98]">
+<span class="material-symbols-outlined text-xl" data-icon="bookmark">bookmark</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-title-sm text-title-sm ring-2 ring-primary/20 shrink-0">
+          م
+        </div>
+</div>
+</div>
+<!-- Mobile Sub-Navigation Bar (Horizontal Scrollable Tabs) -->
+<nav class="md:hidden flex items-center gap-4 px-4 overflow-x-auto no-scrollbar border-t border-outline-variant/15 py-2.5 text-body-sm font-medium whitespace-nowrap bg-surface">
+<a class="text-primary font-bold border-b-2 border-primary pb-0.5" href="#">الأسهم</a>
+<a class="text-on-surface-variant hover:text-primary" href="#">الصناديق</a>
+<a class="text-on-surface-variant hover:text-primary" href="#">المؤشرات</a>
+<a class="text-on-surface-variant hover:text-primary" href="#">تكوين محفظة</a>
+<a class="text-on-surface-variant hover:text-primary" href="#">المعايير الشرعية</a>
+<a class="flex items-center gap-1 text-on-surface-variant hover:text-primary" href="#">
+<span>المفضلة</span>
+<span class="bg-primary text-on-primary text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">7</span>
+</a>
+</nav>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-1 w-full max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-margin py-4 sm:py-space-xl">
+<!-- Title Section & Top Info -->
+<div class="flex flex-col md:flex-row md:items-end justify-between mb-space-md sm:mb-space-lg gap-4">
+<div>
+<div class="flex items-center gap-2 mb-1">
+<span class="text-label-md font-label-md text-primary font-semibold bg-secondary-fixed/30 px-2 py-0.5 rounded">البورصة المصرية</span>
+<span class="text-label-md font-label-md text-outline">• 236 سهم متوفر</span>
+</div>
+<h1 class="text-2xl sm:text-headline-lg lg:text-display-hero font-bold text-on-background tracking-tight">الأسهم</h1>
+<p class="text-body-sm sm:text-body-md text-on-surface-variant mt-1 max-w-2xl">
+          ابحث، صفّ، وقارن تقييمات الأسهم وأحكام الشريعة بناءً على بيانات المؤشرات ونماذج القيمة العادلة المعتمدة.
+        </p>
+</div>
+<div class="flex flex-wrap items-center gap-2 self-stretch sm:self-auto justify-between sm:justify-start">
+<div class="flex items-center bg-surface-container-low p-1 rounded-xl border border-outline-variant/30 flex-1 sm:flex-initial justify-center">
+<button class="flex items-center justify-center gap-1 px-2.5 sm:px-3 py-1.5 bg-primary text-on-primary rounded-lg text-xs sm:text-label-sm font-medium shadow-sm transition-all flex-1 sm:flex-initial">
+<span class="material-symbols-outlined text-base">grid_view</span>
+<span class="">بطاقات</span>
+</button>
+<button class="flex items-center justify-center gap-1 px-2.5 sm:px-3 py-1.5 text-on-surface-variant hover:text-primary rounded-lg text-xs sm:text-label-sm font-medium transition-all flex-1 sm:flex-initial">
+<span class="material-symbols-outlined text-base">table_chart</span>
+<span class="">جدول</span>
+</button>
+<button class="flex items-center justify-center gap-1 px-2.5 sm:px-3 py-1.5 text-on-surface-variant hover:text-primary rounded-lg text-xs sm:text-label-sm font-medium transition-all flex-1 sm:flex-initial">
+<span class="material-symbols-outlined text-base">view_quilt</span>
+<span class="hidden xs:inline">خريطة</span>
+<span class="xs:hidden">خريطة</span>
+</button>
+</div>
+<button class="flex items-center gap-1.5 px-3 py-2 bg-surface-container-lowest border border-outline-variant/30 text-on-surface-variant hover:text-primary hover:border-primary/40 rounded-xl text-xs sm:text-label-sm font-medium shadow-sm transition-all shrink-0">
+<span class="material-symbols-outlined text-base">picture_as_pdf</span>
+<span class="">تقرير PDF</span>
+</button>
+</div>
+</div>
+<!-- KPI Summary Ribbon (2 columns on mobile, 4 on desktop) -->
+<section class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-space-lg sm:mb-space-xl">
+<!-- KPI 1 -->
+<div class="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-3 sm:p-space-md shadow-sm hover:border-primary/30 transition-all flex flex-col justify-between">
+<div class="flex items-center justify-between mb-2">
+<span class="text-xs sm:text-label-md text-outline font-medium line-clamp-1">إجمالي الأسهم</span>
+<div class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-surface-container flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined text-base sm:text-lg" data-icon="list_alt">list_alt</span>
+</div>
+</div>
+<div class="flex items-baseline justify-between flex-wrap gap-1">
+<span class="text-2xl sm:text-metric-xl font-bold text-on-surface">236</span>
+<span class="text-[10px] sm:text-label-xs text-primary bg-secondary-fixed/40 px-1.5 sm:px-2 py-0.5 rounded-full font-semibold">100% السوق</span>
+</div>
+</div>
+<!-- KPI 2 -->
+<div class="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-3 sm:p-space-md shadow-sm hover:border-primary/30 transition-all flex flex-col justify-between">
+<div class="flex items-center justify-between mb-2">
+<span class="text-xs sm:text-label-md text-outline font-medium line-clamp-1">متوافق شرعاً</span>
+<div class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-secondary-fixed/30 flex items-center justify-center text-secondary shrink-0">
+<span class="material-symbols-outlined text-base sm:text-lg" data-icon="verified">verified</span>
+</div>
+</div>
+<div class="flex items-baseline justify-between flex-wrap gap-1">
+<span class="text-2xl sm:text-metric-xl font-bold text-on-surface">157</span>
+<span class="text-[10px] sm:text-label-xs text-secondary font-semibold bg-secondary-container/40 px-1.5 sm:px-2 py-0.5 rounded-full">66.5%</span>
+</div>
+</div>
+<!-- KPI 3 -->
+<div class="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-3 sm:p-space-md shadow-sm hover:border-primary/30 transition-all flex flex-col justify-between">
+<div class="flex items-center justify-between mb-2">
+<span class="text-xs sm:text-label-md text-outline font-medium line-clamp-1">فرص صعود للعادل</span>
+<div class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-primary-fixed/30 flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined text-base sm:text-lg" data-icon="trending_up">trending_up</span>
+</div>
+</div>
+<div class="flex items-baseline justify-between flex-wrap gap-1">
+<span class="text-2xl sm:text-metric-xl font-bold text-primary">64</span>
+<span class="text-[10px] sm:text-label-xs text-primary bg-primary-fixed/40 px-1.5 sm:px-2 py-0.5 rounded-full font-semibold">أرخص</span>
+</div>
+</div>
+<!-- KPI 4 -->
+<div class="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-3 sm:p-space-md shadow-sm hover:border-primary/30 transition-all flex flex-col justify-between">
+<div class="flex items-center justify-between mb-2">
+<span class="text-xs sm:text-label-md text-outline font-medium line-clamp-1">أعلى أداء اليوم</span>
+<div class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-surface-container flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined text-base sm:text-lg" data-icon="local_fire_department">local_fire_department</span>
+</div>
+</div>
+<div class="flex items-baseline justify-between flex-wrap gap-1">
+<span class="text-xs sm:text-title-sm text-on-surface font-bold truncate max-w-[90px] sm:max-w-[130px]">قناة السويس</span>
+<span class="text-base sm:text-metric-md font-bold text-primary" dir="ltr">+15.2%</span>
+</div>
+</div>
+</section>
+<!-- Filter & Valuation Query Bar -->
+<section class="mb-space-md sm:mb-space-xl space-y-3 sm:space-y-space-md">
+<!-- Quick Category Tabs (Horizontally Scrollable Pills) -->
+<div class="flex items-center justify-between gap-2">
+<div class="overflow-x-auto no-scrollbar flex items-center gap-2 py-1 w-full max-w-full">
+<button class="whitespace-nowrap px-3.5 py-1.5 sm:px-4 sm:py-2 bg-primary text-on-primary rounded-full text-xs sm:text-label-md font-semibold shadow-sm transition-all shrink-0">
+        كل الأسهم (236)
+      </button>
+<button class="whitespace-nowrap px-3.5 py-1.5 sm:px-4 sm:py-2 bg-surface-container-lowest border border-outline-variant/30 text-on-surface hover:border-primary/40 hover:text-primary rounded-full text-xs sm:text-label-md font-medium shadow-sm transition-all shrink-0">
+        متوافق شرعاً (157)
+      </button>
+<button class="whitespace-nowrap px-3.5 py-1.5 sm:px-4 sm:py-2 bg-surface-container-lowest border border-outline-variant/30 text-on-surface hover:border-primary/40 hover:text-primary rounded-full text-xs sm:text-label-md font-medium shadow-sm transition-all shrink-0">
+        فرص صعود للقيمة العادلة (64)
+      </button>
+<button class="whitespace-nowrap px-3.5 py-1.5 sm:px-4 sm:py-2 bg-surface-container-lowest border border-outline-variant/30 text-on-surface hover:border-primary/40 hover:text-primary rounded-full text-xs sm:text-label-md font-medium shadow-sm transition-all shrink-0">
+        الأعلى ربحية وتوزيعاً
+      </button>
+<button class="whitespace-nowrap px-3.5 py-1.5 sm:px-4 sm:py-2 bg-surface-container-lowest border border-outline-variant/30 text-on-surface hover:border-primary/40 hover:text-primary rounded-full text-xs sm:text-label-md font-medium shadow-sm transition-all shrink-0">
+        الأقل مكرر ربحية (P/E)
+      </button>
+</div>
+</div>
+<!-- Search & Refined Dropdowns Toolbar -->
+<div class="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-3 sm:p-space-md shadow-sm flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 sm:gap-space-md">
+<!-- Unified Search Field -->
+<div class="relative w-full lg:flex-1">
+<div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-outline">
+<span class="material-symbols-outlined text-xl">search</span>
+</div>
+<input class="w-full pr-10 pl-4 py-2 sm:py-2.5 bg-surface text-body-sm sm:text-body-md text-on-surface rounded-xl border border-outline-variant/40 focus:ring-2 focus:ring-primary focus:border-primary transition-all placeholder:text-outline" placeholder="ابحث باسم السهم أو رمزه (مثال: COMI أو فوري)..." type="text"/>
+</div>
+<!-- Quick Filter Dropdowns and Actions -->
+<div class="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 sm:gap-2.5 w-full lg:w-auto">
+<!-- Sector / Index Filter -->
+<select class="w-full sm:w-auto py-2 px-2.5 bg-surface text-xs sm:text-label-md text-on-surface rounded-lg border border-outline-variant/40 focus:ring-1 focus:ring-primary truncate">
+<option>كل المؤشرات</option>
+<option>EGX 30</option>
+<option>EGX 70 EWI</option>
+<option>EGX 100</option>
+<option>EGX 33 Shariah</option>
+</select>
+<!-- Shariah Filter -->
+<select class="w-full sm:w-auto py-2 px-2.5 bg-surface text-xs sm:text-label-md text-on-surface rounded-lg border border-outline-variant/40 focus:ring-1 focus:ring-primary truncate">
+<option>الشرعية: الكل</option>
+<option>متوافق شرعاً</option>
+<option>غير متوافق</option>
+</select>
+<!-- Valuation Model Filter -->
+<select class="w-full sm:w-auto py-2 px-2.5 bg-surface text-xs sm:text-label-md text-on-surface rounded-lg border border-outline-variant/40 focus:ring-1 focus:ring-primary truncate">
+<option>القيمة العادلة: الكل</option>
+<option>أرخص من العادلة</option>
+<option>أعلى من العادلة</option>
+</select>
+<!-- Sorting Selector -->
+<select class="w-full sm:w-auto py-2 px-2.5 bg-surface text-xs sm:text-label-md text-on-surface rounded-lg border border-outline-variant/40 focus:ring-1 focus:ring-primary truncate">
+<option>الترتيب: نسبة التغير (تنازلي)</option>
+<option>الترتيب: نسبة التغير (تصاعدي)</option>
+<option>الترتيب: السعر (الأعلى)</option>
+<option>الترتيب: الأقرب للقيمة العادلة</option>
+</select>
+<!-- Advanced Filter Toggle Button -->
+<button class="col-span-2 sm:col-span-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-surface-container-low hover:bg-surface-container border border-outline-variant/30 text-on-surface rounded-lg text-xs sm:text-label-md font-medium transition-colors w-full sm:w-auto">
+<span class="material-symbols-outlined text-base sm:text-lg text-primary">tune</span>
+<span class="">تصفية متقدمة</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Query Info Count Banner -->
+<div class="flex items-center justify-between text-xs sm:text-body-sm text-on-surface-variant mb-3 sm:mb-space-md px-1">
+<span class="font-medium">236 نتيجة مطابقة (الصفحة 1 من 12)</span>
+<div class="flex items-center gap-3">
+<span class="flex items-center gap-1"><span class="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-secondary"></span> متوافق</span>
+<span class="flex items-center gap-1"><span class="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-error"></span> غير متوافق</span>
+</div>
+</div>
+<!-- Stock Cards Grid (Responsive Grid: 1 col on mobile, 2 on tablet, 3 on desktop) -->
+<section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 mb-space-xl">
+<!-- Card 1: SCTS -->
+<div class="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-3.5 sm:p-space-md shadow-sm hover:border-primary/40 hover:-translate-y-0.5 transition-all flex flex-col justify-between">
+<div>
+<!-- Header -->
+<div class="flex items-start justify-between mb-2">
+<div class="flex items-start gap-2">
+<button aria-label="إضافة للمفضلة" class="text-outline hover:text-primary transition-colors mt-0.5">
+<span class="material-symbols-outlined text-xl" data-icon="star">star</span>
+</button>
+<div>
+<h3 class="text-sm sm:text-title-sm font-semibold text-on-surface">قناة السويس لتوطين التكنولوجيا</h3>
+<span class="text-[11px] sm:text-label-xs text-outline uppercase">SCTS • Suez Canal Technology Settling</span>
+</div>
+</div>
+<span class="bg-secondary-fixed/30 text-secondary text-xs sm:text-label-md px-2 py-0.5 rounded font-bold shrink-0" dir="ltr">+15.22%</span>
+</div>
+<!-- Price -->
+<div class="my-2 sm:my-space-sm">
+<div class="flex items-baseline gap-1">
+<span class="text-2xl sm:text-metric-xl font-bold text-on-surface" dir="ltr">500.40</span>
+<span class="text-xs sm:text-label-sm text-outline">ج.م</span>
+</div>
+</div>
+<!-- Valuation Model Ribbon -->
+<div class="bg-error-container/40 text-on-error-container text-[11px] sm:text-label-xs px-2.5 py-1.5 rounded-lg flex items-center justify-between mb-2 sm:mb-space-sm">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-sm" data-icon="warning">warning</span>
+<span class="">أعلى من العادلة بـ +363.08%</span>
+</span>
+<span class="text-[10px] opacity-80 shrink-0">(4.6x للوصول للعادل)</span>
+</div>
+<!-- Shariah Status -->
+<div class="flex items-center justify-between pt-1">
+<span class="inline-flex items-center gap-1 text-[11px] sm:text-label-xs text-secondary bg-secondary-fixed/20 px-2 py-0.5 rounded-full font-medium">
+<span class="material-symbols-outlined text-sm" data-icon="check_circle">check_circle</span>
+<span class="">متوافق</span>
+</span>
+</div>
+</div>
+<div class="mt-3 sm:mt-space-md pt-2 border-t border-outline-variant/20 flex flex-wrap items-center justify-between gap-1.5 text-[11px]">
+<span class="text-[11px] text-outline font-medium">خدمات تعليمية</span>
+<span class="text-[11px] text-outline/80 tracking-wide font-medium">EGX70 • EGX100</span>
+</div>
+</div>
+<!-- Card 2: KABO -->
+<div class="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-3.5 sm:p-space-md shadow-sm hover:border-primary/40 hover:-translate-y-0.5 transition-all flex flex-col justify-between">
+<div>
+<!-- Header -->
+<div class="flex items-start justify-between mb-2">
+<div class="flex items-start gap-2">
+<button aria-label="إضافة للمفضلة" class="text-outline hover:text-primary transition-colors mt-0.5">
+<span class="material-symbols-outlined text-xl" data-icon="star">star</span>
+</button>
+<div>
+<h3 class="text-sm sm:text-title-sm font-semibold text-on-surface">النصر للملابس والمنسوجات - كابو</h3>
+<span class="text-[11px] sm:text-label-xs text-outline uppercase">KABO • El Nasr Clothes &amp; Textiles</span>
+</div>
+</div>
+<span class="bg-secondary-fixed/30 text-secondary text-xs sm:text-label-md px-2 py-0.5 rounded font-bold shrink-0" dir="ltr">+8.59%</span>
+</div>
+<!-- Price -->
+<div class="my-2 sm:my-space-sm">
+<div class="flex items-baseline gap-1">
+<span class="text-2xl sm:text-metric-xl font-bold text-on-surface" dir="ltr">6.70</span>
+<span class="text-xs sm:text-label-sm text-outline">ج.م</span>
+</div>
+</div>
+<!-- Valuation Model Ribbon -->
+<div class="bg-error-container/40 text-on-error-container text-[11px] sm:text-label-xs px-2.5 py-1.5 rounded-lg flex items-center justify-between mb-2 sm:mb-space-sm">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-sm" data-icon="warning">warning</span>
+<span class="">أعلى من العادلة بـ +121.13%</span>
+</span>
+<span class="text-[10px] opacity-80 shrink-0">(2.2x للوصول للعادل)</span>
+</div>
+<!-- Shariah Status -->
+<div class="flex items-center justify-between pt-1">
+<span class="inline-flex items-center gap-1 text-[11px] sm:text-label-xs text-secondary bg-secondary-fixed/20 px-2 py-0.5 rounded-full font-medium">
+<span class="material-symbols-outlined text-sm" data-icon="check_circle">check_circle</span>
+<span class="">متوافق</span>
+</span>
+</div>
+</div>
+<div class="mt-3 sm:mt-space-md pt-2 border-t border-outline-variant/20 flex flex-wrap items-center justify-between gap-1.5 text-[11px]">
+<span class="text-[11px] text-outline font-medium">منسوجات وسلع معمرة</span>
+<span class="text-[11px] text-outline/80 tracking-wide font-medium">EGX70 • EGX100</span>
+</div>
+</div>
+<!-- Card 3: MIPH -->
+<div class="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-3.5 sm:p-space-md shadow-sm hover:border-primary/40 hover:-translate-y-0.5 transition-all flex flex-col justify-between">
+<div>
+<!-- Header -->
+<div class="flex items-start justify-between mb-2">
+<div class="flex items-start gap-2">
+<button aria-label="إضافة للمفضلة" class="text-outline hover:text-primary transition-colors mt-0.5">
+<span class="material-symbols-outlined text-xl" data-icon="star">star</span>
+</button>
+<div>
+<h3 class="text-sm sm:text-title-sm font-semibold text-on-surface">مينا فارم للأدوية والصناعات الكيماوية</h3>
+<span class="text-[11px] sm:text-label-xs text-outline uppercase">MIPH • Minapharm Pharmaceuticals</span>
+</div>
+</div>
+<span class="bg-secondary-fixed/30 text-secondary text-xs sm:text-label-md px-2 py-0.5 rounded font-bold shrink-0" dir="ltr">+8.37%</span>
+</div>
+<!-- Price -->
+<div class="my-2 sm:my-space-sm">
+<div class="flex items-baseline gap-1">
+<span class="text-2xl sm:text-metric-xl font-bold text-on-surface" dir="ltr">740.72</span>
+<span class="text-xs sm:text-label-sm text-outline">ج.م</span>
+</div>
+</div>
+<!-- Valuation Model Ribbon -->
+<div class="bg-error-container/40 text-on-error-container text-[11px] sm:text-label-xs px-2.5 py-1.5 rounded-lg flex items-center justify-between mb-2 sm:mb-space-sm">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-sm" data-icon="warning">warning</span>
+<span class="">أعلى من العادلة بـ +59.43%</span>
+</span>
+<span class="text-[10px] opacity-80 shrink-0">(1.6x للهبوط)</span>
+</div>
+<!-- Shariah Status -->
+<div class="flex items-center justify-between pt-1">
+<span class="inline-flex items-center gap-1 text-[11px] sm:text-label-xs text-secondary bg-secondary-fixed/20 px-2 py-0.5 rounded-full font-medium">
+<span class="material-symbols-outlined text-sm" data-icon="check_circle">check_circle</span>
+<span class="">متوافق</span>
+</span>
+</div>
+</div>
+<div class="mt-3 sm:mt-space-md pt-2 border-t border-outline-variant/20 flex flex-wrap items-center justify-between gap-1.5 text-[11px]">
+<span class="text-[11px] text-outline font-medium">رعاية صحية وأدوية</span>
+<span class="text-[11px] text-outline/80 tracking-wide font-medium">EGX70 • EGX100</span>
+</div>
+</div>
+<!-- Card 4: ETRS (Undervalued / Opportunity) -->
+<div class="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-3.5 sm:p-space-md shadow-sm hover:border-primary/40 hover:-translate-y-0.5 transition-all flex flex-col justify-between">
+<div>
+<!-- Header -->
+<div class="flex items-start justify-between mb-2">
+<div class="flex items-start gap-2">
+<button aria-label="إضافة للمفضلة" class="text-outline hover:text-primary transition-colors mt-0.5">
+<span class="material-symbols-outlined text-xl" data-icon="star">star</span>
+</button>
+<div>
+<h3 class="text-sm sm:text-title-sm font-semibold text-on-surface">المصرية لخدمات النقل ايجيترانس</h3>
+<span class="text-[11px] sm:text-label-xs text-outline uppercase">ETRS • Egyptian Transport Services</span>
+</div>
+</div>
+<span class="bg-secondary-fixed/30 text-secondary text-xs sm:text-label-md px-2 py-0.5 rounded font-bold shrink-0" dir="ltr">+7.82%</span>
+</div>
+<!-- Price -->
+<div class="my-2 sm:my-space-sm">
+<div class="flex items-baseline gap-1">
+<span class="text-2xl sm:text-metric-xl font-bold text-on-surface" dir="ltr">10.34</span>
+<span class="text-xs sm:text-label-sm text-outline">ج.م</span>
+</div>
+</div>
+<!-- Valuation Model Ribbon (Undervalued) -->
+<div class="bg-secondary-fixed/40 text-on-secondary-container text-[11px] sm:text-label-xs px-2.5 py-1.5 rounded-lg flex items-center justify-between mb-2 sm:mb-space-sm">
+<span class="flex items-center gap-1 font-semibold truncate">
+<span class="material-symbols-outlined text-sm" data-icon="trending_up">trending_up</span>
+<span>أرخص من العادلة — فرصة صعود +18.6%</span>
+</span>
+<span class="text-[10px] opacity-80 shrink-0">(1.2x للعادل)</span>
+</div>
+<!-- Shariah Status -->
+<div class="flex items-center justify-between pt-1">
+<span class="inline-flex items-center gap-1 text-[11px] sm:text-label-xs text-secondary bg-secondary-fixed/20 px-2 py-0.5 rounded-full font-medium">
+<span class="material-symbols-outlined text-sm" data-icon="check_circle">check_circle</span>
+<span class="">متوافق</span>
+</span>
+</div>
+</div>
+<div class="mt-3 sm:mt-space-md pt-2 border-t border-outline-variant/20 flex flex-wrap items-center justify-between gap-1.5 text-[11px]">
+<span class="text-[11px] text-outline font-medium">خدمات النقل والشحن</span>
+<span class="text-[11px] text-outline/80 tracking-wide font-medium">EGX33 Shariah • EGX70</span>
+</div>
+</div>
+<!-- Card 5: SPIN -->
+<div class="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-3.5 sm:p-space-md shadow-sm hover:border-primary/40 hover:-translate-y-0.5 transition-all flex flex-col justify-between">
+<div>
+<!-- Header -->
+<div class="flex items-start justify-between mb-2">
+<div class="flex items-start gap-2">
+<button aria-label="إضافة للمفضلة" class="text-outline hover:text-primary transition-colors mt-0.5">
+<span class="material-symbols-outlined text-xl" data-icon="star">star</span>
+</button>
+<div>
+<h3 class="text-sm sm:text-title-sm font-semibold text-on-surface">الاسكندرية للغزل والنسيج (سبينالكس)</h3>
+<span class="text-[11px] sm:text-label-xs text-outline uppercase">SPIN • Alexandria Spinning &amp; Weaving</span>
+</div>
+</div>
+<span class="bg-secondary-fixed/30 text-secondary text-xs sm:text-label-md px-2 py-0.5 rounded font-bold shrink-0" dir="ltr">+7.76%</span>
+</div>
+<!-- Price -->
+<div class="my-2 sm:my-space-sm">
+<div class="flex items-baseline gap-1">
+<span class="text-2xl sm:text-metric-xl font-bold text-on-surface" dir="ltr">14.17</span>
+<span class="text-xs sm:text-label-sm text-outline">ج.م</span>
+</div>
+</div>
+<!-- Valuation Model Ribbon (Insufficient data) -->
+<div class="bg-surface-container text-on-surface-variant text-[11px] sm:text-label-xs px-2.5 py-1.5 rounded-lg flex items-center justify-between mb-2 sm:mb-space-sm">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-sm" data-icon="info">info</span>
+<span class="">بيانات غير كافية لنموذج Graham</span>
+</span>
+<span class="text-[10px] opacity-80 shrink-0">قيد التحديث</span>
+</div>
+<!-- Shariah Status -->
+<div class="flex items-center justify-between pt-1">
+<span class="inline-flex items-center gap-1 text-[11px] sm:text-label-xs text-secondary bg-secondary-fixed/20 px-2 py-0.5 rounded-full font-medium">
+<span class="material-symbols-outlined text-sm" data-icon="check_circle">check_circle</span>
+<span class="">متوافق</span>
+</span>
+</div>
+</div>
+<div class="mt-3 sm:mt-space-md pt-2 border-t border-outline-variant/20 flex flex-wrap items-center justify-between gap-1.5 text-[11px]">
+<span class="text-[11px] text-outline font-medium">منسوجات وسلع معمرة</span>
+<span class="text-[11px] text-outline/80 tracking-wide font-medium">EGX70 • EGX100</span>
+</div>
+</div>
+<!-- Card 6: ELKA (Undervalued) -->
+<div class="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-3.5 sm:p-space-md shadow-sm hover:border-primary/40 hover:-translate-y-0.5 transition-all flex flex-col justify-between">
+<div>
+<!-- Header -->
+<div class="flex items-start justify-between mb-2">
+<div class="flex items-start gap-2">
+<button aria-label="إضافة للمفضلة" class="text-outline hover:text-primary transition-colors mt-0.5">
+<span class="material-symbols-outlined text-xl" data-icon="star">star</span>
+</button>
+<div>
+<h3 class="text-sm sm:text-title-sm font-semibold text-on-surface">القاهرة للإسكان والتعمير</h3>
+<span class="text-[11px] sm:text-label-xs text-outline uppercase">ELKA • El Kahera Housing</span>
+</div>
+</div>
+<span class="bg-secondary-fixed/30 text-secondary text-xs sm:text-label-md px-2 py-0.5 rounded font-bold shrink-0" dir="ltr">+7.26%</span>
+</div>
+<!-- Price -->
+<div class="my-2 sm:my-space-sm">
+<div class="flex items-baseline gap-1">
+<span class="text-2xl sm:text-metric-xl font-bold text-on-surface" dir="ltr">1.33</span>
+<span class="text-xs sm:text-label-sm text-outline">ج.م</span>
+</div>
+</div>
+<!-- Valuation Model Ribbon (Undervalued) -->
+<div class="bg-secondary-fixed/40 text-on-secondary-container text-[11px] sm:text-label-xs px-2.5 py-1.5 rounded-lg flex items-center justify-between mb-2 sm:mb-space-sm">
+<span class="flex items-center gap-1 font-semibold truncate">
+<span class="material-symbols-outlined text-sm" data-icon="trending_up">trending_up</span>
+<span>أرخص من العادلة — فرصة صعود +110.8%</span>
+</span>
+<span class="text-[10px] opacity-80 shrink-0">(2.1x للعادل)</span>
+</div>
+<!-- Shariah Status -->
+<div class="flex items-center justify-between pt-1">
+<span class="inline-flex items-center gap-1 text-[11px] sm:text-label-xs text-secondary bg-secondary-fixed/20 px-2 py-0.5 rounded-full font-medium">
+<span class="material-symbols-outlined text-sm" data-icon="check_circle">check_circle</span>
+<span class="">متوافق</span>
+</span>
+</div>
+</div>
+<div class="mt-3 sm:mt-space-md pt-2 border-t border-outline-variant/20 flex flex-wrap items-center justify-between gap-1.5 text-[11px]">
+<span class="text-[11px] text-outline font-medium">عقارات وإنشاءات</span>
+<span class="text-[11px] text-outline/80 tracking-wide font-medium">EGX35 • EGX100</span>
+</div>
+</div>
+<!-- Card 7: ARAB (Undervalued) -->
+<div class="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-3.5 sm:p-space-md shadow-sm hover:border-primary/40 hover:-translate-y-0.5 transition-all flex flex-col justify-between">
+<div>
+<!-- Header -->
+<div class="flex items-start justify-between mb-2">
+<div class="flex items-start gap-2">
+<button aria-label="إضافة للمفضلة" class="text-outline hover:text-primary transition-colors mt-0.5">
+<span class="material-symbols-outlined text-xl" data-icon="star">star</span>
+</button>
+<div>
+<h3 class="text-sm sm:text-title-sm font-semibold text-on-surface">المطورون العرب القابضة</h3>
+<span class="text-[11px] sm:text-label-xs text-outline uppercase">ARAB • Arab Developers Holding</span>
+</div>
+</div>
+<span class="bg-secondary-fixed/30 text-secondary text-xs sm:text-label-md px-2 py-0.5 rounded font-bold shrink-0" dir="ltr">+7.11%</span>
+</div>
+<!-- Price -->
+<div class="my-2 sm:my-space-sm">
+<div class="flex items-baseline gap-1">
+<span class="text-2xl sm:text-metric-xl font-bold text-on-surface" dir="ltr">0.23</span>
+<span class="text-xs sm:text-label-sm text-outline">ج.م</span>
+</div>
+</div>
+<!-- Valuation Model Ribbon (Undervalued) -->
+<div class="bg-secondary-fixed/40 text-on-secondary-container text-[11px] sm:text-label-xs px-2.5 py-1.5 rounded-lg flex items-center justify-between mb-2 sm:mb-space-sm">
+<span class="flex items-center gap-1 font-semibold truncate">
+<span class="material-symbols-outlined text-sm" data-icon="trending_up">trending_up</span>
+<span>أرخص من العادلة — فرصة صعود +51.6%</span>
+</span>
+<span class="text-[10px] opacity-80 shrink-0">(1.5x للعادل)</span>
+</div>
+<!-- Shariah Status -->
+<div class="flex items-center justify-between pt-1">
+<span class="inline-flex items-center gap-1 text-[11px] sm:text-label-xs text-secondary bg-secondary-fixed/20 px-2 py-0.5 rounded-full font-medium">
+<span class="material-symbols-outlined text-sm" data-icon="check_circle">check_circle</span>
+<span class="">متوافق</span>
+</span>
+</div>
+</div>
+<div class="mt-3 sm:mt-space-md pt-2 border-t border-outline-variant/20 flex flex-wrap items-center justify-between gap-1.5 text-[11px]">
+<span class="text-[11px] text-outline font-medium">عقارات</span>
+<span class="text-[11px] text-outline/80 tracking-wide font-medium">EGX70 • EGX100</span>
+</div>
+</div>
+<!-- Card 8: MTIE (Overvalued) -->
+<div class="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-3.5 sm:p-space-md shadow-sm hover:border-primary/40 hover:-translate-y-0.5 transition-all flex flex-col justify-between">
+<div>
+<!-- Header -->
+<div class="flex items-start justify-between mb-2">
+<div class="flex items-start gap-2">
+<button aria-label="إضافة للمفضلة" class="text-outline hover:text-primary transition-colors mt-0.5">
+<span class="material-symbols-outlined text-xl" data-icon="star">star</span>
+</button>
+<div>
+<h3 class="text-sm sm:text-title-sm font-semibold text-on-surface">ام.ام جروب للصناعة والتجارة العالمية</h3>
+<span class="text-[11px] sm:text-label-xs text-outline uppercase">MTIE • MM Group For Industry</span>
+</div>
+</div>
+<span class="bg-secondary-fixed/30 text-secondary text-xs sm:text-label-md px-2 py-0.5 rounded font-bold shrink-0" dir="ltr">+7.06%</span>
+</div>
+<!-- Price -->
+<div class="my-2 sm:my-space-sm">
+<div class="flex items-baseline gap-1">
+<span class="text-2xl sm:text-metric-xl font-bold text-on-surface" dir="ltr">6.67</span>
+<span class="text-xs sm:text-label-sm text-outline">ج.م</span>
+</div>
+</div>
+<!-- Valuation Model Ribbon -->
+<div class="bg-error-container/40 text-on-error-container text-[11px] sm:text-label-xs px-2.5 py-1.5 rounded-lg flex items-center justify-between mb-2 sm:mb-space-sm">
+<span class="flex items-center gap-1 truncate">
+<span class="material-symbols-outlined text-sm" data-icon="warning">warning</span>
+<span>أعلى من العادلة بـ +5.17%</span>
+</span>
+<span class="text-[10px] opacity-80 shrink-0">(1.1x للهبوط)</span>
+</div>
+<!-- Shariah Status -->
+<div class="flex items-center justify-between pt-1">
+<div class="flex items-center gap-1.5 flex-wrap">
+<span class="inline-flex items-center gap-1 text-[11px] sm:text-label-xs text-error bg-error-container/40 px-2 py-0.5 rounded-full font-medium">
+<span class="material-symbols-outlined text-sm">cancel</span>
+<span>غير متوافق</span>
+</span>
+<span class="text-[11px] text-outline truncate" title="تجاوز الإيرادات المحرمة (27%)">إيرادات محرمة (27%)</span>
+</div>
+</div>
+</div>
+<div class="mt-3 sm:mt-space-md pt-2 border-t border-outline-variant/20 flex flex-wrap items-center justify-between gap-1.5 text-[11px]">
+<span class="text-[11px] text-outline font-medium">تجارة وموزعون</span>
+<span class="text-[11px] text-outline/80 tracking-wide font-medium">EGX33 Shariah • EGX35</span>
+</div>
+</div>
+<!-- Card 9: ATLC (Undervalued) -->
+<div class="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-3.5 sm:p-space-md shadow-sm hover:border-primary/40 hover:-translate-y-0.5 transition-all flex flex-col justify-between">
+<div>
+<!-- Header -->
+<div class="flex items-start justify-between mb-2">
+<div class="flex items-start gap-2">
+<button aria-label="إضافة للمفضلة" class="text-outline hover:text-primary transition-colors mt-0.5">
+<span class="material-symbols-outlined text-xl" data-icon="star">star</span>
+</button>
+<div>
+<h3 class="text-sm sm:text-title-sm font-semibold text-on-surface">التوفيق للتأجير التمويلي -أية.تي.ليس</h3>
+<span class="text-[11px] sm:text-label-xs text-outline uppercase">ATLC • Al Tawfeek Leasing A.T.LEASE</span>
+</div>
+</div>
+<span class="bg-secondary-fixed/30 text-secondary text-xs sm:text-label-md px-2 py-0.5 rounded font-bold shrink-0" dir="ltr">+6.80%</span>
+</div>
+<!-- Price -->
+<div class="my-2 sm:my-space-sm">
+<div class="flex items-baseline gap-1">
+<span class="text-2xl sm:text-metric-xl font-bold text-on-surface" dir="ltr">4.40</span>
+<span class="text-xs sm:text-label-sm text-outline">ج.م</span>
+</div>
+</div>
+<!-- Valuation Model Ribbon (Undervalued) -->
+<div class="bg-secondary-fixed/40 text-on-secondary-container text-[11px] sm:text-label-xs px-2.5 py-1.5 rounded-lg flex items-center justify-between mb-2 sm:mb-space-sm">
+<span class="flex items-center gap-1 font-semibold truncate">
+<span class="material-symbols-outlined text-sm" data-icon="trending_up">trending_up</span>
+<span>أرخص من العادلة — فرصة صعود +25.6%</span>
+</span>
+<span class="text-[10px] opacity-80 shrink-0">(1.3x للعادل)</span>
+</div>
+<!-- Shariah Status -->
+<div class="flex items-center justify-between pt-1">
+<div class="flex items-center gap-1.5 flex-wrap">
+<span class="inline-flex items-center gap-1 text-[11px] sm:text-label-xs text-error bg-error-container/40 px-2 py-0.5 rounded-full font-medium">
+<span class="material-symbols-outlined text-sm">cancel</span>
+<span>غير متوافق</span>
+</span>
+<span class="text-[11px] text-outline truncate" title="النشاط الأساسي غير متوافق (سياحة)">نشاط غير متوافق (سياحة)</span>
+</div>
+</div>
+</div>
+<div class="mt-3 sm:mt-space-md pt-2 border-t border-outline-variant/20 flex flex-wrap items-center justify-between gap-1.5 text-[11px]">
+<span class="text-[11px] text-outline font-medium">خدمات مالية غير مصرفية</span>
+<span class="text-[11px] text-outline/80 tracking-wide font-medium">EGX70 • EGX100</span>
+</div>
+</div>
+</section>
+<!-- Pagination Section (Responsive & Touch-Friendly) -->
+<div class="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 mb-space-xl sm:mb-space-2xl" dir="rtl">
+<button class="px-3 sm:px-4 py-2 rounded-lg border border-outline-variant/40 text-on-surface text-xs sm:text-body-sm font-medium hover:bg-surface-container transition-colors disabled:opacity-50">
+  السابق
+</button>
+<button class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-primary text-on-primary text-xs sm:text-title-sm font-bold flex items-center justify-center shadow-sm">
+  1
+</button>
+<button class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg border border-outline-variant/40 text-on-surface text-xs sm:text-title-sm font-medium hover:bg-surface-container flex items-center justify-center transition-colors">
+  2
+</button>
+<button class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg border border-outline-variant/40 text-on-surface text-xs sm:text-title-sm font-medium hover:bg-surface-container flex items-center justify-center transition-colors">
+  3
+</button>
+<button class="hidden xs:flex w-8 h-8 sm:w-10 sm:h-10 rounded-lg border border-outline-variant/40 text-on-surface text-xs sm:text-title-sm font-medium hover:bg-surface-container items-center justify-center transition-colors">
+  4
+</button>
+<button class="hidden sm:flex w-8 h-8 sm:w-10 sm:h-10 rounded-lg border border-outline-variant/40 text-on-surface text-xs sm:text-title-sm font-medium hover:bg-surface-container items-center justify-center transition-colors">
+  5
+</button>
+<span class="px-1 text-outline text-xs sm:text-sm">...</span>
+<button class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg border border-outline-variant/40 text-on-surface text-xs sm:text-title-sm font-medium hover:bg-surface-container flex items-center justify-center transition-colors">
+  12
+</button>
+<button class="px-3 sm:px-4 py-2 rounded-lg border border-outline-variant/40 text-on-surface text-xs sm:text-body-sm font-medium hover:bg-surface-container transition-colors">
+  التالي
+</button>
+</div>
+</main>
+<!-- Footer (Responsive Component) -->
+<footer class="bg-surface-container-low dark:bg-inverse-surface border-t border-outline-variant/30 dark:border-outline/30 full-width bottom mt-auto">
+<div class="flex flex-col md:flex-row-reverse justify-between items-center w-full px-4 sm:px-margin py-6 max-w-[1360px] mx-auto gap-4">
+<!-- Footer Nav Links -->
+<div class="flex flex-wrap justify-center md:justify-start items-center gap-x-4 sm:gap-x-space-md gap-y-2 text-xs sm:text-body-sm font-medium text-center">
+<a class="text-on-surface-variant dark:text-inverse-on-surface hover:text-primary dark:hover:text-primary-fixed transition-colors" href="#">عن ميزان</a>
+<a class="text-on-surface-variant dark:text-inverse-on-surface hover:text-primary dark:hover:text-primary-fixed transition-colors" href="#">المعايير الشرعية</a>
+<a class="text-on-surface-variant dark:text-inverse-on-surface hover:text-primary dark:hover:text-primary-fixed transition-colors" href="#">إخلاء المسؤولية المالية</a>
+<a class="text-on-surface-variant dark:text-inverse-on-surface hover:text-primary dark:hover:text-primary-fixed transition-colors" href="#">شروط الاستخدام</a>
+<a class="text-on-surface-variant dark:text-inverse-on-surface hover:text-primary dark:hover:text-primary-fixed transition-colors" href="#">اتصل بنا</a>
+</div>
+<!-- Copyright & Regulatory Notice -->
+<div class="text-[11px] sm:text-label-xs text-on-surface-variant text-center md:text-right max-w-xl">
+  © 2024 ميزان EGX. جميع البيانات متوافقة مع ضوابط الشريعة الإسلامية وتخضع للرقابة المالية للبورصة المصرية.
+</div>
+<!-- Footer Micro Badge -->
+<div class="flex items-center gap-2">
+<div class="bg-primary text-on-primary w-6 h-6 rounded flex items-center justify-center font-bold text-xs shadow-sm">
+  م
+</div>
+<span class="text-sm sm:text-title-sm font-bold text-primary dark:text-primary-fixed">ميزان EGX</span>
+</div>
+</div>
+</footer>
+</body></html>
