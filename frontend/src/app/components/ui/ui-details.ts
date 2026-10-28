@@ -375,23 +375,252 @@ export class MzPerformanceChartComponent {
 
 export interface MzAllocation { label: string; pct: number; color: string; }
 
+export interface MzNumberLineBand {
+  id: string;
+  label: string;
+  min: number;
+  max: number;
+  color: string;
+  limitText: string;
+  description?: string;
+  lane?: number;
+}
+
+export interface MzAllocationCardItem {
+  id: string;
+  label: string;
+  limitText: string;
+  description?: string;
+  color: string;
+  hasNumericLimit: boolean;
+  min?: number;
+  max?: number;
+}
+
+/** Track which animated NumberLine instances have played in this session to prevent replaying on cached returns */
+const PLAYED_NUMBER_LINES = new Set<string>();
+
+@Component({
+  selector: 'mz-number-line',
+  standalone: true,
+  imports: [CommonModule],
+  host: { class: 'mz mz-numline-host', style: 'display:block' },
+  template: `
+    <div class="mz-numline-wrap" role="img" [attr.aria-label]="ariaLabel" [class.is-animated]="hasEntered">
+      <!-- Ticks Header / Scale -->
+      <div class="mz-numline-scale" aria-hidden="true">
+        <span *ngFor="let t of ticks" class="mz-numline-tick-label" [style.right.%]="t">
+          {{ t }}%
+        </span>
+      </div>
+
+      <!-- Main Scale Track & Lanes -->
+      <div class="mz-numline-track-area">
+        <!-- Thin background axis line with tick notches -->
+        <div class="mz-numline-axis" aria-hidden="true">
+          <span *ngFor="let t of ticks" class="mz-numline-notch" [style.right.%]="t"></span>
+        </div>
+
+        <!-- Rendered Band Lanes -->
+        <div class="mz-numline-lanes" [style.min-height.px]="lanesCount * 44">
+          <div *ngFor="let b of bands; let idx = index"
+               class="mz-numline-band-row"
+               [style.top.px]="(b.lane ?? idx) * 44"
+               [class.is-active]="activeBandId === b.id"
+               [class.is-dimmed]="activeBandId && activeBandId !== b.id"
+               (mouseenter)="onBandEnter(b)"
+               (mouseleave)="onBandLeave()"
+               (focus)="onBandEnter(b)"
+               (blur)="onBandLeave()"
+               tabindex="0"
+               role="figure"
+               [attr.aria-label]="b.label + ': ' + b.limitText">
+            <!-- Filled Band Bar -->
+            <div class="mz-numline-bar"
+                 [style.right.%]="b.min"
+                 [style.width.%]="Math.max(1.5, b.max - b.min)"
+                 [style.background]="b.color">
+              <!-- Animated Glow Line -->
+              <span class="mz-numline-glow"></span>
+            </div>
+
+            <!-- Limit Marker Stem & Tag on Min Bound (if min > 0) -->
+            <div *ngIf="b.min > 0" class="mz-numline-marker min" [style.right.%]="b.min">
+              <span class="mz-numline-pin" [style.border-color]="b.color"></span>
+              <span class="mz-numline-tag" [style.color]="b.color">{{ b.min }}%</span>
+            </div>
+
+            <!-- Limit Marker Stem & Tag on Max Bound (if max < 100) -->
+            <div *ngIf="b.max < 100" class="mz-numline-marker max" [style.right.%]="b.max">
+              <span class="mz-numline-pin" [style.border-color]="b.color"></span>
+              <span class="mz-numline-tag" [style.color]="b.color">{{ b.max }}%</span>
+            </div>
+
+            <!-- Floating Label inside / above band -->
+            <div class="mz-numline-caption"
+                 [style.right.%]="(b.min + b.max) / 2"
+                 [title]="b.label + ' (' + b.limitText + ')'">
+              <span class="mz-numline-dot" [style.background]="b.color"></span>
+              <span class="mz-numline-name">{{ b.label }}</span>
+              <span class="mz-numline-limit">{{ b.limitText }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Floating Tooltip for Active Hover/Focus -->
+      <div *ngIf="hoveredBand" class="mz-numline-tooltip"
+           [style.right.%]="(hoveredBand.min + hoveredBand.max) / 2"
+           [style.top.px]="(hoveredBand.lane ?? 0) * 44 - 12">
+        <strong>{{ hoveredBand.label }}</strong>: {{ hoveredBand.limitText }}
+      </div>
+    </div>
+  `
+})
+export class MzNumberLineComponent implements OnInit, AfterViewInit, OnDestroy {
+  readonly Math = Math;
+
+  @Input() instanceId = 'numline_default';
+  @Input() bands: MzNumberLineBand[] = [];
+  @Input() ticks: number[] = [0, 25, 50, 75, 100];
+  @Input() direction: 'rtl' | 'ltr' = 'rtl';
+  @Input() activeBandId: string | null = null;
+  @Input() ariaLabel = 'مقياس توزيع الأصول المستهدف من 0% إلى 100%';
+
+  @Output() bandHover = new EventEmitter<string | null>();
+
+  hoveredBand: MzNumberLineBand | null = null;
+  hasEntered = false;
+  private observer?: IntersectionObserver;
+
+  constructor(private el: ElementRef<HTMLElement>) {}
+
+  get lanesCount(): number {
+    if (!this.bands.length) return 1;
+    const maxLane = this.bands.reduce((max, b) => Math.max(max, b.lane ?? 0), 0);
+    return Math.max(1, maxLane + 1);
+  }
+
+  ngOnInit(): void {
+    if (PLAYED_NUMBER_LINES.has(this.instanceId)) {
+      this.hasEntered = true;
+    }
+  }
+
+  ngAfterViewInit(): void {
+    if (this.hasEntered) return;
+
+    if (typeof IntersectionObserver !== 'undefined') {
+      this.observer = new IntersectionObserver((entries) => {
+        if (entries[0]?.isIntersecting) {
+          this.hasEntered = true;
+          PLAYED_NUMBER_LINES.add(this.instanceId);
+          this.observer?.disconnect();
+        }
+      }, { threshold: 0.15 });
+      this.observer.observe(this.el.nativeElement);
+    } else {
+      this.hasEntered = true;
+      PLAYED_NUMBER_LINES.add(this.instanceId);
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.observer?.disconnect();
+  }
+
+  onBandEnter(band: MzNumberLineBand): void {
+    this.hoveredBand = band;
+    this.bandHover.emit(band.id);
+  }
+
+  onBandLeave(): void {
+    this.hoveredBand = null;
+    this.bandHover.emit(null);
+  }
+}
+
 @Component({
   selector: 'mz-allocation-breakdown',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, MzNumberLineComponent],
   host: { class: 'mz', style: 'display:block' },
   template: `
-    <div class="mz-alloc-bar" role="img" [attr.aria-label]="ariaLabel">
-      <span *ngFor="let a of items" [style.width.%]="a.pct" [style.background]="a.color"></span>
-    </div>
-    <div class="mz-alloc-items">
-      <div class="mz-alloc-item" *ngFor="let a of items"><span class="mz-alloc-swatch" [style.background]="a.color"></span>{{ a.label }} <strong class="mz-ltr">{{ a.pct }}%</strong></div>
+    <div class="mz-alloc-card">
+      <div class="mz-alloc-head">
+        <h4 class="mz-alloc-title">هيكل توزيع الأصول المستهدف (Asset Allocation)</h4>
+        <span class="mz-alloc-badge" *ngIf="badgeText">{{ badgeText }}</span>
+      </div>
+
+      <!-- Advanced Multi-lane NumberLine Scale (when numeric bands exist) -->
+      <ng-container *ngIf="bands.length > 0; else fallbackBar">
+        <mz-number-line
+          [instanceId]="instanceId"
+          [bands]="bands"
+          [activeBandId]="activeId"
+          [ariaLabel]="ariaLabel"
+          (bandHover)="onNumberLineHover($event)">
+        </mz-number-line>
+      </ng-container>
+
+      <!-- Fallback Bar when no numeric limits parsed -->
+      <ng-template #fallbackBar>
+        <div class="mz-alloc-bar" role="img" [attr.aria-label]="ariaLabel">
+          <span *ngFor="let a of items" [style.width.%]="a.pct" [style.background]="a.color"></span>
+        </div>
+      </ng-template>
+
+      <!-- Asset Allocation Breakdown Cards (below the number line) -->
+      <div class="mz-alloc-grid" *ngIf="cards.length > 0">
+        <div *ngFor="let c of cards"
+             class="mz-alloc-box"
+             [class.is-active]="activeId === c.id"
+             [class.is-dimmed]="activeId && activeId !== c.id"
+             (mouseenter)="onCardHover(c.id)"
+             (mouseleave)="onCardLeave()"
+             (focus)="onCardHover(c.id)"
+             (blur)="onCardLeave()"
+             tabindex="0">
+          <div class="mz-alloc-box-head">
+            <span class="mz-alloc-swatch" [style.background]="c.color"></span>
+            <span class="mz-alloc-box-label">{{ c.label }}</span>
+          </div>
+          <p class="mz-alloc-box-val" [style.color]="c.color">{{ c.limitText }}</p>
+          <span *ngIf="c.description" class="mz-alloc-box-sub">{{ c.description }}</span>
+        </div>
+      </div>
+
+      <!-- Traditional items fallback if cards not passed -->
+      <div class="mz-alloc-items" *ngIf="!cards.length && items.length > 0">
+        <div class="mz-alloc-item" *ngFor="let a of items">
+          <span class="mz-alloc-swatch" [style.background]="a.color"></span>
+          {{ a.label }} <strong class="mz-ltr">{{ a.pct }}%</strong>
+        </div>
+      </div>
     </div>
   `
 })
 export class MzAllocationBreakdownComponent {
+  @Input() instanceId = 'alloc_default';
+  @Input() badgeText = 'معايير الالتزام والسياسة الاستثمارية';
+  @Input() bands: MzNumberLineBand[] = [];
+  @Input() cards: MzAllocationCardItem[] = [];
   @Input() items: MzAllocation[] = [];
-  @Input() ariaLabel = '';
+  @Input() ariaLabel = 'هيكل توزيع الأصول المستهدف';
+
+  activeId: string | null = null;
+
+  onNumberLineHover(id: string | null): void {
+    this.activeId = id;
+  }
+
+  onCardHover(id: string): void {
+    this.activeId = id;
+  }
+
+  onCardLeave(): void {
+    this.activeId = null;
+  }
 }
 
 /* ───────────── DetailsPage layout (stack of sections) ───────────── */

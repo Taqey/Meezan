@@ -20,7 +20,7 @@ import {
   MzSpinnerComponent
 } from '../../components/ui';
 import { Subject, forkJoin, takeUntil } from 'rxjs';
-import { fundLogoUrl, managerRouteParam } from '../../models/fund-display';
+import { fundLogoUrl, managerRouteParam, parseFundAllocations, type FundAllocationModel } from '../../models/fund-display';
 import type { Chart, ChartConfiguration } from 'chart.js';
 
 /**
@@ -53,6 +53,8 @@ async function ensureChartJs(): Promise<typeof import('chart.js') | null> {
     MzDetailsHeaderCardComponent,
     MzDetailsSectionComponent,
     MzInfoGridComponent,
+    MzAllocationBreakdownComponent,
+    MzNumberLineComponent,
     MzSpinnerComponent
   ],
   template: `
@@ -131,6 +133,29 @@ async function ensureChartJs(): Promise<typeof import('chart.js') | null> {
           <div *ngIf="!chartHasData()" class="mz-authority-note" style="text-align: center; padding: 40px 0;">
             لا توجد بيانات سعرية تاريخية متاحة لهذا الصندوق.
           </div>
+        </mz-details-section>
+
+        <!-- Section: Investment Strategy & Target Asset Allocation (NumberLine) -->
+        <mz-details-section
+          *ngIf="fund && (fund.descriptionAr || fund.investmentStrategy || allocationModel.bands.length > 0)"
+          eyebrow="الاستراتيجية والمحفظة"
+          title="استراتيجية وهيكل الاستثمار">
+          <!-- Strategy & Fund Description Text Block -->
+          <div *ngIf="allocationModel.paragraphs.length > 0" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
+            <p *ngFor="let p of allocationModel.paragraphs" class="mz-authority-note" style="font-size: 13.5px; line-height: 1.8; color: #334155; margin: 0; text-align: justify;">
+              {{ p }}
+            </p>
+          </div>
+
+          <!-- Reusable Visual NumberLine & Breakdown Component -->
+          <mz-allocation-breakdown
+            [instanceId]="'alloc_' + fund.code"
+            [bands]="allocationModel.bands"
+            [cards]="allocationModel.cards"
+            [items]="allocationModel.fallbackAllocations"
+            badgeText="معايير الالتزام والسياسة الاستثمارية"
+            [ariaLabel]="'هيكل توزيع الأصول المستهدف لصندوق ' + fund.nameAr">
+          </mz-allocation-breakdown>
         </mz-details-section>
 
         <!-- Section 3: Similar Funds (if present) -->
@@ -349,6 +374,7 @@ export class FundDetailComponent implements OnInit, AfterViewInit, AfterViewChec
   readonly Loader2Icon = Loader2;
 
   fund: FundDetailDto | null = null;
+  allocationModel: FundAllocationModel = { bands: [], cards: [], fallbackAllocations: [], paragraphs: [] };
   displaySimilarFunds: FundSimilarDto[] = [];
   loading = true;
   private destroy$ = new Subject<void>();
@@ -629,6 +655,7 @@ export class FundDetailComponent implements OnInit, AfterViewInit, AfterViewChec
       this.fund = cached.data;
       this.lastSyncedAt = cached.data.lastSyncedAt || null;
       this.heroLogoUrl = this.computeHeroLogo(cached.data);
+      this.allocationModel = parseFundAllocations(cached.data.descriptionAr, cached.data.investmentStrategy, cached.data.typeSlug);
       this.loading = false;
       this.chartHasDataFlag = this.visiblePoints().length >= 2;
       this.chartNeedsRender = true;
@@ -648,6 +675,7 @@ export class FundDetailComponent implements OnInit, AfterViewInit, AfterViewChec
         this.fund = data;
         this.lastSyncedAt = data.lastSyncedAt || null;
         this.heroLogoUrl = this.computeHeroLogo(data);
+        this.allocationModel = parseFundAllocations(data.descriptionAr, data.investmentStrategy, data.typeSlug);
         this.loading = false;
         this.chartHasDataFlag = this.visiblePoints().length >= 2;
         this.chartNeedsRender = true;
