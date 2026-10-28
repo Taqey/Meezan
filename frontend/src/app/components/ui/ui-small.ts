@@ -1,4 +1,4 @@
-import { Component, EventEmitter, HostListener, ElementRef, Input, Output, forwardRef } from '@angular/core';
+import { Component, EventEmitter, HostListener, ElementRef, Input, Output, forwardRef, ViewChild, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -137,8 +137,10 @@ let nextSelectId = 1;
       </button>
 
       <div
+        #panelRef
         *ngIf="open"
         class="mz-select-panel"
+        [class.flip-up]="flipUp"
         role="listbox"
         [id]="listboxId"
         [attr.aria-label]="ariaLabel || placeholder">
@@ -162,7 +164,7 @@ let nextSelectId = 1;
     </div>
   `
 })
-export class MzSelectComponent implements ControlValueAccessor {
+export class MzSelectComponent implements ControlValueAccessor, OnDestroy {
   readonly ChevronIcon = ChevronDown;
   readonly CheckIcon = Check;
   readonly listboxId = `mz-select-listbox-${nextSelectId++}`;
@@ -175,14 +177,23 @@ export class MzSelectComponent implements ControlValueAccessor {
   @Input() size: 'default' | 'compact' = 'default';
   @Output() valueChange = new EventEmitter<any>();
 
+  @ViewChild('panelRef') panelRef?: ElementRef<HTMLElement>;
+
   open = false;
   flipUp = false;
   activeIndex = -1;
 
   private onChangeCallback: (v: any) => void = () => {};
   private onTouchedCallback: () => void = () => {};
+  private scrollListener?: () => void;
+  private resizeListener?: () => void;
+  private panelEl?: HTMLElement;
 
   constructor(private el: ElementRef<HTMLElement>) {}
+
+  ngOnDestroy(): void {
+    this.close();
+  }
 
   get hasSelection(): boolean {
     return this.options.some((o) => this.isEqual(o.value, this.value));
@@ -229,18 +240,105 @@ export class MzSelectComponent implements ControlValueAccessor {
 
   openDropdown(): void {
     if (this.disabled || !this.options.length) return;
-    const rect = this.el.nativeElement.getBoundingClientRect();
-    const spaceBelow = window.innerHeight - rect.bottom;
-    const spaceAbove = rect.top;
-    this.flipUp = spaceBelow < 260 && spaceAbove > spaceBelow;
     const idx = this.options.findIndex((o) => this.isEqual(o.value, this.value));
     this.activeIndex = idx >= 0 ? idx : 0;
     this.open = true;
+
+    // Reposition panel and attach to body portal
+    setTimeout(() => {
+      this.attachAndPositionPanel();
+    }, 0);
+  }
+
+  private attachAndPositionPanel(): void {
+    if (!this.open || !this.panelRef) return;
+    const panel = this.panelRef.nativeElement;
+    this.panelEl = panel;
+
+    if (panel.parentElement !== document.body) {
+      document.body.appendChild(panel);
+    }
+
+    this.updatePosition();
+
+    // Attach listeners to reposition / close on scroll & resize
+    if (!this.scrollListener) {
+      this.scrollListener = () => {
+        if (!this.open) return;
+        this.updatePosition();
+      };
+      window.addEventListener('scroll', this.scrollListener, true);
+    }
+    if (!this.resizeListener) {
+      this.resizeListener = () => {
+        if (!this.open) return;
+        this.updatePosition();
+      };
+      window.addEventListener('resize', this.resizeListener);
+    }
+  }
+
+  private updatePosition(): void {
+    if (!this.open || !this.panelEl) return;
+    const trigger = this.el.nativeElement.querySelector('.mz-select-trigger') as HTMLElement;
+    if (!trigger) return;
+
+    const rect = trigger.getBoundingClientRect();
+    // If trigger is detached or out of viewport (e.g. page scrolled away)
+    if (rect.bottom < 0 || rect.top > window.innerHeight) {
+      this.close();
+      return;
+    }
+
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const spaceAbove = rect.top;
+    const shouldFlip = spaceBelow < 260 && spaceAbove > spaceBelow;
+    this.flipUp = shouldFlip;
+
+    if (shouldFlip) {
+      this.panelEl.classList.add('flip-up');
+      this.panelEl.style.top = 'auto';
+      this.panelEl.style.bottom = `${Math.round(window.innerHeight - rect.top + 6)}px`;
+      this.panelEl.style.maxHeight = `${Math.min(280, Math.max(100, Math.floor(spaceAbove - 16)))}px`;
+    } else {
+      this.panelEl.classList.remove('flip-up');
+      this.panelEl.style.bottom = 'auto';
+      this.panelEl.style.top = `${Math.round(rect.bottom + 6)}px`;
+      this.panelEl.style.maxHeight = `${Math.min(280, Math.max(100, Math.floor(spaceBelow - 16)))}px`;
+    }
+
+    const minWidth = Math.max(140, Math.round(rect.width));
+    this.panelEl.style.minWidth = `${minWidth}px`;
+
+    // Right-aligned in RTL: align panel right edge to trigger right edge
+    let left = Math.round(rect.right - minWidth);
+    if (left < 10) left = 10;
+    if (left + minWidth > window.innerWidth - 10) {
+      left = Math.max(10, window.innerWidth - minWidth - 10);
+    }
+    this.panelEl.style.left = `${left}px`;
+    this.panelEl.style.right = 'auto';
   }
 
   close(): void {
     if (!this.open) return;
     this.open = false;
+
+    // Clean up body portal
+    if (this.panelEl && this.panelEl.parentElement === document.body) {
+      document.body.removeChild(this.panelEl);
+    }
+    this.panelEl = undefined;
+
+    if (this.scrollListener) {
+      window.removeEventListener('scroll', this.scrollListener, true);
+      this.scrollListener = undefined;
+    }
+    if (this.resizeListener) {
+      window.removeEventListener('resize', this.resizeListener);
+      this.resizeListener = undefined;
+    }
+
     this.onTouchedCallback();
   }
 
@@ -300,7 +398,11 @@ export class MzSelectComponent implements ControlValueAccessor {
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(e: MouseEvent): void {
-    if (this.open && !this.el.nativeElement.contains(e.target as Node)) {
+    if (!this.open) return;
+    const target = e.target as Node;
+    const insideTrigger = this.el.nativeElement.contains(target);
+    const insidePanel = this.panelEl ? this.panelEl.contains(target) : false;
+    if (!insideTrigger && !insidePanel) {
       this.close();
     }
   }
