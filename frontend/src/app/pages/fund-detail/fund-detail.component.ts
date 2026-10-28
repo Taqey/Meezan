@@ -17,6 +17,8 @@ import {
   MzHeaderTag,
   MzIndicator,
   MzListingCardData,
+  MzAllocationBreakdownComponent,
+  MzNumberLineComponent,
   MzSpinnerComponent
 } from '../../components/ui';
 import { Subject, forkJoin, takeUntil } from 'rxjs';
@@ -54,7 +56,6 @@ async function ensureChartJs(): Promise<typeof import('chart.js') | null> {
     MzDetailsSectionComponent,
     MzInfoGridComponent,
     MzAllocationBreakdownComponent,
-    MzNumberLineComponent,
     MzSpinnerComponent
   ],
   template: `

@@ -2,7 +2,7 @@ import { Component, EventEmitter, HostListener, ElementRef, Input, Output, forwa
 import { CommonModule } from '@angular/common';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { LucideAngularModule, Search, ChevronDown, Check, Star, FileText, type LucideIconData } from 'lucide-angular';
+import { LucideAngularModule, Search, ChevronDown, Check, Star, FileText, ExternalLink, type LucideIconData } from 'lucide-angular';
 import { FavoriteToggleComponent } from '../favorite-toggle/favorite-toggle.component';
 import { MzSpinnerComponent } from './mz-spinner.component';
 
@@ -543,21 +543,40 @@ export class MzPaginationButtonComponent {
 @Component({
   selector: 'mz-indicator-card',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink, LucideAngularModule],
   host: { class: 'mz', style: 'display:block' },
   template: `
     <div class="mz-indicator">
       <span class="mz-indicator-label">{{ label }}</span>
-      <span class="mz-indicator-value" [class.mz-ltr]="ltr">{{ value == null || value === '' ? '—' : value }}</span>
+      <ng-container *ngIf="link && value != null && value !== '' && value !== '—'; else plainValue">
+        <span class="mz-indicator-value" [class.mz-ltr]="ltr">
+          <a class="mz-manager-link" [routerLink]="link" [attr.aria-label]="ariaLabel || ('عرض جميع صناديق ' + value)">
+            <span>{{ value }}</span>
+            <span class="mz-manager-arrow" aria-hidden="true">←</span>
+          </a>
+          <a *ngIf="externalUrl" [href]="externalUrl" target="_blank" rel="noopener noreferrer"
+             class="mz-manager-ext" [attr.aria-label]="'الموقع الخارجي لـ ' + value"
+             (click)="$event.stopPropagation()">
+            <lucide-icon [img]="ExternalLinkIcon" [size]="13"></lucide-icon>
+          </a>
+        </span>
+      </ng-container>
+      <ng-template #plainValue>
+        <span class="mz-indicator-value" [class.mz-ltr]="ltr">{{ value == null || value === '' ? '—' : value }}</span>
+      </ng-template>
       <span class="mz-indicator-hint" *ngIf="hint">{{ hint }}</span>
     </div>
   `
 })
 export class MzIndicatorCardComponent {
+  readonly ExternalLinkIcon = ExternalLink;
   @Input() label = '';
   @Input() value: string | number | null | undefined;
   @Input() hint?: string | null;
   @Input() ltr = false;
+  @Input() link?: string | unknown[] | null;
+  @Input() ariaLabel?: string | null;
+  @Input() externalUrl?: string | null;
 }
 
 export interface MzAuthority {
