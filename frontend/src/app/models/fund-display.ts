@@ -264,3 +264,48 @@ export function fundTypeChangeLabelAr(v: unknown): string {
   }
   return '—';
 }
+
+
+/**
+ * Normalizes an Arabic/English manager name for comparison and URL slug matching:
+ *  - trims & collapses spaces
+ *  - removes Arabic diacritics (tashkeel) and tatweel
+ *  - normalizes alef variants (أ/إ/آ/ٱ → ا), taa marbuta (ة → ه), alef maqsura (ى → ي)
+ *  - lowercases ASCII characters
+ */
+export function normalizeManagerKey(name: string | null | undefined): string {
+  if (!name) return '';
+  return name
+    .trim()
+    .replace(/[\u064B-\u065F\u0670\u0640]/g, '')
+    .replace(/[أإآٱ]/g, 'ا')
+    .replace(/ة/g, 'ه')
+    .replace(/ى/g, 'ي')
+    .replace(/\s+/g, ' ')
+    .toLowerCase();
+}
+
+/**
+ * Converts a manager name into a URL-safe normalized slug (spaces replaced with '-').
+ */
+export function normalizeManagerSlug(name: string | null | undefined): string {
+  const key = normalizeManagerKey(name);
+  if (!key) return '';
+  return key.replace(/\s+/g, '-');
+}
+
+/**
+ * Returns the route parameter for `/fund-managers/:id` given a fund's assetManagerId and assetManagerName.
+ * Uses numeric `assetManagerId` when present (> 0), or falls back to `normalizeManagerSlug(assetManagerName)`.
+ * Returns `null` when both are empty.
+ */
+export function managerRouteParam(
+  assetManagerId?: number | null,
+  assetManagerName?: string | null
+): string | null {
+  if (typeof assetManagerId === 'number' && Number.isFinite(assetManagerId) && assetManagerId > 0) {
+    return String(assetManagerId);
+  }
+  const slug = normalizeManagerSlug(assetManagerName);
+  return slug ? slug : null;
+}

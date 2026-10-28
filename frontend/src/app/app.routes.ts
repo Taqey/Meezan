@@ -9,6 +9,7 @@ import { SectorsListComponent } from './pages/sectors-list/sectors-list.componen
 import { SectorDetailComponent } from './pages/sector-detail/sector-detail.component';
 import { FundsListComponent } from './pages/funds-list/funds-list.component';
 import { FundDetailComponent } from './pages/fund-detail/fund-detail.component';
+import { FundManagerDetailComponent } from './pages/fund-manager-detail/fund-manager-detail.component';
 import { AdminLoginComponent } from './pages/admin-login/admin-login.component';
 import { ShariahStandardsComponent } from './pages/shariah-standards/shariah-standards.component';
 import { PurificationComponent } from './pages/purification/purification.component';
@@ -28,6 +29,7 @@ export const routes: Routes = [
       { path: 'stocks/:code', component: StockDetailComponent },
       { path: 'funds', component: FundsListComponent },
       { path: 'funds/:slug', component: FundDetailComponent },
+      { path: 'fund-managers/:id', component: FundManagerDetailComponent },
       { path: 'portfolio', component: PortfolioComponent },
       { path: 'portfolio-simplifier', component: PortfolioSimplifierComponent },
       { path: 'shariah-standards', component: ShariahStandardsComponent },

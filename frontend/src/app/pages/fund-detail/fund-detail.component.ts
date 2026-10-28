@@ -20,7 +20,7 @@ import {
   MzSpinnerComponent
 } from '../../components/ui';
 import { Subject, forkJoin, takeUntil } from 'rxjs';
-import { fundLogoUrl } from '../../models/fund-display';
+import { fundLogoUrl, managerRouteParam } from '../../models/fund-display';
 import type { Chart, ChartConfiguration } from 'chart.js';
 
 /**
@@ -866,6 +866,12 @@ export class FundDetailComponent implements OnInit, AfterViewInit, AfterViewChec
   }
 
   // ── Mappers for shared UI components ────────────────────────────────
+  get managerLink(): string[] | null {
+    if (!this.fund) return null;
+    const param = managerRouteParam(this.fund.assetManagerId, this.fund.assetManagerName);
+    return param ? ['/fund-managers', param] : null;
+  }
+
   get headerTags(): MzHeaderTag[] {
     if (!this.fund) return [];
     const tags: MzHeaderTag[] = [];
@@ -876,8 +882,13 @@ export class FundDetailComponent implements OnInit, AfterViewInit, AfterViewChec
     if (typeLabel) {
       tags.push({ label: typeLabel, tone: 'default' });
     }
-    if (this.fund.assetManagerName) {
-      tags.push({ label: this.fund.assetManagerName, tone: 'outline' });
+    if (this.fund.assetManagerName && this.fund.assetManagerName.trim()) {
+      tags.push({
+        label: this.fund.assetManagerName,
+        tone: 'outline',
+        link: this.managerLink,
+        ariaLabel: `عرض جميع صناديق شركة ${this.fund.assetManagerName}`
+      });
     }
     if (this.fund.isFeatured) {
       tags.push({ label: 'مميز ★', tone: 'warn' });
@@ -888,9 +899,15 @@ export class FundDetailComponent implements OnInit, AfterViewInit, AfterViewChec
   get fundFundamentalsList(): MzIndicator[] {
     if (!this.fund) return [];
     const f = this.fund;
+    const mgrName = f.assetManagerName && f.assetManagerName.trim() ? f.assetManagerName : '—';
     return [
       { label: 'كود الصندوق', value: f.code, ltr: true },
-      { label: 'المدير', value: f.assetManagerName || '—' },
+      {
+        label: 'المدير',
+        value: mgrName,
+        link: mgrName !== '—' ? this.managerLink : null,
+        ariaLabel: mgrName !== '—' ? `عرض جميع صناديق شركة ${mgrName}` : null
+      },
       { label: 'العملة', value: f.currency, ltr: true },
       { label: 'تاريخ التأسيس', value: f.inceptionDate ? new Date(f.inceptionDate).toISOString().slice(0, 10) : '—', ltr: true },
       { label: 'الحد الأدنى للاستثمار', value: f.minimumInvestment || '—' },

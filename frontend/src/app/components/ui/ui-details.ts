@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { LucideAngularModule, ArrowRight, ChevronLeft } from 'lucide-angular';
+import { LucideAngularModule, ArrowRight, ChevronLeft, ExternalLink } from 'lucide-angular';
 import { RevealDirective } from '../../directives/reveal.directive';
 import {
   MzBadgeComponent, MzAuthorityCardComponent, MzChipComponent, MzFavoriteButtonComponent, MzIndicatorCardComponent,
@@ -47,12 +47,18 @@ export class MzDetailsSectionComponent {
 }
 
 /* ───────────── DetailsHeaderCard ───────────── */
-export interface MzHeaderTag { label: string; link?: string | unknown[] | null; tone?: 'default' | 'neutral' | 'danger' | 'warn' | 'outline'; }
+export interface MzHeaderTag {
+  label: string;
+  link?: string | unknown[] | null;
+  tone?: 'default' | 'neutral' | 'danger' | 'warn' | 'outline';
+  ariaLabel?: string | null;
+  externalUrl?: string | null;
+}
 
 @Component({
   selector: 'mz-details-header-card',
   standalone: true,
-  imports: [CommonModule, RouterLink, MzBadgeComponent, MzFavoriteButtonComponent],
+  imports: [CommonModule, RouterLink, LucideAngularModule, MzBadgeComponent, MzFavoriteButtonComponent],
   host: { class: 'mz', style: 'display:block' },
   template: `
     <div class="mz-card mz-dheader">
@@ -71,7 +77,18 @@ export interface MzHeaderTag { label: string; link?: string | unknown[] | null; 
         </div>
         <div class="mz-dheader-tags" *ngIf="tags?.length">
           <ng-container *ngFor="let t of tags">
-            <a *ngIf="t.link; else plain" [routerLink]="t.link"><mz-badge [tone]="t.tone || 'neutral'" [pill]="true">{{ t.label }}</mz-badge></a>
+            <span *ngIf="t.link; else plain" class="mz-header-tag-wrap">
+              <a class="mz-header-tag-link" [routerLink]="t.link" [attr.aria-label]="t.ariaLabel || ('عرض جميع صناديق ' + t.label)">
+                <mz-badge [tone]="t.tone || 'neutral'" [pill]="true">
+                  <span>{{ t.label }}</span>
+                  <span class="mz-manager-arrow" aria-hidden="true">←</span>
+                </mz-badge>
+              </a>
+              <a *ngIf="t.externalUrl" [href]="t.externalUrl" target="_blank" rel="noopener noreferrer"
+                 class="mz-manager-ext" [attr.aria-label]="'الموقع الخارجي لـ ' + t.label">
+                <lucide-icon [img]="ExternalLinkIcon" [size]="12"></lucide-icon>
+              </a>
+            </span>
             <ng-template #plain><mz-badge [tone]="t.tone || 'neutral'" [pill]="true">{{ t.label }}</mz-badge></ng-template>
           </ng-container>
         </div>
@@ -87,6 +104,7 @@ export interface MzHeaderTag { label: string; link?: string | unknown[] | null; 
   `
 })
 export class MzDetailsHeaderCardComponent {
+  readonly ExternalLinkIcon = ExternalLink;
   @Input() logoUrl?: string | null;
   @Input() title = '';
   @Input() code?: string | null;
@@ -186,7 +204,15 @@ export class MzFairValueCardComponent {
 }
 
 /* ───────────── InfoGrid / MarketIndicatorsSection ───────────── */
-export interface MzIndicator { label: string; value: string | number | null | undefined; hint?: string | null; ltr?: boolean; }
+export interface MzIndicator {
+  label: string;
+  value: string | number | null | undefined;
+  hint?: string | null;
+  ltr?: boolean;
+  link?: string | unknown[] | null;
+  ariaLabel?: string | null;
+  externalUrl?: string | null;
+}
 
 @Component({
   selector: 'mz-info-grid',
@@ -195,7 +221,7 @@ export interface MzIndicator { label: string; value: string | number | null | un
   host: { class: 'mz', style: 'display:block' },
   template: `
     <div class="mz-infogrid">
-      <mz-indicator-card *ngFor="let i of items" [label]="i.label" [value]="i.value" [hint]="i.hint" [ltr]="!!i.ltr"></mz-indicator-card>
+      <mz-indicator-card *ngFor="let i of items" [label]="i.label" [value]="i.value" [hint]="i.hint" [ltr]="!!i.ltr" [link]="i.link" [ariaLabel]="i.ariaLabel" [externalUrl]="i.externalUrl"></mz-indicator-card>
     </div>
   `
 })
