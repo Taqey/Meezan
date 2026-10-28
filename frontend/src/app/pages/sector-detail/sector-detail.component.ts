@@ -56,19 +56,38 @@ import { TreemapComponent, type TreemapItem } from '../../components/treemap/tre
       </div>
 
       <div advanced class="mz-adv-grid">
-        <mz-select
-          *ngIf="shariahStatuses.includes('NonCompliant')"
-          [options]="nonComplianceOptions"
-          [(ngModel)]="nonComplianceType"
-          (valueChange)="nonComplianceType = $event; onFilterChange()"
-          ariaLabel="سبب عدم التوافق">
-        </mz-select>
-        <mz-select
-          [options]="minCompliantOptions"
-          [(ngModel)]="minCompliantSources"
-          (valueChange)="minCompliantSources = $event; onFilterChange()"
-          ariaLabel="الحد الأدنى للمصادر المتوافقة">
-        </mz-select>
+        <!-- Right Column: Stacked authorities/compliance dropdown + results per page -->
+        <div class="mz-adv-col">
+          <div class="mz-adv-item" *ngIf="shariahStatuses.includes('NonCompliant')">
+            <span class="mz-slicer-head"><span>سبب عدم التوافق</span></span>
+            <mz-select
+              [options]="nonComplianceOptions"
+              [(ngModel)]="nonComplianceType"
+              (valueChange)="nonComplianceType = $event; onFilterChange()"
+              ariaLabel="سبب عدم التوافق">
+            </mz-select>
+          </div>
+          <div class="mz-adv-item">
+            <span class="mz-slicer-head"><span>الحد الأدنى للمصادر المتوافقة</span></span>
+            <mz-select
+              [options]="minCompliantOptions"
+              [(ngModel)]="minCompliantSources"
+              (valueChange)="minCompliantSources = $event; onFilterChange()"
+              ariaLabel="الحد الأدنى للمصادر المتوافقة">
+            </mz-select>
+          </div>
+          <div class="mz-adv-item">
+            <span class="mz-slicer-head"><span>النتائج لكل صفحة</span></span>
+            <mz-select
+              [options]="pageSizeOptions"
+              [(ngModel)]="pageSize"
+              (valueChange)="pageSize = $event; onPageSizeChange()"
+              ariaLabel="عدد الأسهم في الصفحة">
+            </mz-select>
+          </div>
+        </div>
+
+        <!-- Middle Column: P/E range card -->
         <div class="mz-slicer">
           <div class="mz-slicer-head"><span>مكرر الربحية (P/E)</span><span>{{ minPe !== null ? minPe : 0 }} - {{ maxPe !== null ? maxPe : 100 }}</span></div>
           <div class="mz-slicer-inputs">
@@ -78,6 +97,8 @@ import { TreemapComponent, type TreemapItem } from '../../components/treemap/tre
           </div>
           <input type="range" min="0" max="100" [ngModel]="maxPe !== null ? maxPe : 100" (ngModelChange)="onPeMaxChange($event)" aria-label="شريط أقصى مكرر ربحية" />
         </div>
+
+        <!-- Left Column: P/B range card -->
         <div class="mz-slicer">
           <div class="mz-slicer-head"><span>مضاعف القيمة الدفترية (P/B)</span><span>{{ minPb !== null ? minPb : 0 }} - {{ maxPb !== null ? maxPb : 20 }}</span></div>
           <div class="mz-slicer-inputs">
@@ -87,15 +108,6 @@ import { TreemapComponent, type TreemapItem } from '../../components/treemap/tre
           </div>
           <input type="range" min="0" max="20" step="0.5" [ngModel]="maxPb !== null ? maxPb : 20" (ngModelChange)="onPbMaxChange($event)" aria-label="شريط أقصى مضاعف قيمة دفترية" />
         </div>
-        <label class="mz-slicer">
-          <span class="mz-slicer-head"><span>لكل صفحة</span></span>
-          <mz-select
-            [options]="pageSizeOptions"
-            [(ngModel)]="pageSize"
-            (valueChange)="pageSize = $event; onPageSizeChange()"
-            ariaLabel="عدد الأسهم في الصفحة">
-          </mz-select>
-        </label>
       </div>
     </mz-listing-page>
   `
