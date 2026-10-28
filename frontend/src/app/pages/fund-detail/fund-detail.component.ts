@@ -122,7 +122,7 @@ async function ensureChartJs(): Promise<typeof import('chart.js') | null> {
             </button>
           </div>
 
-          <div style="width: 100%; background: rgba(248, 250, 252, 0.7); border-radius: 16px; padding: 16px; border: 1px solid #e2e8f0; margin-top: 16px;">
+          <div *ngIf="chartHasData()" style="width: 100%; background: rgba(248, 250, 252, 0.7); border-radius: 16px; padding: 16px; border: 1px solid #e2e8f0; margin-top: 16px;">
             <div class="chart-container" style="height: 290px; position: relative;">
               <canvas #priceChart></canvas>
             </div>
@@ -346,6 +346,7 @@ export class FundDetailComponent implements OnInit, AfterViewInit, AfterViewChec
 
   selectedPeriod = '1Y';
   chartPeriods = [
+    { key: '1W', label: 'أسبوع' },
     { key: '1M', label: '1 شهر' },
     { key: '3M', label: '3 أشهر' },
     { key: '6M', label: '6 أشهر' },
@@ -585,7 +586,7 @@ export class FundDetailComponent implements OnInit, AfterViewInit, AfterViewChec
     this.viewReady = true;
     // Covers the case where data arrived BEFORE the view existed (cached route reuse).
     if (this.fund) {
-      this.chartHasDataFlag = this.visiblePoints().length > 0;
+      this.chartHasDataFlag = this.visiblePoints().length >= 2;
       this.chartNeedsRender = true;
     }
   }
@@ -616,7 +617,7 @@ export class FundDetailComponent implements OnInit, AfterViewInit, AfterViewChec
       this.lastSyncedAt = cached.data.lastSyncedAt || null;
       this.heroLogoUrl = this.computeHeroLogo(cached.data);
       this.loading = false;
-      this.chartHasDataFlag = this.visiblePoints().length > 0;
+      this.chartHasDataFlag = this.visiblePoints().length >= 2;
       this.chartNeedsRender = true;
       this.loadAllFundsForSimilar(cached.data);
       if (!this.cache.isStale(cacheKey)) {
@@ -635,7 +636,7 @@ export class FundDetailComponent implements OnInit, AfterViewInit, AfterViewChec
         this.lastSyncedAt = data.lastSyncedAt || null;
         this.heroLogoUrl = this.computeHeroLogo(data);
         this.loading = false;
-        this.chartHasDataFlag = this.visiblePoints().length > 0;
+        this.chartHasDataFlag = this.visiblePoints().length >= 2;
         this.chartNeedsRender = true;
         this.loadAllFundsForSimilar(data);
       },
@@ -655,6 +656,19 @@ export class FundDetailComponent implements OnInit, AfterViewInit, AfterViewChec
     const all = this.fund?.priceHistory ?? [];
     if (all.length === 0) return [];
     if (this.selectedPeriod === 'ALL') return all.slice();
+
+    if (this.selectedPeriod === '1W') {
+      const latestTime = all.reduce((max, p) => {
+        const t = new Date(p.date).getTime();
+        return !isNaN(t) && t > max ? t : max;
+      }, 0);
+      const cutoff = latestTime ? new Date(latestTime) : new Date();
+      cutoff.setDate(cutoff.getDate() - 7);
+      return all.filter(p => {
+        const d = new Date(p.date);
+        return !isNaN(d.getTime()) && d >= cutoff;
+      });
+    }
 
     const months = this.selectedPeriod === '1M' ? 1
       : this.selectedPeriod === '3M' ? 3
@@ -684,7 +698,8 @@ export class FundDetailComponent implements OnInit, AfterViewInit, AfterViewChec
 
   selectPeriod(key: string): void {
     this.selectedPeriod = key;
-    this.chartHasDataFlag = this.visiblePoints().length > 0;
+    this.chartHasDataFlag = this.visiblePoints().length >= 2;
+    this.chartNeedsRender = true;
     this.renderChart();
   }
 
@@ -692,13 +707,20 @@ export class FundDetailComponent implements OnInit, AfterViewInit, AfterViewChec
 
   private renderChart(): void {
     if (!this.viewReady || this.loading) return;
+    if (!this.chartHasDataFlag) {
+      this.destroyChart();
+      return;
+    }
     const canvas = this.priceChartRef?.nativeElement;
-    if (!canvas) return;
+    if (!canvas) {
+      this.chartNeedsRender = true;
+      return;
+    }
 
     this.destroyChart();
 
     const points = this.visiblePoints();
-    if (points.length === 0) return;
+    if (points.length < 2) return;
 
     this.paintChart(canvas, points);
   }

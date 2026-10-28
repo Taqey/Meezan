@@ -305,6 +305,16 @@ export class MzInfoCardComponent {
 /* ───────────── Fund-only: PerformanceChart / AllocationBreakdown ───────────── */
 export interface MzPerfPeriod { id: string; label: string; }
 
+export const MZ_DEFAULT_PERF_PERIODS: MzPerfPeriod[] = [
+  { id: '1W', label: 'أسبوع' },
+  { id: '1M', label: '1 شهر' },
+  { id: '3M', label: '3 أشهر' },
+  { id: '6M', label: '6 أشهر' },
+  { id: '1Y', label: 'سنة' },
+  { id: '3Y', label: '3 سنين' },
+  { id: '5Y', label: '5 سنين' }
+];
+
 @Component({
   selector: 'mz-performance-chart',
   standalone: true,
@@ -322,11 +332,11 @@ export interface MzPerfPeriod { id: string; label: string; }
   `
 })
 export class MzPerformanceChartComponent {
-  @Input() periods: MzPerfPeriod[] = [];
-  @Input() active = '';
+  @Input() periods: MzPerfPeriod[] = MZ_DEFAULT_PERF_PERIODS;
+  @Input() active = '1Y';
   @Input() points: number[] = [];
   @Input() ariaLabel = '';
-  @Input() emptyText = '';
+  @Input() emptyText = 'لا توجد بيانات سعرية تاريخية متاحة لهذا الصندوق.';
   @Output() periodChange = new EventEmitter<string>();
   get path(): string {
     const p = this.points.filter((n) => Number.isFinite(n));
