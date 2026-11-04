@@ -54,6 +54,16 @@ public class MarketSnapshotsBackgroundService : BackgroundService
                 break;
             }
 
+            using (var checkScope = _serviceProvider.CreateScope())
+            {
+                var sectorDailyService = checkScope.ServiceProvider.GetRequiredService<Meezan.Application.Common.Interfaces.Repositories.Sectors.ISectorDailyService>();
+                if (!await sectorDailyService.IsExternalSectorPullEnabledAsync(stoppingToken))
+                {
+                    _logger.LogInformation(
+                        "MarketSnapshotsBackgroundService: external sector pull is disabled (EXTERNAL_SECTOR_PULL_ENABLED = false).");
+                }
+            }
+
             if (!_jobSettings.IsEnabled("MarketSnapshots"))
             {
                 _logger.LogInformation(

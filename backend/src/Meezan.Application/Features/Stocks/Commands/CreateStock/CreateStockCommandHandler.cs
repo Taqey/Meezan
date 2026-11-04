@@ -13,15 +13,18 @@ public sealed class CreateStockCommandHandler : IRequestHandler<CreateStockComma
     private readonly IStockRepository _stockRepository;
     private readonly ISectorRepository _sectorRepository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ISectorDailyService _sectorDailyService;
 
     public CreateStockCommandHandler(
         IStockRepository stockRepository,
         ISectorRepository sectorRepository,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        ISectorDailyService sectorDailyService)
     {
         _stockRepository = stockRepository;
         _sectorRepository = sectorRepository;
         _unitOfWork = unitOfWork;
+        _sectorDailyService = sectorDailyService;
     }
 
     public async Task<Result<StockManagementItemDto>> Handle(CreateStockCommand request, CancellationToken cancellationToken)
@@ -61,6 +64,21 @@ public sealed class CreateStockCommandHandler : IRequestHandler<CreateStockComma
 
         await _stockRepository.AddAsync(stock, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        if (stock.SectorId.HasValue)
+        {
+            try
+            {
+                await _sectorDailyService.RecalculateSectorsAsync(
+                    new List<int> { stock.SectorId.Value },
+                    "StockCreated",
+                    cancellationToken);
+            }
+            catch
+            {
+                // Non-blocking
+            }
+        }
 
         return new StockManagementItemDto(
             stock.Id, stock.Ticker, stock.NameAr, stock.NameEn,

@@ -21,6 +21,7 @@ public class RefreshMarketSnapshotsCommandHandler
     private readonly IMarketSnapshotRepository _snapshotRepository;
     private readonly IMubasherMarketSnapshotClient _snapshotClient;
     private readonly IScrapeProgressTracker _progress;
+    private readonly Meezan.Application.Common.Interfaces.Repositories.Sectors.ISectorDailyService _sectorDailyService;
     private readonly ILogger<RefreshMarketSnapshotsCommandHandler> _logger;
 
     public RefreshMarketSnapshotsCommandHandler(
@@ -28,12 +29,14 @@ public class RefreshMarketSnapshotsCommandHandler
         IMarketSnapshotRepository snapshotRepository,
         IMubasherMarketSnapshotClient snapshotClient,
         IScrapeProgressTracker progress,
+        Meezan.Application.Common.Interfaces.Repositories.Sectors.ISectorDailyService sectorDailyService,
         ILogger<RefreshMarketSnapshotsCommandHandler> logger)
     {
         _indexRepository = indexRepository;
         _snapshotRepository = snapshotRepository;
         _snapshotClient = snapshotClient;
         _progress = progress;
+        _sectorDailyService = sectorDailyService;
         _logger = logger;
     }
 
@@ -62,9 +65,17 @@ public class RefreshMarketSnapshotsCommandHandler
 
             // Sectors: every sector ID present in the map.
             // (Sector rows are resolved by ID at upsert time; unknown IDs skipped.)
-            foreach (var (sectorId, slug) in MubasherMarketMap.SectorSlugs)
+            var externalSectorPullEnabled = await _sectorDailyService.IsExternalSectorPullEnabledAsync(cancellationToken);
+            if (externalSectorPullEnabled)
             {
-                targets.Add(("Sector", sectorId.ToString(), slug, sectorId));
+                foreach (var (sectorId, slug) in MubasherMarketMap.SectorSlugs)
+                {
+                    targets.Add(("Sector", sectorId.ToString(), slug, sectorId));
+                }
+            }
+            else
+            {
+                _logger.LogInformation("EXTERNAL_SECTOR_PULL_ENABLED is false; external sector quotes scrape skipped.");
             }
 
             _progress.StartRun("MarketSnapshots", request.TriggeredBy, targets.Count);

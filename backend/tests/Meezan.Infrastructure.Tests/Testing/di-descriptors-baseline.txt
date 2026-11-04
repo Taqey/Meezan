@@ -35,6 +35,7 @@ Scoped|IOptionsSnapshot`1[TOptions]|OptionsManager`1[TOptions]|False|False
 Scoped|IRemovalCandidatesReadQuery|RemovalCandidatesReadQuery|False|False
 Scoped|IScrapeBatchCommitter|ScrapeBatchCommitter|False|False
 Scoped|IScrapeRunLogRepository|ScrapeRunLogRepository|False|False
+Scoped|ISectorDailyService|SectorDailyService|False|False
 Scoped|ISectorRepository|SectorRepository|False|False
 Scoped|IShariahComplianceRepository|ShariahComplianceRepository|False|False
 Scoped|IShariahMapLoader|ShariahMapLoader|False|False

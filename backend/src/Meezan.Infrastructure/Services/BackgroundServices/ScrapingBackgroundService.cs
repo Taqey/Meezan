@@ -76,6 +76,32 @@ public class ScrapingBackgroundService : BackgroundService
                         "Daily scrape completed. Stocks: {Total}, Succeeded: {Succeeded}, Failed: {Failed}, Duration: {Duration}s",
                         result.Value.TotalStocks, result.Value.Succeeded, result.Value.Failed,
                         (int)result.Value.Duration.TotalSeconds);
+
+                    // Publish guard: if fewer than 80% of all stocks have a price for the new trading date,
+                    // do not publish new sector rows, keep showing the last good day, log an error.
+                    if (result.Value.TotalStocks > 0 &&
+                        ((decimal)result.Value.Succeeded / result.Value.TotalStocks) < 0.80m)
+                    {
+                        _logger.LogError("Publish guard failed: only {Succeeded}/{Total} stocks succeeded (< 80%). Sector daily calculation skipped.",
+                            result.Value.Succeeded, result.Value.TotalStocks);
+                    }
+                    else
+                    {
+                        try
+                        {
+                            var sectorDailyService = scope.ServiceProvider.GetRequiredService<Meezan.Application.Common.Interfaces.Repositories.Sectors.ISectorDailyService>();
+                            await sectorDailyService.CalculateAsync(
+                                tradingDate: null,
+                                specificSectorIds: null,
+                                triggeredBy: "LiveDailyPriceScrape",
+                                ct: stoppingToken);
+                            _logger.LogInformation("Daily sector calculation completed successfully as the last step of 4 PM price pull.");
+                        }
+                        catch (Exception calcEx)
+                        {
+                            _logger.LogError(calcEx, "Failed running daily sector calculation after price scrape.");
+                        }
+                    }
                 }
                 else
                 {

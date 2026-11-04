@@ -10,5 +10,13 @@ public record SectorSummaryDto(
     decimal? AverageChangePct = null,
     decimal? MarketCapTotal = null,
     decimal? CompliantMarketCapTotal = null,
-    decimal? AveragePeRatio = null
+    decimal? AveragePeRatio = null,
+    string? TradingDate = null,
+    DateTime? ComputedAt = null,
+    bool Approximate = false,
+    int StocksUsed = 0,
+    int Advancers = 0,
+    int Decliners = 0,
+    int Unchanged = 0,
+    string? TopContributorsJson = null
 );

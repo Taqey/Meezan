@@ -220,36 +220,99 @@ import {
       border: 1px solid rgba(188, 202, 192, 0.3);
     }
     @media (max-width: 767px) {
-      .mz-std-table thead {
-        display: none;
+      .mz-table-scroll {
+        border: none;
+        background: transparent;
+        overflow: visible;
       }
-      .mz-std-table, .mz-std-table tbody, .mz-std-table tr, .mz-std-table td {
-        display: block;
-        width: 100%;
+      .mz-std-table thead {
+        display: none !important;
+      }
+      .mz-std-table, .mz-std-table tbody {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 12px;
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
       }
       .mz-std-table tr {
-        padding: 12px;
-        border-bottom: 1px solid rgba(188, 202, 192, 0.35);
+        display: flex !important;
+        flex-direction: column !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+        background: var(--mz-surface, #fff);
+        border: 1px solid rgba(188, 202, 192, 0.35);
+        border-radius: 14px;
+        padding: 16px;
+        overflow: visible;
+      }
+      .mz-std-table tr.scholars-row {
+        background: rgba(255, 244, 217, 0.3);
       }
       .mz-std-table td {
-        padding: 6px 4px;
-        border-bottom: 0;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 8px;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 10px;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+        padding: 8px 0 !important;
+        border-bottom: 1px solid rgba(188, 202, 192, 0.2);
+        font-size: 13px;
+        text-align: right !important;
+      }
+      .mz-std-table td:last-child {
+        border-bottom: none;
+        padding-bottom: 0 !important;
       }
       .mz-std-table td:first-child {
-        display: block;
-        padding-bottom: 10px;
-        margin-bottom: 6px;
-        border-bottom: 1px dashed rgba(188, 202, 192, 0.35);
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 4px;
+        padding-top: 0 !important;
+        padding-bottom: 12px !important;
+        margin-bottom: 4px;
+        border-bottom: 1px solid rgba(188, 202, 192, 0.35);
+      }
+      .mz-std-table .std-name {
+        font-size: 16px;
+        line-height: 1.4;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+      }
+      .mz-std-table .std-en {
+        font-size: 11px;
+        overflow-wrap: anywhere;
+        text-align: right !important;
+      }
+      .mz-std-table .std-sub {
+        font-size: 12px;
+        line-height: 1.5;
+        overflow-wrap: anywhere;
+        word-break: break-word;
       }
       .mz-std-table td[data-label]::before {
         content: attr(data-label);
         font-size: 12px;
         font-weight: 700;
         color: var(--mz-on-surface-variant, #3d4a42);
+        flex: 1 1 auto;
+        min-width: 0;
+        overflow-wrap: anywhere;
+      }
+      .mz-std-pill {
+        flex: 0 0 auto !important;
+        white-space: nowrap !important;
+      }
+      .mz-std-dash {
+        flex: 0 0 auto !important;
+        white-space: nowrap !important;
       }
     }
   `]

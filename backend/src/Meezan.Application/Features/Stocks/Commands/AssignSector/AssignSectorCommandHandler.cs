@@ -14,17 +14,20 @@ public sealed class AssignSectorCommandHandler : IRequestHandler<AssignSectorCom
     private readonly ISectorRepository _sectorRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IIndexStaticCache _indexCache;
+    private readonly ISectorDailyService _sectorDailyService;
 
     public AssignSectorCommandHandler(
         IStockRepository stockRepository,
         ISectorRepository sectorRepository,
         IUnitOfWork unitOfWork,
-        IIndexStaticCache indexCache)
+        IIndexStaticCache indexCache,
+        ISectorDailyService sectorDailyService)
     {
         _stockRepository = stockRepository;
         _sectorRepository = sectorRepository;
         _unitOfWork = unitOfWork;
         _indexCache = indexCache;
+        _sectorDailyService = sectorDailyService;
     }
 
     public async Task<Result<StockManagementItemDto>> Handle(AssignSectorCommand request, CancellationToken cancellationToken)
@@ -41,6 +44,8 @@ public sealed class AssignSectorCommandHandler : IRequestHandler<AssignSectorCom
             return Error.Validation("SectorNotFound", $"Sector with Id {request.SectorId} does not exist.");
         }
 
+        var oldSectorId = stock.SectorId;
+
         stock.SectorId = sector.Id;
         stock.Sector = sector;
         stock.IsManual = true;
@@ -51,6 +56,25 @@ public sealed class AssignSectorCommandHandler : IRequestHandler<AssignSectorCom
 
         // Invalidate Sectoral-Indices cache so membership updates immediately
         await _indexCache.InvalidateAsync("SECTORAL-INDICES", cancellationToken);
+
+        // Automatically recalculate affected sector(s) for the latest trading date
+        var affectedSectorIds = new List<int> { sector.Id };
+        if (oldSectorId.HasValue && oldSectorId.Value != sector.Id)
+        {
+            affectedSectorIds.Add(oldSectorId.Value);
+        }
+
+        try
+        {
+            await _sectorDailyService.RecalculateSectorsAsync(
+                affectedSectorIds,
+                "StockAssignSector",
+                cancellationToken);
+        }
+        catch
+        {
+            // Non-blocking
+        }
 
         return new StockManagementItemDto(
             stock.Id, stock.Ticker, stock.NameAr, stock.NameEn,

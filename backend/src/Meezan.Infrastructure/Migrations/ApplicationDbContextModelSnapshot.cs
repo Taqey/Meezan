@@ -81,6 +81,13 @@ namespace Meezan.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)")
+                        .HasDefaultValue("");
+
                     b.Property<DateTime?>("InceptionDate")
                         .HasColumnType("datetime2");
 
@@ -91,11 +98,21 @@ namespace Meezan.Infrastructure.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("IsDescriptionManuallyEdited")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
                     b.Property<bool>("IsFeatured")
                         .HasColumnType("bit");
 
                     b.Property<bool>("IsIslamic")
                         .HasColumnType("bit");
+
+                    b.Property<bool>("IsNameManuallyEdited")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<DateTime?>("LastSyncedAt")
                         .HasColumnType("datetime2");
@@ -1567,6 +1584,71 @@ namespace Meezan.Infrastructure.Migrations
                     b.ToTable("Sectors", (string)null);
                 });
 
+            modelBuilder.Entity("Meezan.Domain.Entities.SectorDaily", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Advancers")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("Approximate")
+                        .HasColumnType("bit");
+
+                    b.Property<decimal?>("ChangePct")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<DateTime>("ComputedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("CoveragePct")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<int>("Decliners")
+                        .HasColumnType("int");
+
+                    b.Property<string>("MethodUsed")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.Property<int>("SectorId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("ShareOfWeightRose")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<int>("StocksTotal")
+                        .HasColumnType("int");
+
+                    b.Property<int>("StocksUsed")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TopContributorsJson")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<decimal>("TotalMarketCap")
+                        .HasColumnType("decimal(24,4)");
+
+                    b.Property<DateOnly>("TradingDate")
+                        .HasColumnType("date");
+
+                    b.Property<int>("Unchanged")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SectorId", "TradingDate")
+                        .IsUnique();
+
+                    b.ToTable("SectorDailies", (string)null);
+                });
+
             modelBuilder.Entity("Meezan.Domain.Entities.ShariahCompliance", b =>
                 {
                     b.Property<int>("Id")
@@ -1766,6 +1848,59 @@ namespace Meezan.Infrastructure.Migrations
                     b.ToTable("Stocks", (string)null);
                 });
 
+            modelBuilder.Entity("Meezan.Domain.Entities.StockDailySnapshot", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal?>("ChangePct")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<string>("Currency")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<decimal?>("PrevClose")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal?>("Price")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<DateTime>("RecordedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("SectorId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal?>("SharesUsed")
+                        .HasColumnType("decimal(24,4)");
+
+                    b.Property<int>("StockId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Ticker")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<DateOnly>("TradingDate")
+                        .HasColumnType("date");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SectorId");
+
+                    b.HasIndex("TradingDate");
+
+                    b.HasIndex("StockId", "TradingDate")
+                        .IsUnique();
+
+                    b.ToTable("StockDailySnapshots", (string)null);
+                });
+
             modelBuilder.Entity("Meezan.Domain.Entities.StockFairValue", b =>
                 {
                     b.Property<int>("Id")
@@ -1860,14 +1995,28 @@ namespace Meezan.Infrastructure.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
+                    b.Property<decimal?>("EarningsGrowthRate")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<decimal?>("Eps")
                         .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal?>("EpsGrowthRate")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<DateTime>("FetchedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<decimal?>("FreeCashFlow")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<decimal?>("High")
                         .HasColumnType("decimal(18,4)");
+
+                    b.Property<bool>("IsSharesManual")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<decimal?>("Low")
                         .HasColumnType("decimal(18,4)");
@@ -1886,6 +2035,9 @@ namespace Meezan.Infrastructure.Migrations
 
                     b.Property<decimal?>("PeRatio")
                         .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal?>("SharesOutstanding")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<DateTime?>("SlowDataFetchedAt")
                         .HasColumnType("datetime2");
@@ -2047,6 +2199,39 @@ namespace Meezan.Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("StockSupportResistance", (string)null);
+                });
+
+            modelBuilder.Entity("Meezan.Domain.Entities.SystemSetting", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("nvarchar(80)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Key")
+                        .IsUnique();
+
+                    b.ToTable("SystemSettings", (string)null);
                 });
 
             modelBuilder.Entity("Meezan.Domain.Entities.UploadHistory", b =>
@@ -2281,6 +2466,17 @@ namespace Meezan.Infrastructure.Migrations
                     b.Navigation("Stock");
                 });
 
+            modelBuilder.Entity("Meezan.Domain.Entities.SectorDaily", b =>
+                {
+                    b.HasOne("Meezan.Domain.Entities.Sector", "Sector")
+                        .WithMany()
+                        .HasForeignKey("SectorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Sector");
+                });
+
             modelBuilder.Entity("Meezan.Domain.Entities.ShariahCompliance", b =>
                 {
                     b.HasOne("Meezan.Domain.Entities.Stock", "Stock")
@@ -2311,6 +2507,24 @@ namespace Meezan.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Sector");
+                });
+
+            modelBuilder.Entity("Meezan.Domain.Entities.StockDailySnapshot", b =>
+                {
+                    b.HasOne("Meezan.Domain.Entities.Sector", "Sector")
+                        .WithMany()
+                        .HasForeignKey("SectorId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Meezan.Domain.Entities.Stock", "Stock")
+                        .WithMany()
+                        .HasForeignKey("StockId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Sector");
+
+                    b.Navigation("Stock");
                 });
 
             modelBuilder.Entity("Meezan.Domain.Entities.StockFairValue", b =>

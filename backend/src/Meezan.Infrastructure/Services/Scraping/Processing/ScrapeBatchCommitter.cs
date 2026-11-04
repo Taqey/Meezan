@@ -287,18 +287,30 @@ public class ScrapeBatchCommitter : IScrapeBatchCommitter
         }
 
         existing.NominalValue = data.NominalValue;
-        if (data.SharesOutstanding.HasValue)
+        // If shares were manually set by admin, protect them from scraper overwrite
+        if (!existing.IsSharesManual)
         {
-            existing.SharesOutstanding = data.SharesOutstanding;
+            if (data.SharesOutstanding.HasValue)
+            {
+                existing.SharesOutstanding = data.SharesOutstanding;
+            }
+            // If shares outstanding and closing price exist, recalculate fresh market cap
+            if (existing.ClosingPrice.HasValue && existing.SharesOutstanding.HasValue && existing.SharesOutstanding.Value > 0)
+            {
+                existing.MarketValue = existing.ClosingPrice.Value * existing.SharesOutstanding.Value;
+            }
+            else if (data.MarketValue.HasValue)
+            {
+                existing.MarketValue = data.MarketValue;
+            }
         }
-        // If shares outstanding and closing price exist, recalculate fresh market cap
-        if (existing.ClosingPrice.HasValue && existing.SharesOutstanding.HasValue && existing.SharesOutstanding.Value > 0)
+        else
         {
-            existing.MarketValue = existing.ClosingPrice.Value * existing.SharesOutstanding.Value;
-        }
-        else if (data.MarketValue.HasValue)
-        {
-            existing.MarketValue = data.MarketValue;
+            // Even if shares are manual, keep MarketValue synced with current price * manual shares
+            if (existing.ClosingPrice.HasValue && existing.SharesOutstanding.HasValue && existing.SharesOutstanding.Value > 0)
+            {
+                existing.MarketValue = existing.ClosingPrice.Value * existing.SharesOutstanding.Value;
+            }
         }
         existing.BookValue = data.BookValue;
         existing.PbRatio = data.PbRatio;
