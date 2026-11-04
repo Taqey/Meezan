@@ -18,6 +18,13 @@ public interface ISectorDailyService
     /// If specificSectorIds is provided, only those sectors are calculated (and upserted).
     /// Returns the list of calculated sector daily entities.
     /// </summary>
+    /// <summary>
+    /// Unified recalculation entry point called synchronously on any stock/market data changes.
+    /// Recomputes stock market values, synchronizes daily snapshots, runs sector daily calculations,
+    /// and invalidates static and sectoral caches.
+    /// </summary>
+    Task<List<SectorDaily>> RecalculateSectorsAsync(List<int>? affectedSectorIds, string reason, CancellationToken ct = default);
+
     Task<List<SectorDaily>> CalculateAsync(DateOnly? tradingDate = null, List<int>? specificSectorIds = null, string triggeredBy = "Manual", CancellationToken ct = default);
 
     /// <summary>

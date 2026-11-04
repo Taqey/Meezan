@@ -2013,6 +2013,11 @@ namespace Meezan.Infrastructure.Migrations
                     b.Property<decimal?>("High")
                         .HasColumnType("decimal(18,4)");
 
+                    b.Property<bool>("IsSharesManual")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
                     b.Property<decimal?>("Low")
                         .HasColumnType("decimal(18,4)");
 

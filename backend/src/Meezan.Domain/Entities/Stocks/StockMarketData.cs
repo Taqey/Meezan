@@ -11,6 +11,7 @@ public class StockMarketData
     public decimal? Eps { get; set; }
     public decimal? PeRatio { get; set; }
     public decimal? SharesOutstanding { get; set; }
+    public bool IsSharesManual { get; set; } = false;
     public decimal? EarningsGrowthRate { get; set; }
     public decimal? EpsGrowthRate { get; set; }
     public decimal? FreeCashFlow { get; set; }

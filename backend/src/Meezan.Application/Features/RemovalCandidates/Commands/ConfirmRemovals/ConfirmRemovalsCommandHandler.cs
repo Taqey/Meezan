@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Interfaces.Repositories.Sectors;
 using MediatR;
 using Meezan.Application.Common.Interfaces.Repositories.Stocks;
 using Meezan.Application.Common.Results;
@@ -8,10 +9,12 @@ namespace Meezan.Application.Features.RemovalCandidates.Commands.ConfirmRemovals
 public sealed class ConfirmRemovalsCommandHandler : IRequestHandler<ConfirmRemovalsCommand, Result<ConfirmRemovalsResultDto>>
 {
     private readonly IStockRepository _stockRepository;
+    private readonly ISectorDailyService _sectorDailyService;
 
-    public ConfirmRemovalsCommandHandler(IStockRepository stockRepository)
+    public ConfirmRemovalsCommandHandler(IStockRepository stockRepository, ISectorDailyService sectorDailyService)
     {
         _stockRepository = stockRepository;
+        _sectorDailyService = sectorDailyService;
     }
 
     public async Task<Result<ConfirmRemovalsResultDto>> Handle(ConfirmRemovalsCommand request, CancellationToken cancellationToken)
@@ -24,6 +27,7 @@ public sealed class ConfirmRemovalsCommandHandler : IRequestHandler<ConfirmRemov
 
         var confirmed = new List<string>();
         var notFound = new List<string>();
+        var affectedSectorIds = new HashSet<int>();
 
         foreach (var ticker in tickers)
         {
@@ -40,9 +44,29 @@ public sealed class ConfirmRemovalsCommandHandler : IRequestHandler<ConfirmRemov
                     stock.Id,
                     request.Reason ?? "Confirmed by operator via removal-candidates checklist",
                     cancellationToken);
+
+                if (stock.SectorId.HasValue)
+                {
+                    affectedSectorIds.Add(stock.SectorId.Value);
+                }
             }
 
             confirmed.Add(stock.Ticker);
+        }
+
+        if (affectedSectorIds.Count > 0)
+        {
+            try
+            {
+                await _sectorDailyService.RecalculateSectorsAsync(
+                    affectedSectorIds.ToList(),
+                    "ConfirmRemovalsDeactivate",
+                    cancellationToken);
+            }
+            catch
+            {
+                // Proceed without failing the deactivation response
+            }
         }
 
         return new ConfirmRemovalsResultDto(

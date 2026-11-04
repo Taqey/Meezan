@@ -13,6 +13,7 @@ public class StockMarketDataConfiguration : IEntityTypeConfiguration<StockMarket
 
         builder.Property(m => m.Currency).HasMaxLength(20);
         builder.Property(m => m.SourceLastUpdateText).HasMaxLength(200);
+        builder.Property(m => m.IsSharesManual).HasDefaultValue(false);
 
         builder.Property(m => m.NominalValue).HasColumnType("decimal(18,4)");
         builder.Property(m => m.MarketValue).HasColumnType("decimal(18,4)");

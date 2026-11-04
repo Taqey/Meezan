@@ -69,11 +69,10 @@ public sealed class CreateStockCommandHandler : IRequestHandler<CreateStockComma
         {
             try
             {
-                await _sectorDailyService.CalculateAsync(
-                    tradingDate: null,
-                    specificSectorIds: new List<int> { stock.SectorId.Value },
-                    triggeredBy: "StockCreated",
-                    ct: cancellationToken);
+                await _sectorDailyService.RecalculateSectorsAsync(
+                    new List<int> { stock.SectorId.Value },
+                    "StockCreated",
+                    cancellationToken);
             }
             catch
             {

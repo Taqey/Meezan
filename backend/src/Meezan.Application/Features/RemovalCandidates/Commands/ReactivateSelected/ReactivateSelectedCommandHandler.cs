@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Interfaces.Repositories.Sectors;
 using MediatR;
 using Meezan.Application.Common.Interfaces.Repositories.Stocks;
 using Meezan.Application.Common.Results;
@@ -8,10 +9,12 @@ namespace Meezan.Application.Features.RemovalCandidates.Commands.ReactivateSelec
 public sealed class ReactivateSelectedCommandHandler : IRequestHandler<ReactivateSelectedCommand, Result<ReactivateSelectedResultDto>>
 {
     private readonly IStockRepository _stockRepository;
+    private readonly ISectorDailyService _sectorDailyService;
 
-    public ReactivateSelectedCommandHandler(IStockRepository stockRepository)
+    public ReactivateSelectedCommandHandler(IStockRepository stockRepository, ISectorDailyService sectorDailyService)
     {
         _stockRepository = stockRepository;
+        _sectorDailyService = sectorDailyService;
     }
 
     public async Task<Result<ReactivateSelectedResultDto>> Handle(ReactivateSelectedCommand request, CancellationToken cancellationToken)
@@ -24,6 +27,7 @@ public sealed class ReactivateSelectedCommandHandler : IRequestHandler<Reactivat
 
         var reactivated = new List<string>();
         var notFound = new List<string>();
+        var affectedSectorIds = new HashSet<int>();
 
         foreach (var ticker in tickers)
         {
@@ -37,9 +41,28 @@ public sealed class ReactivateSelectedCommandHandler : IRequestHandler<Reactivat
             if (!stock.IsActive)
             {
                 await _stockRepository.ReactivateAsync(stock.Id, cancellationToken);
+                if (stock.SectorId.HasValue)
+                {
+                    affectedSectorIds.Add(stock.SectorId.Value);
+                }
             }
 
             reactivated.Add(stock.Ticker);
+        }
+
+        if (affectedSectorIds.Count > 0)
+        {
+            try
+            {
+                await _sectorDailyService.RecalculateSectorsAsync(
+                    affectedSectorIds.ToList(),
+                    "ReactivateSelected",
+                    cancellationToken);
+            }
+            catch
+            {
+                // Proceed without failing the reactivate response
+            }
         }
 
         return new ReactivateSelectedResultDto(

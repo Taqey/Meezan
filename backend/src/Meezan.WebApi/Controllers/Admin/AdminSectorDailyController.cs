@@ -78,10 +78,9 @@ public class AdminSectorDailyController : ControllerBase
     public async Task<IActionResult> RecalculateToday(CancellationToken cancellationToken)
     {
         _logger.LogInformation("Admin requested immediate recalculation of daily sector changes for today/latest trading date.");
-        var rows = await _sectorDailyService.CalculateAsync(
-            tradingDate: null,
-            specificSectorIds: null,
-            triggeredBy: "AdminManualToday",
+        var rows = await _sectorDailyService.RecalculateSectorsAsync(
+            affectedSectorIds: null,
+            reason: "AdminManualToday",
             ct: cancellationToken);
 
         return Ok(new
@@ -152,10 +151,9 @@ public class AdminSectorDailyController : ControllerBase
 
         if (needsRecalculate)
         {
-            await _sectorDailyService.CalculateAsync(
-                tradingDate: null,
-                specificSectorIds: null,
-                triggeredBy: "AdminConfigUpdate",
+            await _sectorDailyService.RecalculateSectorsAsync(
+                affectedSectorIds: null,
+                reason: "AdminConfigUpdate",
                 ct: cancellationToken);
         }
 

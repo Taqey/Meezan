@@ -52,11 +52,10 @@ public sealed class RemoveFromSectorCommandHandler : IRequestHandler<RemoveFromS
         {
             try
             {
-                await _sectorDailyService.CalculateAsync(
-                    tradingDate: null,
-                    specificSectorIds: new List<int> { oldSectorId.Value },
-                    triggeredBy: "StockRemoveFromSector",
-                    ct: cancellationToken);
+                await _sectorDailyService.RecalculateSectorsAsync(
+                    new List<int> { oldSectorId.Value },
+                    "StockRemoveFromSector",
+                    cancellationToken);
             }
             catch
             {

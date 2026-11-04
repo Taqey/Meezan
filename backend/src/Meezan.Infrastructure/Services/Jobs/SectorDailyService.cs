@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Interfaces.Caching;
 using System.Text.Json;
 using Meezan.Application.Common.Interfaces.Repositories.Sectors;
 using Meezan.Domain.Entities;
@@ -20,10 +21,13 @@ public class SectorDailyService : ISectorDailyService
     public const decimal DefaultUsdEgpRate = 55.35m;
     public const string DefaultWeightingMethod = "marketCap"; // marketCap | displayedWeight
 
-    public SectorDailyService(ApplicationDbContext db, ILogger<SectorDailyService> logger)
+    private readonly IIndexStaticCache? _indexStaticCache;
+
+    public SectorDailyService(ApplicationDbContext db, ILogger<SectorDailyService> logger, IIndexStaticCache? indexStaticCache = null)
     {
         _db = db;
         _logger = logger;
+        _indexStaticCache = indexStaticCache;
     }
 
     public async Task<decimal> GetUsdEgpRateAsync(CancellationToken ct = default)
@@ -120,6 +124,145 @@ public class SectorDailyService : ISectorDailyService
             setting.UpdatedAt = DateTime.UtcNow;
         }
         await _db.SaveChangesAsync(ct);
+    }
+
+    public async Task<List<SectorDaily>> RecalculateSectorsAsync(List<int>? affectedSectorIds, string reason, CancellationToken ct = default)
+    {
+        _logger.LogInformation("RecalculateSectorsAsync invoked. Reason: {Reason}, AffectedSectors: {Sectors}",
+            reason, affectedSectorIds != null ? string.Join(",", affectedSectorIds) : "ALL");
+
+        // 1. Resolve trading date (latest from snapshots or current date)
+        var latestSnapshotDate = await _db.StockDailySnapshots
+            .OrderByDescending(s => s.TradingDate)
+            .Select(s => (DateOnly?)s.TradingDate)
+            .FirstOrDefaultAsync(ct);
+
+        DateOnly tradingDate;
+        if (latestSnapshotDate.HasValue)
+        {
+            tradingDate = latestSnapshotDate.Value;
+        }
+        else
+        {
+            var nowCairo = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow,
+                TimeZoneInfo.FindSystemTimeZoneById("Egypt Standard Time"));
+            tradingDate = DateOnly.FromDateTime(nowCairo);
+        }
+
+        // 2. Synchronize MarketValue for active stocks whose MarketValue may be outdated vs ClosingPrice * SharesOutstanding
+        var activeStocksQuery = _db.Stocks
+            .Include(s => s.MarketData)
+            .Where(s => s.IsActive && s.DataStatus == StockDataStatus.Active);
+
+        if (affectedSectorIds != null && affectedSectorIds.Count > 0)
+        {
+            activeStocksQuery = activeStocksQuery.Where(s => s.SectorId != null && affectedSectorIds.Contains(s.SectorId.Value));
+        }
+
+        var activeStocks = await activeStocksQuery.ToListAsync(ct);
+        bool mdChanged = false;
+
+        foreach (var st in activeStocks)
+        {
+            if (st.MarketData != null && st.MarketData.SharesOutstanding.HasValue && st.MarketData.SharesOutstanding.Value > 0)
+            {
+                // If closing price is missing on MarketData, check latest snapshot for price
+                var price = st.MarketData.ClosingPrice;
+                if (!price.HasValue)
+                {
+                    price = _db.StockDailySnapshots
+                        .Where(snap => snap.StockId == st.Id && snap.Price.HasValue && snap.Price.Value > 0)
+                        .OrderByDescending(snap => snap.TradingDate)
+                        .Select(snap => snap.Price)
+                        .FirstOrDefault();
+
+                    if (price.HasValue)
+                    {
+                        st.MarketData.ClosingPrice = price;
+                        mdChanged = true;
+                    }
+                }
+
+                if (price.HasValue && price.Value > 0)
+                {
+                    var expectedMv = price.Value * st.MarketData.SharesOutstanding.Value;
+                    if (st.MarketData.MarketValue != expectedMv)
+                    {
+                        st.MarketData.MarketValue = expectedMv;
+                        mdChanged = true;
+                    }
+                }
+            }
+        }
+
+        if (mdChanged)
+        {
+            await _db.SaveChangesAsync(ct);
+        }
+
+        // 3. Synchronize today's StockDailySnapshots in bulk:
+        // Query active stock IDs across the system once
+        var allActiveStockInfo = await _db.Stocks
+            .AsNoTracking()
+            .Where(s => s.IsActive && s.DataStatus == StockDataStatus.Active)
+            .Select(s => new { s.Id, s.SectorId, Shares = s.MarketData != null ? s.MarketData.SharesOutstanding : null })
+            .ToDictionaryAsync(s => s.Id, ct);
+
+        var existingTodaySnaps = await _db.StockDailySnapshots
+            .Where(s => s.TradingDate == tradingDate)
+            .ToListAsync(ct);
+
+        bool snapsChanged = false;
+        foreach (var snap in existingTodaySnaps)
+        {
+            if (allActiveStockInfo.TryGetValue(snap.StockId, out var activeInfo))
+            {
+                if (activeInfo.Shares != null && snap.SharesUsed != activeInfo.Shares)
+                {
+                    snap.SharesUsed = activeInfo.Shares;
+                    snapsChanged = true;
+                }
+                if (snap.SectorId != activeInfo.SectorId)
+                {
+                    snap.SectorId = activeInfo.SectorId;
+                    snapsChanged = true;
+                }
+            }
+            else
+            {
+                // Stock is no longer active: remove snapshot for this trading date
+                _db.StockDailySnapshots.Remove(snap);
+                snapsChanged = true;
+            }
+        }
+
+        if (snapsChanged)
+        {
+            await _db.SaveChangesAsync(ct);
+        }
+
+        // 4. Run calculation for the affected sectors (or all if null)
+        var results = await CalculateAsync(
+            targetTradingDate: tradingDate,
+            specificSectorIds: affectedSectorIds,
+            triggeredBy: reason,
+            ct: ct);
+
+        // 5. Invalidate caches (IndexStaticCache covers SECTORAL-INDICES and all index constituents)
+        if (_indexStaticCache != null)
+        {
+            try
+            {
+                await _indexStaticCache.InvalidateAsync("SECTORAL-INDICES", ct);
+                await _indexStaticCache.InvalidateAsync(null, ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error invalidating index cache during RecalculateSectorsAsync");
+            }
+        }
+
+        return results;
     }
 
     public async Task<List<SectorDaily>> CalculateAsync(

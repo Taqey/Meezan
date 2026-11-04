@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Interfaces.Repositories.Sectors;
 using Meezan.Application.Common.Interfaces.Caching;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -46,6 +47,21 @@ public class CacheWarmupHostedService : IHostedService
                 await cache.GetClassificationDatasetAsync(ct);
                 await cache.GetStaticFundsAsync(ct);
                 _logger.LogInformation("Fund cache background warmup completed successfully.");
+
+                // Reconcile and calculate latest sector dailies at startup
+                try
+                {
+                    var sectorDailyService = scope.ServiceProvider.GetService<ISectorDailyService>();
+                    if (sectorDailyService != null)
+                    {
+                        _logger.LogInformation("Startup reconciliation: recalculating sector metrics and synchronizing market caps...");
+                        await sectorDailyService.RecalculateSectorsAsync(null, "StartupReconciliation", ct);
+                    }
+                }
+                catch (Exception sEx)
+                {
+                    _logger.LogWarning(sEx, "Startup sector recalculation warning (non-blocking).");
+                }
             }
             catch (OperationCanceledException)
             {

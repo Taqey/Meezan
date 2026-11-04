@@ -380,22 +380,34 @@ public class AdminMarketDataController : ControllerBase
             await _context.StockMarketData.AddAsync(marketData, cancellationToken);
         }
 
-        marketData.NominalValue = request.NominalValue;
-        marketData.MarketValue = request.MarketValue;
-        marketData.BookValue = request.BookValue;
-        marketData.Eps = request.Eps;
-        marketData.PeRatio = request.PeRatio;
-        marketData.PbRatio = request.PbRatio;
-        marketData.SharesOutstanding = request.SharesOutstanding;
-        marketData.EarningsGrowthRate = request.EarningsGrowthRate;
-        marketData.EpsGrowthRate = request.EpsGrowthRate;
-        marketData.FreeCashFlow = request.FreeCashFlow;
-        marketData.Currency = request.Currency;
+        if (request.NominalValue.HasValue) marketData.NominalValue = request.NominalValue;
+        if (request.BookValue.HasValue) marketData.BookValue = request.BookValue;
+        if (request.Eps.HasValue) marketData.Eps = request.Eps;
+        if (request.PeRatio.HasValue) marketData.PeRatio = request.PeRatio;
+        if (request.PbRatio.HasValue) marketData.PbRatio = request.PbRatio;
+        if (request.EarningsGrowthRate.HasValue) marketData.EarningsGrowthRate = request.EarningsGrowthRate;
+        if (request.EpsGrowthRate.HasValue) marketData.EpsGrowthRate = request.EpsGrowthRate;
+        if (request.FreeCashFlow.HasValue) marketData.FreeCashFlow = request.FreeCashFlow;
+        if (!string.IsNullOrWhiteSpace(request.Currency)) marketData.Currency = request.Currency;
 
-        marketData.High = request.High;
-        marketData.Low = request.Low;
-        marketData.Open = request.Open;
-        marketData.ClosingPrice = request.ClosingPrice;
+        if (request.High.HasValue) marketData.High = request.High;
+        if (request.Low.HasValue) marketData.Low = request.Low;
+        if (request.Open.HasValue) marketData.Open = request.Open;
+        if (request.ClosingPrice.HasValue) marketData.ClosingPrice = request.ClosingPrice;
+
+        if (request.SharesOutstanding.HasValue)
+        {
+            marketData.SharesOutstanding = request.SharesOutstanding;
+            marketData.IsSharesManual = true;
+            if (marketData.ClosingPrice.HasValue && marketData.SharesOutstanding.Value > 0)
+            {
+                marketData.MarketValue = marketData.ClosingPrice.Value * marketData.SharesOutstanding.Value;
+            }
+        }
+        else if (request.MarketValue.HasValue)
+        {
+            marketData.MarketValue = request.MarketValue;
+        }
         marketData.SourceLastUpdateText = request.SourceLastUpdateText;
 
         if (request.RecalculateRatios)
@@ -488,17 +500,19 @@ public class AdminMarketDataController : ControllerBase
 
         await _context.SaveChangesAsync(cancellationToken);
 
-        if (stock.SectorId.HasValue && request.SharesOutstanding.HasValue)
+        if (stock.SectorId.HasValue)
         {
             try
             {
-                await _sectorDailyService.CalculateAsync(
-                    tradingDate: null,
-                    specificSectorIds: new List<int> { stock.SectorId.Value },
-                    triggeredBy: "AdminSharesOutstandingUpdate",
+                await _sectorDailyService.RecalculateSectorsAsync(
+                    affectedSectorIds: new List<int> { stock.SectorId.Value },
+                    reason: "AdminMarketDataUpdate",
                     ct: cancellationToken);
             }
-            catch { }
+            catch
+            {
+                // Ignore or log
+            }
         }
 
         return Ok(new ManualMarketDataUpdateResponse(

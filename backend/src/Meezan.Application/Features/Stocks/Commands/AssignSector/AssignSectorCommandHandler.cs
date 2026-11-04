@@ -66,11 +66,10 @@ public sealed class AssignSectorCommandHandler : IRequestHandler<AssignSectorCom
 
         try
         {
-            await _sectorDailyService.CalculateAsync(
-                tradingDate: null,
-                specificSectorIds: affectedSectorIds,
-                triggeredBy: "StockAssignSector",
-                ct: cancellationToken);
+            await _sectorDailyService.RecalculateSectorsAsync(
+                affectedSectorIds,
+                "StockAssignSector",
+                cancellationToken);
         }
         catch
         {
