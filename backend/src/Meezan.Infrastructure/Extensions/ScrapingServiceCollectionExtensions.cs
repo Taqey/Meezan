@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Interfaces.Repositories.Sectors;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Repositories.Market;
 using Meezan.Application.Common.Interfaces.Repositories.Scraping;
@@ -25,6 +26,8 @@ public static class ScrapingServiceCollectionExtensions
         services.AddScoped<IScrapeRunLogRepository, ScrapeRunLogRepository>();
         services.AddScoped<IScrapeBatchCommitter, ScrapeBatchCommitter>();
         services.AddScoped<IMarketSnapshotRepository, MarketSnapshotRepository>();
+        services.AddScoped<ISectorDailyService, SectorDailyService>();
+
 
         // Part 4 — singleton in-memory run progress tracker (transient, not persisted)
         services.AddSingleton<IScrapeProgressTracker, ScrapeProgressTracker>();

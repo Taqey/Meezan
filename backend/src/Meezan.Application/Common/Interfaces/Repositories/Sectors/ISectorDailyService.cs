@@ -1,0 +1,42 @@
+using Meezan.Domain.Entities;
+
+namespace Meezan.Application.Common.Interfaces.Repositories.Sectors;
+
+public record TopContributorDto(string Stock, decimal Weight, decimal Change, decimal Contribution);
+
+public interface ISectorDailyService
+{
+    Task<decimal> GetUsdEgpRateAsync(CancellationToken ct = default);
+    Task SetUsdEgpRateAsync(decimal rate, CancellationToken ct = default);
+    Task<string> GetWeightingMethodAsync(CancellationToken ct = default);
+    Task SetWeightingMethodAsync(string method, CancellationToken ct = default);
+    Task<bool> IsExternalSectorPullEnabledAsync(CancellationToken ct = default);
+    Task SetExternalSectorPullEnabledAsync(bool enabled, CancellationToken ct = default);
+
+    /// <summary>
+    /// Calculates sector daily rows for given trading date (or latest available if null).
+    /// If specificSectorIds is provided, only those sectors are calculated (and upserted).
+    /// Returns the list of calculated sector daily entities.
+    /// </summary>
+    Task<List<SectorDaily>> CalculateAsync(DateOnly? tradingDate = null, List<int>? specificSectorIds = null, string triggeredBy = "Manual", CancellationToken ct = default);
+
+    /// <summary>
+    /// Recomputes a date range using stored stock daily snapshots.
+    /// </summary>
+    Task<int> RecomputeDateRangeAsync(DateOnly fromDate, DateOnly toDate, CancellationToken ct = default);
+
+    /// <summary>
+    /// Returns the latest computed row for each sector.
+    /// </summary>
+    Task<List<SectorDaily>> GetLatestPerSectorAsync(CancellationToken ct = default);
+
+    /// <summary>
+    /// Returns the latest computed row for a specific sector.
+    /// </summary>
+    Task<SectorDaily?> GetLatestForSectorAsync(int sectorId, CancellationToken ct = default);
+
+    /// <summary>
+    /// Gets history for a sector up to maxDays.
+    /// </summary>
+    Task<List<SectorDaily>> GetHistoryForSectorAsync(int sectorId, int maxDays = 30, CancellationToken ct = default);
+}

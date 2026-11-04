@@ -33,6 +33,11 @@ public class ApplicationDbContext : DbContext
     // Job enabled/disabled flags (persisted across restarts)
     public DbSet<JobSetting> JobSettings => Set<JobSetting>();
 
+    // Sector Daily calculation & System Settings
+    public DbSet<SystemSetting> SystemSettings => Set<SystemSetting>();
+    public DbSet<SectorDaily> SectorDailies => Set<SectorDaily>();
+    public DbSet<StockDailySnapshot> StockDailySnapshots => Set<StockDailySnapshot>();
+
     // Funds
     public DbSet<Fund> Funds => Set<Fund>();
     public DbSet<FundPriceHistory> FundPriceHistories => Set<FundPriceHistory>();

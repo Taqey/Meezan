@@ -730,10 +730,30 @@ public class StockRepository : IStockRepository
         var aggBySectorId = aggregates.ToDictionary(a => a.SectorId);
         var sectorDict = staticSectors.ToDictionary(s => s.Id);
 
+        // Load latest SectorDaily rows as the SINGLE SOURCE OF TRUTH
+        var latestDate = await _context.SectorDailies
+            .MaxAsync(sd => (DateOnly?)sd.TradingDate, cancellationToken);
+
+        Dictionary<int, SectorDaily> sectorDailyMap = new();
+        if (latestDate.HasValue)
+        {
+            var dailies = await _context.SectorDailies
+                .AsNoTracking()
+                .Where(sd => sd.TradingDate == latestDate.Value)
+                .ToListAsync(cancellationToken);
+            sectorDailyMap = dailies.ToDictionary(d => d.SectorId);
+        }
+
         var result = new List<SectorSummaryDto>(aggregates.Count);
         foreach (var agg in aggregates)
         {
             if (!sectorDict.TryGetValue(agg.SectorId, out var sec)) continue;
+
+            sectorDailyMap.TryGetValue(agg.SectorId, out var daily);
+
+            // Single source of truth: changePct and marketCap from sector_daily when present!
+            decimal? changePct = daily?.ChangePct;
+            decimal? marketCap = daily != null && daily.TotalMarketCap > 0 ? daily.TotalMarketCap : (agg.HasCap ? agg.MarketCapSum : null);
 
             result.Add(new SectorSummaryDto(
                 sec.Id,
@@ -742,10 +762,18 @@ public class StockRepository : IStockRepository
                 agg.TotalCount,
                 agg.CompliantCount,
                 agg.TotalCount > 0 ? Math.Round(100m * agg.CompliantCount / agg.TotalCount, 1) : null,
-                agg.ChangeN > 0 ? Math.Round(agg.ChangeSum / agg.ChangeN, 2) : null,
-                agg.HasCap ? agg.MarketCapSum : null,
+                changePct,
+                marketCap,
                 agg.HasCompliantCap ? agg.CompliantMarketCapSum : null,
-                agg.PeN > 0 ? Math.Round(agg.PeSum / agg.PeN, 2) : null));
+                agg.PeN > 0 ? Math.Round(agg.PeSum / agg.PeN, 2) : null,
+                daily?.TradingDate.ToString("yyyy-MM-dd"),
+                daily?.ComputedAt,
+                daily?.Approximate ?? false,
+                daily?.StocksUsed ?? 0,
+                daily?.Advancers ?? 0,
+                daily?.Decliners ?? 0,
+                daily?.Unchanged ?? 0,
+                daily?.TopContributorsJson));
         }
 
         return result

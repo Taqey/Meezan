@@ -1,3 +1,4 @@
+using Meezan.Application.Common.Interfaces.Repositories.Sectors;
 using Meezan.Application.Features.Scraping.Services;
 using Meezan.Domain.Entities;
 using Meezan.Domain.Enums;
@@ -15,9 +16,12 @@ public class AdminMarketDataController : ControllerBase
 {
     private readonly ApplicationDbContext _context;
 
-    public AdminMarketDataController(ApplicationDbContext context)
+    private readonly ISectorDailyService _sectorDailyService;
+
+    public AdminMarketDataController(ApplicationDbContext context, ISectorDailyService sectorDailyService)
     {
         _context = context;
+        _sectorDailyService = sectorDailyService;
     }
 
     // -- Shariah Manual Overrides ----------------------------------------------
@@ -483,6 +487,19 @@ public class AdminMarketDataController : ControllerBase
         }
 
         await _context.SaveChangesAsync(cancellationToken);
+
+        if (stock.SectorId.HasValue && request.SharesOutstanding.HasValue)
+        {
+            try
+            {
+                await _sectorDailyService.CalculateAsync(
+                    tradingDate: null,
+                    specificSectorIds: new List<int> { stock.SectorId.Value },
+                    triggeredBy: "AdminSharesOutstandingUpdate",
+                    ct: cancellationToken);
+            }
+            catch { }
+        }
 
         return Ok(new ManualMarketDataUpdateResponse(
             Ticker: stock.Ticker,
