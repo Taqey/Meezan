@@ -37,3 +37,4 @@ for (const file of htmlFiles) {
 }
 
 console.log(`Total cleaned: ${fixedCount}`);
+
