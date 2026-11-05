@@ -17,3 +17,8 @@ Verification kind: build + full test suite + static checks (no browser run: star
 - 23 files: inline template/styles moved to .html/.css, missing specs added.
 - Verified: build ok (bundle 89.19 kB over, was 89.37), 555 pass / 7 baseline fail.
 - Human look: every route, public and admin, once at the end.
+
+## Stop 4 - global CSS
+- `styles.css` (4087 lines) and `ui-kit.css` (1332 lines) split into contiguous chunks: `src/styles/ui-kit/*` (11) and `src/styles/global/*` (24); `styles.css` is now only ordered @imports (ui-kit first, then global), same order as before. No selector renamed or merged.
+- Verified: built bundle CSS is byte-identical to before (same content hash styles-S4TYUFXR.css, 109948 bytes). Build ok.
+- Human look: none needed.
