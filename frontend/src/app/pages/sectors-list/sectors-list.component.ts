@@ -29,45 +29,7 @@ type Chip = 'all' | 'compliance' | 'performance' | 'pe' | 'name';
   selector: 'app-sectors-list',
   standalone: true,
   imports: [CommonModule, FormsModule, LucideAngularModule, MzListingPageComponent, MzButtonComponent, MzSelectComponent, ViewSwitcherComponent, EntityTableComponent, TreemapComponent],
-    template: `
-    <mz-listing-page
-      [config]="config"
-      [customView]="view !== 'grid'"
-      (tabChange)="setChip($event)"
-      (searchChange)="onSearchInput($event)"
-      (controlChange)="onControlChange($event)"
-      (sortChange)="onSortChangeSelect($event)"
-      (advancedClick)="advancedOpen = !advancedOpen; rebuild()"
-      (retry)="load(true)">
-      <ng-container actions>
-        <app-view-switcher [view]="view" (viewChange)="setView($event)"></app-view-switcher>
-        <mz-button [icon]="PrintIcon" [loading]="printing" (clicked)="printReport()">تقرير PDF</mz-button>
-      </ng-container>
-      <ng-container view>
-        <app-entity-table
-          *ngIf="sectors.length && view === 'table' && !dataPending"
-          [columns]="tableColumns" [rows]="tableRows" [sortKey]="tableSortKey" [sortDir]="tableSortDir"
-          (sortChange)="setTableSort($event)" ariaLabel="جدول القطاعات الاقتصادية">
-        </app-entity-table>
-        <app-treemap
-          *ngIf="sectors.length && view === 'heatmap' && !dataPending"
-          [items]="treemapItems"
-          sizeNote="حجم المربع يعكس القيمة السوقية للقطاع">
-        </app-treemap>
-      </ng-container>
-      <div advanced class="mz-adv-grid">
-        <label class="mz-slicer">
-          <span class="mz-slicer-head"><span>الحد الأدنى لعدد الأسهم في القطاع</span></span>
-          <mz-select
-            [options]="minStocksOptions"
-            [(ngModel)]="minStocks"
-            (valueChange)="minStocks = $event; refreshDerived()"
-            ariaLabel="الحد الأدنى لعدد الأسهم">
-          </mz-select>
-        </label>
-      </div>
-    </mz-listing-page>
-  `
+    templateUrl: './sectors-list.component.html',
 })
 export class SectorsListComponent implements OnInit, OnDestroy {
   readonly PrintIcon = Printer;

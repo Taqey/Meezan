@@ -1,0 +1,19 @@
+﻿# Refactor verification log
+
+Branch: `refactor/structure`. Baseline: initial bundle 89.37 kB over the 1.00 MB budget; 7 failing tests (6 FundsList classification wiring, 1 StockDetail opinion cards).
+Verification kind: build + full test suite + static checks (no browser run: starting the backend against the shared DB is not safe, so no screenshot comparison).
+
+## Stop 1 - shared components/ (b479d3e)
+- 16 components: inline template/styles moved to .html/.css (content byte-identical, extracted by evaluating the template literal), 14 specs added.
+- Verified: build ok, 498 pass / 7 baseline fail.
+- Human look: /stocks, /funds, /sectors, /indices cards, badges, treemap, toasts.
+
+## Stop 2 - components/ui (d452021)
+- 5 multi-declaration files split into 40 component folders, 22 models, 7 util functions, 5 constants; barrel regenerated; consumers import files directly (barrel caused a circular import).
+- Verified: build ok, 535 pass / 7 baseline fail.
+- Human look: listing pages and detail pages (mz-* components), spinner buttons.
+
+## Stop 3 - pages, layouts, app.component inline templates
+- 23 files: inline template/styles moved to .html/.css, missing specs added.
+- Verified: build ok (bundle 89.19 kB over, was 89.37), 555 pass / 7 baseline fail.
+- Human look: every route, public and admin, once at the end.

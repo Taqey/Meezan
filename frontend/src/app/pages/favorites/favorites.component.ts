@@ -24,77 +24,8 @@ import { type MzListingConfig } from '../../components/ui/models/mz-listing-conf
     MzButtonComponent,
     MzBadgeComponent
   ],
-  template: `
-    <mz-listing-page
-      [config]="listingConfig"
-      (tabChange)="activeTab = $event"
-      (searchChange)="search = $event"
-      (sortChange)="onSortChange($event)"
-      (retry)="reload()">
-      <ng-container actions>
-        <mz-badge tone="default" [pill]="true">
-          <lucide-icon [img]="StarIcon" [size]="14"></lucide-icon>
-          <span>تُحفظ على هذا الجهاز فقط</span>
-        </mz-badge>
-        <ng-container *ngIf="favCount > 0">
-          <mz-button
-            *ngIf="!confirmingClear"
-            variant="default"
-            [icon]="TrashIcon"
-            (clicked)="confirmingClear = true">
-            مسح الكل
-          </mz-button>
-          <span *ngIf="confirmingClear" class="fav-clear-confirm">
-            <span class="fav-clear-label">تأكيد مسح كل المفضلة؟</span>
-            <mz-button variant="primary" (clicked)="clearAll()">تأكيد</mz-button>
-            <mz-button variant="default" (clicked)="confirmingClear = false">تراجع</mz-button>
-          </span>
-        </ng-container>
-      </ng-container>
-
-      <div resultsExtra *ngIf="!favorites.persisted()" class="fav-storage-warn">
-        <span>التخزين غير متاح في هذا المتصفح — ستعمل المفضلة لهذه الجلسة فقط ولن تُحفظ.</span>
-      </div>
-
-      <div footer *ngIf="!loading && !loadError && favCount === 0" class="fav-empty-cta">
-        <mz-button variant="primary" link="/stocks">تصفح الأسهم</mz-button>
-        <span style="width: 12px; display: inline-block;"></span>
-        <mz-button variant="default" link="/funds">تصفح الصناديق</mz-button>
-      </div>
-    </mz-listing-page>
-  `,
-  styles: [`
-    .fav-clear-confirm {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-      background: var(--mz-surface-low, #f2f3ff);
-      border: 1px solid rgba(188, 202, 192, 0.4);
-      padding: 4px 10px;
-      border-radius: 12px;
-    }
-    .fav-clear-label {
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--mz-on-surface, #131b2e);
-    }
-    .fav-storage-warn {
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--mz-warn, #b47b20);
-      background: var(--mz-warn-soft, #fff4d9);
-      padding: 6px 12px;
-      border-radius: 8px;
-    }
-    .fav-empty-cta {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      margin-top: -20px;
-      margin-bottom: 32px;
-    }
-  `]
+  templateUrl: './favorites.component.html',
+  styleUrl: './favorites.component.css',
 })
 export class FavoritesComponent implements OnInit {
   readonly SearchIcon = Search;

@@ -11,27 +11,8 @@ interface SvgSlice {
   selector: 'app-portfolio-donut-chart',
   standalone: true,
   imports: [CommonModule],
-  template: `
-    <svg class="donut-chart" viewBox="0 0 100 100" role="img" [attr.aria-label]="ariaLabel">
-      <path *ngFor="let slice of slices" [attr.d]="slice.path" [attr.fill]="slice.color" />
-      <circle cx="50" cy="50" r="25" fill="#ffffff" />
-    </svg>
-  `,
-  styles: [`
-    :host {
-      display: block;
-      width: 140px;
-      height: 140px;
-      margin: auto;
-    }
-    .donut-chart {
-      width: 100%;
-      height: 100%;
-      transform: rotate(-90deg);
-      border-radius: 50%;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
-    }
-  `]
+  templateUrl: './portfolio-donut-chart.component.html',
+  styleUrl: './portfolio-donut-chart.component.css',
 })
 export class PortfolioDonutChartComponent {
   @Input() items: PortfolioAllocationItem[] = [];
