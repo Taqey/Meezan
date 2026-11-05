@@ -1,0 +1,2210 @@
+[
+  {
+    "symbol": "COMI",
+    "nameEn": "Commercial International Bank - Egypt (CIB) S.A.E.",
+    "nameAr": "البنك التجاري الدولي",
+    "rawSector": "Banks",
+    "rawPrice": "128.00",
+    "rawChange": "+1.18%"
+  },
+  {
+    "symbol": "SWDY",
+    "nameEn": "El Sewedy Electric Company",
+    "nameAr": "السويدي اليكتريك",
+    "rawSector": "Industrial Goods , Services and Automobiles",
+    "rawPrice": "116.11",
+    "rawChange": "+3.67%"
+  },
+  {
+    "symbol": "ETEL",
+    "nameEn": "Telecom Egypt",
+    "nameAr": "المصرية للاتصالات",
+    "rawSector": "IT , Media &amp; Communication Services",
+    "rawPrice": "128.55",
+    "rawChange": "+0.43%"
+  },
+  {
+    "symbol": "TMGH",
+    "nameEn": "Talaat Moustafa Group Holding",
+    "nameAr": "طلعت مصطفى",
+    "rawSector": "Real Estate",
+    "rawPrice": "83.25",
+    "rawChange": "+2.68%"
+  },
+  {
+    "symbol": "EGAL",
+    "nameEn": "Egypt Aluminum",
+    "nameAr": "مصر للالومنيوم",
+    "rawSector": "Basic Resources",
+    "rawPrice": "321.08",
+    "rawChange": "+0.34%"
+  },
+  {
+    "symbol": "MFPC",
+    "nameEn": "Misr Fertilizers Production Company MOPCO",
+    "nameAr": "موبكو",
+    "rawSector": "Basic Resources",
+    "rawPrice": "41.00",
+    "rawChange": "-0.89%"
+  },
+  {
+    "symbol": "QNBE",
+    "nameEn": "Qatar National Bank",
+    "nameAr": "بنك قطر الوطني",
+    "rawSector": "Banks",
+    "rawPrice": "53.23",
+    "rawChange": "+0.38%"
+  },
+  {
+    "symbol": "HDBK",
+    "nameEn": "Housing &amp; Development Bank",
+    "nameAr": "بنك التعمير والاسكان",
+    "rawSector": "Banks",
+    "rawPrice": "99.99",
+    "rawChange": "+3.17%"
+  },
+  {
+    "symbol": "ABUK",
+    "nameEn": "Abou Kir Fertilizers &amp; Chemical Industries Co.",
+    "nameAr": "ابوقير للاسمدة",
+    "rawSector": "Basic Resources",
+    "rawPrice": "80.98",
+    "rawChange": "+1.23%"
+  },
+  {
+    "symbol": "EAST",
+    "nameEn": "Eastern Company",
+    "nameAr": "ايسترن كومباني",
+    "rawSector": "Food, Beverages and Tobacco",
+    "rawPrice": "33.33",
+    "rawChange": "+0.42%"
+  },
+  {
+    "symbol": "ALCN",
+    "nameEn": "Alexandria Containers &amp; Goods",
+    "nameAr": "الاسكندرية لتداول الحاويات",
+    "rawSector": "Shipping &amp; Transportation Services",
+    "rawPrice": "33.00",
+    "rawChange": "+2.36%"
+  },
+  {
+    "symbol": "ORAS",
+    "nameEn": "Orascom Construction Plc",
+    "nameAr": "اوراسكوم كونستراكشون ليميتد",
+    "rawSector": "Contracting &amp; Construction Engineering",
+    "rawPrice": "810.02",
+    "rawChange": "+1.63%"
+  },
+  {
+    "symbol": "EFIH",
+    "nameEn": "e-finance for Digital and Financial Investments S.A.E.",
+    "nameAr": "اي فاينانس للاستثمارات المالية والرقمية",
+    "rawSector": "IT , Media &amp; Communication Services",
+    "rawPrice": "23.50",
+    "rawChange": "-0.84%"
+  },
+  {
+    "symbol": "ADIB",
+    "nameEn": "Abu Dhabi Islamic Bank-Egypt",
+    "nameAr": "مصرف أبو ظبي الإسلامي",
+    "rawSector": "Banks",
+    "rawPrice": "49.01",
+    "rawChange": "-0.99%"
+  },
+  {
+    "symbol": "EMFD",
+    "nameEn": "Emaar Misr for Development SAE",
+    "nameAr": "إعمار مصر",
+    "rawSector": "Real Estate",
+    "rawPrice": "12.25",
+    "rawChange": "-0.16%"
+  },
+  {
+    "symbol": "FWRY",
+    "nameEn": "Fawry For Banking Technology And Electronic Payment",
+    "nameAr": "فوري لتكنولوجيا البنوك والمدفوعات الالكترونية",
+    "rawSector": "IT , Media &amp; Communication Services",
+    "rawPrice": "17.36",
+    "rawChange": "+1.52%"
+  },
+  {
+    "symbol": "CANA",
+    "nameEn": "Suez Canal Bank SAE",
+    "nameAr": "بنك قناة السويس",
+    "rawSector": "Banks",
+    "rawPrice": "47.30",
+    "rawChange": "+2.92%"
+  },
+  {
+    "symbol": "SCTS",
+    "nameEn": "Sues Canal Co. for Technology Settling",
+    "nameAr": "قناة السويس لتوطين التكنولوجيا",
+    "rawSector": "Education Services",
+    "rawPrice": "519.89",
+    "rawChange": "+5.15%"
+  },
+  {
+    "symbol": "GPPL",
+    "nameEn": "Golden Pyramids Plaza",
+    "nameAr": "جولدن بيراميدز بلازا",
+    "rawSector": "Travel &amp; Leisure",
+    "rawPrice": "—",
+    "rawChange": "—"
+  },
+  {
+    "symbol": "EFID",
+    "nameEn": "Edita Food Industries SAE",
+    "nameAr": "ايديتا",
+    "rawSector": "Food, Beverages and Tobacco",
+    "rawPrice": "18.81",
+    "rawChange": "-3.04%"
+  },
+  {
+    "symbol": "ORHD",
+    "nameEn": "Orascom Development Egypt (S.A.E)",
+    "nameAr": "اوراسكوم للتنمية مصر",
+    "rawSector": "Real Estate",
+    "rawPrice": "10.34",
+    "rawChange": "+2.38%"
+  },
+  {
+    "symbol": "JUFO",
+    "nameEn": "Juhayna Food Industries",
+    "nameAr": "جهينة",
+    "rawSector": "Food, Beverages and Tobacco",
+    "rawPrice": "23.83",
+    "rawChange": "-0.50%"
+  },
+  {
+    "symbol": "HRHO",
+    "nameEn": "EFG Holding S.A.E.",
+    "nameAr": "هيرميس",
+    "rawSector": "Non-bank financial services",
+    "rawPrice": "23.78",
+    "rawChange": "+1.19%"
+  },
+  {
+    "symbol": "PHDC",
+    "nameEn": "Palm Hills Development Co.",
+    "nameAr": "بالم هيلز",
+    "rawSector": "Real Estate",
+    "rawPrice": "11.91",
+    "rawChange": "+5.68%"
+  },
+  {
+    "symbol": "OCDI",
+    "nameEn": "Six of October Development &amp; Investment (SODIC)",
+    "nameAr": "سوديك",
+    "rawSector": "Real Estate",
+    "rawPrice": "25.00",
+    "rawChange": "+2.33%"
+  },
+  {
+    "symbol": "FAITA",
+    "nameEn": "Faisal Islamic Bank of Egypt",
+    "nameAr": "بنك فيصل الإسلامي المصري",
+    "rawSector": "Banks",
+    "rawPrice": "1.00 USD",
+    "rawChange": "+1.01%"
+  },
+  {
+    "symbol": "FAIT",
+    "nameEn": "Faisal Islamic Bank of Egypt",
+    "nameAr": "بنك فيصل الإسلامي المصري",
+    "rawSector": "Banks",
+    "rawPrice": "44.19",
+    "rawChange": "+2.29%"
+  },
+  {
+    "symbol": "VLMR",
+    "nameEn": "Valmore Holding",
+    "nameAr": "فالمور القابضة للاستثمار",
+    "rawSector": "Non-bank financial services",
+    "rawPrice": "0.64 USD",
+    "rawChange": "+1.74%"
+  },
+  {
+    "symbol": "VLMRA",
+    "nameEn": "Valmore Holding",
+    "nameAr": "فالمور القابضة للاستثمار",
+    "rawSector": "Non-bank financial services",
+    "rawPrice": "24.50",
+    "rawChange": "+2.55%"
+  },
+  {
+    "symbol": "EGS385S1C012",
+    "nameEn": "Ferchem Misr Co. for Fertilizers &amp; Chemicals",
+    "nameAr": "فيركيم",
+    "rawSector": "Basic Resources",
+    "rawPrice": "72.02",
+    "rawChange": "+19.99%"
+  },
+  {
+    "symbol": "CIEB",
+    "nameEn": "Credit Agricole Egypt",
+    "nameAr": "كريدي أجريكول",
+    "rawSector": "Banks",
+    "rawPrice": "22.92",
+    "rawChange": "+1.37%"
+  },
+  {
+    "symbol": "HELI",
+    "nameEn": "Heliopolis Housing",
+    "nameAr": "مصر الجديدة للاسكان",
+    "rawSector": "Real Estate",
+    "rawPrice": "6.94",
+    "rawChange": "+4.99%"
+  },
+  {
+    "symbol": "BIOC",
+    "nameEn": "GlaxoSmithKline S.A.E.",
+    "nameAr": "جلاكسو سميثكلاين",
+    "rawSector": "Health Care &amp; Pharmaceuticals",
+    "rawPrice": "315.93",
+    "rawChange": "+1.90%"
+  },
+  {
+    "symbol": "EXPA",
+    "nameEn": "Export Development Bank of Egypt",
+    "nameAr": "البنك المصري لتنمية الصادرات",
+    "rawSector": "Banks",
+    "rawPrice": "14.37",
+    "rawChange": "+4.06%"
+  },
+  {
+    "symbol": "BTFH",
+    "nameEn": "Beltone Holding",
+    "nameAr": "بلتون المالية",
+    "rawSector": "Non-bank financial services",
+    "rawPrice": "2.38",
+    "rawChange": "+1.71%"
+  },
+  {
+    "symbol": "ARCC",
+    "nameEn": "Arabian Cement Company",
+    "nameAr": "العربية للأسمنت",
+    "rawSector": "Building Materials",
+    "rawPrice": "67.57",
+    "rawChange": "+1.61%"
+  },
+  {
+    "symbol": "SCEM",
+    "nameEn": "Sinai Cement Co.",
+    "nameAr": "اسمنت سيناء",
+    "rawSector": "Building Materials",
+    "rawPrice": "94.50",
+    "rawChange": "+2.72%"
+  },
+  {
+    "symbol": "GBCO",
+    "nameEn": "GB Corp",
+    "nameAr": "جي بي اوتو",
+    "rawSector": "Industrial Goods , Services and Automobiles",
+    "rawPrice": "22.46",
+    "rawChange": "+1.72%"
+  },
+  {
+    "symbol": "RAYA",
+    "nameEn": "Raya Holding for Financial Investments SAE",
+    "nameAr": "راية",
+    "rawSector": "Non-bank financial services",
+    "rawPrice": "5.60",
+    "rawChange": "+2.75%"
+  },
+  {
+    "symbol": "IRON",
+    "nameEn": "Egyptian Iron &amp; Steel",
+    "nameAr": "الحديد والصلب المصرية",
+    "rawSector": "Basic Resources",
+    "rawPrice": "24.18",
+    "rawChange": "+0.42%"
+  },
+  {
+    "symbol": "CIRA",
+    "nameEn": "Cairo For Investment And Real Estate Developments -CIRA Education",
+    "nameAr": "القاهره للإستثمار و التنمية العقاريه سيرا للتعليم",
+    "rawSector": "Education Services",
+    "rawPrice": "37.12",
+    "rawChange": "+1.31%"
+  },
+  {
+    "symbol": "EGCH",
+    "nameEn": "Egyptian Chemical Industries",
+    "nameAr": "كيما",
+    "rawSector": "Basic Resources",
+    "rawPrice": "10.50",
+    "rawChange": "+1.16%"
+  },
+  {
+    "symbol": "CLHO",
+    "nameEn": "Cleopatra Hospital Company",
+    "nameAr": "مستشفى كليوب��ترا",
+    "rawSector": "Health Care &amp; Pharmaceuticals",
+    "rawPrice": "13.60",
+    "rawChange": "+1.19%"
+  },
+  {
+    "symbol": "VALU",
+    "nameEn": "U Consumer Finance S.A.E",
+    "nameAr": "يو للتمويل الاستهلاكي (ڤاليو)",
+    "rawSector": "Non-bank financial services",
+    "rawPrice": "9.33",
+    "rawChange": "+0.00%"
+  },
+  {
+    "symbol": "TAQA",
+    "nameEn": "TAQA Arabia",
+    "nameAr": "طاقة عربية",
+    "rawSector": "Utilities",
+    "rawPrice": "14.30",
+    "rawChange": "+0.85%"
+  },
+  {
+    "symbol": "CCAP",
+    "nameEn": "QALA For Financial Investments",
+    "nameAr": "القلعة للاستشارات المالية",
+    "rawSector": "Non-bank financial services",
+    "rawPrice": "5.88",
+    "rawChange": "-1.84%"
+  },
+  {
+    "symbol": "EGSA",
+    "nameEn": "Egyptian Satellite Co.",
+    "nameAr": "نايل سات",
+    "rawSector": "IT , Media &amp; Communication Services",
+    "rawPrice": "8.71 USD",
+    "rawChange": "-1.02%"
+  },
+  {
+    "symbol": "POUL",
+    "nameEn": "Cairo Poultry Co.",
+    "nameAr": "القاهرة للدواجن",
+    "rawSector": "Food, Beverages and Tobacco",
+    "rawPrice": "10.12",
+    "rawChange": "+0.20%"
+  },
+  {
+    "symbol": "MBSC",
+    "nameEn": "Misr Beni Suef Cement Co. SAE",
+    "nameAr": "مصر بنى سويف للأسمنت",
+    "rawSector": "Building Materials",
+    "rawPrice": "322.00",
+    "rawChange": "+2.15%"
+  },
+  {
+    "symbol": "PHAR",
+    "nameEn": "Egyptian International Pharmaceutical Industries Co.",
+    "nameAr": "ايبيكو",
+    "rawSector": "Health Care &amp; Pharmaceuticals",
+    "rawPrice": "102.60",
+    "rawChange": "+0.72%"
+  },
+  {
+    "symbol": "AMOC",
+    "nameEn": "Alexandria Mineral Oils Co.",
+    "nameAr": "أموك",
+    "rawSector": "Energy &amp; Support Services",
+    "rawPrice": "13.27",
+    "rawChange": "-0.45%"
+  },
+  {
+    "symbol": "SKPC",
+    "nameEn": "Sidi Kerir Petrochemicals",
+    "nameAr": "سيدي كرير للبتروكيماويات",
+    "rawSector": "Basic Resources",
+    "rawPrice": "15.01",
+    "rawChange": "+2.11%"
+  },
+  {
+    "symbol": "EFIC",
+    "nameEn": "Egyptian Financial &amp; Industrial Co.",
+    "nameAr": "المالية والصناعية المصرية",
+    "rawSector": "Basic Resources",
+    "rawPrice": "168.65",
+    "rawChange": "+19.75%"
+  },
+  {
+    "symbol": "MOIL",
+    "nameEn": "Maridive &amp; Oil Services SAE",
+    "nameAr": "ماريدايف",
+    "rawSector": "Energy &amp; Support Services",
+    "rawPrice": "0.64 USD",
+    "rawChange": "+0.79%"
+  },
+  {
+    "symbol": "ORWE",
+    "nameEn": "Oriental Weavers Carpet",
+    "nameAr": "النساجون الشرقيون",
+    "rawSector": "Textile &amp; Durables",
+    "rawPrice": "25.03",
+    "rawChange": "+0.16%"
+  },
+  {
+    "symbol": "MCQE",
+    "nameEn": "Misr Cement Co. (Qena)",
+    "nameAr": "مصر للأسمنت - قنا",
+    "rawSector": "Building Materials",
+    "rawPrice": "171.47",
+    "rawChange": "+2.37%"
+  },
+  {
+    "symbol": "UBEE",
+    "nameEn": "United Bank SAE",
+    "nameAr": "المصرف المتحد",
+    "rawSector": "Banks",
+    "rawPrice": "15.19",
+    "rawChange": "+1.95%"
+  },
+  {
+    "symbol": "MTIE",
+    "nameEn": "MM Group for Industry &amp; International Trade",
+    "nameAr": "إم تي أي",
+    "rawSector": "Trade &amp; Distributors",
+    "rawPrice": "7.13",
+    "rawChange": "+4.85%"
+  },
+  {
+    "symbol": "SAUD",
+    "nameEn": "Al Baraka Bank Egypt",
+    "nameAr": "بنك البركة",
+    "rawSector": "Banks",
+    "rawPrice": "20.75",
+    "rawChange": "+2.32%"
+  },
+  {
+    "symbol": "TALM",
+    "nameEn": "Taaleem Management Services S.A.E",
+    "nameAr": "تعليم لخدمات الإدارة",
+    "rawSector": "Education Services",
+    "rawPrice": "20.42",
+    "rawChange": "+4.18%"
+  },
+  {
+    "symbol": "MASR",
+    "nameEn": "Madinet Masr for Housing &amp; Development",
+    "nameAr": "مدينة مصر للاسكان والتعمير",
+    "rawSector": "Real Estate",
+    "rawPrice": "6.81",
+    "rawChange": "+0.44%"
+  },
+  {
+    "symbol": "EGBE",
+    "nameEn": "Egyptian Gulf Bank",
+    "nameAr": "البنك المصري الخليجي",
+    "rawSector": "Banks",
+    "rawPrice": "0.49 USD",
+    "rawChange": "+1.03%"
+  },
+  {
+    "symbol": "NIPH",
+    "nameEn": "El-Nile Co. for Pharmaceuticals &amp; Chemical Industries",
+    "nameAr": "النيل للادوية",
+    "rawSector": "Health Care &amp; Pharmaceuticals",
+    "rawPrice": "281.00",
+    "rawChange": "+1.08%"
+  },
+  {
+    "symbol": "EGTS",
+    "nameEn": "Egyptian for Tourism Resorts",
+    "nameAr": "المصرية للمنتجعات السياحية",
+    "rawSector": "Travel &amp; Leisure",
+    "rawPrice": "13.29",
+    "rawChange": "+2.15%"
+  },
+  {
+    "symbol": "MHOT",
+    "nameEn": "Misr Hotels Co.",
+    "nameAr": "مصر للفنادق",
+    "rawSector": "Travel &amp; Leisure",
+    "rawPrice": "15.70",
+    "rawChange": "-2.42%"
+  },
+  {
+    "symbol": "ATQA",
+    "nameEn": "Misr National Steel",
+    "nameAr": "عتاقة",
+    "rawSector": "Basic Resources",
+    "rawPrice": "9.73",
+    "rawChange": "+4.85%"
+  },
+  {
+    "symbol": "BINV",
+    "nameEn": "B Investments Holding SAE",
+    "nameAr": "بى بى اى القابضة",
+    "rawSector": "Non-bank financial services",
+    "rawPrice": "53.01",
+    "rawChange": "+0.86%"
+  },
+  {
+    "symbol": "ISPH",
+    "nameEn": "Ibnsina Pharma",
+    "nameAr": "ابن سينا فارما",
+    "rawSector": "Health Care &amp; Pharmaceuticals",
+    "rawPrice": "10.27",
+    "rawChange": "+1.68%"
+  },
+  {
+    "symbol": "CPME",
+    "nameEn": "Catalyst Partners Middle East",
+    "nameAr": "كاتليست بارتنرز ميديل ايست",
+    "rawSector": "Non-bank financial services",
+    "rawPrice": "37.06",
+    "rawChange": "+2.38%"
+  },
+  {
+    "symbol": "RMDA",
+    "nameEn": "Tenth of Ramadan Pharmaceutical Industries &amp; Diagnostic-Rameda",
+    "nameAr": "العاشر من رمضان للصناعات الدوائية والمستحضرات التشخيصية (راميدا)",
+    "rawSector": "Health Care &amp; Pharmaceuticals",
+    "rawPrice": "5.50",
+    "rawChange": "+0.37%"
+  },
+  {
+    "symbol": "CICH",
+    "nameEn": "CI Capital Holding for Financial Investments",
+    "nameAr": "سي اي كابيتال القابضة",
+    "rawSector": "Non-bank financial services",
+    "rawPrice": "10.82",
+    "rawChange": "+2.37%"
+  },
+  {
+    "symbol": "CSAG",
+    "nameEn": "Canal Shipping Agencies Co.",
+    "nameAr": "القناة للتوكيلات الملاحية",
+    "rawSector": "Shipping &amp; Transportation Services",
+    "rawPrice": "35.34",
+    "rawChange": "+3.64%"
+  },
+  {
+    "symbol": "AMES",
+    "nameEn": "Alexandria New Medical Center Co.",
+    "nameAr": "المركز الطبي الجديد - الإسكندرية",
+    "rawSector": "Health Care &amp; Pharmaceuticals",
+    "rawPrice": "38.15",
+    "rawChange": "+12.24%"
+  },
+  {
+    "symbol": "AMIA",
+    "nameEn": "Arab Moltaqa Investments Company",
+    "nameAr": "الملتقى العربي للاستثمارات",
+    "rawSector": "Non-bank financial services",
+    "rawPrice": "18.11",
+    "rawChange": "+0.72%"
+  },
+  {
+    "symbol": "OIH",
+    "nameEn": "Orascom Investment Holding SAE",
+    "nameAr": "اوراسكوم للاتصالات والاعلام والتكنولوجيا",
+    "rawSector": "IT , Media &amp; Communication Services",
+    "rawPrice": "1.81",
+    "rawChange": "+5.85%"
+  },
+  {
+    "symbol": "IFAP",
+    "nameEn": "International Agricultural Products",
+    "nameAr": "الدولية للمحاصيل الزراعية",
+    "rawSector": "Trade &amp; Distributors",
+    "rawPrice": "18.22",
+    "rawChange": "+12.47%"
+  },
+  {
+    "symbol": "MIPH",
+    "nameEn": "Minapharm Pharmaceuticals",
+    "nameAr": "مينا فارم للأدوية",
+    "rawSector": "Health Care &amp; Pharmaceuticals",
+    "rawPrice": "793.85",
+    "rawChange": "-0.63%"
+  },
+  {
+    "symbol": "CPCI",
+    "nameEn": "Kahira Pharmaceuticals &amp; Chemical Industries Co.",
+    "nameAr": "القاهرة للادوية",
+    "rawSector": "Health Care &amp; Pharmaceuticals",
+    "rawPrice": "601.50",
+    "rawChange": "+0.06%"
+  },
+  {
+    "symbol": "SVCE",
+    "nameEn": "South Valley Cement Co.",
+    "nameAr": "جنوب الوادي للاسمنت",
+    "rawSector": "Building Materials",
+    "rawPrice": "8.84",
+    "rawChange": "+0.00%"
+  },
+  {
+    "symbol": "BONY",
+    "nameEn": "Bonyan for Development and Trade",
+    "nameAr": "بنيان للتنمية والتجارة",
+    "rawSector": "Real Estate",
+    "rawPrice": "4.36",
+    "rawChange": "-0.46%"
+  },
+  {
+    "symbol": "PHTV",
+    "nameEn": "Pyramisa Hotels",
+    "nameAr": "بيراميزا",
+    "rawSector": "Travel &amp; Leisure",
+    "rawPrice": "322.00",
+    "rawChange": "+0.63%"
+  },
+  {
+    "symbol": "OLFI",
+    "nameEn": "Obour Land for Food Industries",
+    "nameAr": "عبور لاند للصناعات الغذائية",
+    "rawSector": "Food, Beverages and Tobacco",
+    "rawPrice": "19.58",
+    "rawChange": "+1.61%"
+  },
+  {
+    "symbol": "MOIN",
+    "nameEn": "Mohandes Insurance Co.",
+    "nameAr": "المهندس للتأمين",
+    "rawSector": "Non-bank financial services",
+    "rawPrice": "29.60",
+    "rawChange": "+1.93%"
+  },
+  {
+    "symbol": "ISMQ",
+    "nameEn": "Iron &amp; Steel for Mines &amp; Quarries",
+    "nameAr": "الحديد والصلب للمناجم والمحاجر",
+    "rawSector": "Basic Resources",
+    "rawPrice": "7.40",
+    "rawChange": "+0.27%"
+  },
+  {
+    "symbol": "MPCI",
+    "nameEn": "Memphis Pharmaceutical &amp; Chemical Industries",
+    "nameAr": "ممفيس للادوية",
+    "rawSector": "Health Care &amp; Pharmaceuticals",
+    "rawPrice": "317.00",
+    "rawChange": "+1.40%"
+  },
+  {
+    "symbol": "EGAS",
+    "nameEn": "Egypt Gas Co.",
+    "nameAr": "غاز مصر",
+    "rawSector": "Utilities",
+    "rawPrice": "47.79",
+    "rawChange": "+2.22%"
+  },
+  {
+    "symbol": "ZMID",
+    "nameEn": "Zahraa Maadi Investment &amp; Development",
+    "nameAr": "زهراء المعادي",
+    "rawSector": "Real Estate",
+    "rawPrice": "6.88",
+    "rawChange": "+1.18%"
+  },
+  {
+    "symbol": "SUGR",
+    "nameEn": "Delta Sugar",
+    "nameAr": "الدلتا للسكر",
+    "rawSector": "Food, Beverages and Tobacco",
+    "rawPrice": "47.87",
+    "rawChange": "-0.68%"
+  },
+  {
+    "symbol": "DOMT",
+    "nameEn": "Arabian Food Industries Co.",
+    "nameAr": "دومتي",
+    "rawSector": "Food, Beverages and Tobacco",
+    "rawPrice": "23.91",
+    "rawChange": "+1.87%"
+  },
+  {
+    "symbol": "SPHT",
+    "nameEn": "El Shams Pyramids Co. for Hotels &amp; Touristic Projects SAE",
+    "nameAr": "الشمس بيراميدز",
+    "rawSector": "Travel &amp; Leisure",
+    "rawPrice": "1.42 USD",
+    "rawChange": "+2.90%"
+  },
+  {
+    "symbol": "AXPH",
+    "nameEn": "Alexandria Company for Pharmaceuticals and Chemical Industries",
+    "nameAr": "الاسكندرية للادوية",
+    "rawSector": "Health Care &amp; Pharmaceuticals",
+    "rawPrice": "1,335.01",
+    "rawChange": "+0.53%"
+  },
+  {
+    "symbol": "MPRC",
+    "nameEn": "Egyptian Media Production City",
+    "nameAr": "مدينة الانتاج الاعلامى",
+    "rawSector": "IT , Media &amp; Communication Services",
+    "rawPrice": "34.50",
+    "rawChange": "+1.59%"
+  },
+  {
+    "symbol": "PRDC",
+    "nameEn": "Pioneers Properties for Urban Development",
+    "nameAr": "بايونيرز بروبرتيز للتنمية العمرانية بي ار اي جروب",
+    "rawSector": "Real Estate",
+    "rawPrice": "6.45",
+    "rawChange": "+1.74%"
+  },
+  {
+    "symbol": "GOUR",
+    "nameEn": "Gourmet Egypt.Com Foods",
+    "nameAr": "",
+    "rawSector": "Trade &amp; Distributors",
+    "rawPrice": "16.00",
+    "rawChange": "+5.75%"
+  },
+  {
+    "symbol": "ARAB",
+    "nameEn": "Arab Developers Holding",
+    "nameAr": "بورتو جروب",
+    "rawSector": "Real Estate",
+    "rawPrice": "0.25",
+    "rawChange": "+4.17%"
+  },
+  {
+    "symbol": "ELEC",
+    "nameEn": "Electro Cable Egypt",
+    "nameAr": "الكابلات الكهربائية المصرية",
+    "rawSector": "Industrial Goods , Services and Automobiles",
+    "rawPrice": "1.68",
+    "rawChange": "+5.00%"
+  },
+  {
+    "symbol": "SPIN",
+    "nameEn": "Alexandria Spinning &amp; Weaving",
+    "nameAr": "سبينالكس",
+    "rawSector": "Textile &amp; Durables",
+    "rawPrice": "14.50",
+    "rawChange": "+0.35%"
+  },
+  {
+    "symbol": "ACAP",
+    "nameEn": "A Capital Holding",
+    "nameAr": "ايه كابيتال القابضة",
+    "rawSector": "Real Estate",
+    "rawPrice": "7.33",
+    "rawChange": "+3.97%"
+  },
+  {
+    "symbol": "ENGC",
+    "nameEn": "Industrial Engineering Co. for Construction &amp; Development",
+    "nameAr": "ايكون",
+    "rawSector": "Contracting &amp; Construction Engineering",
+    "rawPrice": "34.98",
+    "rawChange": "-1.38%"
+  },
+  {
+    "symbol": "CNFN",
+    "nameEn": "Contact Financial Holding SAE",
+    "nameAr": "كونتكت المالية القابضة",
+    "rawSector": "Non-bank financial services",
+    "rawPrice": "4.00",
+    "rawChange": "+4.17%"
+  },
+  {
+    "symbol": "NINH",
+    "nameEn": "Nozha International Hospital",
+    "nameAr": "مستشفى النزهه الدولي",
+    "rawSector": "Health Care &amp; Pharmaceuticals",
+    "rawPrice": "15.87",
+    "rawChange": "+4.27%"
+  },
+  {
+    "symbol": "SAIB",
+    "nameEn": "Societe Arabe Internationale de Banque",
+    "nameAr": "بنك الشركة المصرفية العربية الدولية",
+    "rawSector": "Banks",
+    "rawPrice": "2.53 USD",
+    "rawChange": "-16.50%"
+  },
+  {
+    "symbol": "SDTI",
+    "nameEn": "Sharm Dreams Co. for Tourism Investment",
+    "nameAr": "شارم دريمز",
+    "rawSector": "Travel &amp; Leisure",
+    "rawPrice": "87.67",
+    "rawChange": "-1.26%"
+  },
+  {
+    "symbol": "AFMC",
+    "nameEn": "Alexandria Flour Mills Co.",
+    "nameAr": "مطاحن ومخابز الإسكندرية",
+    "rawSector": "Food, Beverages and Tobacco",
+    "rawPrice": "138.00",
+    "rawChange": "+1.08%"
+  },
+  {
+    "symbol": "AJWA",
+    "nameEn": "Ajwa for Food Industries Co. Egypt",
+    "nameAr": "اجواء",
+    "rawSector": "Food, Beverages and Tobacco",
+    "rawPrice": "224.80",
+    "rawChange": "+2.23%"
+  },
+  {
+    "symbol": "MCRO",
+    "nameEn": "Macro Group Pharmaceutical S.A.E.",
+    "nameAr": "ماكرو جروب للمستحضرات الطبية - ماكرو كابيتال",
+    "rawSector": "Health Care &amp; Pharmaceuticals",
+    "rawPrice": "1.34",
+    "rawChange": "+1.52%"
+  },
+  {
+    "symbol": "OCPH",
+    "nameEn": "October Pharma Co.",
+    "nameAr": "اكتوبر فارما",
+    "rawSector": "Health Care &amp; Pharmaceuticals",
+    "rawPrice": "187.21",
+    "rawChange": "+0.13%"
+  },
+  {
+    "symbol": "MICH",
+    "nameEn": "Misr Chemical Industries Ltd.",
+    "nameAr": "مصر لصناعة الكيماويات",
+    "rawSector": "Basic Resources",
+    "rawPrice": "40.90",
+    "rawChange": "+1.97%"
+  },
+  {
+    "symbol": "GSSC",
+    "nameEn": "General Silos &amp; Storage Co.",
+    "nameAr": "العامة للصوامع والتخزين",
+    "rawSector": "Food, Beverages and Tobacco",
+    "rawPrice": "260.00",
+    "rawChange": "+2.44%"
+  },
+  {
+    "symbol": "UNIT",
+    "nameEn": "United Housing Construction SA",
+    "nameAr": "المتحدة للاسكان",
+    "rawSector": "Real Estate",
+    "rawPrice": "18.52",
+    "rawChange": "+0.05%"
+  },
+  {
+    "symbol": "AMER",
+    "nameEn": "Amer Group Holding",
+    "nameAr": "عامر جروب",
+    "rawSector": "Real Estate",
+    "rawPrice": "4.53",
+    "rawChange": "+0.44%"
+  },
+  {
+    "symbol": "KABO",
+    "nameEn": "El Nasr Clothing &amp; Textiles Co.",
+    "nameAr": "كابو",
+    "rawSector": "Textile &amp; Durables",
+    "rawPrice": "7.12",
+    "rawChange": "-0.70%"
+  },
+  {
+    "symbol": "DSCW",
+    "nameEn": "Dice Sports &amp; Casual Wear Manufacturers SAE",
+    "nameAr": "دايس",
+    "rawSector": "Textile &amp; Durables",
+    "rawPrice": "1.48",
+    "rawChange": "+2.07%"
+  },
+  {
+    "symbol": "KZPC",
+    "nameEn": "Kafr El Zayat Pesticides &amp; Chemical Co.",
+    "nameAr": "كفر الزيات للمبيدات والكيماويات",
+    "rawSector": "Basic Resources",
+    "rawPrice": "13.56",
+    "rawChange": "+7.19%"
+  },
+  {
+    "symbol": "ACGC",
+    "nameEn": "Arab Cotton Ginning Co.",
+    "nameAr": "العربية لحليج الأقطان",
+    "rawSector": "Textile &amp; Durables",
+    "rawPrice": "13.43",
+    "rawChange": "+3.71%"
+  },
+  {
+    "symbol": "WCDF",
+    "nameEn": "Middle &amp; West Delta Flour Mills Co.",
+    "nameAr": "مطاحن وسط وغرب الدلتا",
+    "rawSector": "Food, Beverages and Tobacco",
+    "rawPrice": "512.50",
+    "rawChange": "+2.50%"
+  },
+  {
+    "symbol": "UEFM",
+    "nameEn": "Upper Egypt Flour Mills Co.",
+    "nameAr": "مطاحن مصر العليا",
+    "rawSector": "Food, Beverages and Tobacco",
+    "rawPrice": "484.00",
+    "rawChange": "+4.09%"
+  },
+  {
+    "symbol": "CRST",
+    "nameEn": "Creast Mark For Contracting And Real Estate Development",
+    "nameAr": "ليفت سلاب مصر",
+    "rawSector": "Contracting &amp; Construction Engineering",
+    "rawPrice": "2.95",
+    "rawChange": "+8.86%"
+  },
+  {
+    "symbol": "MFSC",
+    "nameEn": "Misr Duty Free Shops Co.",
+    "nameAr": "مصر للاسواق الحرة",
+    "rawSector": "Trade &amp; Distributors",
+    "rawPrice": "35.27",
+    "rawChange": "-0.51%"
+  },
+  {
+    "symbol": "OFH",
+    "nameEn": "O B Financial Holding",
+    "nameAr": "أو بي المالية القابضة",
+    "rawSector": "Non-bank financial services",
+    "rawPrice": "0.74",
+    "rawChange": "+4.37%"
+  },
+  {
+    "symbol": "ADCI",
+    "nameEn": "Arab Pharmaceuticals",
+    "nameAr": "أدكو",
+    "rawSector": "Health Care &amp; Pharmaceuticals",
+    "rawPrice": "260.00",
+    "rawChange": "+1.39%"
+  },
+  {
+    "symbol": "GDWA",
+    "nameEn": "Gadwa For Industrial Development",
+    "nameAr": "جدوى للتنمية الصناعية",
+    "rawSector": "Industrial Goods , Services and Automobiles",
+    "rawPrice": "0.58",
+    "rawChange": "+4.73%"
+  },
+  {
+    "symbol": "ICFC",
+    "nameEn": "International Co. for Fertilizers &amp; Chemicals",
+    "nameAr": "الدولية للأسمدة",
+    "rawSector": "Trade &amp; Distributors",
+    "rawPrice": "26.35",
+    "rawChange": "+10.11%"
+  },
+  {
+    "symbol": "LCSW",
+    "nameEn": "Lecico Egypt SAE",
+    "nameAr": "ليسيكو",
+    "rawSector": "Building Materials",
+    "rawPrice": "36.39",
+    "rawChange": "+3.62%"
+  },
+  {
+    "symbol": "ELKA",
+    "nameEn": "El Kahera Housing",
+    "nameAr": "القاهرة للاسكان",
+    "rawSector": "Real Estate",
+    "rawPrice": "1.51",
+    "rawChange": "+2.72%"
+  },
+  {
+    "symbol": "CFGH",
+    "nameEn": "Concrete Fashion Group for Commercial and Industrial Investments S.A.E",
+    "nameAr": "العرفة القابضة",
+    "rawSector": "Textile &amp; Durables",
+    "rawPrice": "0.11 USD",
+    "rawChange": "+3.96%"
+  },
+  {
+    "symbol": "ACAMD",
+    "nameEn": "Arab Co. for Asset Management &amp; Development",
+    "nameAr": "العربية لإدارة وتطوير الأصول",
+    "rawSector": "Real Estate",
+    "rawPrice": "2.00",
+    "rawChange": "-1.48%"
+  },
+  {
+    "symbol": "GPIM",
+    "nameEn": "GPI For Urban Growth",
+    "nameAr": "المصريين للاستثمار",
+    "rawSector": "Contracting &amp; Construction Engineering",
+    "rawPrice": "1.60",
+    "rawChange": "+5.96%"
+  },
+  {
+    "symbol": "ASCM",
+    "nameEn": "ASEC Co. for Mining",
+    "nameAr": "اسيك للتعدين",
+    "rawSector": "Basic Resources",
+    "rawPrice": "46.65",
+    "rawChange": "+4.39%"
+  },
+  {
+    "symbol": "ACTF",
+    "nameEn": "Act Financial",
+    "nameAr": "أكت فاينانشال للاستشارات",
+    "rawSector": "Non-bank financial services",
+    "rawPrice": "2.20",
+    "rawChange": "+2.80%"
+  },
+  {
+    "symbol": "ETRS",
+    "nameEn": "Egyptian Transport And Commercial Services Co. (Egytrans Nosco)",
+    "nameAr": "إيجيترانس",
+    "rawSector": "Shipping &amp; Transportation Services",
+    "rawPrice": "10.98",
+    "rawChange": "+2.04%"
+  },
+  {
+    "symbol": "NAHO",
+    "nameEn": "Naeem Holding Co.",
+    "nameAr": "النعيم القابضة",
+    "rawSector": "Non-bank financial services",
+    "rawPrice": "0.13 USD",
+    "rawChange": "+0.00%"
+  },
+  {
+    "symbol": "INFI",
+    "nameEn": "Ismailia National Food Industries",
+    "nameAr": "فوديكو",
+    "rawSector": "Food, Beverages and Tobacco",
+    "rawPrice": "119.55",
+    "rawChange": "-0.58%"
+  },
+  {
+    "symbol": "ELSH",
+    "nameEn": "El-Shams Housing &amp; Development SA",
+    "nameAr": "الشمس للاسكان",
+    "rawSector": "Real Estate",
+    "rawPrice": "10.56",
+    "rawChange": "+2.33%"
+  },
+  {
+    "symbol": "AIFI",
+    "nameEn": "Atlas for Investment &amp; Food Industries SAE",
+    "nameAr": "اطلس لاستصلاح الاراضى",
+    "rawSector": "Real Estate",
+    "rawPrice": "2.06",
+    "rawChange": "-0.96%"
+  },
+  {
+    "symbol": "ZEOT",
+    "nameEn": "Extracted Oils &amp; Derivatives Co.",
+    "nameAr": "الزيوت المستخلصة",
+    "rawSector": "Food, Beverages and Tobacco",
+    "rawPrice": "11.28",
+    "rawChange": "+3.49%"
+  },
+  {
+    "symbol": "EDFM",
+    "nameEn": "East Delta Flour Mills Co.",
+    "nameAr": "مطاحن شرق الدلتا",
+    "rawSector": "Food, Beverages and Tobacco",
+    "rawPrice": "362.80",
+    "rawChange": "+2.26%"
+  },
+  {
+    "symbol": "DAPH",
+    "nameEn": "Development &amp; Engineering Consultants",
+    "nameAr": "التعمير والاستشارات الهندسية",
+    "rawSector": "Real Estate",
+    "rawPrice": "86.90",
+    "rawChange": "+4.95%"
+  },
+  {
+    "symbol": "ATLC",
+    "nameEn": "Al Tawfeek Leasing Company-A.T.LEASE",
+    "nameAr": "ايه تي ليس",
+    "rawSector": "Non-bank financial services",
+    "rawPrice": "5.10",
+    "rawChange": "+2.00%"
+  },
+  {
+    "symbol": "MPCO",
+    "nameEn": "Mansourah Poultry Co.",
+    "nameAr": "المنصورة للدواجن",
+    "rawSector": "Food, Beverages and Tobacco",
+    "rawPrice": "1.90",
+    "rawChange": "+3.26%"
+  },
+  {
+    "symbol": "ISMA",
+    "nameEn": "Ismailia Misr Poultry",
+    "nameAr": "الاسماعيلية مصر للدواجن",
+    "rawSector": "Food, Beverages and Tobacco",
+    "rawPrice": "20.71",
+    "rawChange": "+6.37%"
+  },
+  {
+    "symbol": "SNFC",
+    "nameEn": "Sharkia National Food",
+    "nameAr": "الشرقية الوطنية للامن الغذائي",
+    "rawSector": "Food, Beverages and Tobacco",
+    "rawPrice": "11.12",
+    "rawChange": "+4.41%"
+  },
+  {
+    "symbol": "SMFR",
+    "nameEn": "Samad Misr-EGYFERT",
+    "nameAr": "ايجيفرت",
+    "rawSector": "Trade &amp; Distributors",
+    "rawPrice": "227.71",
+    "rawChange": "+18.52%"
+  },
+  {
+    "symbol": "ICID",
+    "nameEn": "International Company for Investment &amp; Development",
+    "nameAr": "العالمية للاستثمار والتنمية",
+    "rawSector": "Real Estate",
+    "rawPrice": "17.98",
+    "rawChange": "+4.29%"
+  },
+  {
+    "symbol": "GTWL",
+    "nameEn": "Golden Textiles &amp; Clothes Wool",
+    "nameAr": "جولدن تكس",
+    "rawSector": "Textile &amp; Durables",
+    "rawPrice": "123.50",
+    "rawChange": "-1.21%"
+  },
+  {
+    "symbol": "CEFM",
+    "nameEn": "Middle Egypt Flour Mills",
+    "nameAr": "مطاحن مصر الوسطى",
+    "rawSector": "Food, Beverages and Tobacco",
+    "rawPrice": "118.66",
+    "rawChange": "+0.14%"
+  },
+  {
+    "symbol": "NARE",
+    "nameEn": "Naeem Real Estate Holding Group",
+    "nameAr": "ريكاب",
+    "rawSector": "Real Estate",
+    "rawPrice": "13.50",
+    "rawChange": "+1.05%"
+  },
+  {
+    "symbol": "RACC",
+    "nameEn": "Raya Contact Center",
+    "nameAr": "راية لخدمات مراكز الاتصالات",
+    "rawSector": "IT , Media &amp; Communication Services",
+    "rawPrice": "8.04",
+    "rawChange": "+3.08%"
+  },
+  {
+    "symbol": "MOSC",
+    "nameEn": "Misr Oils &amp; Soap Co.",
+    "nameAr": "مصر للزيوت والصابون",
+    "rawSector": "Food, Beverages and Tobacco",
+    "rawPrice": "265.84",
+    "rawChange": "+6.68%"
+  },
+  {
+    "symbol": "AALR",
+    "nameEn": "General Co. for Land Reclamation Development &amp; Reconstruction",
+    "nameAr": "العامة لاستصلاح الأراضي",
+    "rawSector": "Contracting &amp; Construction Engineering",
+    "rawPrice": "238.02",
+    "rawChange": "-5.54%"
+  },
+  {
+    "symbol": "EALR",
+    "nameEn": "El Arabia for Land Reclamation",
+    "nameAr": "العربية لاستصلاح الاراضي",
+    "rawSector": "Contracting &amp; Construction Engineering",
+    "rawPrice": "294.01",
+    "rawChange": "-3.10%"
+  },
+  {
+    "symbol": "ADPC",
+    "nameEn": "Arab Dairy Products Co. Arab Dairy - Panda",
+    "nameAr": "آراب ديري-باندا",
+    "rawSector": "Food, Beverages and Tobacco",
+    "rawPrice": "3.10",
+    "rawChange": "+1.31%"
+  },
+  {
+    "symbol": "ECAP",
+    "nameEn": "El Ezz Ceramics &amp; Porcelain Co. (Gemma)",
+    "nameAr": "الجوهرة",
+    "rawSector": "Building Materials",
+    "rawPrice": "27.87",
+    "rawChange": "+1.75%"
+  },
+  {
+    "symbol": "WKOL",
+    "nameEn": "Wadi Kom Ombo Land Reclamation",
+    "nameAr": "وادي كوم امبو",
+    "rawSector": "Contracting &amp; Construction Engineering",
+    "rawPrice": "176.37",
+    "rawChange": "-5.28%"
+  },
+  {
+    "symbol": "MAAL",
+    "nameEn": "Marseilla Al Masreia Al Khalegeya for Holding Investment",
+    "nameAr": "مرسيليا",
+    "rawSector": "Real Estate",
+    "rawPrice": "6.90",
+    "rawChange": "-0.86%"
+  },
+  {
+    "symbol": "IDRE",
+    "nameEn": "Ismailia Development &amp; Real Estate Co.",
+    "nameAr": "الاسماعيلية الجديدة للتطوير",
+    "rawSector": "Real Estate",
+    "rawPrice": "39.99",
+    "rawChange": "+3.41%"
+  },
+  {
+    "symbol": "MILS",
+    "nameEn": "North Cairo Mills Co.",
+    "nameAr": "مطاحن شمال القاهرة",
+    "rawSector": "Food, Beverages and Tobacco",
+    "rawPrice": "135.07",
+    "rawChange": "+5.10%"
+  },
+  {
+    "symbol": "DEIN",
+    "nameEn": "Delta Insurance",
+    "nameAr": "الدلتا للتأمين",
+    "rawSector": "Non-bank financial services",
+    "rawPrice": "10.35",
+    "rawChange": "-16.67%"
+  },
+  {
+    "symbol": "EHDR",
+    "nameEn": "Egyptians Housing Development &amp; Reconstruction",
+    "nameAr": "المصريين للاسكان",
+    "rawSector": "Real Estate",
+    "rawPrice": "2.11",
+    "rawChange": "+2.93%"
+  },
+  {
+    "symbol": "MENA",
+    "nameEn": "Mena Touristic &amp; Real Estate Investment",
+    "nameAr": "مينا للاستثمار السياحي",
+    "rawSector": "Real Estate",
+    "rawPrice": "5.87",
+    "rawChange": "+0.69%"
+  },
+  {
+    "symbol": "KRDI",
+    "nameEn": "Al Khair River for Development Agriculture Investment and Environmental Services",
+    "nameAr": "نهر الخير للتنمية والأستثمار الزراعى والخدمات البيئية",
+    "rawSector": "Food, Beverages and Tobacco",
+    "rawPrice": "0.35",
+    "rawChange": "+1.43%"
+  },
+  {
+    "symbol": "NCCW",
+    "nameEn": "Nasr Co. for Civil Works",
+    "nameAr": "النصر للأعمال المدنية",
+    "rawSector": "Contracting &amp; Construction Engineering",
+    "rawPrice": "5.46",
+    "rawChange": "+0.92%"
+  },
+  {
+    "symbol": "NDRL",
+    "nameEn": "National Drilling Co.",
+    "nameAr": "الحفر الوطنية",
+    "rawSector": "Energy &amp; Support Services",
+    "rawPrice": "—",
+    "rawChange": "—"
+  },
+  {
+    "symbol": "SCFM",
+    "nameEn": "South Cairo &amp; Giza Mills &amp; Bakeries",
+    "nameAr": "مطاحن جنوب القاهرة والجيزة",
+    "rawSector": "Food, Beverages and Tobacco",
+    "rawPrice": "218.00",
+    "rawChange": "+0.83%"
+  },
+  {
+    "symbol": "AIH",
+    "nameEn": "Arabia Investments Holding SAE",
+    "nameAr": "العربية للاستثمارات",
+    "rawSector": "Non-bank financial services",
+    "rawPrice": "0.82",
+    "rawChange": "+1.74%"
+  },
+  {
+    "symbol": "SIPC",
+    "nameEn": "Sabaa International Company for Pharmaceutial and Chemical Industry",
+    "nameAr": "سبأ",
+    "rawSector": "Health Care &amp; Pharmaceuticals",
+    "rawPrice": "5.08",
+    "rawChange": "+8.78%"
+  },
+  {
+    "symbol": "ODIN",
+    "nameEn": "ODIN Investments",
+    "nameAr": "المصريين في الخارج للاستثمار والتنمية",
+    "rawSector": "Non-bank financial services",
+    "rawPrice": "2.10",
+    "rawChange": "+2.44%"
+  },
+  {
+    "symbol": "ASPI",
+    "nameEn": "Aspire Capital Holding for Financial Investments",
+    "nameAr": "بايونيرز القابضة",
+    "rawSector": "Non-bank financial services",
+    "rawPrice": "0.32",
+    "rawChange": "-0.31%"
+  },
+  {
+    "symbol": "GGCC",
+    "nameEn": "Giza General Contracting &amp; Real Estate Investment",
+    "nameAr": "الجيزة العامة للمقاولات",
+    "rawSector": "Contracting &amp; Construction Engineering",
+    "rawPrice": "0.56",
+    "rawChange": "+0.36%"
+  },
+  {
+    "symbol": "CAED",
+    "nameEn": "Cairo Educational Services",
+    "nameAr": "القاهرة للخدمات التعليمية",
+    "rawSector": "Education Services",
+    "rawPrice": "99.53",
+    "rawChange": "-3.03%"
+  },
+  {
+    "symbol": "CERA",
+    "nameEn": "Arab Ceramic Co. - Ceramica Remas",
+    "nameAr": "ريماس",
+    "rawSector": "Building Materials",
+    "rawPrice": "1.07",
+    "rawChange": "+2.88%"
+  },
+  {
+    "symbol": "IEEC",
+    "nameEn": "Industrial &amp; Engineering Enterprises Co.",
+    "nameAr": "المشروعات الصناعية والهندسية",
+    "rawSector": "Contracting &amp; Construction Engineering",
+    "rawPrice": "0.76",
+    "rawChange": "-0.26%"
+  },
+  {
+    "symbol": "PRCL",
+    "nameEn": "General Co. for Ceramic &amp; Porcelain Products",
+    "nameAr": "شينى",
+    "rawSector": "Building Materials",
+    "rawPrice": "21.95",
+    "rawChange": "+1.86%"
+  },
+  {
+    "symbol": "DTPP",
+    "nameEn": "Delta for Printing &amp; Packaging",
+    "nameAr": "دلتا للطباعة والتغليف",
+    "rawSector": "Industrial Goods , Services and Automobiles",
+    "rawPrice": "49.00",
+    "rawChange": "+3.92%"
+  },
+  {
+    "symbol": "UEGC",
+    "nameEn": "El-Saeed Contracting &amp; Real Estate Investment Co. SCCD",
+    "nameAr": "الصعيد العامة للمقاولات",
+    "rawSector": "Real Estate",
+    "rawPrice": "1.49",
+    "rawChange": "+1.36%"
+  },
+  {
+    "symbol": "MBEG",
+    "nameEn": "MB for Engineering &amp; Contracting",
+    "nameAr": "إم بي",
+    "rawSector": "Industrial Goods , Services and Automobiles",
+    "rawPrice": "5.35",
+    "rawChange": "+0.94%"
+  },
+  {
+    "symbol": "NHPS",
+    "nameEn": "National Housing for Professional Syndicates",
+    "nameAr": "الوطنية للاسكان",
+    "rawSector": "Real Estate",
+    "rawPrice": "62.15",
+    "rawChange": "+2.10%"
+  },
+  {
+    "symbol": "FCMD",
+    "nameEn": "Future Care For Medical Industries",
+    "nameAr": "ايكمي",
+    "rawSector": "Health Care &amp; Pharmaceuticals",
+    "rawPrice": "8.51",
+    "rawChange": "+5.85%"
+  },
+  {
+    "symbol": "OBRI",
+    "nameEn": "El Obour Real Estate Investment",
+    "nameAr": "العبور للاستثمار العقارى",
+    "rawSector": "Real Estate",
+    "rawPrice": "24.50",
+    "rawChange": "+4.26%"
+  },
+  {
+    "symbol": "MEGM",
+    "nameEn": "Middle East Glass Manufacturing SAE",
+    "nameAr": "الشرق الأوسط لصناعة الزجاج",
+    "rawSector": "Paper &amp; Packaging",
+    "rawPrice": "—",
+    "rawChange": "—"
+  },
+  {
+    "symbol": "MEPA",
+    "nameEn": "Medical Packaging Company",
+    "nameAr": "العبوات الطبية",
+    "rawSector": "Health Care &amp; Pharmaceuticals",
+    "rawPrice": "1.35",
+    "rawChange": "+4.65%"
+  },
+  {
+    "symbol": "ALUM",
+    "nameEn": "Arab Aluminum Co. SAE",
+    "nameAr": "الالومنيوم العربية",
+    "rawSector": "Basic Resources",
+    "rawPrice": "20.33",
+    "rawChange": "+4.90%"
+  },
+  {
+    "symbol": "COSG",
+    "nameEn": "Cairo Oils &amp; Soap",
+    "nameAr": "القاهرة للزيوت والصابون",
+    "rawSector": "Food, Beverages and Tobacco",
+    "rawPrice": "1.34",
+    "rawChange": "+3.88%"
+  },
+  {
+    "symbol": "TANM",
+    "nameEn": "Tanmiya for Real Estate Investment",
+    "nameAr": "تنمية للاستثمار العقاري",
+    "rawSector": "Real Estate",
+    "rawPrice": "5.73",
+    "rawChange": "-1.04%"
+  },
+  {
+    "symbol": "AFDI",
+    "nameEn": "Alahly For Development &amp; Investment",
+    "nameAr": "الاهلي للتنمية والاستثمار",
+    "rawSector": "Non-bank financial services",
+    "rawPrice": "45.43",
+    "rawChange": "+3.09%"
+  },
+  {
+    "symbol": "RUBX",
+    "nameEn": "Rubex International for Plastic &amp; Acrylic Manufacturing",
+    "nameAr": "روبكس",
+    "rawSector": "Building Materials",
+    "rawPrice": "13.24",
+    "rawChange": "-1.05%"
+  },
+  {
+    "symbol": "EBSC",
+    "nameEn": "Osool ESB Securities Brokerage",
+    "nameAr": "اصول إى إس بى للوساطة في الاوراق المالية",
+    "rawSector": "Non-bank financial services",
+    "rawPrice": "1.53",
+    "rawChange": "+0.00%"
+  },
+  {
+    "symbol": "ICLE",
+    "nameEn": "International Co. for Leasing SAE",
+    "nameAr": "انكوليس",
+    "rawSector": "Non-bank financial services",
+    "rawPrice": "15.76",
+    "rawChange": "-16.66%"
+  },
+  {
+    "symbol": "KWIN",
+    "nameEn": "El Kahera El Watania Investment",
+    "nameAr": "القاهرة الوطنية للاستثمار والاوراق المالية",
+    "rawSector": "Non-bank financial services",
+    "rawPrice": "69.46",
+    "rawChange": "-4.67%"
+  },
+  {
+    "symbol": "TYCN",
+    "nameEn": "Tycoon Holding Company For Financial Investments",
+    "nameAr": "الاسكندرية الوطنية للاستثمارات المالية",
+    "rawSector": "Non-bank financial services",
+    "rawPrice": "13.70",
+    "rawChange": "+2.78%"
+  },
+  {
+    "symbol": "RREI",
+    "nameEn": "Arab Real Estate Investment Co.",
+    "nameAr": "اليكو",
+    "rawSector": "Real Estate",
+    "rawPrice": "2.85",
+    "rawChange": "+1.42%"
+  },
+  {
+    "symbol": "RTVC",
+    "nameEn": "Remco for Touristic Villages Construction",
+    "nameAr": "رمكو",
+    "rawSector": "Travel &amp; Leisure",
+    "rawPrice": "2.81",
+    "rawChange": "+0.36%"
+  },
+  {
+    "symbol": "APSW",
+    "nameEn": "Arab Polvara Spinning &amp; Weaving Co.",
+    "nameAr": "يونيراب",
+    "rawSector": "Textile &amp; Durables",
+    "rawPrice": "7.57",
+    "rawChange": "+1.20%"
+  },
+  {
+    "symbol": "UNIP",
+    "nameEn": "Universal Co. for Paper &amp; Packaging Materials-Unipack",
+    "nameAr": "يونيباك",
+    "rawSector": "Paper &amp; Packaging",
+    "rawPrice": "0.30",
+    "rawChange": "+1.37%"
+  },
+  {
+    "symbol": "PRMH",
+    "nameEn": "Prime Holding",
+    "nameAr": "برايم القابضة",
+    "rawSector": "Non-bank financial services",
+    "rawPrice": "1.94",
+    "rawChange": "-1.02%"
+  },
+  {
+    "symbol": "RAKT",
+    "nameEn": "Rakta Paper Manufacturing",
+    "nameAr": "راكتا",
+    "rawSector": "Paper &amp; Packaging",
+    "rawPrice": "22.35",
+    "rawChange": "-0.18%"
+  },
+  {
+    "symbol": "COPR",
+    "nameEn": "Cooper for Commercial Investment &amp; Real Estate Development",
+    "nameAr": "العقارية للبنوك الوطنية للتنمية",
+    "rawSector": "Contracting &amp; Construction Engineering",
+    "rawPrice": "0.41",
+    "rawChange": "+0.73%"
+  },
+  {
+    "symbol": "EASB",
+    "nameEn": "Egyptian Arabian Company for Securities Brokerage EAC",
+    "nameAr": "ثمار",
+    "rawSector": "Non-bank financial services",
+    "rawPrice": "6.50",
+    "rawChange": "-0.15%"
+  },
+  {
+    "symbol": "SEIGA",
+    "nameEn": "Saudi Egyptian Investment &amp; Finance Co. SAE",
+    "nameAr": "السعودية المصرية للاستثمار والتمويل",
+    "rawSector": "Non-bank financial services",
+    "rawPrice": "—",
+    "rawChange": "—"
+  },
+  {
+    "symbol": "AMII",
+    "nameEn": "Arabian Metal Industries and Industrial Investments",
+    "nameAr": "العربية للمحابس",
+    "rawSector": "Building Materials",
+    "rawPrice": "8.21",
+    "rawChange": "+5.26%"
+  },
+  {
+    "symbol": "SEIG",
+    "nameEn": "Saudi Egyptian Investment &amp; Finance Co. SAE",
+    "nameAr": "السعودية المصرية للاستثمار والتمويل",
+    "rawSector": "Non-bank financial services",
+    "rawPrice": "240.49",
+    "rawChange": "-5.53%"
+  },
+  {
+    "symbol": "SPMD",
+    "nameEn": "Speed Medical SAE",
+    "nameAr": "شركة سبيد ميديكال",
+    "rawSector": "Health Care &amp; Pharmaceuticals",
+    "rawPrice": "0.35",
+    "rawChange": "+2.62%"
+  },
+  {
+    "symbol": "ROTO",
+    "nameEn": "Rowad Tourism (Al Rowad) Co",
+    "nameAr": "الرواد",
+    "rawSector": "Travel &amp; Leisure",
+    "rawPrice": "32.57",
+    "rawChange": "+1.72%"
+  },
+  {
+    "symbol": "MOED",
+    "nameEn": "Egyptian Modern Education Systems",
+    "nameAr": "المصرية لنظم التعليم الحديثة",
+    "rawSector": "Education Services",
+    "rawPrice": "0.49",
+    "rawChange": "+2.50%"
+  },
+  {
+    "symbol": "EEII",
+    "nameEn": "El Arabia Engineering Industries",
+    "nameAr": "العربية للصناعات الهندسية",
+    "rawSector": "Industrial Goods , Services and Automobiles",
+    "rawPrice": "1.79",
+    "rawChange": "-0.56%"
+  },
+  {
+    "symbol": "AREH",
+    "nameEn": "Egyptian Real Estate Group",
+    "nameAr": "المجموعة المصرية العقارية",
+    "rawSector": "Real Estate",
+    "rawPrice": "1.12",
+    "rawChange": "+3.70%"
+  },
+  {
+    "symbol": "CCRS",
+    "nameEn": "Gulf Canadian Real Estate Investment Co.",
+    "nameAr": "الخليجية الكندية للاستثمار العقاري العربي",
+    "rawSector": "Real Estate",
+    "rawPrice": "2.02",
+    "rawChange": "+5.76%"
+  },
+  {
+    "symbol": "EGREF",
+    "nameEn": "Egyptians Real Estate Fund",
+    "nameAr": "وثائق شركة صندوق استثمار المصريين للاستثمار العقاري",
+    "rawSector": "Non-bank financial services",
+    "rawPrice": "22.77",
+    "rawChange": "-5.28%"
+  },
+  {
+    "symbol": "EPCO",
+    "nameEn": "Egypt for Poultry Co.",
+    "nameAr": "إجيبكو",
+    "rawSector": "Food, Beverages and Tobacco",
+    "rawPrice": "8.55",
+    "rawChange": "+1.30%"
+  },
+  {
+    "symbol": "GRCA",
+    "nameEn": "Grand Investment Capital",
+    "nameAr": "جراند انفستمنت القابضة للاستثمارات المالية",
+    "rawSector": "Non-bank financial services",
+    "rawPrice": "32.12",
+    "rawChange": "-3.40%"
+  },
+  {
+    "symbol": "TRTO",
+    "nameEn": "TransOceans Tours",
+    "nameAr": "عبر المحيطات للسياحة",
+    "rawSector": "Travel &amp; Leisure",
+    "rawPrice": "0.06 USD",
+    "rawChange": "-1.69%"
+  },
+  {
+    "symbol": "ELNA",
+    "nameEn": "El Nasr for Manufacturing Agricultural Crops",
+    "nameAr": "النصر لتصنيع الحاصلات الزراعية",
+    "rawSector": "Food, Beverages and Tobacco",
+    "rawPrice": "41.35",
+    "rawChange": "+3.12%"
+  },
+  {
+    "symbol": "UTOP",
+    "nameEn": "Utopia Real Estate Investment &amp; Tourism SAE",
+    "nameAr": "يوتوبيا",
+    "rawSector": "Real Estate",
+    "rawPrice": "95.90",
+    "rawChange": "+5.93%"
+  },
+  {
+    "symbol": "GIHD",
+    "nameEn": "Gharbia Islamic Housing Development",
+    "nameAr": "الغربية الاسلامية للتنمية العمرانية",
+    "rawSector": "Real Estate",
+    "rawPrice": "47.01",
+    "rawChange": "+6.84%"
+  },
+  {
+    "symbol": "ELWA",
+    "nameEn": "Elwadi for International Investment &amp; Development",
+    "nameAr": "الوادى",
+    "rawSector": "Travel &amp; Leisure",
+    "rawPrice": "1.40",
+    "rawChange": "+1.45%"
+  },
+  {
+    "symbol": "IBCT",
+    "nameEn": "International Business Corp. for Trading &amp; Agencies",
+    "nameAr": "انترناشيونال بزنيس كوربوريشن",
+    "rawSector": "Industrial Goods , Services and Automobiles",
+    "rawPrice": "10.32",
+    "rawChange": "+3.20%"
+  },
+  {
+    "symbol": "MMAT",
+    "nameEn": "Marsa Marsa Alam for Tourism Development",
+    "nameAr": "مرسى مرسى علم",
+    "rawSector": "Travel &amp; Leisure",
+    "rawPrice": "5.00",
+    "rawChange": "-1.57%"
+  },
+  {
+    "symbol": "FNAR",
+    "nameEn": "Al Fanar Contracting Construction Trade Import &amp; Export Co.",
+    "nameAr": "الفنار للمقاولات",
+    "rawSector": "Contracting &amp; Construction Engineering",
+    "rawPrice": "10.79",
+    "rawChange": "-1.01%"
+  },
+  {
+    "symbol": "NEDA",
+    "nameEn": "Northern Upper Egypt Development &amp; Agricultural Production",
+    "nameAr": "نيوداب",
+    "rawSector": "Food, Beverages and Tobacco",
+    "rawPrice": "2.47",
+    "rawChange": "+0.82%"
+  },
+  {
+    "symbol": "VERT",
+    "nameEn": "Vertika for Industry &amp; Trade",
+    "nameAr": "فرتيكا",
+    "rawSector": "Trade &amp; Distributors",
+    "rawPrice": "4.31",
+    "rawChange": "+1.89%"
+  },
+  {
+    "symbol": "RKAZ",
+    "nameEn": "REKAZ Financial Holding",
+    "nameAr": "بورسعيد للتنمية الزراعية و المقاولات",
+    "rawSector": "Industrial Goods , Services and Automobiles",
+    "rawPrice": "4.19",
+    "rawChange": "+0.24%"
+  },
+  {
+    "symbol": "EPPK",
+    "nameEn": "El Ahram Co. for Printing &amp; Packing",
+    "nameAr": "الاهرام للطباعة والتغليف",
+    "rawSector": "Paper &amp; Packaging",
+    "rawPrice": "—",
+    "rawChange": "—"
+  },
+  {
+    "symbol": "BIGP",
+    "nameEn": "ElBarbary Investment Group",
+    "nameAr": "بى اى جى للتجارة والاستثمار",
+    "rawSector": "Trade &amp; Distributors",
+    "rawPrice": "0.22",
+    "rawChange": "+0.91%"
+  },
+  {
+    "symbol": "AMPI",
+    "nameEn": "AL Moasher Pay for Electronic Payment and Collection (S.A.E)",
+    "nameAr": "المؤشر",
+    "rawSector": "IT , Media &amp; Communication Services",
+    "rawPrice": "2.35",
+    "rawChange": "+5.38%"
+  },
+  {
+    "symbol": "FIRE",
+    "nameEn": "First Investment &amp; Real Estate Development",
+    "nameAr": "الأولى للاستثمار",
+    "rawSector": "Real Estate",
+    "rawPrice": "4.30",
+    "rawChange": "+0.70%"
+  },
+  {
+    "symbol": "GMCI",
+    "nameEn": "GMC Group for Industrial Commercial &amp; Financial Investments",
+    "nameAr": "جى إم سى",
+    "rawSector": "Trade &amp; Distributors",
+    "rawPrice": "1.42",
+    "rawChange": "+0.00%"
+  },
+  {
+    "symbol": "BIDI",
+    "nameEn": "El Badr Investment and Development - BID",
+    "nameAr": "البدر للبلاستيك",
+    "rawSector": "Basic Resources",
+    "rawPrice": "—",
+    "rawChange": "—"
+  },
+  {
+    "symbol": "MISR",
+    "nameEn": "MISR Intercontinental for Granite &amp; Marble",
+    "nameAr": "ايجى ستون",
+    "rawSector": "Building Materials",
+    "rawPrice": "—",
+    "rawChange": "—"
+  },
+  {
+    "symbol": "EOSB",
+    "nameEn": "El Orouba Securities Brokerage",
+    "nameAr": "العروبة للسمسرة فى الأوراق المالية",
+    "rawSector": "Non-bank financial services",
+    "rawPrice": "1.55",
+    "rawChange": "-4.32%"
+  },
+  {
+    "symbol": "MLIC",
+    "nameEn": "Misr Life Insurance",
+    "nameAr": "مصر لتأمينات الحياة",
+    "rawSector": "Non-bank financial services",
+    "rawPrice": "—",
+    "rawChange": "—"
+  },
+  {
+    "symbol": "SIEG",
+    "nameEn": "Egyptian Company for Pipes and Cement Products -Siegwart",
+    "nameAr": "المصرية للمواسير والمنتجات الاسمنتية (سيجوارت)",
+    "rawSector": "Building Materials",
+    "rawPrice": "—",
+    "rawChange": "—"
+  },
+  {
+    "symbol": "SINA",
+    "nameEn": "Sinai Manganese Company",
+    "nameAr": "سيناء للمنجنيز",
+    "rawSector": "Basic Resources",
+    "rawPrice": "—",
+    "rawChange": "—"
+  },
+  {
+    "symbol": "MITR",
+    "nameEn": "Misr Travel&amp;Touris Egp6",
+    "nameAr": "",
+    "rawSector": "Travel &amp; Leisure",
+    "rawPrice": "—",
+    "rawChange": "—"
+  },
+  {
+    "symbol": "CID",
+    "nameEn": "Chemical Development Industries (CID)",
+    "nameAr": "",
+    "rawSector": "Health Care &amp; Pharmaceuticals",
+    "rawPrice": "—",
+    "rawChange": "—"
+  },
+  {
+    "symbol": "INEG",
+    "nameEn": "Integrated Engineering Group S.A.E",
+    "nameAr": "المجموعة المتكاملة للاعمال الهندسية",
+    "rawSector": "Contracting &amp; Construction Engineering",
+    "rawPrice": "0.54",
+    "rawChange": "+1.13%"
+  },
+  {
+    "symbol": "FTNS",
+    "nameEn": "Fitness Prime",
+    "nameAr": "فتنس برايم للاندية الصحية",
+    "rawSector": "Travel &amp; Leisure",
+    "rawPrice": "1.07",
+    "rawChange": "+0.94%"
+  },
+  {
+    "symbol": "GEOS",
+    "nameEn": "Geos for trading and contracting",
+    "nameAr": "جيوس للتجارة والمقاولات",
+    "rawSector": "Contracting &amp; Construction Engineering",
+    "rawPrice": "—",
+    "rawChange": "—"
+  },
+  {
+    "symbol": "GGRN",
+    "nameEn": "Gogreen for Agricultural Investment and Development Company",
+    "nameAr": "جو جرين للاستثمار الزراعي والتنمية",
+    "rawSector": "Food, Beverages and Tobacco",
+    "rawPrice": "1.07",
+    "rawChange": "+1.90%"
+  },
+  {
+    "symbol": "ANCC",
+    "nameEn": "ALNAHDA Industrial Co.",
+    "nameAr": "",
+    "rawSector": "Building Materials",
+    "rawPrice": "—",
+    "rawChange": "—"
+  },
+  {
+    "symbol": "TOUR",
+    "nameEn": "Tourism Urbanization",
+    "nameAr": "التعمير السياحي",
+    "rawSector": "Travel &amp; Leisure",
+    "rawPrice": "—",
+    "rawChange": "—"
+  },
+  {
+    "symbol": "TWSA",
+    "nameEn": "Tawasoa Factoring",
+    "nameAr": "توسع للتخصيم",
+    "rawSector": "Non-bank financial services",
+    "rawPrice": "6.90",
+    "rawChange": "-1.85%"
+  },
+  {
+    "symbol": "GROV",
+    "nameEn": "Grova Special Purpose Acquisition Company",
+    "nameAr": "",
+    "rawSector": "Non-bank financial services",
+    "rawPrice": "—",
+    "rawChange": "—"
+  },
+  {
+    "symbol": "ALXD",
+    "nameEn": "Alexandria For Investment and Urban Development",
+    "nameAr": "الإسكندرية للاستثمارات والتنمية العمرانية",
+    "rawSector": "Real Estate",
+    "rawPrice": "—",
+    "rawChange": "—"
+  },
+  {
+    "symbol": "LUTS",
+    "nameEn": "Lotus For Agricultural Investments And Development",
+    "nameAr": "لوتس للتنمية والاستثمار الزراعي",
+    "rawSector": "Food, Beverages and Tobacco",
+    "rawPrice": "0.75",
+    "rawChange": "+3.04%"
+  },
+  {
+    "symbol": "GTEX",
+    "nameEn": "G-TEX for Commercial and Industrial Investments S.A.E",
+    "nameAr": "جيتكس للاستثمارات التجارية والصناعية",
+    "rawSector": "Textile &amp; Durables",
+    "rawPrice": "0.04 USD",
+    "rawChange": "+0.00%"
+  },
+  {
+    "symbol": "HBCO",
+    "nameEn": "Heibco for Commercial Investments &amp; Real Estate Development",
+    "nameAr": "هيبكو للاستثمارات التجارية والتنمية العقارية",
+    "rawSector": "Contracting &amp; Construction Engineering",
+    "rawPrice": "9.00",
+    "rawChange": "+5.88%"
+  },
+  {
+    "symbol": "UPMS",
+    "nameEn": "Union Pharmacist Company For Medical Services And Investment",
+    "nameAr": "الاتحاد الصيدلى",
+    "rawSector": "Real Estate",
+    "rawPrice": "9.96",
+    "rawChange": "+1.63%"
+  },
+  {
+    "symbol": "KORA",
+    "nameEn": "KORRA",
+    "nameAr": "قرة لمشروعات الطاقة والاستثمار",
+    "rawSector": "Contracting &amp; Construction Engineering",
+    "rawPrice": "1.84",
+    "rawChange": "+0.00%"
+  },
+  {
+    "symbol": "AIDC",
+    "nameEn": "Arabia for Investment and Development",
+    "nameAr": "ارابيا للاستثمار والتنمية",
+    "rawSector": "Non-bank financial services",
+    "rawPrice": "0.51",
+    "rawChange": "+0.98%"
+  },
+  {
+    "symbol": "KNGC",
+    "nameEn": "EL- Nasr Glass And Crystal",
+    "nameAr": "",
+    "rawSector": "Industrial Goods , Services and Automobiles",
+    "rawPrice": "—",
+    "rawChange": "—"
+  },
+  {
+    "symbol": "ADRI",
+    "nameEn": "Arab Development &amp; Real Estate Investment",
+    "nameAr": "أراب للتنمية و الاستثمار العقاري",
+    "rawSector": "Real Estate",
+    "rawPrice": "13.08",
+    "rawChange": "+2.19%"
+  },
+  {
+    "symbol": "HDST",
+    "nameEn": "HEDGESTONE INVESTMENT",
+    "nameAr": "هيدجستون للاستثمار",
+    "rawSector": "Trade &amp; Distributors",
+    "rawPrice": "—",
+    "rawChange": "—"
+  },
+  {
+    "symbol": "YAYT",
+    "nameEn": "Spring &amp; Transportation Needs Manufacturing Co.",
+    "nameAr": "",
+    "rawSector": "Industrial Goods , Services and Automobiles",
+    "rawPrice": "—",
+    "rawChange": "—"
+  },
+  {
+    "symbol": "EGS65621C012",
+    "nameEn": "El Nasr Housing &amp; Egp5",
+    "nameAr": "",
+    "rawSector": "Real Estate",
+    "rawPrice": "—",
+    "rawChange": "—"
+  },
+  {
+    "symbol": "ACFR",
+    "nameEn": "Alexandria Company For Refractories",
+    "nameAr": "الاسكندرية للحراريات",
+    "rawSector": "Building Materials",
+    "rawPrice": "—",
+    "rawChange": "—"
+  },
+  {
+    "symbol": "EGS65101C015",
+    "nameEn": "National Investment &amp; Reconstruction",
+    "nameAr": "",
+    "rawSector": "Real Estate",
+    "rawPrice": "—",
+    "rawChange": "—"
+  },
+  {
+    "symbol": "EGS370O1C013",
+    "nameEn": "National Printing",
+    "nameAr": "",
+    "rawSector": "Paper &amp; Packaging",
+    "rawPrice": "47.75",
+    "rawChange": "+2.12%"
+  },
+  {
+    "symbol": "EGS220N1C016",
+    "nameEn": "ALNASR For Building And Construction Company",
+    "nameAr": "",
+    "rawSector": "Contracting &amp; Construction Engineering",
+    "rawPrice": "—",
+    "rawChange": "—"
+  },
+  {
+    "symbol": "EGOTH",
+    "nameEn": "El Masreyah Touris Egp100",
+    "nameAr": "",
+    "rawSector": "Travel &amp; Leisure",
+    "rawPrice": "—",
+    "rawChange": "—"
+  },
+  {
+    "symbol": "EFAC",
+    "nameEn": "Egyptian Ferro All Egp10",
+    "nameAr": "الشركة المصرية للسبائك الحديدية (ايفاكو)",
+    "rawSector": "Basic Resources",
+    "rawPrice": "—",
+    "rawChange": "—"
+  },
+  {
+    "symbol": "PHGC",
+    "nameEn": "Premium Healthcare Group",
+    "nameAr": "بريميم هيلثكير جروب",
+    "rawSector": "Health Care &amp; Pharmaceuticals",
+    "rawPrice": "0.08",
+    "rawChange": "+2.53%"
+  },
+  {
+    "symbol": "EEP",
+    "nameEn": "Egypt Education Platform - EEP",
+    "nameAr": "",
+    "rawSector": "Education Services",
+    "rawPrice": "—",
+    "rawChange": "—"
+  },
+  {
+    "symbol": "PMSC",
+    "nameEn": "Petroleum Marine Services Company",
+    "nameAr": "خدمات البترول البحرية",
+    "rawSector": "Energy &amp; Support Services",
+    "rawPrice": "—",
+    "rawChange": "—"
+  },
+  {
+    "symbol": "POCO",
+    "nameEn": "Port Said Container And Cargo Handling",
+    "nameAr": "بورسعيد لتداول الحاويات والبضائع",
+    "rawSector": "Shipping &amp; Transportation Services",
+    "rawPrice": "—",
+    "rawChange": "—"
+  },
+  {
+    "symbol": "EGS65861C014",
+    "nameEn": "Egyptian Contracting Co.-AL- ABD",
+    "nameAr": "",
+    "rawSector": "Contracting &amp; Construction Engineering",
+    "rawPrice": "—",
+    "rawChange": "—"
+  },
+  {
+    "symbol": "EGS72L31C011",
+    "nameEn": "SOLARSOL For Energy",
+    "nameAr": "",
+    "rawSector": "Energy &amp; Support Services",
+    "rawPrice": "—",
+    "rawChange": "—"
+  },
+  {
+    "symbol": "EGS73M81C012",
+    "nameEn": "National Asset Management And Investment",
+    "nameAr": "",
+    "rawSector": "Real Estate",
+    "rawPrice": "—",
+    "rawChange": "—"
+  },
+  {
+    "symbol": "OCAP",
+    "nameEn": "OG Capital For Investments SPAC",
+    "nameAr": "",
+    "rawSector": "Non-bank financial services",
+    "rawPrice": "—",
+    "rawChange": "—"
+  },
+  {
+    "symbol": "NMIN",
+    "nameEn": "El Nasr Mining Co Egp10",
+    "nameAr": "",
+    "rawSector": "Basic Resources",
+    "rawPrice": "—",
+    "rawChange": "—"
+  },
+  {
+    "symbol": "EGWA",
+    "nameEn": "General Warehouses of Egypt",
+    "nameAr": "المستودعات المصرية العامة",
+    "rawSector": "Shipping &amp; Transportation Services",
+    "rawPrice": "—",
+    "rawChange": "—"
+  },
+  {
+    "symbol": "NFCI",
+    "nameEn": "ELNASR Co For Fertilizers And Chemical Industries",
+    "nameAr": "",
+    "rawSector": "Basic Resources",
+    "rawPrice": "—",
+    "rawChange": "—"
+  },
+  {
+    "symbol": "ELAB",
+    "nameEn": "Egyptian Linear Alkyl Benzene Company",
+    "nameAr": "المصرية لانتاج الالكيل بنزين الخطى (إيلاب)",
+    "rawSector": "Energy &amp; Support Services",
+    "rawPrice": "—",
+    "rawChange": "—"
+  },
+  {
+    "symbol": "ENPI",
+    "nameEn": "Engineering for the Petroleum and Process Industries",
+    "nameAr": "الهندسية للصناعات البترولية والكيماوية (إنبى)",
+    "rawSector": "Energy &amp; Support Services",
+    "rawPrice": "—",
+    "rawChange": "—"
+  },
+  {
+    "symbol": "DGTZ",
+    "nameEn": "Digitize for Investment And Technology",
+    "nameAr": "ديجيتايز للاستثمار والتقنية",
+    "rawSector": "IT , Media &amp; Communication Services",
+    "rawPrice": "1.70",
+    "rawChange": "+0.00%"
+  },
+  {
+    "symbol": "DCCC",
+    "nameEn": "Damietta Container and Cargo Handling",
+    "nameAr": "دمياط لتداول الحاويات والبضائع",
+    "rawSector": "Shipping &amp; Transportation Services",
+    "rawPrice": "—",
+    "rawChange": "—"
+  },
+  {
+    "symbol": "MMHC",
+    "nameEn": "El Mamoura Company For Construction &amp; Tourism Development",
+    "nameAr": "",
+    "rawSector": "Travel &amp; Leisure",
+    "rawPrice": "—",
+    "rawChange": "—"
+  }
+]
