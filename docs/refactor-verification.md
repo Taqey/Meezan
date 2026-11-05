@@ -110,4 +110,27 @@ Verification kind: build + full test suite + static checks (no browser run: star
 - **Affected Routes**:
   - All routes (transparent facade).
 
+### Stop 10 (Step 1.2 — Eliminate Inline Styles Across Frontend)
+- **Changes**:
+  - Audited all HTML templates across `core/`, `shared/`, `features/`.
+  - Migrated over 130 inline `style="..."` attributes to their respective component scoped `.css` stylesheets:
+    - `loading-skeletons.component` (53 styles)
+    - `fund-detail.component` (34 styles)
+    - `stock-detail.component` (6 styles)
+    - `mz-listing-card.component` (6 styles)
+    - `admin-classification.component` (6 styles)
+    - `mz-fair-value-card.component` (5 styles)
+    - `fund-manager-detail.component` (4 styles)
+    - `funds-list.component` (4 styles)
+    - `portfolio.component` (4 styles)
+    - `mz-details-header-card.component` (4 styles)
+    - `favorites.component`, `mz-filters-bar`, `mz-performance-chart`, `mz-stat-card`, `mz-support-resistance-card`, `admin-funds` (1 each)
+  - Zero inline styles remaining in components!
+- **Verification**:
+  - Production build: `npx ng build` passed with 0 errors and baseline bundle warning.
+  - Test suite: `npx ng test --watch=false --browsers=ChromeHeadless` passed with **589 SUCCESS, 7 FAILED** (exact 7 baseline failures).
+- **Affected Routes**:
+  - All feature pages (visual presentation preserved 1:1 via exact CSS rule equivalents).
+
+
 
