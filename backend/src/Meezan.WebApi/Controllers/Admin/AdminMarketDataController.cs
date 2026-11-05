@@ -1,3 +1,4 @@
+using Meezan.WebApi.Models.Admin;
 using Meezan.Application.Common.Interfaces.Repositories.Sectors;
 using Meezan.Application.Features.Scraping.Services;
 using Meezan.Domain.Entities;
@@ -534,75 +535,3 @@ public class AdminMarketDataController : ControllerBase
         return Math.Round(numerator.Value / denominator.Value, 4, MidpointRounding.AwayFromZero);
     }
 }
-
-public sealed record ManualMarketDataUpdateRequest(
-    decimal? NominalValue,
-    decimal? MarketValue,
-    decimal? BookValue,
-    decimal? PbRatio,
-    decimal? Eps,
-    decimal? PeRatio,
-    string? Currency,
-    decimal? High,
-    decimal? Low,
-    decimal? Open,
-    decimal? ClosingPrice,
-    string? SourceLastUpdateText,
-    decimal? SharesOutstanding = null,
-    decimal? EarningsGrowthRate = null,
-    decimal? EpsGrowthRate = null,
-    decimal? FreeCashFlow = null,
-    bool RecalculateRatios = true);
-
-public sealed record ManualMarketDataUpdateResponse(
-    string Ticker,
-    bool LiveUpdated,
-    bool SlowUpdated,
-    DateTime FetchedAt,
-    DateTime? SlowDataFetchedAt,
-    decimal? FairValue = null);
-
-public sealed record AdminStockLookupItem(
-    string Ticker,
-    string? NameAr,
-    string? NameEn);
-
-/// <summary>Snapshot of a stock's DataStatus for admin monitoring.</summary>
-public sealed record StockDataStatusItem(
-    string Ticker,
-    string? NameAr,
-    string? NameEn,
-    string DataStatus,
-    DateTime UpdatedAt);
-
-/// <summary>Request body for the manual DataStatus override endpoint.</summary>
-public sealed record UpdateDataStatusRequest(string DataStatus);
-
-// -- Shariah Override DTOs ----------------------------------------------------
-
-/// <summary>Response DTO for Shariah manual overrides (feed, override, and effective values).</summary>
-public sealed record ShariahOverridesDto(
-    string Ticker,
-    bool? FeedCoreActivityCompliant,
-    string? FeedCategoryAr,
-    string? FeedCategoryEn,
-    decimal? FeedHaramRevenuePercentage,
-    decimal? FeedLoansPercentage,
-    bool? OverrideCoreActivityCompliant,
-    string? OverrideCategoryAr,
-    string? OverrideCategoryEn,
-    decimal? OverrideHaramRevenuePercentage,
-    decimal? OverrideLoansPercentage,
-    bool? EffectiveCoreActivityCompliant,
-    string? EffectiveCategoryAr,
-    string? EffectiveCategoryEn,
-    decimal? EffectiveHaramRevenuePercentage,
-    decimal? EffectiveLoansPercentage);
-
-/// <summary>Request body for saving Shariah manual overrides. Null values clear the override.</summary>
-public sealed record SaveShariahOverridesRequest(
-    bool? CoreActivityCompliantOverride,
-    string? CategoryArOverride,
-    string? CategoryEnOverride,
-    decimal? HaramRevenuePercentageOverride,
-    decimal? LoansPercentageOverride);
