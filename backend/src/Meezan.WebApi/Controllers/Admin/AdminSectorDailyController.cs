@@ -1,15 +1,9 @@
 using Meezan.Application.Common.Interfaces.Repositories.Sectors;
+using Meezan.WebApi.Models.Admin;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Meezan.WebApi.Controllers.Admin;
-
-public sealed record UpdateSectorDailyConfigRequest(
-    decimal? UsdEgpRate,
-    string? WeightingMethod,
-    bool? ExternalSectorPullEnabled);
-
-public sealed record RecomputeRangeRequest(DateOnly FromDate, DateOnly ToDate);
 
 [ApiController]
 [Route("api/admin/sector-daily")]
