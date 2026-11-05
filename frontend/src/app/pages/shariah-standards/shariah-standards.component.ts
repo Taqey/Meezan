@@ -2,11 +2,9 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { LucideAngularModule, ShieldCheck } from 'lucide-angular';
 import { RevealDirective } from '../../directives/reveal.directive';
-import {
-  MzPageHeaderComponent,
-  MzDetailsSectionComponent,
-  MzBadgeComponent
-} from '../../components/ui';
+import { MzPageHeaderComponent } from '../../components/ui/mz-page-header/mz-page-header.component';
+import { MzDetailsSectionComponent } from '../../components/ui/mz-details-section/mz-details-section.component';
+import { MzBadgeComponent } from '../../components/ui/mz-badge/mz-badge.component';
 import {
   CRITERION_LABELS,
   CRITERION_ORDER,

@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { LucideAngularModule, type LucideIconData } from 'lucide-angular';
-import { MzSpinnerComponent } from '../ui/mz-spinner.component';
+import { MzSpinnerComponent } from '../ui/mz-spinner/mz-spinner.component';
 
 /** Friendly empty/error block with an optional link or retry action. */
 @Component({

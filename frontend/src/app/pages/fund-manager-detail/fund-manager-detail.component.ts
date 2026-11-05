@@ -23,9 +23,11 @@ import {
   normalizeManagerKey,
   normalizeManagerSlug
 } from '../../models/fund-display';
-import { MzListingPageComponent, type MzListingConfig } from '../../components/ui/ui-listing-page';
-import { MzSelectComponent, type MzOption } from '../../components/ui/ui-small';
-import type { MzListingCardData } from '../../components/ui/ui-listing';
+import { MzListingPageComponent } from '../../components/ui/mz-listing-page/mz-listing-page.component';
+import { type MzListingConfig } from '../../components/ui/models/mz-listing-config.model';
+import { MzSelectComponent } from '../../components/ui/mz-select/mz-select.component';
+import { type MzOption } from '../../components/ui/models/mz-option.model';
+import type { MzListingCardData } from '../../components/ui';
 import { ClassificationCascadeComponent } from '../../components/classification-cascade/classification-cascade.component';
 import { type EntityStat } from '../../components/entity-card/entity-card.component';
 import { debounceTime, distinctUntilChanged, forkJoin, Subject, takeUntil } from 'rxjs';

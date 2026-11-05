@@ -6,14 +6,12 @@ import { EMPTY, Observable, expand, map, reduce, forkJoin, of, catchError } from
 import { ApiService } from '../../services/api.service';
 import { FavoritesService } from '../../services/favorites.service';
 import { StockListItemDto, FundListItemDto } from '../../models/api.models';
-import {
-  MzListingPageComponent,
-  MzButtonComponent,
-  MzBadgeComponent,
-  stockToCard,
-  fundToCard,
-  type MzListingConfig
-} from '../../components/ui';
+import { MzListingPageComponent } from '../../components/ui/mz-listing-page/mz-listing-page.component';
+import { MzButtonComponent } from '../../components/ui/mz-button/mz-button.component';
+import { MzBadgeComponent } from '../../components/ui/mz-badge/mz-badge.component';
+import { stockToCard } from '../../components/ui/mappers/stock-to-card.util';
+import { fundToCard } from '../../components/ui/mappers/fund-to-card.util';
+import { type MzListingConfig } from '../../components/ui/models/mz-listing-config.model';
 
 @Component({
   selector: 'app-favorites',

@@ -8,13 +8,11 @@ import { InvestorProfile } from './portfolio-config.data';
 import { PORTFOLIO_SOURCES, PortfolioSource } from './portfolio-sources.data';
 import { PortfolioDonutChartComponent } from './portfolio-donut-chart.component';
 import { ToastService } from '../../services/toast.service';
-import {
-  MzPageHeaderComponent,
-  MzDetailsSectionComponent,
-  MzBadgeComponent,
-  MzButtonComponent,
-  MzBackLinkComponent
-} from '../../components/ui';
+import { MzPageHeaderComponent } from '../../components/ui/mz-page-header/mz-page-header.component';
+import { MzDetailsSectionComponent } from '../../components/ui/mz-details-section/mz-details-section.component';
+import { MzBadgeComponent } from '../../components/ui/mz-badge/mz-badge.component';
+import { MzButtonComponent } from '../../components/ui/mz-button/mz-button.component';
+import { MzBackLinkComponent } from '../../components/ui/mz-back-link/mz-back-link.component';
 
 @Component({
   selector: 'app-portfolio-simplifier',

@@ -11,8 +11,9 @@ import {
   LineChart
 } from 'lucide-angular';
 import { ApiService } from '../../services/api.service';
-import { MzListingCardComponent, type MzListingCardData } from '../../components/ui/ui-listing';
-import { stockToCard } from '../../components/ui/ui-mappers';
+import { MzListingCardComponent } from '../../components/ui/mz-listing-card/mz-listing-card.component';
+import { type MzListingCardData } from '../../components/ui/models/mz-listing-card-data.model';
+import { stockToCard } from '../../components/ui/mappers/stock-to-card.util';
 import { StatusBadgeComponent } from '../../components/status-badge/status-badge.component';
 import { CountUpDirective } from '../../directives/count-up.directive';
 import { RevealDirective } from '../../directives/reveal.directive';

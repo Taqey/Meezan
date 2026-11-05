@@ -9,11 +9,17 @@ import { SessionCacheService } from '../../services/session-cache.service';
 import { navigateQueryParams } from '../../utils/navigation-utils';
 import { IndexSummaryDto, PagedResult, StockListItemDto } from '../../models/api.models';
 import { matchesNonComplianceType, getNonComplianceReasons, normalizeStatusValue } from '../../models/shariah-standards';
-import { MzListingPageComponent, type MzListingConfig } from '../../components/ui/ui-listing-page';
-import { comparisonRibbon, fmtNumber, pctTone, signedPct, statusTag, stockToCard } from '../../components/ui/ui-mappers';
-import type { MzListingCardData } from '../../components/ui/ui-listing';
-import type { MzStat, MzOption } from '../../components/ui/ui-small';
-import { MzSelectComponent } from '../../components/ui/ui-small';
+import { MzListingPageComponent } from '../../components/ui/mz-listing-page/mz-listing-page.component';
+import { type MzListingConfig } from '../../components/ui/models/mz-listing-config.model';
+import { comparisonRibbon } from '../../components/ui/mappers/comparison-ribbon.util';
+import { fmtNumber } from '../../components/ui/mappers/fmt-number.util';
+import { pctTone } from '../../components/ui/mappers/pct-tone.util';
+import { signedPct } from '../../components/ui/mappers/signed-pct.util';
+import { statusTag } from '../../components/ui/mappers/status-tag.util';
+import { stockToCard } from '../../components/ui/mappers/stock-to-card.util';
+import type { MzListingCardData } from '../../components/ui';
+import type { MzStat, MzOption } from '../../components/ui';
+import { MzSelectComponent } from '../../components/ui/mz-select/mz-select.component';
 
 @Component({
   selector: 'app-stocks-list',

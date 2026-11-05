@@ -13,10 +13,8 @@ import {
   UploadCloud,
   Info
 } from 'lucide-angular';
-import {
-  MzPageHeaderComponent,
-  MzBadgeComponent
-} from '../../components/ui';
+import { MzPageHeaderComponent } from '../../components/ui/mz-page-header/mz-page-header.component';
+import { MzBadgeComponent } from '../../components/ui/mz-badge/mz-badge.component';
 
 declare global {
   interface Window {

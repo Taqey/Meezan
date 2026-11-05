@@ -18,24 +18,22 @@ import {
 import { ApiService } from '../../services/api.service';
 import { SessionCacheService } from '../../services/session-cache.service';
 import { ComparisonBadgeComponent } from '../../components/comparison-badge/comparison-badge.component';
-import {
-  MzBackLinkComponent,
-  MzDetailsHeaderCardComponent,
-  MzSupportResistanceCardComponent,
-  MzFairValueCardComponent,
-  MzMarketIndicatorsSectionComponent,
-  MzShariaAuthoritiesSectionComponent,
-  MzDetailsSectionComponent,
-  MzInfoGridComponent,
-  MzHeaderTag,
-  MzSrPoint,
-  MzFairMethod,
-  MzIndicator,
-  MzAuthority,
-  MzMetric,
-  MzShariaRatio,
-  MzSpinnerComponent
-} from '../../components/ui';
+import { MzBackLinkComponent } from '../../components/ui/mz-back-link/mz-back-link.component';
+import { MzDetailsHeaderCardComponent } from '../../components/ui/mz-details-header-card/mz-details-header-card.component';
+import { MzSupportResistanceCardComponent } from '../../components/ui/mz-support-resistance-card/mz-support-resistance-card.component';
+import { MzFairValueCardComponent } from '../../components/ui/mz-fair-value-card/mz-fair-value-card.component';
+import { MzMarketIndicatorsSectionComponent } from '../../components/ui/mz-market-indicators-section/mz-market-indicators-section.component';
+import { MzShariaAuthoritiesSectionComponent } from '../../components/ui/mz-sharia-authorities-section/mz-sharia-authorities-section.component';
+import { MzDetailsSectionComponent } from '../../components/ui/mz-details-section/mz-details-section.component';
+import { MzInfoGridComponent } from '../../components/ui/mz-info-grid/mz-info-grid.component';
+import { MzHeaderTag } from '../../components/ui/models/mz-header-tag.model';
+import { MzSrPoint } from '../../components/ui/models/mz-sr-point.model';
+import { MzFairMethod } from '../../components/ui/models/mz-fair-method.model';
+import { MzIndicator } from '../../components/ui/models/mz-indicator.model';
+import { MzAuthority } from '../../components/ui/models/mz-authority.model';
+import { MzMetric } from '../../components/ui/models/mz-metric.model';
+import { MzShariaRatio } from '../../components/ui/models/mz-sharia-ratio.model';
+import { MzSpinnerComponent } from '../../components/ui/mz-spinner/mz-spinner.component';
 import { StatusBadgeComponent } from '../../components/status-badge/status-badge.component';
 import { FavoriteToggleComponent } from '../../components/favorite-toggle/favorite-toggle.component';
 import { LoadingSkeletonsComponent } from '../../components/loading-skeletons/loading-skeletons.component';

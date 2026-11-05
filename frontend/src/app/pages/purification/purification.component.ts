@@ -11,12 +11,10 @@ import {
   ChevronDown,
   TrendingUp
 } from 'lucide-angular';
-import {
-  MzPageHeaderComponent,
-  MzDetailsSectionComponent,
-  MzBadgeComponent,
-  MzButtonComponent
-} from '../../components/ui';
+import { MzPageHeaderComponent } from '../../components/ui/mz-page-header/mz-page-header.component';
+import { MzDetailsSectionComponent } from '../../components/ui/mz-details-section/mz-details-section.component';
+import { MzBadgeComponent } from '../../components/ui/mz-badge/mz-badge.component';
+import { MzButtonComponent } from '../../components/ui/mz-button/mz-button.component';
 import {
   FAISAL_SUB_ROW,
   PURIFICATION_APPROACHES,

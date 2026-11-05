@@ -9,9 +9,12 @@ import { SessionCacheService } from '../../services/session-cache.service';
 import { navigateQueryParams } from '../../utils/navigation-utils';
 import { ConstituentItemDto, IndexConstituentsPagedResultDto, MarketSnapshotDto } from '../../models/api.models';
 import { normalizeStatusValue } from '../../models/shariah-standards';
-import { MzListingPageComponent, type MzListingConfig } from '../../components/ui/ui-listing-page';
-import { stockToCard } from '../../components/ui/ui-mappers';
-import { MzSelectComponent, type MzStat, type MzOption } from '../../components/ui/ui-small';
+import { MzListingPageComponent } from '../../components/ui/mz-listing-page/mz-listing-page.component';
+import { type MzListingConfig } from '../../components/ui/models/mz-listing-config.model';
+import { stockToCard } from '../../components/ui/mappers/stock-to-card.util';
+import { MzSelectComponent } from '../../components/ui/mz-select/mz-select.component';
+import { type MzStat } from '../../components/ui/models/mz-stat.model';
+import { type MzOption } from '../../components/ui/models/mz-option.model';
 
 import { ViewSwitcherComponent, type EntityView } from '../../components/view-switcher/view-switcher.component';
 import { TreemapComponent, type TreemapItem } from '../../components/treemap/treemap.component';

@@ -2,7 +2,8 @@ import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import type { FundClassificationTreeNode } from '../../models/api.models';
-import { MzSelectComponent, type MzOption } from '../ui/ui-small';
+import { MzSelectComponent } from '../ui/mz-select/mz-select.component';
+import { type MzOption } from '../ui/models/mz-option.model';
 
 export interface CascadeLevel {
   node: FundClassificationTreeNode | null;

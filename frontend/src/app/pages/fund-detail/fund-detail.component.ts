@@ -7,21 +7,19 @@ import { SessionCacheService } from '../../services/session-cache.service';
 import { FundDetailDto, FundListItemDto, FundPagedResultDto, FundPricePointDto, FundAnalysisDto, FundSimilarDto, FundCategoryMembershipDto, FundRiskLevel, FundType } from '../../models/api.models';
 import { FavoriteToggleComponent } from '../../components/favorite-toggle/favorite-toggle.component';
 import { LoadingSkeletonsComponent } from '../../components/loading-skeletons/loading-skeletons.component';
-import {
-  MzBackLinkComponent,
-  MzDetailsHeaderCardComponent,
-  MzDetailsSectionComponent,
-  MzInfoGridComponent,
-  MzInfoCardComponent,
-  MzCardsGridComponent,
-  MzHeaderTag,
-  MzIndicator,
-  MzListingCardData,
-  MzAllocationBreakdownComponent,
-  MzNumberLineComponent,
-  MzSpinnerComponent,
-  SHOW_FUND_ALLOCATION_BAR
-} from '../../components/ui';
+import { MzBackLinkComponent } from '../../components/ui/mz-back-link/mz-back-link.component';
+import { MzDetailsHeaderCardComponent } from '../../components/ui/mz-details-header-card/mz-details-header-card.component';
+import { MzDetailsSectionComponent } from '../../components/ui/mz-details-section/mz-details-section.component';
+import { MzInfoGridComponent } from '../../components/ui/mz-info-grid/mz-info-grid.component';
+import { MzInfoCardComponent } from '../../components/ui/mz-info-card/mz-info-card.component';
+import { MzCardsGridComponent } from '../../components/ui/mz-cards-grid/mz-cards-grid.component';
+import { MzHeaderTag } from '../../components/ui/models/mz-header-tag.model';
+import { MzIndicator } from '../../components/ui/models/mz-indicator.model';
+import { MzListingCardData } from '../../components/ui/models/mz-listing-card-data.model';
+import { MzAllocationBreakdownComponent } from '../../components/ui/mz-allocation-breakdown/mz-allocation-breakdown.component';
+import { MzNumberLineComponent } from '../../components/ui/mz-number-line/mz-number-line.component';
+import { MzSpinnerComponent } from '../../components/ui/mz-spinner/mz-spinner.component';
+import { SHOW_FUND_ALLOCATION_BAR } from '../../components/ui/constants/show_fund_allocation_bar.constants';
 import { Subject, forkJoin, takeUntil } from 'rxjs';
 import { fundLogoUrl, managerRouteParam, parseFundAllocations, type FundAllocationModel } from '../../models/fund-display';
 import type { Chart, ChartConfiguration } from 'chart.js';
