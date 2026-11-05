@@ -40,3 +40,4 @@ public sealed class FlexibleLongConverter : JsonConverter<long?>
         else writer.WriteNumberValue(value.Value);
     }
 }
+
