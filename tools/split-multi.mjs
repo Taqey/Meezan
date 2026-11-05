@@ -1,4 +1,4 @@
-﻿// Splits files that hold several declarations (components, models, constants, functions) into one declaration per file.
+// Splits files that hold several declarations (components, models, constants, functions) into one declaration per file.
 // usage: node tools/split-multi.mjs <dir> <file.ts> [...]   (new files are created under <dir>)
 import fs from 'node:fs';
 import path from 'node:path';

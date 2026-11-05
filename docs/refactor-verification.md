@@ -1,4 +1,4 @@
-﻿# Refactor verification log
+# Refactor verification log
 
 Branch: `refactor/structure`. Baseline: initial bundle 89.37 kB over the 1.00 MB budget; 7 failing tests (6 FundsList classification wiring, 1 StockDetail opinion cards).
 Verification kind: build + full test suite + static checks (no browser run: starting the backend against the shared DB is not safe, so no screenshot comparison).
@@ -31,3 +31,23 @@ Verification kind: build + full test suite + static checks (no browser run: star
 ## Stop 5b - ensure 4 files per component (.html, .css, .ts, .spec.ts)
 - Added 62 empty .css files and styleUrl bindings to components that had no inline styles previously.
 - Verified: build ok (89.19 kB over budget).
+
+### Stop 6 (Step 1.2 — AdminComponent Split)
+- **Changes**:
+  - Split the monolithic `AdminComponent` (over 2,000 lines TS, 2,017 lines HTML) into single-responsibility units:
+    - **13 Domain Services** in `features/admin/services/`:
+      - `AdminScrapingJobsService`, `AdminSectorDailyService`, `AdminFundsSyncService`, `AdminHistoricalSyncService`, `AdminFundCompareService`, `AdminStockLookupService`, `AdminMarketDataService`, `AdminShariahOverridesService`, `AdminIndexUploadService`, `AdminShariahSeedService`, `AdminSourcePdfService`, `AdminRemovalCandidatesService`, `AdminStocksManagementService`.
+    - **1 Feature Model** in `features/admin/models/`: `EditableMarketForm`.
+    - **2 Reusable Shared Components** in `shared/components/`:
+      - `StockPickerComponent`: Stock search input, select dropdown, and matching chips.
+      - `StockHeaderBannerComponent`: Stock details header banner with live updates, sector badge, and fair value / Shariah pills.
+    - **15 Focused Child Components** in `features/admin/components/`:
+      - `AdminPageHeadingComponent`, `JobCardComponent`, `FundsSyncCardComponent`, `ScrapeProgressComponent`, `SectorDailyPanelComponent`, `LastRunTableComponent`, `HistoricalSyncModalComponent`, `FundCompareChartModalComponent`, `MarketDataFormComponent`, `ShariahOverridesPanelComponent`, `BourseHalalStandardsTableComponent`, `SourcePdfStatusCardComponent`, `PdfUploadFormComponent`, `CreateStockFormComponent`, `StocksManagementTableComponent`.
+    - **8 Routed Tab Pages** in `features/admin/pages/`:
+      - `AdminScrapingPageComponent`, `AdminMarketDataPageComponent`, `AdminShariahEditPageComponent`, `AdminIndexUploadPageComponent`, `AdminShariahSeedPageComponent`, `AdminPdfReportsPageComponent`, `AdminReviewChecklistPageComponent`, `AdminStocksMgmtPageComponent`.
+    - `AdminComponent` reduced to a coordinator (< 65 lines).
+- **Verification**:
+  - Production build: `npx ng build` passed with 0 errors and identical baseline bundle size warnings.
+  - Test suite: `npx ng test --watch=false --browsers=ChromeHeadless` passed with **580 SUCCESS, 7 FAILED** (only the exact 7 baseline test failures). All newly generated component specs passed.
+- **Affected Routes**:
+  - `/admin/market-data`, `/admin/manual-edit`, `/admin/shariah-edit`, `/admin/index-files`, `/admin/shariah-seed`, `/admin/shariah-reports`, `/admin/review-queue`, `/admin/stocks`.
