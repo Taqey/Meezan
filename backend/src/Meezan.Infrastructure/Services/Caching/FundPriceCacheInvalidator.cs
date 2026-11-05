@@ -15,4 +15,10 @@ public class FundPriceCacheInvalidator : IFundPriceCacheInvalidator
     {
         await _cacheService.InvalidatePricesAsync(cancellationToken);
     }
+
+    public async Task InvalidateAllFundCachesAsync(CancellationToken cancellationToken = default)
+    {
+        await _cacheService.InvalidateCatalogAsync(cancellationToken);
+        await _cacheService.InvalidatePricesAsync(cancellationToken);
+    }
 }

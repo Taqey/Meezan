@@ -8,4 +8,9 @@ public class NoOpFundPriceCacheInvalidator : IFundPriceCacheInvalidator
     {
         return Task.CompletedTask;
     }
+
+    public Task InvalidateAllFundCachesAsync(CancellationToken cancellationToken = default)
+    {
+        return Task.CompletedTask;
+    }
 }

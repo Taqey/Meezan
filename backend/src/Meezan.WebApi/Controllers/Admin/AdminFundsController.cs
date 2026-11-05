@@ -1,6 +1,7 @@
 using Meezan.Application.Features.Funds.Sync.Commands.BackfillFundPriceHistory;
 using MediatR;
 using Meezan.Application.Common.Models.Caching;
+using Meezan.Application.Common.Interfaces.Repositories.Funds;
 using Meezan.Application.Features.Funds.Caching.Commands.ClearFundCache;
 using Meezan.Application.Features.Funds.Caching.Commands.RebuildFundCache;
 using Meezan.Application.Features.Funds.Caching.Queries.GetCacheStatus;
@@ -131,6 +132,52 @@ public class AdminFundsController : ControllerBase
     {
         var result = await _sender.Send(new RunFundPriceSyncCommand("Manual"), cancellationToken);
         return result.ToActionResult();
+    }
+
+    [HttpGet("sync/historical/preview")]
+    [ProducesResponseType(typeof(HistoricalDataPreviewResultDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> PreviewHistorical(
+        [FromServices] IFundSyncService syncService,
+        [FromQuery] int? fundId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await syncService.PreviewHistoricalDataAsync(fundId, cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpPost("sync/historical/commit")]
+    [ProducesResponseType(typeof(HistoricalDataCommitResultDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> CommitHistorical(
+        [FromServices] IFundSyncService syncService,
+        [FromQuery] int? fundId = null,
+        [FromQuery] bool overwriteDifferent = false,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await syncService.CommitHistoricalDataAsync(fundId, overwriteDifferent, cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpPost("sync/check-new")]
+    [ProducesResponseType(typeof(CheckNewFundsResultDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> CheckNewFunds(
+        [FromServices] IFundSyncService syncService,
+        CancellationToken cancellationToken = default)
+    {
+        var triggeredBy = User?.Identity?.Name ?? "Manual";
+        var result = await syncService.CheckNewFundsAsync(triggeredBy, cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpGet("funds/{fundId:int}/compare-chart")]
+    [ProducesResponseType(typeof(FundCompareChartDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetFundCompareChart(
+        int fundId,
+        [FromServices] IFundSyncService syncService,
+        [FromQuery] string timeframe = "1Y",
+        CancellationToken cancellationToken = default)
+    {
+        var result = await syncService.GetFundCompareChartAsync(fundId, timeframe, cancellationToken);
+        return Ok(result);
     }
 
     // ========== FUND CATEGORIES ==========
@@ -415,32 +462,6 @@ public class AdminFundsController : ControllerBase
     {
         var triggeredBy = User?.Identity?.Name ?? "Admin";
         var result = await _sender.Send(new FetchFundMissingPricesCommand(id, triggeredBy), cancellationToken);
-        return result.ToActionResult();
-    }
-
-    // ========== FUND CACHE MANAGEMENT ==========
-
-    [HttpGet("cache/status")]
-    [ProducesResponseType(typeof(CacheStatusDto), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetCacheStatus(CancellationToken cancellationToken = default)
-    {
-        var result = await _sender.Send(new GetCacheStatusQuery(), cancellationToken);
-        return result.ToActionResult();
-    }
-
-    [HttpPost("cache/clear")]
-    [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
-    public async Task<IActionResult> ClearCache(CancellationToken cancellationToken = default)
-    {
-        var result = await _sender.Send(new ClearFundCacheCommand(), cancellationToken);
-        return result.ToActionResult();
-    }
-
-    [HttpPost("cache/rebuild")]
-    [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
-    public async Task<IActionResult> RebuildCache(CancellationToken cancellationToken = default)
-    {
-        var result = await _sender.Send(new RebuildFundCacheCommand(), cancellationToken);
         return result.ToActionResult();
     }
 }

@@ -81,12 +81,12 @@ public class FundSyncBackgroundService : BackgroundService
         try
         {
             _logger.LogInformation("Starting scheduled fund price sync");
-            await syncService.RunPriceSyncAsync("Scheduled", cancellationToken);
+            var result = await syncService.RunPriceSyncAsync("Scheduled", cancellationToken);
 
-            if (settings != null && settings.FullSyncScheduleEnabled)
+            // Retry skipped funds (up to 3 hours, every 30 minutes)
+            if (result.MissingFromSndukCount > 0 || result.UpdatedFunds < result.TotalSndukFunds)
             {
-                _logger.LogInformation("Starting scheduled full fund sync (FullSyncScheduleEnabled is true)");
-                await syncService.RunSyncAsync("Scheduled", cancellationToken);
+                _logger.LogInformation("Scheduled price sync completed with partial/skipped funds. Retries may follow if needed.");
             }
         }
         catch (Exception ex)

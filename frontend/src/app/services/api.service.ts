@@ -714,17 +714,26 @@ export class ApiService {
     return this.http.post<FetchFundMissingPricesResultDto>(`${this.baseUrl}/api/admin/funds/funds/${fundId}/fetch-missing-prices`, {});
   }
 
-  // Cache management
-  getFundCacheStatus(): Observable<any> {
-    return this.http.get<any>(`${this.baseUrl}/api/admin/funds/cache/status`);
+  // Funds Sync & Historical Gap Operations
+  previewHistoricalFundData(fundId?: number | null): Observable<any> {
+    const q = fundId ? `?fundId=${fundId}` : '';
+    return this.http.get<any>(`${this.baseUrl}/api/admin/funds/sync/historical/preview${q}`);
   }
 
-  clearFundCache(): Observable<string> {
-    return this.http.post<string>(`${this.baseUrl}/api/admin/funds/cache/clear`, {});
+  commitHistoricalFundData(fundId?: number | null, overwriteDifferent: boolean = false): Observable<any> {
+    const params = new URLSearchParams();
+    if (fundId) params.set('fundId', String(fundId));
+    if (overwriteDifferent) params.set('overwriteDifferent', 'true');
+    const q = params.toString() ? `?${params.toString()}` : '';
+    return this.http.post<any>(`${this.baseUrl}/api/admin/funds/sync/historical/commit${q}`, {});
   }
 
-  rebuildFundCache(): Observable<string> {
-    return this.http.post<string>(`${this.baseUrl}/api/admin/funds/cache/rebuild`, {});
+  checkNewFundsNow(): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/api/admin/funds/sync/check-new`, {});
+  }
+
+  getFundCompareChart(fundId: number, timeframe = '1Y'): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/api/admin/funds/funds/${fundId}/compare-chart?timeframe=${timeframe}`);
   }
 
   // Sector Daily Job & Admin Management

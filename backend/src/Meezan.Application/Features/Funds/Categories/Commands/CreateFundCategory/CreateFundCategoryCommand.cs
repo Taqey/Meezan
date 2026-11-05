@@ -1,11 +1,12 @@
 using MediatR;
+using Meezan.Application.Common.Interfaces.Caching;
 using Meezan.Application.Common.Interfaces.Persistence;
 using Meezan.Application.Common.Results;
 using Meezan.Domain.Entities;
 
 namespace Meezan.Application.Features.Funds.Categories.Commands.CreateFundCategory;
 
-public sealed record CreateFundCategoryCommand : IRequest<Result<FundCategory>>, ITransactionalCommand
+public sealed record CreateFundCategoryCommand : IRequest<Result<FundCategory>>, ITransactionalCommand, IInvalidatesFundCatalog
 {
     public string NameAr { get; init; } = string.Empty;
     public string NameEn { get; init; } = string.Empty;

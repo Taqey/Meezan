@@ -12,4 +12,8 @@ public interface IFundSyncService
     Task<int> BackfillLogosAsync(CancellationToken cancellationToken = default);
     Task<FundPriceHistoryBackfillResultDto> BackfillPriceHistoryAsync(bool dryRun = true, int? specificFundId = null, CancellationToken cancellationToken = default);
     Task<FetchFundMissingPricesResultDto> FetchMissingPricesForFundAsync(int fundId, string triggeredBy, bool bypassCooldown = false, CancellationToken cancellationToken = default);
+    Task<HistoricalDataPreviewResultDto> PreviewHistoricalDataAsync(int? fundId = null, CancellationToken cancellationToken = default);
+    Task<HistoricalDataCommitResultDto> CommitHistoricalDataAsync(int? fundId = null, bool overwriteDifferent = false, CancellationToken cancellationToken = default);
+    Task<CheckNewFundsResultDto> CheckNewFundsAsync(string triggeredBy, CancellationToken cancellationToken = default);
+    Task<FundCompareChartDto> GetFundCompareChartAsync(int fundId, string timeframe = "1Y", CancellationToken cancellationToken = default);
 }

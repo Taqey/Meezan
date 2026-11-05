@@ -26,7 +26,8 @@ import {
   AlertCircle,
   Check,
   ShieldCheck,
-  Layers
+  Layers,
+  LineChart
 } from 'lucide-angular';
 import { ApiService } from '../../services/api.service';
 import { AdminAuthService } from '../../services/admin-auth.service';
@@ -286,7 +287,6 @@ interface EditableMarketForm {
               </div>
             </div>
           </div>
-        </div>
 
           <!-- Bucket 4: Funds Sync -->
           <div style="background: #fbfcfb; border: 1px solid var(--border); border-radius: 14px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between;">
@@ -299,7 +299,7 @@ interface EditableMarketForm {
                 <span class="live-dot" *ngIf="fundSyncRunning"></span>
               </div>
               <p style="font-size: 13px; color: var(--muted-foreground); margin: 0 0 14px; line-height: 1.5;">
-                يسحب قائمة الصناديق، تاريخ الأسعار، التحليل، والصناديق المشابهة من SNDUK، ويعيد حساب تصنيفات الصناديق.
+                تحديث أسعار الصناديق اليومية، مزامنة وتعبئة البيانات التاريخية الناقصة، واكتشاف الصناديق الجديدة من SNDUK.
               </p>
               <div style="font-size: 12px; background: white; border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; margin-bottom: 16px;">
                 <div style="margin-bottom: 6px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
@@ -315,7 +315,8 @@ interface EditableMarketForm {
                   <span>بتوقيت القاهرة</span>
                 </div>
                 <div><strong>آخر تحديث أسعار:</strong> {{ getFundPriceSyncLastRunText() }}</div>
-                <div><strong>آخر مزامنة كاملة:</strong> {{ getFundFullSyncLastRunText() }}</div>
+                <div><strong>آخر مزامنة تاريخية:</strong> {{ getFundHistoricalSyncLastRunText() }}</div>
+                <div><strong>آخر فحص للصناديق الجديدة:</strong> {{ getFundNewCheckLastRunText() }}</div>
               </div>
               <!-- Automation Toggle -->
               <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: #f5f3ff; border: 1px solid #ddd6fe; border-radius: 8px; margin-bottom: 16px;"
@@ -342,7 +343,7 @@ interface EditableMarketForm {
               </div>
 
               <div style="display: flex; flex-direction: column; gap: 8px;">
-                <div *ngIf="fundPriceSyncRunning || fundSyncRunning || (fundSyncStatus?.isRunning)" class="progress-bar-container" style="margin-bottom: 4px;">
+                <div *ngIf="fundPriceSyncRunning || fundHistoricalSyncRunning || fundCombinedSyncRunning || fundCheckNewRunning || (fundSyncStatus?.isRunning)" class="progress-bar-container" style="margin-bottom: 4px;">
                   <div class="progress-bar-fill indeterminate"></div>
                 </div>
                 <div *ngIf="fundSyncStatus?.isRunning" style="font-size: 11px; text-align: center; color: #7c3aed; font-weight: 600;">
@@ -350,18 +351,37 @@ interface EditableMarketForm {
                   <span *ngIf="fundSyncStatus?.totalFunds">{{ fundSyncStatus?.processedCount }} من {{ fundSyncStatus?.totalFunds }}</span>
                   <span *ngIf="fundSyncStatus?.currentFundCode"> [{{ fundSyncStatus?.currentFundCode }}]</span>
                 </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                  <button class="btn btn-primary" (click)="runFundPriceSyncNow()" [disabled]="fundPriceSyncRunning || fundSyncRunning || (fundSyncStatus?.isRunning)" style="justify-content: center; background: #059669; border-color: #059669; gap: 6px;">
-                    <lucide-icon *ngIf="!fundPriceSyncRunning" [img]="PlayIcon" size="15"></lucide-icon>
-                    <lucide-icon *ngIf="fundPriceSyncRunning" [img]="RotateCcwIcon" size="15" class="spin-anim"></lucide-icon>
+
+                <!-- 4 Action Buttons Grid -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 8px;">
+                  <!-- 1) Update prices now -->
+                  <button class="btn btn-primary" (click)="runFundPriceSyncNow()" [disabled]="isAnyFundOperationRunning" style="justify-content: center; background: #059669; border-color: #059669; gap: 6px; font-size: 12px; padding: 8px 10px;">
+                    <lucide-icon *ngIf="!fundPriceSyncRunning" [img]="PlayIcon" size="14"></lucide-icon>
+                    <lucide-icon *ngIf="fundPriceSyncRunning" [img]="RotateCcwIcon" size="14" class="spin-anim"></lucide-icon>
                     {{ fundPriceSyncRunning ? 'جارٍ التحديث...' : 'تحديث الأسعار الآن' }}
                   </button>
-                  <button class="btn btn-primary" (click)="runFundSyncNow()" [disabled]="fundSyncRunning || fundPriceSyncRunning || (fundSyncStatus?.isRunning)" style="justify-content: center; background: #7c3aed; border-color: #7c3aed; gap: 6px;">
-                    <lucide-icon *ngIf="!fundSyncRunning" [img]="PlayIcon" size="15"></lucide-icon>
-                    <lucide-icon *ngIf="fundSyncRunning" [img]="RotateCcwIcon" size="15" class="spin-anim"></lucide-icon>
-                    {{ fundSyncRunning ? 'جارٍ المزامنة...' : 'مزامنة كاملة' }}
+
+                  <!-- 2) Sync historical data (preview / fill) -->
+                  <button class="btn btn-outline" (click)="openHistoricalSyncModal()" [disabled]="isAnyFundOperationRunning" style="justify-content: center; border-color: #7c3aed; color: #7c3aed; gap: 6px; font-size: 12px; padding: 8px 10px;">
+                    <lucide-icon [img]="HistoryIcon" size="14"></lucide-icon>
+                    مزامنة البيانات التاريخية
+                  </button>
+
+                  <!-- 3) Update prices + historical data -->
+                  <button class="btn btn-primary" (click)="runPricesAndHistoricalSync()" [disabled]="isAnyFundOperationRunning" style="justify-content: center; background: #4f46e5; border-color: #4f46e5; gap: 6px; font-size: 12px; padding: 8px 10px;">
+                    <lucide-icon *ngIf="!fundCombinedSyncRunning" [img]="PlayIcon" size="14"></lucide-icon>
+                    <lucide-icon *ngIf="fundCombinedSyncRunning" [img]="RotateCcwIcon" size="14" class="spin-anim"></lucide-icon>
+                    {{ fundCombinedSyncRunning ? 'جارٍ التنفيذ...' : 'تحديث الأسعار + البيانات التاريخية' }}
+                  </button>
+
+                  <!-- 4) Check for new funds (replaces old full sync) -->
+                  <button class="btn btn-outline" (click)="runCheckNewFundsNow()" [disabled]="isAnyFundOperationRunning" style="justify-content: center; border-color: #0284c7; color: #0284c7; gap: 6px; font-size: 12px; padding: 8px 10px;">
+                    <lucide-icon *ngIf="!fundCheckNewRunning" [img]="SearchIcon" size="14"></lucide-icon>
+                    <lucide-icon *ngIf="fundCheckNewRunning" [img]="RotateCcwIcon" size="14" class="spin-anim"></lucide-icon>
+                    {{ fundCheckNewRunning ? 'جارٍ الفحص...' : 'فحص الصناديق الجديدة' }}
                   </button>
                 </div>
+
                 <div *ngIf="fundPriceSyncResult" style="font-size: 11px; text-align: center; color: #059669;">
                   تم تحديث أسعار {{ fundPriceSyncResult.updatedFunds }} صندوق في {{ fundPriceSyncResult.durationSeconds }} ثانية
                   <span *ngIf="fundPriceSyncResult.newInSndukCount > 0"> ({{ fundPriceSyncResult.newInSndukCount }} صندوق جديد مكتشف)</span>
@@ -369,63 +389,32 @@ interface EditableMarketForm {
                 <div *ngIf="fundPriceSyncError" style="font-size: 11px; text-align: center; color: var(--bad);">
                   {{ fundPriceSyncError }}
                 </div>
-                <div *ngIf="fundSyncRunResult" style="font-size: 11px; text-align: center;" [style.color]="getFundSyncStatusColor(fundSyncRunResult.status)">
-                  {{ fundSyncRunResultText() }}
-                </div>
-                <div *ngIf="fundSyncRunError" style="font-size: 11px; text-align: center; color: var(--bad);">
-                  {{ fundSyncRunError }}
-                </div>
-                <a routerLink="/admin/funds" class="btn btn-outline" style="width: 100%; justify-content: center; border-color: #ddd6fe; color: #7c3aed; text-decoration: none; box-sizing: border-box;">
-                  <lucide-icon [img]="HistoryIcon" size="14"></lucide-icon>
-                  إدارة الصناديق وسجل المزامنة
-                </a>
-              </div>
-            </div>
 
-            <!-- Fund Cache Status & Control Card -->
-            <div class="admin-card" style="border-top: 4px solid #3b82f6; display: flex; flex-direction: column; justify-content: space-between;">
-              <div>
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
-                  <h3 style="margin: 0; font-size: 16px; display: flex; align-items: center; gap: 8px;">
-                    <lucide-icon [img]="DatabaseIcon" size="18" style="color: #3b82f6;"></lucide-icon>
-                    ذاكرة الصناديق المؤقتة (L1/L2)
-                  </h3>
-                  <span class="badge" [style.background]="fundCacheStatus?.redisConnected ? '#dcfce7' : '#fee2e2'" [style.color]="fundCacheStatus?.redisConnected ? '#15803d' : '#b91c1c'" style="font-size: 11px;">
-                    {{ fundCacheStatus?.redisConnected ? 'Redis متصل' : 'ذاكرة محلية (L1)' }}
-                  </span>
+                <div *ngIf="fundCheckNewResult" style="font-size: 11px; text-align: center; color: #0284c7; font-weight: 600;">
+                  فحص الصناديق: إجمالي {{ fundCheckNewResult.totalSndukFunds }} | المسجلة: {{ fundCheckNewResult.existingFundsCount }} | مضافة حديثاً: {{ fundCheckNewResult.newFundsAddedCount }}
                 </div>
-                <p class="muted" style="font-size: 13px; margin-bottom: 12px;">
-                  إصدار الكتالوج: <strong>v{{ fundCacheStatus?.catalogVersion || 1 }}</strong> | الأسعار: <strong>v{{ fundCacheStatus?.pricesVersion || 1 }}</strong>
-                  <br>
-                  المفاتيح في Redis: <strong>{{ fundCacheStatus?.keyCount || 0 }}</strong> | الحجم: <strong>{{ fundCacheStatus?.approximateSizeBytes || 0 }} بايت</strong>
-                </p>
-                <div *ngIf="fundCacheStatus" style="font-size: 12px; margin-bottom: 12px; background: #f8fafc; padding: 8px 12px; border-radius: 6px; border: 1px solid #e2e8f0;">
-                  <div>نجاح L1: <strong>{{ fundCacheStatus.l1Hits }}</strong> | إخفاق L1: <strong>{{ fundCacheStatus.l1Misses }}</strong></div>
-                  <div>نجاح L2: <strong>{{ fundCacheStatus.l2Hits }}</strong> | إخفاق L2: <strong>{{ fundCacheStatus.l2Misses }}</strong></div>
-                  <div *ngIf="fundCacheStatus.lastRebuildUtc" style="color: #64748b; font-size: 11px; margin-top: 4px;">آخر إعادة بناء: {{ fundCacheStatus.lastRebuildUtc | date:'short' }}</div>
+                <div *ngIf="fundCheckNewError" style="font-size: 11px; text-align: center; color: var(--bad);">
+                  {{ fundCheckNewError }}
                 </div>
-              </div>
 
-              <div style="display: flex; flex-direction: column; gap: 8px;">
-                <div *ngIf="fundCacheActionRunning" class="progress-bar-container" style="margin-bottom: 4px;">
-                  <div class="progress-bar-fill indeterminate"></div>
+                <div *ngIf="fundCombinedMessage" style="font-size: 11px; text-align: center; color: #4f46e5; font-weight: 600;">
+                  {{ fundCombinedMessage }}
                 </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                  <button class="btn btn-outline" (click)="clearFundCacheNow()" [disabled]="fundCacheActionRunning" style="justify-content: center; border-color: #cbd5e1; font-size: 12px; gap: 6px;">
-                    <lucide-icon *ngIf="fundCacheClearing" [img]="RotateCcwIcon" size="14" class="spin-anim"></lucide-icon>
-                    {{ fundCacheClearing ? 'جارٍ التفريغ...' : 'تفريغ الذاكرة' }}
+
+                <div style="display: flex; gap: 8px; margin-top: 4px;">
+                  <button type="button" class="btn btn-outline" (click)="openCompareChartModal()" style="flex: 1; justify-content: center; border-color: #cbd5e1; color: #334155; font-size: 12px; gap: 6px;">
+                    <lucide-icon [img]="LineChartIcon" size="14"></lucide-icon>
+                    مقارنة المصدر (Chart)
                   </button>
-                  <button class="btn btn-primary" (click)="rebuildFundCacheNow()" [disabled]="fundCacheActionRunning" style="justify-content: center; background: #3b82f6; border-color: #3b82f6; font-size: 12px; gap: 6px;">
-                    <lucide-icon *ngIf="fundCacheRebuilding" [img]="RotateCcwIcon" size="14" class="spin-anim"></lucide-icon>
-                    {{ fundCacheRebuilding ? 'جارٍ البناء...' : 'إعادة بناء الآن' }}
-                  </button>
-                </div>
-                <div *ngIf="fundCacheMessage" style="font-size: 11px; text-align: center; color: #15803d;">
-                  {{ fundCacheMessage }}
+                  <a routerLink="/admin/funds" class="btn btn-outline" style="flex: 1; justify-content: center; border-color: #ddd6fe; color: #7c3aed; text-decoration: none; box-sizing: border-box; font-size: 12px; gap: 6px;">
+                    <lucide-icon [img]="HistoryIcon" size="14"></lucide-icon>
+                    إدارة وسجل المزامنة
+                  </a>
                 </div>
               </div>
             </div>
-          </div>  <!-- closes the grid container -->
+          </div>  <!-- closes bucket 4 -->
+        </div>  <!-- closes the grid container -->
 
         <div *ngIf="jobToggleError" class="admin-result error" style="margin-top: 12px; margin-bottom: 12px;">
           {{ jobToggleError }}
@@ -626,6 +615,274 @@ interface EditableMarketForm {
               </tr>
             </tbody>
           </table>
+          </div>
+        </div>
+
+        <!-- ======================================================== -->
+        <!-- Historical Sync & Gaps Modal / Overlay                   -->
+        <!-- ======================================================== -->
+        <div *ngIf="showHistoricalModal" style="position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 16px;">
+          <div style="background: white; border-radius: 14px; max-width: 900px; width: 100%; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2);">
+            
+            <!-- Modal Header -->
+            <div style="padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <h3 style="margin: 0; font-size: 17px; display: flex; align-items: center; gap: 8px; color: #7c3aed;">
+                  <lucide-icon [img]="HistoryIcon" size="18"></lucide-icon>
+                  مزامنة وتعبئة البيانات التاريخية (فحص الفجوات)
+                </h3>
+                <div style="font-size: 12px; color: var(--muted-foreground); margin-top: 2px;">
+                  مقارنة الأسعار المسجلة في Meezan مع تاريخ SNDUK دون المساس بأسعار اليوم
+                </div>
+              </div>
+              <button type="button" class="btn btn-outline btn-sm" (click)="closeHistoricalSyncModal()" style="padding: 4px 8px;">
+                <lucide-icon [img]="XIcon" size="16"></lucide-icon>
+              </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div style="padding: 20px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 16px;">
+              <!-- Fund filter selector -->
+              <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; background: #f8fafc; padding: 12px 14px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                <label style="font-size: 13px; font-weight: 600;">تحديد الصندوق:</label>
+                <select class="form-input" [(ngModel)]="historicalSelectedFundId" style="min-width: 260px; font-size: 13px; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border);">
+                  <option [ngValue]="null">جميع الصناديق (All Funds)</option>
+                  <option *ngFor="let f of adminFundPickerList" [ngValue]="f.id">
+                    {{ f.code }} — {{ f.displayName || f.nameAr }}
+                  </option>
+                </select>
+                <button type="button" class="btn btn-primary" (click)="fetchHistoricalPreview()" [disabled]="historicalPreviewLoading || historicalCommitLoading" style="background: #7c3aed; border-color: #7c3aed; font-size: 13px; gap: 6px;">
+                  <lucide-icon *ngIf="historicalPreviewLoading" [img]="RotateCcwIcon" size="14" class="spin-anim"></lucide-icon>
+                  <lucide-icon *ngIf="!historicalPreviewLoading" [img]="SearchIcon" size="14"></lucide-icon>
+                  {{ historicalPreviewLoading ? 'جارٍ الفحص التمهيدي...' : 'بدء فحص الفجوات (Preview)' }}
+                </button>
+              </div>
+
+              <!-- Loading state -->
+              <div *ngIf="historicalPreviewLoading" style="text-align: center; padding: 32px 0; color: #7c3aed;">
+                <div class="progress-bar-container" style="max-width: 320px; margin: 0 auto 12px;">
+                  <div class="progress-bar-fill indeterminate"></div>
+                </div>
+                <div style="font-size: 13px; font-weight: 600;">جارٍ جلب البيانات التاريخية من المصدر ومقارنتها...</div>
+                <div style="font-size: 11px; color: var(--muted-foreground); margin-top: 4px;">قد يستغرق فحص كافة الصناديق عدة ثوانٍ</div>
+              </div>
+
+              <!-- Error message -->
+              <div *ngIf="historicalError" class="admin-result error">
+                {{ historicalError }}
+              </div>
+
+              <!-- Commit success result -->
+              <div *ngIf="historicalCommitResult" class="admin-result" style="background: #ecfdf5; border-color: #a7f3d0; color: #065f46;">
+                <strong>اكتمل الحفظ بنجاح:</strong>
+                تمت إضافة {{ historicalCommitResult.insertedCount }} نقطة تاريخية ناقصة عبر {{ historicalCommitResult.fundsUpdated }} صندوق في {{ historicalCommitResult.durationSeconds }} ثانية.
+                <span *ngIf="historicalCommitResult.overwrittenCount > 0"> (تم تعديل {{ historicalCommitResult.overwrittenCount }} نقطة مختلفة)</span>
+              </div>
+
+              <!-- Preview Summary Table -->
+              <div *ngIf="historicalPreview && !historicalPreviewLoading">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+                  <div style="font-size: 13px;">
+                    صناديق مفحوصة: <strong>{{ historicalPreview.totalFundsChecked }}</strong> |
+                    نقاط ناقصة قابلة للإضافة: <strong style="color: #059669;">{{ historicalPreview.totalMissingCount }}</strong> |
+                    نقاط مختلفة القيمة: <strong style="color: #d97706;">{{ historicalPreview.totalDifferentCount }}</strong>
+                  </div>
+                </div>
+
+                <div class="table-scroll-x" style="max-height: 380px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px;">
+                  <table class="admin-table" style="width: 100%; font-size: 12px;">
+                    <thead style="position: sticky; top: 0; background: #f8fafc; z-index: 1;">
+                      <tr>
+                        <th>الكود</th>
+                        <th>اسم الصندوق</th>
+                        <th>نقاط المصدر</th>
+                        <th>نقاطنا</th>
+                        <th>مطابق</th>
+                        <th>ناقص (Missing)</th>
+                        <th>مختلف (Diff)</th>
+                        <th>فترة البيانات</th>
+                        <th>معاينة</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let item of historicalPreview.funds">
+                        <td><strong>{{ item.fundCode }}</strong></td>
+                        <td>{{ item.fundName }}</td>
+                        <td>{{ item.sourceCount }}</td>
+                        <td>{{ item.myCount }}</td>
+                        <td style="color: #059669;">{{ item.matchingCount }}</td>
+                        <td [style.color]="item.missingCount > 0 ? '#dc2626' : '#64748b'" [style.fontWeight]="item.missingCount > 0 ? '700' : '400'">
+                          +{{ item.missingCount }}
+                        </td>
+                        <td [style.color]="item.differentCount > 0 ? '#d97706' : '#64748b'">
+                          {{ item.differentCount }}
+                        </td>
+                        <td style="font-size: 11px; color: var(--muted-foreground);" dir="ltr">
+                          {{ item.oldestSourceDate || '—' }} → {{ item.latestSourceDate || '—' }}
+                        </td>
+                        <td>
+                          <button type="button" class="btn btn-outline btn-sm" (click)="openFundCompareFromPreview(item.fundId)" style="padding: 2px 6px; font-size: 11px;">
+                            رسم
+                          </button>
+                        </td>
+                      </tr>
+                      <tr *ngIf="historicalPreview.funds.length === 0">
+                        <td colspan="9" style="text-align: center; color: var(--muted-foreground); padding: 16px;">
+                          لم يتم العثور على أية نتائج فحص.
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <!-- Commit actions bar -->
+                <div style="margin-top: 16px; padding: 14px; background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; display: flex; flex-direction: column; gap: 10px;">
+                  <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                    <div>
+                      <div style="font-weight: 600; font-size: 13px;">الخطوة الثانية: اعتماد وحفظ النقاط الناقصة</div>
+                      <div style="font-size: 11px; color: var(--muted-foreground);">
+                        يتم حفظ التواريخ الناقصة فقط (insert-only) دون تعديل النقاط الحالية، مع استبعاد الجمعة والسبت.
+                      </div>
+                    </div>
+                    <button type="button" class="btn btn-primary" (click)="commitHistoricalSync(false)" [disabled]="historicalCommitLoading || historicalPreview.totalMissingCount === 0" style="background: #059669; border-color: #059669; font-size: 13px; gap: 6px; padding: 8px 16px;">
+                      <lucide-icon *ngIf="historicalCommitLoading && !overwriteDifferentChoice" [img]="RotateCcwIcon" size="14" class="spin-anim"></lucide-icon>
+                      <lucide-icon *ngIf="!historicalCommitLoading" [img]="CheckCircleIcon" size="14"></lucide-icon>
+                      {{ historicalCommitLoading && !overwriteDifferentChoice ? 'جارٍ الحفظ...' : 'حفظ البيانات الناقصة فقط (' + historicalPreview.totalMissingCount + ')' }}
+                    </button>
+                  </div>
+
+                  <!-- Optional overwrite different points warning -->
+                  <div *ngIf="historicalPreview.totalDifferentCount > 0" style="border-top: 1px dashed var(--border); padding-top: 10px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+                    <div style="font-size: 11px; color: #b45309; display: flex; align-items: center; gap: 6px;">
+                      <lucide-icon [img]="AlertTriangleIcon" size="14"></lucide-icon>
+                      يوجد {{ historicalPreview.totalDifferentCount }} نقطة بقيم مختلفة بين Meezan والمصدر. الإبقاء على قيمنا هو الخيار الافتراضي والآمن.
+                    </div>
+                    <button type="button" class="btn btn-outline btn-sm" (click)="confirmOverwriteDifferent()" [disabled]="historicalCommitLoading" style="border-color: #d97706; color: #b45309; font-size: 11px;">
+                      تحديث المختلف أيضاً وفق المصدر
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div style="padding: 12px 20px; border-top: 1px solid var(--border); background: #f8fafc; border-bottom-left-radius: 14px; border-bottom-right-radius: 14px; display: flex; justify-content: flex-end;">
+              <button type="button" class="btn btn-outline" (click)="closeHistoricalSyncModal()">إغلاق</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ======================================================== -->
+        <!-- Visual Comparison Chart Modal ("مقارنة المصدر")            -->
+        <!-- ======================================================== -->
+        <div *ngIf="showCompareChartModal" style="position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 16px;">
+          <div style="background: white; border-radius: 14px; max-width: 960px; width: 100%; max-height: 92vh; display: flex; flex-direction: column; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2);">
+            
+            <!-- Modal Header -->
+            <div style="padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <h3 style="margin: 0; font-size: 17px; display: flex; align-items: center; gap: 8px; color: #0284c7;">
+                  <lucide-icon [img]="LineChartIcon" size="18"></lucide-icon>
+                  مقارنة بيانات الصندوق مع المصدر (Chart Comparison)
+                </h3>
+                <div style="font-size: 12px; color: var(--muted-foreground); margin-top: 2px;">
+                  عرض بياني متراكب: بيانات Meezan الحالية مقابل بيانات المصدر SNDUK
+                </div>
+              </div>
+              <button type="button" class="btn btn-outline btn-sm" (click)="closeCompareChartModal()" style="padding: 4px 8px;">
+                <lucide-icon [img]="XIcon" size="16"></lucide-icon>
+              </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div style="padding: 20px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 14px;">
+              <!-- Selector & Timeframe Controls -->
+              <div style="display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap;">
+                <div style="display: flex; gap: 8px; align-items: center; flex: 1; min-width: 260px;">
+                  <label style="font-size: 13px; font-weight: 600;">الصندوق:</label>
+                  <select class="form-input" [(ngModel)]="compareChartSelectedFundId" (ngModelChange)="loadCompareChartData()" style="flex: 1; font-size: 13px; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border);">
+                    <option *ngFor="let f of adminFundPickerList" [ngValue]="f.id">
+                      {{ f.code }} — {{ f.displayName || f.nameAr }}
+                    </option>
+                  </select>
+                </div>
+
+                <!-- Timeframe selector -->
+                <div style="display: flex; gap: 4px; background: #f1f5f9; padding: 4px; border-radius: 8px;">
+                  <button *ngFor="let tf of compareTimeframes" type="button" class="btn btn-sm"
+                          [style.background]="compareChartTimeframe === tf.key ? '#fff' : 'transparent'"
+                          [style.color]="compareChartTimeframe === tf.key ? '#0284c7' : '#64748b'"
+                          [style.fontWeight]="compareChartTimeframe === tf.key ? '700' : '400'"
+                          [style.boxShadow]="compareChartTimeframe === tf.key ? '0 1px 2px rgba(0,0,0,0.08)' : 'none'"
+                          (click)="selectCompareTimeframe(tf.key)"
+                          style="font-size: 12px; padding: 4px 10px; border: none;">
+                    {{ tf.label }}
+                  </button>
+                </div>
+              </div>
+
+              <!-- Metrics row -->
+              <div *ngIf="compareChartData" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; font-size: 12px;">
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px 12px; text-align: center;">
+                  <div style="color: var(--muted-foreground); font-size: 11px;">نقاط Meezan</div>
+                  <strong style="color: #059669; font-size: 15px;">{{ compareChartData.myPointsCount }}</strong>
+                </div>
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px 12px; text-align: center;">
+                  <div style="color: var(--muted-foreground); font-size: 11px;">نقاط SNDUK</div>
+                  <strong style="color: #2563eb; font-size: 15px;">{{ compareChartData.sourcePointsCount }}</strong>
+                </div>
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px 12px; text-align: center;">
+                  <div style="color: var(--muted-foreground); font-size: 11px;">ناقصة لدينا</div>
+                  <strong style="color: #dc2626; font-size: 15px;">{{ compareChartData.missingCount }}</strong>
+                </div>
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px 12px; text-align: center;">
+                  <div style="color: var(--muted-foreground); font-size: 11px;">مختلفة القيمة</div>
+                  <strong style="color: #d97706; font-size: 15px;">{{ compareChartData.differentCount }}</strong>
+                </div>
+              </div>
+
+              <!-- Loading spinner -->
+              <div *ngIf="compareChartLoading" style="text-align: center; padding: 48px 0; color: #0284c7;">
+                <div class="progress-bar-container" style="max-width: 260px; margin: 0 auto 10px;">
+                  <div class="progress-bar-fill indeterminate"></div>
+                </div>
+                <div style="font-size: 12px;">جارٍ تحميل ومطابقة السلاسل الزمنية...</div>
+              </div>
+
+              <!-- Chart container -->
+              <div [style.display]="compareChartLoading ? 'none' : 'block'" style="position: relative; height: 360px; width: 100%; background: #ffffff; border: 1px solid var(--border); border-radius: 8px; padding: 12px;">
+                <canvas id="fundCompareCanvas" style="width: 100%; height: 100%;"></canvas>
+              </div>
+
+              <!-- Chart Legend Help -->
+              <div style="font-size: 11px; color: var(--muted-foreground); display: flex; gap: 16px; align-items: center; justify-content: center; flex-wrap: wrap;">
+                <span style="display: inline-flex; align-items: center; gap: 6px;">
+                  <span style="display: inline-block; width: 14px; height: 3px; background: #059669;"></span>
+                  <strong>Meezan (بياناتي)</strong>
+                </span>
+                <span style="display: inline-flex; align-items: center; gap: 6px;">
+                  <span style="display: inline-block; width: 14px; height: 3px; background: #2563eb; border-top: 1px dashed #2563eb;"></span>
+                  <strong>SNDUK (المصدر)</strong>
+                </span>
+                <span style="display: inline-flex; align-items: center; gap: 6px;">
+                  <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #dc2626;"></span>
+                  <strong>نقطة ناقصة</strong>
+                </span>
+                <span style="display: inline-flex; align-items: center; gap: 6px;">
+                  <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #d97706;"></span>
+                  <strong>نقطة مختلفة</strong>
+                </span>
+              </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div style="padding: 12px 20px; border-top: 1px solid var(--border); background: #f8fafc; border-bottom-left-radius: 14px; border-bottom-right-radius: 14px; display: flex; justify-content: space-between; align-items: center;">
+              <button type="button" class="btn btn-outline btn-sm" (click)="openHistoricalSyncForSelectedFund()" style="gap: 6px; border-color: #7c3aed; color: #7c3aed;">
+                <lucide-icon [img]="HistoryIcon" size="13"></lucide-icon>
+                فتح فحص الفجوات لهذا الصندوق
+              </button>
+              <button type="button" class="btn btn-outline" (click)="closeCompareChartModal()">إغلاق</button>
+            </div>
           </div>
         </div>
       </div>
@@ -1882,6 +2139,7 @@ export class AdminComponent implements OnInit, OnDestroy {
   readonly CheckIcon = Check;
   readonly ShieldCheckIcon = ShieldCheck;
   readonly LayersIcon = Layers;
+  readonly LineChartIcon = LineChart;
 
   activeTab: 'scraping' | 'market-data' | 'upload' | 'shariah' | 'pdf-upload' | 'review' | 'stocks' | 'shariah-edit' = 'scraping';
 
@@ -1996,9 +2254,15 @@ export class AdminComponent implements OnInit, OnDestroy {
   fundSyncLoading = false;
   fundSyncRunning = false;
   fundPriceSyncRunning = false;
+  fundHistoricalSyncRunning = false;
+  fundCombinedSyncRunning = false;
+  fundCheckNewRunning = false;
   fundSyncStatus?: FundSyncStatusDto | null;
   fundPriceSyncResult?: FundPriceSyncResultDto | null;
   fundPriceSyncError: string | null = null;
+  fundCheckNewResult?: { totalSndukFunds: number; existingFundsCount: number; newFundsAddedCount: number; durationSeconds: number } | null;
+  fundCheckNewError: string | null = null;
+  fundCombinedMessage: string | null = null;
   fundSyncRunResult?: FundSyncLog | null;
   fundSyncRunError: string | null = null;
   fundSyncHistory: FundSyncLog[] = [];
@@ -2008,12 +2272,43 @@ export class AdminComponent implements OnInit, OnDestroy {
   fundSyncHistoryTotalPages = 0;
   fundSyncHistoryTotalCount = 0;
 
-  // Fund Cache state
-  fundCacheStatus: any = null;
-  fundCacheActionRunning = false;
-  fundCacheClearing = false;
-  fundCacheRebuilding = false;
-  fundCacheMessage: string | null = null;
+  // Historical Sync modal & preview state
+  showHistoricalModal = false;
+  historicalSelectedFundId: number | null = null;
+  historicalPreviewLoading = false;
+  historicalCommitLoading = false;
+  historicalPreview?: { totalFundsChecked: number; totalMissingCount: number; totalDifferentCount: number; funds: any[] } | null;
+  historicalCommitResult?: { insertedCount: number; overwrittenCount: number; fundsUpdated: number; durationSeconds: number } | null;
+  historicalError: string | null = null;
+  overwriteDifferentChoice = false;
+
+  // Comparison Chart Modal state
+  showCompareChartModal = false;
+  compareChartSelectedFundId: number | null = null;
+  compareChartTimeframe = '1Y';
+  compareChartLoading = false;
+  compareChartData?: {
+    fundId: number;
+    fundCode: string;
+    fundName: string;
+    currency: string;
+    timeframe: string;
+    myPointsCount: number;
+    sourcePointsCount: number;
+    missingCount: number;
+    differentCount: number;
+    points: { date: string; myPrice: number | null; sourcePrice: number | null; isMissingInMine: boolean; isDifferent: boolean }[];
+  } | null = null;
+  compareChartInstance: any = null;
+  adminFundPickerList: { id: number; code: string; nameAr: string; displayName?: string | null }[] = [];
+  compareTimeframes = [
+    { key: '1W', label: 'أسبوع' },
+    { key: '1M', label: 'شهر' },
+    { key: '3M', label: '3 شهور' },
+    { key: '6M', label: '6 شهور' },
+    { key: '1Y', label: 'سنة' },
+    { key: 'ALL', label: 'الكل' }
+  ];
 
   // Shariah tab
   shariahRefreshing = false;
@@ -2094,7 +2389,7 @@ export class AdminComponent implements OnInit, OnDestroy {
         if (tab === 'scraping') {
           this.loadFundSyncSettings();
           this.loadFundSyncHistory();
-          this.loadFundCacheStatus();
+          this.loadAdminFundPickerList();
         }
       }
     });
@@ -2280,8 +2575,31 @@ export class AdminComponent implements OnInit, OnDestroy {
     });
   }
 
+  get isAnyFundOperationRunning(): boolean {
+    return this.fundPriceSyncRunning ||
+      this.fundHistoricalSyncRunning ||
+      this.fundCombinedSyncRunning ||
+      this.fundCheckNewRunning ||
+      (this.fundSyncStatus?.isRunning ?? false);
+  }
+
+  loadAdminFundPickerList(): void {
+    if (this.adminFundPickerList.length > 0) return;
+    this.api.getAllFundsAdmin(undefined, undefined, 1, 200).subscribe({
+      next: (res) => {
+        this.adminFundPickerList = (res.items || []).map(f => ({
+          id: f.id,
+          code: f.code,
+          nameAr: f.nameAr,
+          displayName: f.displayName
+        }));
+      },
+      error: () => {}
+    });
+  }
+
   runFundPriceSyncNow(): void {
-    if (this.fundPriceSyncRunning || this.fundSyncRunning) return;
+    if (this.isAnyFundOperationRunning) return;
     this.fundPriceSyncRunning = true;
     this.fundPriceSyncError = null;
     this.fundPriceSyncResult = null;
@@ -2311,40 +2629,288 @@ export class AdminComponent implements OnInit, OnDestroy {
     return 'لا يوجد تشغيل سابق';
   }
 
-  getFundFullSyncLastRunText(): string {
-    const latest = this.fundSyncHistory.find(h => h.mode === 'Full' || !h.mode);
+  getFundHistoricalSyncLastRunText(): string {
+    const latest = this.fundSyncHistory.find(h => h.mode === 'Historical');
     if (latest) {
       return `${new Date(latest.runAt).toLocaleString('ar-EG')} (${fundSyncStatusLabelAr(normFundSyncStatus(latest.status))}) - ${latest.updatedFunds} صندوق`;
     }
     return 'لا يوجد تشغيل سابق';
   }
 
-  runFundSyncNow(): void {
-    if (this.fundSyncRunning || this.fundPriceSyncRunning) return;
-    this.fundSyncRunning = true;
-    this.fundSyncRunError = null;
-    this.fundSyncRunResult = null;
-    this.fetchFundSyncStatus();
-    this.api.runFundSyncNow().subscribe({
-      next: (log) => {
-        this.fundSyncRunResult = log;
-        this.fundSyncRunning = false;
-        this.loadFundSyncHistory();
-        this.fetchFundSyncStatus();
-        const status = normFundSyncStatus(log.status);
-        this.toast.show(
-          status === 'success'
-            ? 'اكتملت مزامنة الصناديق بنجاح'
-            : `اكتملت المزامنة (${fundSyncStatusLabelAr(status)}): تم تحديث ${log.updatedFunds} من ${log.totalFunds}`
-        );
+  getFundNewCheckLastRunText(): string {
+    const latest = this.fundSyncHistory.find(h => h.mode === 'NewFunds');
+    if (latest) {
+      return `${new Date(latest.runAt).toLocaleString('ar-EG')} (${fundSyncStatusLabelAr(normFundSyncStatus(latest.status))}) - ${latest.updatedFunds} صندوق جديد`;
+    }
+    return 'لا يوجد تشغيل سابق';
+  }
+
+  // 1-b) Historical sync modal actions
+  openHistoricalSyncModal(): void {
+    this.showHistoricalModal = true;
+    this.historicalError = null;
+    this.historicalCommitResult = null;
+    this.loadAdminFundPickerList();
+    if (!this.historicalPreview) {
+      this.fetchHistoricalPreview();
+    }
+  }
+
+  closeHistoricalSyncModal(): void {
+    this.showHistoricalModal = false;
+  }
+
+  fetchHistoricalPreview(): void {
+    this.historicalPreviewLoading = true;
+    this.historicalError = null;
+    this.historicalCommitResult = null;
+    this.api.previewHistoricalFundData(this.historicalSelectedFundId).subscribe({
+      next: (res) => {
+        this.historicalPreview = res;
+        this.historicalPreviewLoading = false;
       },
       error: (err) => {
-        this.fundSyncRunning = false;
-        this.fetchFundSyncStatus();
-        this.fundSyncRunError = err.error?.message || err.message || 'فشل تشغيل المزامنة';
-        this.toast.show('فشل تشغيل مزامنة الصناديق: ' + this.fundSyncRunError);
+        this.historicalPreviewLoading = false;
+        this.historicalError = err.error?.message || err.message || 'فشل جلب المعاينة التاريخية';
       }
     });
+  }
+
+  commitHistoricalSync(overwriteDifferent: boolean = false): void {
+    this.historicalCommitLoading = true;
+    this.overwriteDifferentChoice = overwriteDifferent;
+    this.historicalError = null;
+    this.api.commitHistoricalFundData(this.historicalSelectedFundId, overwriteDifferent).subscribe({
+      next: (res) => {
+        this.historicalCommitResult = res;
+        this.historicalCommitLoading = false;
+        this.loadFundSyncHistory();
+        this.fetchFundSyncStatus();
+        this.fetchHistoricalPreview();
+        this.toast.show(`اكتمل حفظ البيانات التاريخية: تمت إضافة ${res.insertedCount} نقطة ناقصة`);
+      },
+      error: (err) => {
+        this.historicalCommitLoading = false;
+        this.historicalError = err.error?.message || err.message || 'فشل حفظ البيانات التاريخية';
+        this.toast.show('فشل حفظ البيانات التاريخية: ' + this.historicalError);
+      }
+    });
+  }
+
+  confirmOverwriteDifferent(): void {
+    const count = this.historicalPreview?.totalDifferentCount || 0;
+    if (confirm(`تحذير: هل أنت متأكد من تحديث ${count} نقطة تاريخية بقيم المصدر SNDUK بدلاً من قيم Meezan؟`)) {
+      this.commitHistoricalSync(true);
+    }
+  }
+
+  // 1-c) Prices + Historical Data combined
+  runPricesAndHistoricalSync(): void {
+    if (this.isAnyFundOperationRunning) return;
+    this.fundCombinedSyncRunning = true;
+    this.fundCombinedMessage = 'المرحلة 1 من 2: جاري تحديث الأسعار اليومية...';
+    this.api.runFundPriceSyncNow().subscribe({
+      next: (pRes) => {
+        this.fundCombinedMessage = `تم تحديث أسعار ${pRes.updatedFunds} صندوق. المرحلة 2 من 2: جاري فحص وتعبئة البيانات التاريخية...`;
+        this.api.commitHistoricalFundData(null, false).subscribe({
+          next: (hRes) => {
+            this.fundCombinedSyncRunning = false;
+            this.fundCombinedMessage = `اكتمل بنجاح: تم تحديث أسعار ${pRes.updatedFunds} صندوق وإضافة ${hRes.insertedCount} نقطة تاريخية ناقصة.`;
+            this.loadFundSyncHistory();
+            this.fetchFundSyncStatus();
+            this.toast.show('اكتمل تحديث الأسعار + البيانات التاريخية بنجاح');
+          },
+          error: (hErr) => {
+            this.fundCombinedSyncRunning = false;
+            this.fundCombinedMessage = `تم تحديث الأسعار ولكن فشلت المزامنة التاريخية: ${hErr.error?.message || hErr.message}`;
+            this.loadFundSyncHistory();
+          }
+        });
+      },
+      error: (pErr) => {
+        this.fundCombinedSyncRunning = false;
+        this.fundCombinedMessage = `فشل تحديث الأسعار: ${pErr.error?.message || pErr.message}`;
+      }
+    });
+  }
+
+  // 1-d) Check for new funds
+  runCheckNewFundsNow(): void {
+    if (this.isAnyFundOperationRunning) return;
+    this.fundCheckNewRunning = true;
+    this.fundCheckNewError = null;
+    this.fundCheckNewResult = null;
+    this.api.checkNewFundsNow().subscribe({
+      next: (res) => {
+        this.fundCheckNewResult = res;
+        this.fundCheckNewRunning = false;
+        this.loadFundSyncHistory();
+        this.fetchFundSyncStatus();
+        this.toast.show(`اكتمل فحص الصناديق: تم اكتشاف وإضافة ${res.newFundsAddedCount} صندوق جديد`);
+      },
+      error: (err) => {
+        this.fundCheckNewRunning = false;
+        this.fundCheckNewError = err.error?.message || err.message || 'فشل فحص الصناديق الجديدة';
+        this.toast.show('فشل فحص الصناديق: ' + this.fundCheckNewError);
+      }
+    });
+  }
+
+  // Comparison Chart Modal methods
+  openCompareChartModal(fundId?: number): void {
+    this.showCompareChartModal = true;
+    this.loadAdminFundPickerList();
+    if (fundId) {
+      this.compareChartSelectedFundId = fundId;
+    } else if (!this.compareChartSelectedFundId && this.adminFundPickerList.length > 0) {
+      this.compareChartSelectedFundId = this.adminFundPickerList[0].id;
+    }
+    setTimeout(() => this.loadCompareChartData(), 50);
+  }
+
+  closeCompareChartModal(): void {
+    this.showCompareChartModal = false;
+    this.destroyCompareChart();
+  }
+
+  selectCompareTimeframe(tf: string): void {
+    this.compareChartTimeframe = tf;
+    this.loadCompareChartData();
+  }
+
+  openFundCompareFromPreview(fundId: number): void {
+    this.closeHistoricalSyncModal();
+    this.openCompareChartModal(fundId);
+  }
+
+  openHistoricalSyncForSelectedFund(): void {
+    const fid = this.compareChartSelectedFundId;
+    this.closeCompareChartModal();
+    this.historicalSelectedFundId = fid;
+    this.openHistoricalSyncModal();
+  }
+
+  loadCompareChartData(): void {
+    if (!this.compareChartSelectedFundId) {
+      if (this.adminFundPickerList.length > 0) {
+        this.compareChartSelectedFundId = this.adminFundPickerList[0].id;
+      } else {
+        return;
+      }
+    }
+    this.compareChartLoading = true;
+    this.api.getFundCompareChart(this.compareChartSelectedFundId, this.compareChartTimeframe).subscribe({
+      next: (data) => {
+        this.compareChartData = data;
+        this.compareChartLoading = false;
+        setTimeout(() => this.renderCompareChart(), 50);
+      },
+      error: () => {
+        this.compareChartLoading = false;
+      }
+    });
+  }
+
+  private async renderCompareChart(): Promise<void> {
+    const canvas = document.getElementById('fundCompareCanvas') as HTMLCanvasElement | null;
+    if (!canvas || !this.compareChartData) return;
+
+    this.destroyCompareChart();
+
+    let chartJsMod: any;
+    try {
+      chartJsMod = await import('chart.js');
+      chartJsMod.Chart.register(...chartJsMod.registerables);
+    } catch {
+      return;
+    }
+
+    const data = this.compareChartData;
+    const labels = data.points.map(p => p.date);
+    const mySeries = data.points.map(p => p.myPrice);
+    const sourceSeries = data.points.map(p => p.sourcePrice);
+
+    // Highlight missing points in red, different in amber, normal transparent
+    const pointColors = data.points.map(p => {
+      if (p.isMissingInMine) return '#dc2626';
+      if (p.isDifferent) return '#d97706';
+      return '#2563eb';
+    });
+
+    const pointRadii = data.points.map(p => {
+      if (p.isMissingInMine || p.isDifferent) return 5;
+      return data.points.length > 100 ? 0 : 2;
+    });
+
+    this.compareChartInstance = new chartJsMod.Chart(canvas, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'Meezan (بياناتي)',
+            data: mySeries,
+            borderColor: '#059669',
+            backgroundColor: 'rgba(5, 150, 105, 0.08)',
+            borderWidth: 2,
+            tension: 0.1,
+            fill: false,
+            spanGaps: true
+          },
+          {
+            label: 'SNDUK (المصدر)',
+            data: sourceSeries,
+            borderColor: '#2563eb',
+            borderDash: [4, 4],
+            backgroundColor: 'transparent',
+            borderWidth: 1.5,
+            pointBackgroundColor: pointColors,
+            pointBorderColor: pointColors,
+            pointRadius: pointRadii,
+            tension: 0.1,
+            fill: false,
+            spanGaps: true
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { display: true, position: 'top', rtl: true },
+          tooltip: {
+            rtl: true,
+            callbacks: {
+              afterBody: (items: any[]) => {
+                const idx = items[0]?.dataIndex;
+                if (idx != null && data.points[idx]) {
+                  const pt = data.points[idx];
+                  if (pt.isMissingInMine) return '⚠️ نقطة ناقصة في Meezan';
+                  if (pt.isDifferent) return '⚡ نقطة مختلفة القيمة بين المصدر وبياناتي';
+                }
+                return '';
+              }
+            }
+          }
+        },
+        scales: {
+          x: { grid: { display: false } },
+          y: {
+            ticks: {
+              callback: (val: any) => `${val} ${data.currency || 'ج.م'}`
+            }
+          }
+        }
+      }
+    });
+  }
+
+  private destroyCompareChart(): void {
+    if (this.compareChartInstance) {
+      this.compareChartInstance.destroy();
+      this.compareChartInstance = null;
+    }
   }
 
   loadFundSyncHistory(page = 1): void {
@@ -2385,57 +2951,6 @@ export class AdminComponent implements OnInit, OnDestroy {
     const label = fundSyncStatusLabelAr(normFundSyncStatus(r.status));
     const head = label === 'نجح' ? 'اكتمل بنجاح' : label;
     return `${head}: تم تحديث ${r.updatedFunds} من ${r.totalFunds} صندوق`;
-  }
-
-  loadFundCacheStatus(): void {
-    this.api.getFundCacheStatus().subscribe({
-      next: (status) => {
-        this.fundCacheStatus = status;
-      },
-      error: () => {}
-    });
-  }
-
-  clearFundCacheNow(): void {
-    if (this.fundCacheActionRunning) return;
-    this.fundCacheActionRunning = true;
-    this.fundCacheClearing = true;
-    this.fundCacheMessage = null;
-    this.api.clearFundCache().subscribe({
-      next: (res) => {
-        this.fundCacheActionRunning = false;
-        this.fundCacheClearing = false;
-        this.fundCacheMessage = typeof res === 'string' ? res : 'تم تفريغ ذاكرة الصناديق بنجاح';
-        this.loadFundCacheStatus();
-        this.toast.show('تم تفريغ ذاكرة الصناديق بنجاح');
-      },
-      error: (err) => {
-        this.fundCacheActionRunning = false;
-        this.fundCacheClearing = false;
-        this.toast.show('فشل تفريغ الذاكرة: ' + (err.error?.message || err.message));
-      }
-    });
-  }
-
-  rebuildFundCacheNow(): void {
-    if (this.fundCacheActionRunning) return;
-    this.fundCacheActionRunning = true;
-    this.fundCacheRebuilding = true;
-    this.fundCacheMessage = null;
-    this.api.rebuildFundCache().subscribe({
-      next: (res) => {
-        this.fundCacheActionRunning = false;
-        this.fundCacheRebuilding = false;
-        this.fundCacheMessage = typeof res === 'string' ? res : 'تم إعادة بناء ذاكرة الصناديق بنجاح';
-        this.loadFundCacheStatus();
-        this.toast.show('تم إعادة بناء ذاكرة الصناديق بنجاح');
-      },
-      error: (err) => {
-        this.fundCacheActionRunning = false;
-        this.fundCacheRebuilding = false;
-        this.toast.show('فشل إعادة بناء الذاكرة: ' + (err.error?.message || err.message));
-      }
-    });
   }
 
   logout(): void {

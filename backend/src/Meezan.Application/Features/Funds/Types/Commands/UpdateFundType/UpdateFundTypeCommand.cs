@@ -1,11 +1,12 @@
 using MediatR;
+using Meezan.Application.Common.Interfaces.Caching;
 using Meezan.Application.Common.Interfaces.Persistence;
 using Meezan.Application.Common.Results;
 using Meezan.Domain.Entities;
 
 namespace Meezan.Application.Features.Funds.Types.Commands.UpdateFundType;
 
-public sealed record UpdateFundTypeCommand : IRequest<Result<FundTypeDefinition>>, ITransactionalCommand
+public sealed record UpdateFundTypeCommand : IRequest<Result<FundTypeDefinition>>, ITransactionalCommand, IInvalidatesFundCatalog
 {
     public int Id { get; init; }
     public string? NameAr { get; init; }

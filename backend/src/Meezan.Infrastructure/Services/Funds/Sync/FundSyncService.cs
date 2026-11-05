@@ -999,10 +999,12 @@ public class FundSyncService : IFundSyncService
                     fundRepo.Update(existingFund);
 
 
-                    // Upsert today's point in FundPriceHistory
+                    // Upsert today's point in FundPriceHistory using real source date
                     if (price.HasValue && price.Value > 0)
                     {
-                        var pointDate = ParseDateTime(sndukFund.UpdatedAt)?.Date ?? nowCairoDate;
+                        var parsedSourceDate = ParseDateTime(sndukFund.UpdatedAt)?.Date;
+                        // If source has not updated today, we use the parsed real source date (or nowCairoDate only if no date found).
+                        var pointDate = parsedSourceDate ?? nowCairoDate;
                         var existingPoint = await priceRepo.GetByFundIdAndDateAsync(existingFund.Id, pointDate, cancellationToken);
                         if (existingPoint == null)
                         {
@@ -1023,6 +1025,52 @@ public class FundSyncService : IFundSyncService
                             existingPoint.Price = price.Value;
                             existingPoint.Change = existingFund.DailyChange;
                             priceRepo.UpdateRange(new[] { existingPoint });
+                        }
+
+                        // Auto-heal: Request last ~14 days (1M) and insert missing dates (insert-only)
+                        try
+                        {
+                            var healPerf = await sndukClient.GetFundPerformanceAsync(existingFund.SndukId, "1M", cancellationToken);
+                            if (healPerf?.Data != null && healPerf.Data.Length > 0)
+                            {
+                                var existingRecent = await priceRepo.GetByFundIdAndDateRangeAsync(
+                                    existingFund.Id,
+                                    pointDate.AddDays(-14),
+                                    pointDate,
+                                    cancellationToken);
+                                var existingDatesSet = existingRecent.Select(p => p.Date.Date).ToHashSet();
+                                var healMissing = new List<FundPriceHistory>();
+
+                                foreach (var pt in healPerf.Data)
+                                {
+                                    if (!DateTime.TryParse(pt.Date, out var ptDate)) continue;
+                                    var d = ptDate.Date;
+                                    if (d < pointDate.AddDays(-14) || d > pointDate) continue;
+                                    if (d.DayOfWeek == DayOfWeek.Friday || d.DayOfWeek == DayOfWeek.Saturday) continue;
+                                    if (existingDatesSet.Contains(d)) continue;
+                                    if (!decimal.TryParse(pt.Price, out var ptPrice) || ptPrice <= 0) continue;
+
+                                    healMissing.Add(new FundPriceHistory
+                                    {
+                                        FundId = existingFund.Id,
+                                        Date = d,
+                                        Price = ptPrice,
+                                        Change = ParseDecimal(pt.Change),
+                                        Performance = ParseDecimal(pt.Performance),
+                                        CreatedAt = DateTime.UtcNow
+                                    });
+                                    existingDatesSet.Add(d);
+                                }
+
+                                if (healMissing.Count > 0)
+                                {
+                                    await priceRepo.AddRangeAsync(healMissing, cancellationToken);
+                                }
+                            }
+                        }
+                        catch (Exception healEx)
+                        {
+                            _logger.LogWarning(healEx, "Auto-heal recent prices failed for fund {Code}", existingFund.Code);
                         }
                     }
 
@@ -1447,5 +1495,487 @@ public class FundSyncService : IFundSyncService
         };
         await detailRepo.AddRangeAsync(new[] { detail }, ct);
         await uow.SaveChangesAsync(ct);
+    }
+
+    public async Task<HistoricalDataPreviewResultDto> PreviewHistoricalDataAsync(int? fundId = null, CancellationToken cancellationToken = default)
+    {
+        using var scope = _services.CreateScope();
+        var fundRepo = scope.ServiceProvider.GetRequiredService<IFundRepository>();
+        var priceRepo = scope.ServiceProvider.GetRequiredService<IFundPriceHistoryRepository>();
+        var sndukClient = scope.ServiceProvider.GetRequiredService<ISndukFundClient>();
+
+        var allFunds = await fundRepo.GetAllAsync(cancellationToken);
+        if (fundId.HasValue)
+        {
+            allFunds = allFunds.Where(f => f.Id == fundId.Value).ToList();
+        }
+
+        var fundItems = new List<HistoricalDataPreviewFundItemDto>();
+        int totalMissing = 0;
+        int totalDiff = 0;
+        int fundsWithGaps = 0;
+
+        foreach (var fund in allFunds)
+        {
+            if (cancellationToken.IsCancellationRequested) break;
+            if (fund.SndukId <= 0) continue;
+
+            var perf = await sndukClient.GetFundPerformanceAsync(fund.SndukId, "ALL", cancellationToken);
+            if (perf?.Data == null || perf.Data.Length == 0)
+            {
+                // Fallback to 3Y if ALL is empty
+                perf = await sndukClient.GetFundPerformanceAsync(fund.SndukId, "3Y", cancellationToken);
+            }
+
+            var srcData = perf?.Data ?? [];
+            var myHistory = await priceRepo.GetByFundIdAsync(fund.Id, cancellationToken);
+            var myHistoryByDate = myHistory.ToDictionary(p => p.Date.ToString("yyyy-MM-dd"), p => p.Price);
+
+            int matching = 0;
+            var missingDates = new List<string>();
+            var diffPoints = new List<HistoricalDataDiffPointDto>();
+
+            foreach (var pt in srcData)
+            {
+                if (!DateTime.TryParse(pt.Date, out var ptDate)) continue;
+                var d = ptDate.Date;
+                if (d.DayOfWeek == DayOfWeek.Friday || d.DayOfWeek == DayOfWeek.Saturday) continue;
+                var dateStr = d.ToString("yyyy-MM-dd");
+
+                if (!decimal.TryParse(pt.Price, out var srcPrice) || srcPrice <= 0) continue;
+
+                if (myHistoryByDate.TryGetValue(dateStr, out var myPrice))
+                {
+                    if (Math.Abs(myPrice - srcPrice) < 0.0001m)
+                    {
+                        matching++;
+                    }
+                    else
+                    {
+                        var diffPct = myPrice != 0 ? Math.Round(((srcPrice - myPrice) / myPrice) * 100m, 2) : 0m;
+                        diffPoints.Add(new HistoricalDataDiffPointDto(dateStr, myPrice, srcPrice, diffPct));
+                    }
+                }
+                else
+                {
+                    missingDates.Add(dateStr);
+                }
+            }
+
+            if (missingDates.Count > 0 || diffPoints.Count > 0)
+            {
+                fundsWithGaps++;
+            }
+            totalMissing += missingDates.Count;
+            totalDiff += diffPoints.Count;
+
+            fundItems.Add(new HistoricalDataPreviewFundItemDto(
+                FundId: fund.Id,
+                FundCode: fund.Code,
+                FundNameAr: fund.NameAr,
+                SndukId: fund.SndukId,
+                SourcePointsCount: srcData.Length,
+                MyPointsCount: myHistory.Count,
+                MatchingCount: matching,
+                MissingCount: missingDates.Count,
+                DifferentCount: diffPoints.Count,
+                MissingDates: missingDates,
+                DifferentPoints: diffPoints));
+
+            if (allFunds.Count > 1)
+            {
+                await Task.Delay(300, cancellationToken);
+            }
+        }
+
+        return new HistoricalDataPreviewResultDto(
+            TotalFundsInspected: allFunds.Count,
+            FundsWithGaps: fundsWithGaps,
+            TotalMissingPoints: totalMissing,
+            TotalDifferentPoints: totalDiff,
+            Funds: fundItems);
+    }
+
+    public async Task<HistoricalDataCommitResultDto> CommitHistoricalDataAsync(int? fundId = null, bool overwriteDifferent = false, CancellationToken cancellationToken = default)
+    {
+        using var scope = _services.CreateScope();
+        var fundRepo = scope.ServiceProvider.GetRequiredService<IFundRepository>();
+        var priceRepo = scope.ServiceProvider.GetRequiredService<IFundPriceHistoryRepository>();
+        var sndukClient = scope.ServiceProvider.GetRequiredService<ISndukFundClient>();
+        var logRepo = scope.ServiceProvider.GetRequiredService<IFundSyncLogRepository>();
+        var detailRepo = scope.ServiceProvider.GetRequiredService<IFundSyncLogDetailRepository>();
+        var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+
+        var allFunds = await fundRepo.GetAllAsync(cancellationToken);
+        if (fundId.HasValue)
+        {
+            allFunds = allFunds.Where(f => f.Id == fundId.Value).ToList();
+        }
+
+        var startUtc = DateTime.UtcNow;
+        var syncLog = new FundSyncLog
+        {
+            TriggeredBy = "Admin",
+            Mode = "Historical",
+            Status = FundSyncStatus.Running,
+            TotalFunds = allFunds.Count,
+            RunAt = startUtc
+        };
+        await logRepo.AddAsync(syncLog, cancellationToken);
+        await uow.SaveChangesAsync(cancellationToken);
+
+        int totalInserted = 0;
+        int totalOverwritten = 0;
+        var fundResults = new List<HistoricalDataCommitFundResultDto>();
+        var details = new List<FundSyncLogDetail>();
+
+        foreach (var fund in allFunds)
+        {
+            if (cancellationToken.IsCancellationRequested) break;
+            if (fund.SndukId <= 0) continue;
+
+            int fundInserted = 0;
+            int fundOverwritten = 0;
+            string? fundError = null;
+
+            try
+            {
+                var perf = await sndukClient.GetFundPerformanceAsync(fund.SndukId, "ALL", cancellationToken);
+                if (perf?.Data == null || perf.Data.Length == 0)
+                {
+                    perf = await sndukClient.GetFundPerformanceAsync(fund.SndukId, "3Y", cancellationToken);
+                }
+
+                var srcData = perf?.Data ?? [];
+                var myHistory = await priceRepo.GetByFundIdAsync(fund.Id, cancellationToken);
+                var myHistoryByDate = myHistory.ToDictionary(p => p.Date.Date, p => p);
+
+                var toInsert = new List<FundPriceHistory>();
+                var toUpdate = new List<FundPriceHistory>();
+
+                foreach (var pt in srcData)
+                {
+                    if (!DateTime.TryParse(pt.Date, out var ptDate)) continue;
+                    var d = ptDate.Date;
+                    if (d.DayOfWeek == DayOfWeek.Friday || d.DayOfWeek == DayOfWeek.Saturday) continue;
+                    if (!decimal.TryParse(pt.Price, out var srcPrice) || srcPrice <= 0) continue;
+
+                    if (myHistoryByDate.TryGetValue(d, out var existingRow))
+                    {
+                        if (overwriteDifferent && Math.Abs(existingRow.Price - srcPrice) >= 0.0001m)
+                        {
+                            existingRow.Price = srcPrice;
+                            existingRow.Change = ParseDecimal(pt.Change);
+                            existingRow.Performance = ParseDecimal(pt.Performance);
+                            toUpdate.Add(existingRow);
+                            fundOverwritten++;
+                        }
+                    }
+                    else
+                    {
+                        toInsert.Add(new FundPriceHistory
+                        {
+                            FundId = fund.Id,
+                            Date = d,
+                            Price = srcPrice,
+                            Change = ParseDecimal(pt.Change),
+                            Performance = ParseDecimal(pt.Performance),
+                            CreatedAt = DateTime.UtcNow
+                        });
+                        fundInserted++;
+                        myHistoryByDate[d] = toInsert[^1];
+                    }
+                }
+
+                if (toInsert.Count > 0) await priceRepo.AddRangeAsync(toInsert, cancellationToken);
+                if (toUpdate.Count > 0) priceRepo.UpdateRange(toUpdate);
+                if (toInsert.Count > 0 || toUpdate.Count > 0) await uow.SaveChangesAsync(cancellationToken);
+
+                totalInserted += fundInserted;
+                totalOverwritten += fundOverwritten;
+
+                details.Add(new FundSyncLogDetail
+                {
+                    FundSyncLogId = syncLog.Id,
+                    FundId = fund.Id,
+                    FundCode = fund.Code,
+                    Status = FundSyncDetailStatus.Success,
+                    ErrorMessage = $"Inserted={fundInserted}, Overwritten={fundOverwritten}",
+                    AttemptedAt = DateTime.UtcNow
+                });
+
+                fundResults.Add(new HistoricalDataCommitFundResultDto(fund.Id, fund.Code, fundInserted, fundOverwritten, true, null));
+            }
+            catch (Exception ex)
+            {
+                fundError = ex.Message;
+                _logger.LogError(ex, "Historical commit failed for fund {Code}", fund.Code);
+
+                details.Add(new FundSyncLogDetail
+                {
+                    FundSyncLogId = syncLog.Id,
+                    FundId = fund.Id,
+                    FundCode = fund.Code,
+                    Status = FundSyncDetailStatus.Failed,
+                    ErrorMessage = ex.Message,
+                    AttemptedAt = DateTime.UtcNow
+                });
+
+                fundResults.Add(new HistoricalDataCommitFundResultDto(fund.Id, fund.Code, 0, 0, false, ex.Message));
+            }
+
+            if (allFunds.Count > 1) await Task.Delay(300, cancellationToken);
+        }
+
+        var endUtc = DateTime.UtcNow;
+        syncLog.Status = fundResults.Any(r => !r.Success) ? FundSyncStatus.Partial : FundSyncStatus.Success;
+        syncLog.FinishedAt = endUtc;
+        syncLog.DurationSeconds = (int)Math.Max(0, (endUtc - startUtc).TotalSeconds);
+        syncLog.UpdatedFunds = fundResults.Count(r => r.InsertedCount > 0 || r.OverwrittenCount > 0);
+        syncLog.FailedFunds = fundResults.Count(r => !r.Success);
+        syncLog.SkippedFunds = fundResults.Count(r => r.Success && r.InsertedCount == 0 && r.OverwrittenCount == 0);
+        syncLog.ErrorSummary = $"Inserted={totalInserted}, Overwritten={totalOverwritten}";
+
+        logRepo.Update(syncLog);
+        if (details.Count > 0) await detailRepo.AddRangeAsync(details, cancellationToken);
+        await uow.SaveChangesAsync(cancellationToken);
+
+        // Invalidate price caches
+        var invalidator = scope.ServiceProvider.GetService<IFundPriceCacheInvalidator>();
+        if (invalidator != null)
+        {
+            await invalidator.InvalidatePriceCacheAsync(cancellationToken);
+        }
+
+        return new HistoricalDataCommitResultDto(
+            TotalFundsProcessed: fundResults.Count,
+            TotalInsertedPoints: totalInserted,
+            TotalOverwrittenPoints: totalOverwritten,
+            Funds: fundResults);
+    }
+
+    public async Task<CheckNewFundsResultDto> CheckNewFundsAsync(string triggeredBy, CancellationToken cancellationToken = default)
+    {
+        using var scope = _services.CreateScope();
+        var settingsRepo = scope.ServiceProvider.GetRequiredService<IFundSyncSettingsRepository>();
+        var settings = await settingsRepo.GetAsync(cancellationToken);
+        var logRepo = scope.ServiceProvider.GetRequiredService<IFundSyncLogRepository>();
+        var detailRepo = scope.ServiceProvider.GetRequiredService<IFundSyncLogDetailRepository>();
+        var fundRepo = scope.ServiceProvider.GetRequiredService<IFundRepository>();
+        var priceRepo = scope.ServiceProvider.GetRequiredService<IFundPriceHistoryRepository>();
+        var analysisRepo = scope.ServiceProvider.GetRequiredService<IFundAnalysisRepository>();
+        var similarRepo = scope.ServiceProvider.GetRequiredService<IFundSimilarRepository>();
+        var categoryRepo = scope.ServiceProvider.GetRequiredService<IFundCategoryRepository>();
+        var overrideRepo = scope.ServiceProvider.GetRequiredService<IFundCategoryOverrideRepository>();
+        var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+        var sndukClient = scope.ServiceProvider.GetRequiredService<ISndukFundClient>();
+
+        var startUtc = DateTime.UtcNow;
+        var syncLog = new FundSyncLog
+        {
+            TriggeredBy = triggeredBy,
+            Mode = "NewFunds",
+            Status = FundSyncStatus.Running,
+            RunAt = startUtc
+        };
+        await logRepo.AddAsync(syncLog, cancellationToken);
+        await uow.SaveChangesAsync(cancellationToken);
+
+        var listResponse = await sndukClient.GetFundListAsync(cancellationToken);
+        var sourceFunds = (listResponse?.Funds ?? [])
+            .GroupBy(f => f.Id)
+            .Select(g => g.First())
+            .ToList();
+
+        var existingFunds = await fundRepo.GetAllAsync(cancellationToken);
+        var existingSndukIds = existingFunds.Select(f => f.SndukId).ToHashSet();
+        var existingCodes = existingFunds.Select(f => f.Code.Trim().ToUpperInvariant()).ToHashSet();
+
+        syncLog.TotalFunds = sourceFunds.Count;
+
+        var newFundsToAdd = sourceFunds
+            .Where(sf => !existingSndukIds.Contains(sf.Id) &&
+                         (string.IsNullOrWhiteSpace(sf.Code) || !existingCodes.Contains(sf.Code.Trim().ToUpperInvariant())))
+            .ToList();
+
+        var addedNames = new List<string>();
+        var failures = new List<string>();
+        var details = new List<FundSyncLogDetail>();
+
+        if (newFundsToAdd.Count > 0)
+        {
+            await EnsureDefaultCategoriesAsync(categoryRepo, cancellationToken);
+            await fundRepo.SaveChangesAsync(cancellationToken);
+
+            foreach (var sf in newFundsToAdd)
+            {
+                if (cancellationToken.IsCancellationRequested) break;
+
+                try
+                {
+                    var fund = await UpsertFundAsync(fundRepo, sf, cancellationToken);
+
+                    // Logo download
+                    if (!string.IsNullOrWhiteSpace(sf.LogoUrl) && string.IsNullOrWhiteSpace(fund.LocalLogoPath))
+                    {
+                        await DownloadLogoAsync(fund, sf.LogoUrl, cancellationToken);
+                        fundRepo.Update(fund);
+                    }
+
+                    // Price history
+                    await SyncPriceHistoryAsync(fund, priceRepo, sndukClient, settings?.RequestDelaySeconds ?? 2, cancellationToken);
+
+                    // Analysis
+                    await SyncAnalysisAsync(fund, analysisRepo, sndukClient, settings?.RequestDelaySeconds ?? 2, cancellationToken);
+
+                    // Similar funds
+                    await SyncSimilarFundsAsync(fund, similarRepo, fundRepo, sndukClient, settings?.RequestDelaySeconds ?? 2, cancellationToken);
+
+                    // Auto categories
+                    await AutoDeriveCategoriesAsync(fund, categoryRepo, overrideRepo, cancellationToken);
+
+                    // Classification tree
+                    try
+                    {
+                        var classification = scope.ServiceProvider.GetRequiredService<IFundClassificationService>();
+                        await classification.SyncFundClassificationAsync(fund.Id, cancellationToken);
+                    }
+                    catch (Exception cex)
+                    {
+                        _logger.LogWarning(cex, "Classification sync skipped for new fund {Code}", sf.Code);
+                    }
+
+                    addedNames.Add(fund.NameAr);
+                    details.Add(new FundSyncLogDetail
+                    {
+                        FundSyncLogId = syncLog.Id,
+                        FundId = fund.Id,
+                        FundCode = fund.Code,
+                        Status = FundSyncDetailStatus.Success,
+                        ErrorMessage = "New fund added successfully",
+                        AttemptedAt = DateTime.UtcNow
+                    });
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to add new fund {Code}", sf.Code);
+                    failures.Add($"{sf.Code}: {ex.Message}");
+                    details.Add(new FundSyncLogDetail
+                    {
+                        FundSyncLogId = syncLog.Id,
+                        FundCode = sf.Code,
+                        Status = FundSyncDetailStatus.Failed,
+                        ErrorMessage = ex.Message,
+                        AttemptedAt = DateTime.UtcNow
+                    });
+                }
+
+                if (settings?.RequestDelaySeconds > 0)
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(settings.RequestDelaySeconds), cancellationToken);
+                }
+            }
+        }
+
+        var endUtc = DateTime.UtcNow;
+        syncLog.FinishedAt = endUtc;
+        syncLog.DurationSeconds = (int)Math.Max(0, (endUtc - startUtc).TotalSeconds);
+        syncLog.UpdatedFunds = addedNames.Count;
+        syncLog.FailedFunds = failures.Count;
+        syncLog.SkippedFunds = sourceFunds.Count - newFundsToAdd.Count;
+        syncLog.Status = failures.Count > 0 ? FundSyncStatus.Partial : FundSyncStatus.Success;
+        syncLog.ErrorSummary = failures.Count > 0
+            ? string.Join("; ", failures)
+            : $"Added {addedNames.Count} new funds; skipped {syncLog.SkippedFunds} existing.";
+
+        logRepo.Update(syncLog);
+        if (details.Count > 0) await detailRepo.AddRangeAsync(details, cancellationToken);
+        await uow.SaveChangesAsync(cancellationToken);
+
+        // Invalidate all fund caches if any new fund was added
+        if (addedNames.Count > 0)
+        {
+            var invalidator = scope.ServiceProvider.GetService<IFundPriceCacheInvalidator>();
+            if (invalidator != null)
+            {
+                await invalidator.InvalidateAllFundCachesAsync(cancellationToken);
+            }
+        }
+
+        return new CheckNewFundsResultDto(
+            TotalSourceFunds: sourceFunds.Count,
+            TotalDbFunds: existingFunds.Count,
+            ExistingSkippedCount: sourceFunds.Count - newFundsToAdd.Count,
+            NewFundsFoundCount: addedNames.Count,
+            NewFundNames: addedNames,
+            Failures: failures);
+    }
+
+    public async Task<FundCompareChartDto> GetFundCompareChartAsync(int fundId, string timeframe = "1Y", CancellationToken cancellationToken = default)
+    {
+        using var scope = _services.CreateScope();
+        var fundRepo = scope.ServiceProvider.GetRequiredService<IFundRepository>();
+        var priceRepo = scope.ServiceProvider.GetRequiredService<IFundPriceHistoryRepository>();
+        var sndukClient = scope.ServiceProvider.GetRequiredService<ISndukFundClient>();
+
+        var fund = await fundRepo.GetByIdAsync(fundId, cancellationToken);
+        if (fund == null) throw new KeyNotFoundException($"الصندوق رقم {fundId} غير موجود");
+
+        var perf = await sndukClient.GetFundPerformanceAsync(fund.SndukId, timeframe, cancellationToken);
+        var srcData = perf?.Data ?? [];
+
+        var myHistory = await priceRepo.GetByFundIdAsync(fund.Id, cancellationToken);
+        var myMap = myHistory.ToDictionary(p => p.Date.ToString("yyyy-MM-dd"), p => p.Price);
+        var srcMap = new Dictionary<string, decimal>();
+
+        foreach (var pt in srcData)
+        {
+            if (DateTime.TryParse(pt.Date, out var d) && decimal.TryParse(pt.Price, out var pr) && pr > 0)
+            {
+                if (d.DayOfWeek != DayOfWeek.Friday && d.DayOfWeek != DayOfWeek.Saturday)
+                {
+                    srcMap[d.ToString("yyyy-MM-dd")] = pr;
+                }
+            }
+        }
+
+        // Union of all dates
+        var allDates = myMap.Keys.Concat(srcMap.Keys).Distinct().OrderBy(d => d).ToList();
+
+        // Filter based on timeframe start
+        if (allDates.Count > 0 && timeframe != "ALL")
+        {
+            var lastDate = DateTime.Parse(allDates[^1]);
+            DateTime startDate = timeframe switch
+            {
+                "1W" => lastDate.AddDays(-7),
+                "1M" => lastDate.AddMonths(-1),
+                "3M" => lastDate.AddMonths(-3),
+                "6M" => lastDate.AddMonths(-6),
+                "1Y" => lastDate.AddYears(-1),
+                "3Y" => lastDate.AddYears(-3),
+                _ => DateTime.MinValue
+            };
+
+            allDates = allDates.Where(d => DateTime.Parse(d) >= startDate).ToList();
+        }
+
+        var points = new List<FundCompareSeriesPointDto>();
+        foreach (var date in allDates)
+        {
+            decimal? myVal = myMap.TryGetValue(date, out var mp) ? mp : null;
+            decimal? srcVal = srcMap.TryGetValue(date, out var sp) ? sp : null;
+            bool isMissing = !myVal.HasValue && srcVal.HasValue;
+            bool isDiff = myVal.HasValue && srcVal.HasValue && Math.Abs(myVal.Value - srcVal.Value) >= 0.0001m;
+
+            points.Add(new FundCompareSeriesPointDto(date, myVal, srcVal, isMissing, isDiff));
+        }
+
+        return new FundCompareChartDto(
+            FundId: fund.Id,
+            FundCode: fund.Code,
+            FundNameAr: fund.NameAr,
+            Currency: fund.Currency,
+            Points: points);
     }
 }
