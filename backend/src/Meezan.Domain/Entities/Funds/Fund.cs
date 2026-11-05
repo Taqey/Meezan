@@ -74,31 +74,3 @@ public class Fund
     public ICollection<FundSimilar> SimilarFunds { get; set; } = new List<FundSimilar>();
     public ICollection<FundCategoryOverride> CategoryOverrides { get; set; } = new List<FundCategoryOverride>();
 }
-
-/// <summary>
-/// Fund type enum matching SNDUK types.
-/// </summary>
-public enum FundType
-{
-    Unknown = 0,
-    Balanced = 1,
-    CapitalPreservation = 2,
-    Commodities = 3,
-    Equity = 4,
-    FixedIncome = 5,
-    FixedIncomeUsd = 6,
-    Gold = 7,
-    Index = 8,
-    MoneyMarket = 9
-}
-
-/// <summary>
-/// Fund risk level.
-/// </summary>
-public enum FundRiskLevel
-{
-    Unknown = 0,
-    Low = 1,
-    Medium = 2,
-    High = 3
-}
