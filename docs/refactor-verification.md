@@ -27,3 +27,7 @@ Verification kind: build + full test suite + static checks (no browser run: star
 - 305 files moved with all relative imports rewritten by tools/move-files.mjs: core/{api,auth,layouts,services}, shared/{components,directives,models,utils}, features/{admin,favorites,funds,home,indices,portfolio,sectors,sharia,stocks}. Routes, URLs and lazy chunks unchanged.
 - Verified: build ok (bundle 89.19 kB over, baseline 89.37), 555 pass / 7 baseline fail.
 - Human look: none beyond final all-routes pass.
+
+## Stop 5b - ensure 4 files per component (.html, .css, .ts, .spec.ts)
+- Added 62 empty .css files and styleUrl bindings to components that had no inline styles previously.
+- Verified: build ok (89.19 kB over budget).

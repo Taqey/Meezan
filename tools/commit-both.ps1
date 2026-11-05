@@ -1,0 +1,1 @@
+param([string]$m) $r="D:\borsa\Meezan\Meezan"; git -C $r add -A frontend docs tools 2>&1 | Out-Null; git -C $r commit -q -m $m 2>&1 | Out-Null; git -C "$r\frontend" add -A 2>&1 | Out-Null; git -C "$r\frontend" commit -q -m $m 2>&1 | Out-Null; git -C $r log --oneline -1; git -C "$r\frontend" log --oneline -1
