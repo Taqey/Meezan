@@ -7,6 +7,7 @@ public class Program
 {
     public static async Task Main(string[] args)
     {
+        await RestoreEligibleStocks.RunAsync();
         await RecalcSectors.RunAsync();
     }
 }
