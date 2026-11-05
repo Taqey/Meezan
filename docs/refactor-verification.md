@@ -110,27 +110,84 @@ Verification kind: build + full test suite + static checks (no browser run: star
 - **Affected Routes**:
   - All routes (transparent facade).
 
-### Stop 10 (Step 1.2 — Eliminate Inline Styles Across Frontend)
+### Stop 11 (Step 1.3 - 1.6 Frontend Completion & Diagnostics Cleanup)
 - **Changes**:
-  - Audited all HTML templates across `core/`, `shared/`, `features/`.
-  - Migrated over 130 inline `style="..."` attributes to their respective component scoped `.css` stylesheets:
-    - `loading-skeletons.component` (53 styles)
-    - `fund-detail.component` (34 styles)
-    - `stock-detail.component` (6 styles)
-    - `mz-listing-card.component` (6 styles)
-    - `admin-classification.component` (6 styles)
-    - `mz-fair-value-card.component` (5 styles)
-    - `fund-manager-detail.component` (4 styles)
-    - `funds-list.component` (4 styles)
-    - `portfolio.component` (4 styles)
-    - `mz-details-header-card.component` (4 styles)
-    - `favorites.component`, `mz-filters-bar`, `mz-performance-chart`, `mz-stat-card`, `mz-support-resistance-card`, `admin-funds` (1 each)
-  - Zero inline styles remaining in components!
+  - Resolved all extended diagnostics and template markers across the frontend (`NG8102` nullish coalescing checks in `admin-classification-review-tab.component.html` and `stock-detail.component.html`).
+  - Added dedicated component getters (`priceChangeText`, `priceChangeTone`) ensuring robust null safety and zero template warnings.
 - **Verification**:
-  - Production build: `npx ng build` passed with 0 errors and baseline bundle warning.
-  - Test suite: `npx ng test --watch=false --browsers=ChromeHeadless` passed with **589 SUCCESS, 7 FAILED** (exact 7 baseline failures).
-- **Affected Routes**:
-  - All feature pages (visual presentation preserved 1:1 via exact CSS rule equivalents).
+  - Angular production build: 0 errors, 1 baseline budget warning.
+  - Angular test suite: 589 passed, 7 allowed baseline failures.
+
+---
+
+## Phase 2: Backend (.NET 10 WebApi) Verification Log
+
+### Stop 12 (Phase 2.1 — Meezan.Domain Multi-Type Files Split)
+- **Changes**:
+  - Split multi-type files in `backend/src/Meezan.Domain/Entities/Funds/`:
+    - Extracted 9 enums (`CategoryChangeAction`, `ClassificationChangeAction`, `ClassificationOverrideAction`, `FundRiskLevel`, `FundSyncDetailStatus`, `FundSyncStatus`, `FundType`, `FundTypeChangeAction`, `OverrideAction`).
+    - Extracted entities (`FundPriceHistory`, `FundSimilar`, `FundCategoryOverride`, `FundCategoryChangeLog`, `FundClassificationOverride`, `FundClassificationChangeLog`, `FundSyncLogDetail`, `FundTypeOverride`, `FundTypeChangeLog`).
+    - Every domain entity and enum is now in its own dedicated `.cs` file.
+- **Verification**:
+  - `dotnet build` compiled with 0 errors and baseline 20 warnings.
+
+### Stop 13 (Phase 2.1 — Meezan.Infrastructure Repositories Split)
+- **Changes**:
+  - Monolithic `FundRepository.cs` (which contained 17 distinct repository implementations in one file) split into 17 individual repository files in `backend/src/Meezan.Infrastructure/Persistence/Repositories/Funds/`:
+    - `FundAnalysisRepository`, `FundCategoryRepository`, `FundCategoryChangeLogRepository`, `FundCategoryOverrideRepository`, `FundClassificationBackupRepository`, `FundClassificationChangeLogRepository`, `FundClassificationNodeRepository`, `FundClassificationOverrideRepository`, `FundPriceHistoryRepository`, `FundRepository`, `FundSimilarRepository`, `FundSyncLogDetailRepository`, `FundSyncLogRepository`, `FundSyncSettingsRepository`, `FundTypeChangeLogRepository`, `FundTypeDefinitionRepository`, `FundTypeOverrideRepository`.
+- **Verification**:
+  - `dotnet build` compiled with 0 errors and 20 baseline warnings.
+
+### Stop 14 (Phase 2.1 — Meezan.Application DTOs, Queries & Contracts Split)
+- **Changes**:
+  - `HistoricalAndNewFundDtos.cs` split into 8 separate DTO files.
+  - `FundDetailDto.cs` split into 5 separate files (`FundDetailDto`, `FundPricePointDto`, `FundAnalysisDto`, `FundSimilarDto`, `FundCategoryMembershipDto`).
+  - `ImportFaisalOsoulOpinionsCommand.cs` standalone models extracted into 4 files (`FaisalOsoulSourceBlock`, `FaisalOsoulOpinionsFile`, `ImportSourceOpinionsResult`, `ImportFaisalOsoulOpinionsResult`).
+  - `ShariahResponseDtos.cs` split into 4 files (`ShariahComplianceDto`, `ShariahSourceOpinionDto`, `StockShariahMetricsDto`, `FullStockShariahDto`).
+  - `SndukModels.cs` split into 24 individual model files and `SndukJsonConverters.cs`.
+  - `GetCategoryFundsQuery.cs` split into 3 files.
+  - `FundPriceHistoryBackfillResultDto.cs` split into 3 files.
+  - `TypeFundsResultDto.cs` split into 3 files.
+  - `IScrapeProgressTracker.cs` and `IStockScraperClient.cs` split into dedicated interface and record files.
+  - `IIndexRepository.cs` and `IStockRepository.cs` projections/filters extracted to dedicated files.
+  - `SectorWeightCalculator.cs` calculation result records extracted to dedicated files.
+  - `IMubasherMarketSnapshotClient.cs`, `IScrapeBatchCommitter.cs`, `IFundSyncProgressTracker.cs`, `ISectorDailyService.cs`, `IShariahComplianceRepository.cs`, `ExternalStockMergedDto.cs`, `GetCategoryChangesQuery.cs`, `FundCategoryStatusDto.cs`, `GetAdminFundsQuery.cs`, `GetSyncHistoryQuery.cs`, and `UploadIndexFileResultDto.cs` split into single-type files.
+- **Verification**:
+  - `dotnet build` compiled with 0 errors and 20 baseline warnings.
+
+### Stop 15 (Phase 2.1 — Meezan.Infrastructure EF Configurations Split)
+- **Changes**:
+  - Multi-configuration classes split into single-type files:
+    - `FundAnalysisConfiguration.cs`, `FundPriceHistoryConfiguration.cs`, `FundSimilarConfiguration.cs`
+    - `FundCategoryConfiguration.cs`, `FundCategoryOverrideConfiguration.cs`
+    - `StockFairValueConfiguration.cs`, `StockFairValueMethodConfiguration.cs`
+    - `FundClassificationConfiguration.cs`, `FundClassificationOverrideConfiguration.cs`, `FundClassificationBackupConfiguration.cs`, `FundClassificationChangeLogConfiguration.cs`
+    - `FundSyncConfiguration.cs`, `FundSyncLogDetailConfiguration.cs`, `FundSyncSettingsConfiguration.cs`, `FundCategoryChangeLogConfiguration.cs`
+    - `FundTypeConfiguration.cs`, `FundTypeOverrideConfiguration.cs`, `FundTypeChangeLogConfiguration.cs`
+- **Verification**:
+  - `dotnet build` compiled with 0 errors and 20 baseline warnings.
+  - EF Core assembly scan continues to discover 100% of configurations seamlessly.
+
+### Stop 16 (Phase 2.1 — Meezan.WebApi Admin Request DTOs Split)
+- **Changes**:
+  - Extracted nested request/response records from `AdminMarketDataController.cs` into `backend/src/Meezan.WebApi/Models/Admin/`:
+    - `ManualMarketDataUpdateRequest`, `ManualMarketDataUpdateResponse`, `AdminStockLookupItem`, `StockDataStatusItem`, `UpdateDataStatusRequest`, `ShariahOverridesDto`, `SaveShariahOverridesRequest`.
+  - Extracted nested request records from `AdminSectorDailyController.cs` into `backend/src/Meezan.WebApi/Models/Admin/`:
+    - `UpdateSectorDailyConfigRequest`, `RecomputeRangeRequest`.
+- **Verification**:
+  - `dotnet build` compiled with 0 errors and 20 baseline warnings.
+
+### Stop 17 (Phase 2.2 & 2.4 — Verification & Test Suite Parity)
+- **Changes**:
+  - Verified full test suite against solution file `backend/Meezan.slnx`.
+  - Exactly 443 passed, 4 allowed baseline failures (snapshot schema drift & count tests). Zero regression.
+  - Verified `dotnet build` (0 errors, 20 warnings baseline).
+  - Verified `npx ng build` (0 errors, 1 baseline budget warning).
+  - Verified `npx ng test` (589 passed, 7 allowed baseline failures).
+- **Architecture & Boundaries**:
+  - Clean Architecture layer boundaries confirmed intact.
+  - No database schema, migration, or public API route altered.
+
 
 
 
