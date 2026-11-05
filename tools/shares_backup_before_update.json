@@ -1,0 +1,642 @@
+[
+  {
+    "Symbol": "CPME",
+    "StockId": 135,
+    "MarketDataId": 1496,
+    "OldShares": 23500000.0000,
+    "NewShares": 301942795,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 37.0600,
+    "OldMarketValue": 870910000.0000
+  },
+  {
+    "Symbol": "MCRO",
+    "StockId": 107,
+    "MarketDataId": 1455,
+    "OldShares": 570206456.0000,
+    "NewShares": 3417910448,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 1.3300,
+    "OldMarketValue": 758374586.4800
+  },
+  {
+    "Symbol": "GDWA",
+    "StockId": 117,
+    "MarketDataId": 1471,
+    "OldShares": 1033044097.0000,
+    "NewShares": 5310344828,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 0.5700,
+    "OldMarketValue": 588835135.2900
+  },
+  {
+    "Symbol": "DTPP",
+    "StockId": 113,
+    "MarketDataId": 1467,
+    "OldShares": 5600000.0000,
+    "NewShares": 22448980,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 49.0800,
+    "OldMarketValue": 274848000.0000
+  },
+  {
+    "Symbol": "VLMRA",
+    "StockId": 12,
+    "MarketDataId": 1473,
+    "OldShares": 352389240.0000,
+    "NewShares": 1183265306,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 24.6000,
+    "OldMarketValue": 8668775304.0000
+  },
+  {
+    "Symbol": "ORHD",
+    "StockId": 22,
+    "MarketDataId": 1527,
+    "OldShares": 1130473523.0000,
+    "NewShares": 3649903288,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 10.3400,
+    "OldMarketValue": 11689096227.8200
+  },
+  {
+    "Symbol": "COPR",
+    "StockId": 233,
+    "MarketDataId": 1304,
+    "OldShares": 525547440.0000,
+    "NewShares": 1588170732,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 0.4100,
+    "OldMarketValue": 215474450.4000
+  },
+  {
+    "Symbol": "HELI",
+    "StockId": 18,
+    "MarketDataId": 1523,
+    "OldShares": 1335085200.0000,
+    "NewShares": 4005763689,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 6.9400,
+    "OldMarketValue": 9265491288.0000
+  },
+  {
+    "Symbol": "UNIP",
+    "StockId": 401,
+    "MarketDataId": 1347,
+    "OldShares": 763814202.0000,
+    "NewShares": 2268533333,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 0.3000,
+    "OldMarketValue": 229144260.6000
+  },
+  {
+    "Symbol": "FAIT",
+    "StockId": 40,
+    "MarketDataId": 1378,
+    "OldShares": 225910908.0000,
+    "NewShares": 637927133,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 45.9100,
+    "OldMarketValue": 10371569786.2800
+  },
+  {
+    "Symbol": "SVCE",
+    "StockId": 57,
+    "MarketDataId": 1400,
+    "OldShares": 482256840.0000,
+    "NewShares": 964932127,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 8.8200,
+    "OldMarketValue": 4253505328.8000
+  },
+  {
+    "Symbol": "MHOT",
+    "StockId": 178,
+    "MarketDataId": 1544,
+    "OldShares": 396000000.0000,
+    "NewShares": 791719745,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 15.7000,
+    "OldMarketValue": 6217200000.0000
+  },
+  {
+    "Symbol": "CRST",
+    "StockId": 236,
+    "MarketDataId": 1305,
+    "OldShares": 561255744.0000,
+    "NewShares": 1122033898,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 2.9600,
+    "OldMarketValue": 1661317002.2400
+  },
+  {
+    "Symbol": "OCPH",
+    "StockId": 98,
+    "MarketDataId": 1446,
+    "OldShares": 12000000.0000,
+    "NewShares": 23983762,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 187.2100,
+    "OldMarketValue": 2246520000.0000
+  },
+  {
+    "Symbol": "FCMD",
+    "StockId": 276,
+    "MarketDataId": 1317,
+    "OldShares": 57671796.0000,
+    "NewShares": 115171563,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 8.5200,
+    "OldMarketValue": 491363701.9200
+  },
+  {
+    "Symbol": "SEIG",
+    "StockId": 122,
+    "MarketDataId": 1483,
+    "OldShares": 2500000.0000,
+    "NewShares": 4989812,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 240.4900,
+    "OldMarketValue": 601225000.0000
+  },
+  {
+    "Symbol": "KRDI",
+    "StockId": 314,
+    "MarketDataId": 1329,
+    "OldShares": 2000000000.0000,
+    "NewShares": 3942857143,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 0.3500,
+    "OldMarketValue": 700000000.0000
+  },
+  {
+    "Symbol": "AMES",
+    "StockId": 203,
+    "MarketDataId": 1295,
+    "OldShares": 124581600.0000,
+    "NewShares": 244560944,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 38.2500,
+    "OldMarketValue": 4765246200.0000
+  },
+  {
+    "Symbol": "SDTI",
+    "StockId": 181,
+    "MarketDataId": 1547,
+    "OldShares": 79000000.0000,
+    "NewShares": 53039808,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 87.6700,
+    "OldMarketValue": 6925930000.0000
+  },
+  {
+    "Symbol": "ASPI",
+    "StockId": 131,
+    "MarketDataId": 1492,
+    "OldShares": 2000000000.0000,
+    "NewShares": 3875000000,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 0.3200,
+    "OldMarketValue": 640000000.0000
+  },
+  {
+    "Symbol": "HBCO",
+    "StockId": 294,
+    "MarketDataId": 1324,
+    "OldShares": 40000000.0000,
+    "NewShares": 72000000,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 8.7100,
+    "OldMarketValue": 348400000.0000
+  },
+  {
+    "Symbol": "ICFC",
+    "StockId": 174,
+    "MarketDataId": 1541,
+    "OldShares": 67500000.0000,
+    "NewShares": 116888046,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 26.4100,
+    "OldMarketValue": 1782675000.0000
+  },
+  {
+    "Symbol": "ARAB",
+    "StockId": 159,
+    "MarketDataId": 1520,
+    "OldShares": 13902963390.0000,
+    "NewShares": 23920000000,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 0.2500,
+    "OldMarketValue": 3475740847.5000
+  },
+  {
+    "Symbol": "JUFO",
+    "StockId": 460,
+    "MarketDataId": 1557,
+    "OldShares": 941405082.0000,
+    "NewShares": 1470835082,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 24.0700,
+    "OldMarketValue": 22659620323.7400
+  },
+  {
+    "Symbol": "FAITA",
+    "StockId": 41,
+    "MarketDataId": 1379,
+    "OldShares": 411934115.0000,
+    "NewShares": 637850000,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 1.0000,
+    "OldMarketValue": 411934115.0000
+  },
+  {
+    "Symbol": "WKOL",
+    "StockId": 60,
+    "MarketDataId": 1403,
+    "OldShares": 5600000.0000,
+    "NewShares": 8391450,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 176.3700,
+    "OldMarketValue": 987672000.0000
+  },
+  {
+    "Symbol": "EFID",
+    "StockId": 459,
+    "MarketDataId": 1556,
+    "OldShares": 1400027312.0000,
+    "NewShares": 2094630516,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 19.3700,
+    "OldMarketValue": 27118529033.4400
+  },
+  {
+    "Symbol": "ETRS",
+    "StockId": 162,
+    "MarketDataId": 1529,
+    "OldShares": 156062500.0000,
+    "NewShares": 224954463,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 10.9800,
+    "OldMarketValue": 1713566250.0000
+  },
+  {
+    "Symbol": "VLMR",
+    "StockId": 13,
+    "MarketDataId": 1474,
+    "OldShares": 830840311.0000,
+    "NewShares": 1190625000,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 0.6400,
+    "OldMarketValue": 531737799.0400
+  },
+  {
+    "Symbol": "INFI",
+    "StockId": 74,
+    "MarketDataId": 1422,
+    "OldShares": 14547500.0000,
+    "NewShares": 20326223,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 119.5300,
+    "OldMarketValue": 1738862675.0000
+  },
+  {
+    "Symbol": "RMDA",
+    "StockId": 455,
+    "MarketDataId": 1552,
+    "OldShares": 1510996292.0000,
+    "NewShares": 2032727273,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 5.5000,
+    "OldMarketValue": 8310479606.0000
+  },
+  {
+    "Symbol": "GRCA",
+    "StockId": 133,
+    "MarketDataId": 1494,
+    "OldShares": 7800000.0000,
+    "NewShares": 10400062,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 32.1200,
+    "OldMarketValue": 250536000.0000
+  },
+  {
+    "Symbol": "EXPA",
+    "StockId": 38,
+    "MarketDataId": 1376,
+    "OldShares": 1360000000.0000,
+    "NewShares": 1800278358,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 14.3700,
+    "OldMarketValue": 19543200000.0000
+  },
+  {
+    "Symbol": "MOIN",
+    "StockId": 120,
+    "MarketDataId": 1481,
+    "OldShares": 200000000.0000,
+    "NewShares": 260135135,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 29.5700,
+    "OldMarketValue": 5914000000.0000
+  },
+  {
+    "Symbol": "LUTS",
+    "StockId": 79,
+    "MarketDataId": 1427,
+    "OldShares": 1050000000.0000,
+    "NewShares": 1322906667,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 0.7500,
+    "OldMarketValue": 787500000.0000
+  },
+  {
+    "Symbol": "SKPC",
+    "StockId": 26,
+    "MarketDataId": 1389,
+    "OldShares": 907200000.0000,
+    "NewShares": 1133910726,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 15.1200,
+    "OldMarketValue": 13716864000.0000
+  },
+  {
+    "Symbol": "NINH",
+    "StockId": 106,
+    "MarketDataId": 1454,
+    "OldShares": 242000000.0000,
+    "NewShares": 299936988,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 15.8700,
+    "OldMarketValue": 3840540000.0000
+  },
+  {
+    "Symbol": "MTIE",
+    "StockId": 177,
+    "MarketDataId": 1543,
+    "OldShares": 1888275148.0000,
+    "NewShares": 2266479663,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 7.1000,
+    "OldMarketValue": 13406753550.8000
+  },
+  {
+    "Symbol": "NCCW",
+    "StockId": 65,
+    "MarketDataId": 1408,
+    "OldShares": 210000000.0000,
+    "NewShares": 252747253,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 5.4600,
+    "OldMarketValue": 1146600000.0000
+  },
+  {
+    "Symbol": "KZPC",
+    "StockId": 47,
+    "MarketDataId": 1385,
+    "OldShares": 240089400.0000,
+    "NewShares": 288348083,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 13.5600,
+    "OldMarketValue": 3255612264.0000
+  },
+  {
+    "Symbol": "MBSC",
+    "StockId": 58,
+    "MarketDataId": 1401,
+    "OldShares": 61135918.0000,
+    "NewShares": 55031056,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 320.2700,
+    "OldMarketValue": 19580000457.8600
+  },
+  {
+    "Symbol": "EASB",
+    "StockId": 247,
+    "MarketDataId": 1310,
+    "OldShares": 90000000.0000,
+    "NewShares": 100000000,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 6.5000,
+    "OldMarketValue": 585000000.0000
+  },
+  {
+    "Symbol": "COMI",
+    "StockId": 25,
+    "MarketDataId": 1369,
+    "OldShares": 3070851000.0000,
+    "NewShares": 3405156250,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 128.4000,
+    "OldMarketValue": 394297268400.0000
+  },
+  {
+    "Symbol": "BONY",
+    "StockId": 154,
+    "MarketDataId": 1515,
+    "OldShares": 1704403226.0000,
+    "NewShares": 1873853211,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 4.4200,
+    "OldMarketValue": 7533462258.9200
+  },
+  {
+    "Symbol": "ACGC",
+    "StockId": 166,
+    "MarketDataId": 1533,
+    "OldShares": 264815881.0000,
+    "NewShares": 285927029,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 13.4300,
+    "OldMarketValue": 3556477281.8300
+  },
+  {
+    "Symbol": "RUBX",
+    "StockId": 51,
+    "MarketDataId": 1394,
+    "OldShares": 57579946.0000,
+    "NewShares": 61519637,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 13.2400,
+    "OldMarketValue": 762358485.0400
+  },
+  {
+    "Symbol": "CFGH",
+    "StockId": 171,
+    "MarketDataId": 1538,
+    "OldShares": 470250000.0000,
+    "NewShares": 448909091,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 0.1000,
+    "OldMarketValue": 47025000.0000
+  },
+  {
+    "Symbol": "NAHO",
+    "StockId": 129,
+    "MarketDataId": 1490,
+    "OldShares": 350414638.0000,
+    "NewShares": 335615385,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 0.1200,
+    "OldMarketValue": 42049756.5600
+  },
+  {
+    "Symbol": "MIPH",
+    "StockId": 97,
+    "MarketDataId": 1445,
+    "OldShares": 12293440.0000,
+    "NewShares": 11778044,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 793.3100,
+    "OldMarketValue": 9752508886.4000
+  },
+  {
+    "Symbol": "OFH",
+    "StockId": 134,
+    "MarketDataId": 1495,
+    "OldShares": 4799931279.0000,
+    "NewShares": 4635135135,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 0.7400,
+    "OldMarketValue": 3551949146.4600
+  },
+  {
+    "Symbol": "TRTO",
+    "StockId": 182,
+    "MarketDataId": 1548,
+    "OldShares": 100000000.0000,
+    "NewShares": 96666667,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 0.0600,
+    "OldMarketValue": 6000000.0000
+  },
+  {
+    "Symbol": "RACC",
+    "StockId": 110,
+    "MarketDataId": 1464,
+    "OldShares": 205122987.0000,
+    "NewShares": 199004975,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 8.0400,
+    "OldMarketValue": 1649188815.4800
+  },
+  {
+    "Symbol": "GTEX",
+    "StockId": 170,
+    "MarketDataId": 1537,
+    "OldShares": 470250000.0000,
+    "NewShares": 458500000,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 0.0400,
+    "OldMarketValue": 18810000.0000
+  },
+  {
+    "Symbol": "ADPC",
+    "StockId": 83,
+    "MarketDataId": 1431,
+    "OldShares": 500000000.0000,
+    "NewShares": 490322581,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 3.1000,
+    "OldMarketValue": 1550000000.0000
+  },
+  {
+    "Symbol": "HRHO",
+    "StockId": 15,
+    "MarketDataId": 1476,
+    "OldShares": 1459681418.0000,
+    "NewShares": 1436080740,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 23.8100,
+    "OldMarketValue": 34755014562.5800
+  },
+  {
+    "Symbol": "ARCC",
+    "StockId": 53,
+    "MarketDataId": 1396,
+    "OldShares": 378739700.0000,
+    "NewShares": 374870505,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 68.1900,
+    "OldMarketValue": 25826260143.0000
+  },
+  {
+    "Symbol": "INEG",
+    "StockId": 303,
+    "MarketDataId": 1326,
+    "OldShares": 500000000.0000,
+    "NewShares": 495370370,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 0.5400,
+    "OldMarketValue": 270000000.0000
+  },
+  {
+    "Symbol": "SPMD",
+    "StockId": 389,
+    "MarketDataId": 1343,
+    "OldShares": 1663716715.0000,
+    "NewShares": 1677971429,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 0.3500,
+    "OldMarketValue": 582300850.2500
+  },
+  {
+    "Symbol": "BIGP",
+    "StockId": 220,
+    "MarketDataId": 1300,
+    "OldShares": 328061290.0000,
+    "NewShares": 331045455,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 0.2200,
+    "OldMarketValue": 72173483.8000
+  },
+  {
+    "Symbol": "PHGC",
+    "StockId": 363,
+    "MarketDataId": 1334,
+    "OldShares": 23630397700.0000,
+    "NewShares": 23875000000,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 0.0800,
+    "OldMarketValue": 1890431816.0000
+  },
+  {
+    "Symbol": "ACTF",
+    "StockId": 137,
+    "MarketDataId": 1498,
+    "OldShares": 1125685992.0000,
+    "NewShares": 1140909091,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 2.2000,
+    "OldMarketValue": 2476509182.4000
+  },
+  {
+    "Symbol": "CLHO",
+    "StockId": 463,
+    "MarketDataId": 1559,
+    "OldShares": 1445434203.0000,
+    "NewShares": 1467647059,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 13.8500,
+    "OldMarketValue": 20019263711.5500
+  },
+  {
+    "Symbol": "NAPR",
+    "StockId": 342,
+    "MarketDataId": 1332,
+    "OldShares": 211710380.0000,
+    "NewShares": 215287958,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 47.3800,
+    "OldMarketValue": 10030837804.4000
+  },
+  {
+    "Symbol": "EGBE",
+    "StockId": 36,
+    "MarketDataId": 1374,
+    "OldShares": 510106066.0000,
+    "NewShares": 521000000,
+    "OldIsSharesManual": false,
+    "ClosingPrice": 0.4900,
+    "OldMarketValue": 249951972.3400
+  }
+]
