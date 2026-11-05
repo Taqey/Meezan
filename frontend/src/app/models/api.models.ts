@@ -133,10 +133,8 @@ export interface SectorSummaryDto {
   compliantStocksCount?: number | null;
   /** 100 × compliant / total. Absent on older API responses. */
   complianceRatePct?: number | null;
-  /** Mean daily change % (stocks with a value, after 35% cap). Absent on older API responses. */
+  /** Mean daily change % (stocks with a value). Absent on older API responses. */
   averageChangePct?: number | null;
-  /** Mean daily change % before 35% cap. */
-  averageChangePctUncapped?: number | null;
   /** Summed market value in EGP. Absent on older API responses. */
   marketCapTotal?: number | null;
   /** Summed market value (EGP) of compliant stocks. Absent on older API responses. */

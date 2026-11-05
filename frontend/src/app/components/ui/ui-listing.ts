@@ -235,7 +235,7 @@ export interface MzListingCardData {
           <span class="mz-lcard-main-unit" *ngIf="card.mainUnit">{{ card.mainUnit }}</span>
         </div>
         <div class="mz-lcard-metrics" *ngIf="card.metrics?.length">
-          <mz-metric-item *ngFor="let m of card.metrics" [label]="m.label" [value]="m.value" [tone]="m.tone" [ltr]="!!m.ltr" [subValue]="m.subValue" [tooltip]="m.tooltip"></mz-metric-item>
+          <mz-metric-item *ngFor="let m of card.metrics" [label]="m.label" [value]="m.value" [tone]="m.tone" [ltr]="!!m.ltr"></mz-metric-item>
         </div>
       </div>
       <div class="mz-lcard-bottom">
