@@ -73,3 +73,23 @@ Verification kind: build + full test suite + static checks (no browser run: star
   - Test suite: `npx ng test --watch=false --browsers=ChromeHeadless` passed with **585 SUCCESS, 7 FAILED** (only the exact 7 baseline test failures).
 - **Affected Route**:
   - `/admin/funds`.
+
+### Stop 8 (Step 1.2 — AdminClassificationComponent Split)
+- **Changes**:
+  - Split `AdminClassificationComponent` (546 lines TS, 423 lines HTML) into single-responsibility units:
+    - **3 Domain Services** in `features/admin/services/`:
+      - `AdminClassificationTreeService`: Tree data loading, hierarchical flattening, node CRUD/editor form, keyword rules, move/merge/delete previews, and reclassification trigger. Decoupled from funds via callback.
+      - `AdminClassificationReviewService`: Review data loading, unclassified equity funds, conflicting signals, missing sub-classifications, and bulk selection.
+      - `AdminClassificationFundsService`: Node funds list, manual/auto filtering, pagination, search, cascade assignment, bulk move, and reset to auto.
+    - **4 Focused Child Components** in `features/admin/components/`:
+      - `AdminClassificationTreeTabComponent`: Interactive hierarchy tree with expand/collapse, active fund counts, and action buttons.
+      - `AdminClassificationReviewTabComponent`: Review workflow tabs (unclassified, conflicting, missing child) with quick assignment cascade.
+      - `AdminClassificationFundsPanelComponent`: Drawer/panel for managing funds belonging to a selected tree node.
+      - `AdminClassificationModalsComponent`: Dialogs for node editing, moving, merging, deleting, bulk moving, and generic confirmations.
+    - `AdminClassificationComponent` reduced to a thin coordinator (< 40 lines).
+- **Verification**:
+  - Production build: `npx ng build` passed with 0 errors and baseline bundle warning.
+  - Test suite: `npx ng test --watch=false --browsers=ChromeHeadless` passed with **589 SUCCESS, 7 FAILED** (only the exact 7 baseline test failures).
+- **Affected Route**:
+  - `/admin/classification`.
+
