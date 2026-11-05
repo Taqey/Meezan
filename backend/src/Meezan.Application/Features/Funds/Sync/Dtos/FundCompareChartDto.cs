@@ -6,3 +6,4 @@ public sealed record FundCompareChartDto(
     string FundNameAr,
     string Currency,
     List<FundCompareSeriesPointDto> Points);
+

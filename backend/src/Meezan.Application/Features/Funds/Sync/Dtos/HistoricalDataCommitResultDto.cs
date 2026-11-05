@@ -5,3 +5,4 @@ public sealed record HistoricalDataCommitResultDto(
     int TotalInsertedPoints,
     int TotalOverwrittenPoints,
     List<HistoricalDataCommitFundResultDto> Funds);
+

@@ -6,3 +6,4 @@ public sealed record HistoricalDataPreviewResultDto(
     int TotalMissingPoints,
     int TotalDifferentPoints,
     List<HistoricalDataPreviewFundItemDto> Funds);
+

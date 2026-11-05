@@ -7,3 +7,4 @@ public sealed record HistoricalDataCommitFundResultDto(
     int OverwrittenCount,
     bool Success,
     string? Error);
+

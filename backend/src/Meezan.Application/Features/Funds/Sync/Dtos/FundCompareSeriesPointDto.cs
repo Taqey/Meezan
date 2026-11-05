@@ -6,3 +6,4 @@ public sealed record FundCompareSeriesPointDto(
     decimal? SourcePrice,
     bool IsMissingInDb,
     bool IsDifferent);
+

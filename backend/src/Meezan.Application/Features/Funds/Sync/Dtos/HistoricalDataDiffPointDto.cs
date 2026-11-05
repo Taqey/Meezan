@@ -5,3 +5,4 @@ public sealed record HistoricalDataDiffPointDto(
     decimal MyPrice,
     decimal SourcePrice,
     decimal DiffPct);
+

@@ -12,3 +12,4 @@ public sealed record HistoricalDataPreviewFundItemDto(
     int DifferentCount,
     List<string> MissingDates,
     List<HistoricalDataDiffPointDto> DifferentPoints);
+

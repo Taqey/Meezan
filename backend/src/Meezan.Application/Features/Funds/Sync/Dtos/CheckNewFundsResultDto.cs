@@ -7,3 +7,4 @@ public sealed record CheckNewFundsResultDto(
     int NewFundsFoundCount,
     List<string> NewFundNames,
     List<string> Failures);
+
