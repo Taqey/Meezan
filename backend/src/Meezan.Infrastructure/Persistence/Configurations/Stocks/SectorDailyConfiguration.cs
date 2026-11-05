@@ -12,6 +12,7 @@ public class SectorDailyConfiguration : IEntityTypeConfiguration<SectorDaily>
         builder.HasKey(s => s.Id);
 
         builder.Property(s => s.ChangePct).HasColumnType("decimal(18,4)");
+        builder.Property(s => s.ChangePctUncapped).HasColumnType("decimal(18,4)");
         builder.Property(s => s.TotalMarketCap).HasColumnType("decimal(24,4)");
         builder.Property(s => s.CoveragePct).HasColumnType("decimal(18,4)");
         builder.Property(s => s.ShareOfWeightRose).HasColumnType("decimal(18,4)");

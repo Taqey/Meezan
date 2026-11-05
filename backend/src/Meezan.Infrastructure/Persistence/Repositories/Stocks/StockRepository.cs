@@ -753,6 +753,7 @@ public class StockRepository : IStockRepository
 
             // Single source of truth: changePct and marketCap from sector_daily when present!
             decimal? changePct = daily?.ChangePct;
+            decimal? changePctUncapped = daily?.ChangePctUncapped;
             decimal? marketCap = daily != null && daily.TotalMarketCap > 0 ? daily.TotalMarketCap : (agg.HasCap ? agg.MarketCapSum : null);
 
             result.Add(new SectorSummaryDto(
@@ -763,6 +764,7 @@ public class StockRepository : IStockRepository
                 agg.CompliantCount,
                 agg.TotalCount > 0 ? Math.Round(100m * agg.CompliantCount / agg.TotalCount, 1) : null,
                 changePct,
+                changePctUncapped,
                 marketCap,
                 agg.HasCompliantCap ? agg.CompliantMarketCapSum : null,
                 agg.PeN > 0 ? Math.Round(agg.PeSum / agg.PeN, 2) : null,

@@ -433,6 +433,8 @@ export interface MzStat {
   accent?: boolean;
   /** Smaller text value (e.g. top performer name). */
   text?: string | null;
+  tooltip?: string | null;
+  subValue?: string | null;
 }
 
 @Component({
@@ -441,7 +443,7 @@ export interface MzStat {
   imports: [CommonModule, LucideAngularModule],
   host: { class: 'mz', style: 'display:block' },
   template: `
-    <div class="mz-card mz-stat" style="height:100%">
+    <div class="mz-card mz-stat" style="height:100%" [attr.title]="stat.tooltip || null">
       <div class="mz-stat-top">
         <span class="mz-stat-label">{{ stat.label }}</span>
         <span class="mz-stat-icon" *ngIf="stat.icon"><lucide-icon [img]="stat.icon" [size]="18"></lucide-icon></span>
@@ -450,6 +452,9 @@ export interface MzStat {
         <span class="mz-stat-value" [class.accent]="stat.accent">{{ stat.value ?? '—' }}</span>
         <span class="mz-stat-chip" *ngIf="stat.chip">{{ stat.chip }}</span>
       </div>
+      <div *ngIf="stat.subValue" class="mz-stat-sub" style="font-size:12px;color:var(--mz-outline);margin-top:4px;font-weight:600;">
+        {{ stat.subValue }}
+      </div>
     </div>
   `
 })
@@ -457,7 +462,14 @@ export class MzStatCardComponent {
   @Input() stat!: MzStat;
 }
 
-export interface MzMetric { label: string; value: string | number | null | undefined; tone?: Tone; ltr?: boolean; }
+export interface MzMetric {
+  label: string;
+  value: string | number | null | undefined;
+  tone?: Tone;
+  ltr?: boolean;
+  subValue?: string | null;
+  tooltip?: string | null;
+}
 
 @Component({
   selector: 'mz-metric-item',
@@ -465,9 +477,10 @@ export interface MzMetric { label: string; value: string | number | null | undef
   imports: [CommonModule],
   host: { class: 'mz', style: 'display:block;min-width:0' },
   template: `
-    <div class="mz-metric">
+    <div class="mz-metric" [attr.title]="tooltip || null">
       <span class="mz-metric-label">{{ label }}</span>
       <span class="mz-metric-value" [ngClass]="value == null || value === '' ? 'muted' : tone" [class.mz-ltr]="ltr">{{ value == null || value === '' ? '—' : value }}</span>
+      <span *ngIf="subValue" class="mz-metric-sub" style="font-size:11px;color:var(--mz-outline);margin-top:2px;font-weight:600;" [class.mz-ltr]="ltr">{{ subValue }}</span>
     </div>
   `
 })
@@ -476,6 +489,8 @@ export class MzMetricItemComponent {
   @Input() value: string | number | null | undefined;
   @Input() tone: Tone;
   @Input() ltr = false;
+  @Input() subValue?: string | null;
+  @Input() tooltip?: string | null;
 }
 
 export interface MzFilterOption { value: string; label: string; }

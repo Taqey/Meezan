@@ -8,6 +8,7 @@ public record SectorSummaryDto(
     int CompliantStocksCount = 0,
     decimal? ComplianceRatePct = null,
     decimal? AverageChangePct = null,
+    decimal? AverageChangePctUncapped = null,
     decimal? MarketCapTotal = null,
     decimal? CompliantMarketCapTotal = null,
     decimal? AveragePeRatio = null,

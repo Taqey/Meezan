@@ -10,7 +10,7 @@ import { SessionCacheService } from '../../services/session-cache.service';
 import { MarketSnapshotDto, SectorSummaryDto, StockListItemDto } from '../../models/api.models';
 import { sectorAccentFor, sectorIconFor } from '../../models/market-icons';
 import { MzListingPageComponent, type MzListingConfig } from '../../components/ui/ui-listing-page';
-import { MzButtonComponent, MzSelectComponent, type MzOption } from '../../components/ui/ui-small';
+import { MzButtonComponent, MzSelectComponent, type MzOption, type MzMetric } from '../../components/ui/ui-small';
 import type { MzListingCardData } from '../../components/ui/ui-listing';
 import { ViewSwitcherComponent, type EntityView } from '../../components/view-switcher/view-switcher.component';
 import { type KpiData } from '../../components/kpi-strip/kpi-strip.component';
@@ -479,9 +479,23 @@ export class SectorsListComponent implements OnInit, OnDestroy {
   }
 
   private toTableRow(s: SectorSummaryDto): EntityTableRow {
-    const perf = s.averageChangePct !== null && s.averageChangePct !== undefined
-      ? { text: `${this.perfArrow(s.averageChangePct)} ${this.formatSignedPct(s.averageChangePct)}`, tone: this.perfTone(s.averageChangePct) }
-      : { text: '—', tone: 'muted' as const };
+    let perf: { text: string; sub?: string | null; tone: 'positive' | 'negative' | 'muted' };
+    if (s.averageChangePct !== null && s.averageChangePct !== undefined) {
+      const capped = Number(s.averageChangePct);
+      const uncapped = s.averageChangePctUncapped !== null && s.averageChangePctUncapped !== undefined
+        ? Number(s.averageChangePctUncapped)
+        : capped;
+      const diff = Math.round((capped - uncapped) * 100) / 100;
+      const diffFormatted = `${diff > 0 ? '+' : ''}${diff.toFixed(2)} pp`;
+
+      perf = {
+        text: `${this.perfArrow(capped)} ${this.formatSignedPct(capped)}`,
+        sub: `قبل السقف: ${this.formatSignedPct(uncapped)} (${diffFormatted})`,
+        tone: this.perfTone(capped)
+      };
+    } else {
+      perf = { text: '—', tone: 'muted' as const };
+    }
     const row: EntityTableRow = {
       id: s.id,
       cells: {
@@ -508,20 +522,38 @@ export class SectorsListComponent implements OnInit, OnDestroy {
     return 'muted';
   }
 
-  // ── Card stats ──────────────────────────────────────────────────────
-  cardStats(s: SectorSummaryDto): EntityStat[] {
-    const compliance: EntityStat = s.complianceRatePct !== null && s.complianceRatePct !== undefined
+  // ── Card metrics ───────────────────────────────────────────────────
+  cardMetrics(s: SectorSummaryDto): MzMetric[] {
+    const compliance: MzMetric = s.complianceRatePct !== null && s.complianceRatePct !== undefined
       ? { label: 'معدل التوافق', value: `${Math.round(Number(s.complianceRatePct))}% متوافق` }
       : { label: 'معدل التوافق', value: null };
-    const perf: EntityStat = s.averageChangePct !== null && s.averageChangePct !== undefined
-      ? {
-          label: 'الأداء اليومي',
-          value: `${this.perfArrow(s.averageChangePct)} ${this.formatSignedPct(s.averageChangePct)}`,
-          tone: this.perfTone(s.averageChangePct)
-        }
-      : { label: 'الأداء اليومي', value: null };
-    return [compliance, perf];
+
+    if (s.averageChangePct !== null && s.averageChangePct !== undefined) {
+      const capped = Number(s.averageChangePct);
+      const uncapped = s.averageChangePctUncapped !== null && s.averageChangePctUncapped !== undefined
+        ? Number(s.averageChangePctUncapped)
+        : capped;
+      const diff = Math.round((capped - uncapped) * 100) / 100;
+      const diffFormatted = `${diff > 0 ? '+' : ''}${diff.toFixed(2)} pp`;
+
+      const perf: MzMetric = {
+        label: 'الأداء (بعد سقف 35%)',
+        value: `${this.perfArrow(capped)} ${this.formatSignedPct(capped)}`,
+        tone: this.perfTone(capped),
+        subValue: `قبل السقف: ${this.formatSignedPct(uncapped)} (${diffFormatted})`,
+        tooltip: 'The 35% cap prevents a single stock from dominating sector performance. / سقف الـ 35% يمنع سهماً واحداً من الهيمنة على أداء القطاع.'
+      };
+      return [compliance, perf];
+    }
+
+    return [compliance, { label: 'الأداء اليومي', value: null }];
   }
+
+  cardStats(s: SectorSummaryDto): EntityStat[] {
+    const m = this.cardMetrics(s);
+    return m.map(item => ({ label: item.label, value: item.value ? String(item.value) : null, tone: item.tone as any }));
+  }
+
 
   // ── KPIs ────────────────────────────────────────────────────────────
   private buildKpis(): KpiData[] {
@@ -765,7 +797,7 @@ export class SectorsListComponent implements OnInit, OnDestroy {
       subtitle: s.nameEn,
       icon: this.getSectorIcon(s.nameEn),
       badges: [{ label: s.stocksCount + ' سهم مصنّف', tone: 'neutral' }],
-      metrics: this.cardStats(s).map((st) => ({ label: st.label, value: st.value, tone: st.tone })),
+      metrics: this.cardMetrics(s),
       linkLabel: 'استعرض الـ ' + s.stocksCount + ' سهم',
       link: ['/indices/Sectoral-Indices', s.id]
     };

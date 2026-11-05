@@ -10,6 +10,7 @@ public class SectorDaily
     public DateOnly TradingDate { get; set; }
 
     public decimal? ChangePct { get; set; }
+    public decimal? ChangePctUncapped { get; set; }
     public decimal TotalMarketCap { get; set; } // EGP
     public int Advancers { get; set; }
     public int Decliners { get; set; }

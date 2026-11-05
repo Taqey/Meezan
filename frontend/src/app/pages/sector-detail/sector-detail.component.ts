@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { LucideAngularModule, Layers, ShieldCheck, TrendingUp, Flame } from 'lucide-angular';
+import { LucideAngularModule, Layers, ShieldCheck, TrendingUp, TrendingDown, Flame, Activity } from 'lucide-angular';
 import { ApiService } from '../../services/api.service';
 import { SessionCacheService } from '../../services/session-cache.service';
 import { navigateQueryParams } from '../../utils/navigation-utils';
@@ -116,7 +116,9 @@ export class SectorDetailComponent implements OnInit, OnDestroy {
   readonly LayersIcon = Layers;
   readonly ShieldCheckIcon = ShieldCheck;
   readonly TrendingUpIcon = TrendingUp;
+  readonly TrendingDownIcon = TrendingDown;
   readonly FlameIcon = Flame;
+  readonly ActivityIcon = Activity;
 
   readonly shariahOptions = [
     { value: 'Compliant', label: 'متوافق شرعاً' },
@@ -480,7 +482,7 @@ export class SectorDetailComponent implements OnInit, OnDestroy {
       ? validPerformers.reduce((best, cur) => ((cur.changePct || 0) > (best.changePct || 0) ? cur : best))
       : null;
 
-    return [
+    const list: MzStat[] = [
       {
         label: 'إجمالي الأسهم في القطاع',
         value: totalCountVal ? String(totalCountVal) : '—',
@@ -492,20 +494,42 @@ export class SectorDetailComponent implements OnInit, OnDestroy {
         value: compliantCount != null ? String(compliantCount) : '—',
         icon: this.ShieldCheckIcon,
         chip: compliantPct != null ? `${compliantPct}%` : '—'
-      },
-      {
+      }
+    ];
+
+    if (this.sector?.averageChangePct !== null && this.sector?.averageChangePct !== undefined) {
+      const capped = Number(this.sector.averageChangePct);
+      const uncapped = this.sector.averageChangePctUncapped !== null && this.sector.averageChangePctUncapped !== undefined
+        ? Number(this.sector.averageChangePctUncapped)
+        : capped;
+      const diff = Math.round((capped - uncapped) * 100) / 100;
+      const diffFormatted = `${diff > 0 ? '+' : ''}${diff.toFixed(2)} pp`;
+
+      list.push({
+        label: 'أداء القطاع (بعد سقف 35%)',
+        value: `${capped > 0 ? '+' : ''}${capped.toFixed(2)}%`,
+        icon: capped >= 0 ? this.TrendingUpIcon : this.TrendingDownIcon,
+        subValue: `قبل السقف: ${uncapped > 0 ? '+' : ''}${uncapped.toFixed(2)}% (${diffFormatted})`,
+        tooltip: 'The 35% cap prevents a single stock from dominating sector performance. / سقف الـ 35% يمنع سهماً واحداً من الهيمنة على أداء القطاع.'
+      });
+    } else {
+      list.push({
         label: 'فرص تقييم رخيص',
         value: cheapCount != null ? String(cheapCount) : '—',
         icon: this.TrendingUpIcon,
         chip: 'أرخص'
-      },
-      {
-        label: 'أعلى أداء اليوم',
-        value: top && top.changePct != null ? `${top.changePct > 0 ? '+' : ''}${top.changePct.toFixed(2)}%` : '—',
-        icon: this.FlameIcon,
-        chip: top ? (top.ticker || top.nameAr || '—') : '—'
-      }
-    ];
+      });
+    }
+
+    list.push({
+      label: 'أعلى أداء اليوم',
+      value: top && top.changePct != null ? `${top.changePct > 0 ? '+' : ''}${top.changePct.toFixed(2)}%` : '—',
+      icon: this.FlameIcon,
+      chip: top ? (top.ticker || top.nameAr || '—') : '—'
+    });
+
+    return list;
+
   }
 
   get activeTab(): string {

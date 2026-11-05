@@ -1601,6 +1601,9 @@ namespace Meezan.Infrastructure.Migrations
                     b.Property<decimal?>("ChangePct")
                         .HasColumnType("decimal(18,4)");
 
+                    b.Property<decimal?>("ChangePctUncapped")
+                        .HasColumnType("decimal(18,4)");
+
                     b.Property<DateTime>("ComputedAt")
                         .HasColumnType("datetime2");
 
