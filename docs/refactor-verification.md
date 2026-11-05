@@ -51,3 +51,25 @@ Verification kind: build + full test suite + static checks (no browser run: star
   - Test suite: `npx ng test --watch=false --browsers=ChromeHeadless` passed with **580 SUCCESS, 7 FAILED** (only the exact 7 baseline test failures). All newly generated component specs passed.
 - **Affected Routes**:
   - `/admin/market-data`, `/admin/manual-edit`, `/admin/shariah-edit`, `/admin/index-files`, `/admin/shariah-seed`, `/admin/shariah-reports`, `/admin/review-queue`, `/admin/stocks`.
+
+### Stop 7 (Step 1.2 — AdminFundsComponent Split)
+- **Changes**:
+  - Split `AdminFundsComponent` (923 lines TS, 743 lines HTML) into focused, single-responsibility units:
+    - **4 Domain Services** in `features/admin/services/`:
+      - `AdminFundsSyncLogService`: Manages sync history list, page pagination, and per-run detail error drilldown.
+      - `AdminFundCategoriesService`: Manages category CRUD, auto-derived keyword rules, category membership, and change log.
+      - `AdminFundDetailsService`: Manages fund search, name/description draft editing, and missing prices fetching.
+      - `AdminFundTypesService`: Manages editable fund types, merge operations, and type-funds modal.
+    - **1 Feature Model** in `features/admin/models/`: `FundCategoryRow`.
+    - **5 Focused Child Components** in `features/admin/components/`:
+      - `AdminFundsSyncTabComponent`: Tab view for sync history and failed detail logs.
+      - `AdminFundsCategoriesTabComponent`: Categories table, category members drilldown, and add-to-category search.
+      - `AdminFundsTableTabComponent`: Funds listing, inline name/description editor, and category overrides table.
+      - `AdminFundsChangeLogTabComponent`: Category change history log.
+      - `AdminFundsModalsComponent`: Category editor modal, merge modal, and confirmation dialog.
+    - `AdminFundsComponent` reduced to a coordinator managing tab navigation.
+- **Verification**:
+  - Production build: `npx ng build` passed with 0 errors. Bundle size decreased by ~10 kB (`admin-routes` lazy chunk from 391 kB to 380 kB).
+  - Test suite: `npx ng test --watch=false --browsers=ChromeHeadless` passed with **585 SUCCESS, 7 FAILED** (only the exact 7 baseline test failures).
+- **Affected Route**:
+  - `/admin/funds`.
