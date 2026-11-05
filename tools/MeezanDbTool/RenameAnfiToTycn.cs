@@ -77,3 +77,4 @@ public static class RenameAnfiToTycn
         Console.WriteLine("SUCCESS: ANFI successfully renamed to TYCN (تايكون انفستمنتس هولدنج)!");
     }
 }
+
