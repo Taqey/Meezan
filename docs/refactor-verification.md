@@ -22,3 +22,8 @@ Verification kind: build + full test suite + static checks (no browser run: star
 - `styles.css` (4087 lines) and `ui-kit.css` (1332 lines) split into contiguous chunks: `src/styles/ui-kit/*` (11) and `src/styles/global/*` (24); `styles.css` is now only ordered @imports (ui-kit first, then global), same order as before. No selector renamed or merged.
 - Verified: built bundle CSS is byte-identical to before (same content hash styles-S4TYUFXR.css, 109948 bytes). Build ok.
 - Human look: none needed.
+
+## Stop 5 - folder restructure (end of 1.1)
+- 305 files moved with all relative imports rewritten by tools/move-files.mjs: core/{api,auth,layouts,services}, shared/{components,directives,models,utils}, features/{admin,favorites,funds,home,indices,portfolio,sectors,sharia,stocks}. Routes, URLs and lazy chunks unchanged.
+- Verified: build ok (bundle 89.19 kB over, baseline 89.37), 555 pass / 7 baseline fail.
+- Human look: none beyond final all-routes pass.
