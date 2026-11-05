@@ -93,3 +93,21 @@ Verification kind: build + full test suite + static checks (no browser run: star
 - **Affected Route**:
   - `/admin/classification`.
 
+### Stop 9 (Step 1.2 — Domain Models Split)
+- **Changes**:
+  - Split monolithic `shared/models/api.models.ts` (1,222 lines) into 7 domain model files in `shared/models/`:
+    - `common.model.ts`: PagedResult, ValuationConfidence, PriceComparison, ShariahStatus.
+    - `stocks.model.ts`: StockListItemDto, FairValueMethodDto, MarketDataDto, SupportResistanceDto.
+    - `sectors.model.ts`: SectorSummaryDto, SectorPickerItem.
+    - `indices.model.ts`: IndexSummaryDto, MarketSnapshotDto, IndexInStockDto, ConstituentItemDto, IndexConstituentsPagedResultDto, INDEX_ARABIC_NAMES, IndexPickerItem.
+    - `shariah.model.ts`: ShariahSourceKey, SHARIAH_BOARD_FROZEN_TICKERS, SHARIAH_SOURCE_NAMES, ShariahSourceOpinionDto, RatioCheckDto, CriterionResultDto, StoredVerdictDetailsDto, StockShariahMetricsDto, ShariahOverridesDto, SaveShariahOverridesRequest.
+    - `funds.model.ts`: FundType, FundRiskLevel, FundSortBy, FundListItemDto, EffectiveClassificationDto, FundDetailDto, FundPricePointDto, FundAnalysisDto, FundSimilarDto, FundTypeOptionDto, FundClassificationTreeNode, AdminClassificationNode, FundCategory, FundSyncLog, etc.
+    - `admin.model.ts`: RemovalCandidateDto, RefreshSelectedStocksResult, LiveProgressInfo, JobProgressInfo, LastRunSummary, ScrapeStatusResponse, RunCombinedScrapeResult, SeedShariahResultDto, SourcePdfStatusDto, UploadIndexFileResultDto, ManualMarketDataUpdateRequest, StockManagementItem, etc.
+  - Converted `api.models.ts` into a clean facade barrel re-exporting all 7 domain model modules with zero changes to existing consumers.
+- **Verification**:
+  - Production build: `npx ng build` passed with 0 errors and baseline bundle warning.
+  - Test suite: `npx ng test --watch=false --browsers=ChromeHeadless` passed with **589 SUCCESS, 7 FAILED** (exact 7 baseline failures).
+- **Affected Routes**:
+  - All routes (transparent facade).
+
+
