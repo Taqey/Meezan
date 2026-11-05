@@ -9,20 +9,7 @@ import { MzSpinnerComponent } from '../ui/mz-spinner.component';
   selector: 'app-empty-state',
   standalone: true,
   imports: [CommonModule, RouterLink, LucideAngularModule, MzSpinnerComponent],
-  template: `
-    <div class="empty-state">
-      <lucide-icon *ngIf="icon" [img]="icon" size="32"></lucide-icon>
-      <h3>{{ title }}</h3>
-      <p>{{ message }}</p>
-      <a *ngIf="actionLink" [routerLink]="actionLink" routerLinkActive="active" class="btn btn-primary">
-        {{ actionLabel }}
-      </a>
-      <button *ngIf="!actionLink && actionLabel" type="button" class="btn btn-primary" [disabled]="loading" (click)="action.emit()">
-        <mz-spinner *ngIf="loading" [active]="true" [immediate]="true" size="small"></mz-spinner>
-        <span>{{ actionLabel }}</span>
-      </button>
-    </div>
-  `
+  templateUrl: './empty-state.component.html',
 })
 export class EmptyStateComponent {
   @Input() icon?: LucideIconData;

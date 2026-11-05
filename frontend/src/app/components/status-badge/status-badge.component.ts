@@ -6,12 +6,7 @@ import { LucideAngularModule } from 'lucide-angular';
   selector: 'app-status-badge',
   standalone: true,
   imports: [CommonModule, LucideAngularModule],
-  template: `
-    <span class="status-badge" [ngClass]="badgeClass">
-      <span class="status-dot"></span>
-      {{ label }}
-    </span>
-  `
+  templateUrl: './status-badge.component.html',
 })
 export class StatusBadgeComponent {
   @Input() status?: string | null;

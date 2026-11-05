@@ -6,13 +6,7 @@ import { CommonModule } from '@angular/common';
   selector: 'app-section-header',
   standalone: true,
   imports: [CommonModule],
-  template: `
-    <div class="section-head">
-      <span>{{ lead }}</span>
-      <span *ngIf="sessionDate" class="session-date">آخر جلسة تداول: <bdi dir="ltr">{{ sessionDate }}</bdi></span>
-      <span *ngIf="sourceNote" class="source-note">{{ sourceNote }}</span>
-    </div>
-  `
+  templateUrl: './section-header.component.html',
 })
 export class SectionHeaderComponent {
   @Input() lead = '';

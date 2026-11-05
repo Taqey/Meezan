@@ -14,23 +14,7 @@ export interface KpiData {
   selector: 'app-kpi-strip',
   standalone: true,
   imports: [CommonModule, LucideAngularModule],
-  template: `
-    <div class="kpi-grid" *ngIf="loading">
-      <div class="kpi-card" *ngFor="let n of [1, 2, 3]" aria-hidden="true">
-        <div class="sk-line sk-text"></div>
-        <div class="sk-line sk-price"></div>
-      </div>
-    </div>
-    <div class="kpi-grid" *ngIf="!loading">
-      <div class="kpi-card" *ngFor="let k of kpis">
-        <span class="kpi-icon"><lucide-icon [img]="k.icon" size="18"></lucide-icon></span>
-        <div>
-          <strong>{{ k.value }} <small *ngIf="k.sub">{{ k.sub }}</small></strong>
-          <span>{{ k.label }}</span>
-        </div>
-      </div>
-    </div>
-  `
+  templateUrl: './kpi-strip.component.html',
 })
 export class KpiStripComponent {
   @Input() kpis: KpiData[] = [];

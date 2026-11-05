@@ -15,27 +15,8 @@ export interface CascadeLevel {
   selector: 'app-classification-cascade',
   standalone: true,
   imports: [CommonModule, FormsModule, MzSelectComponent],
-  template: `
-    <div class="cascade-wrap">
-      <div *ngFor="let lvl of levels; let i = index; trackBy: trackLevel" class="cascade-level">
-        <label class="filter-label" [attr.for]="'cascade-' + i">
-          {{ i === 0 ? rootLabel : lvl.label }}
-          <span *ngIf="lvl.node" class="cascade-count">({{ lvl.node.totalFundCount }})</span>
-        </label>
-        <mz-select
-          [options]="lvl.options"
-          [value]="lvl.node?.slug ?? ''"
-          (valueChange)="pick(i, $event)"
-          [ariaLabel]="i === 0 ? rootLabel : lvl.label">
-        </mz-select>
-      </div>
-    </div>
-  `,
-  styles: [`
-    .cascade-wrap { display: contents; }
-    .cascade-level { min-width: 0; }
-    .cascade-count { font-weight: 400; color: var(--muted-foreground); }
-  `]
+  templateUrl: './classification-cascade.component.html',
+  styleUrl: './classification-cascade.component.css',
 })
 export class ClassificationCascadeComponent implements OnChanges {
   @Input() tree: FundClassificationTreeNode[] = [];

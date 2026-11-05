@@ -6,14 +6,7 @@ import { ToastService } from '../../services/toast.service';
   selector: 'app-toast-host',
   standalone: true,
   imports: [CommonModule],
-  template: `
-    <div class="toast-host" aria-live="polite" aria-atomic="false">
-      <div class="toast-item" *ngFor="let m of toast.messages()">
-        <span>{{ m.text }}</span>
-        <button type="button" class="toast-close" (click)="toast.dismiss(m.id)" aria-label="إغلاق التنبيه">×</button>
-      </div>
-    </div>
-  `
+  templateUrl: './toast-host.component.html',
 })
 export class ToastHostComponent {
   constructor(readonly toast: ToastService) {}

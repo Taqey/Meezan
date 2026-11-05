@@ -13,18 +13,7 @@ import { ToastService } from '../../services/toast.service';
   selector: 'app-favorite-toggle',
   standalone: true,
   imports: [CommonModule, LucideAngularModule],
-  template: `
-    <button
-      type="button"
-      class="fav-toggle"
-      [class.active]="isFav"
-      [attr.aria-pressed]="isFav"
-      [attr.aria-label]="isFav ? 'إزالة من المفضلة' : 'إضافة إلى المفضلة'"
-      [attr.title]="isFav ? 'إزالة من المفضلة' : 'إضافة إلى المفضلة'"
-      (click)="onToggle($event)">
-      <lucide-icon [img]="StarIcon" size="17"></lucide-icon>
-    </button>
-  `
+  templateUrl: './favorite-toggle.component.html',
 })
 export class FavoriteToggleComponent {
   @Input() symbol = '';

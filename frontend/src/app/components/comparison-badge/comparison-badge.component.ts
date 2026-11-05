@@ -6,15 +6,7 @@ import { LucideAngularModule, TrendingUp, TrendingDown, Minus } from 'lucide-ang
   selector: 'app-comparison-badge',
   standalone: true,
   imports: [CommonModule, LucideAngularModule],
-  template: `
-    <span class="comparison-badge" [ngClass]="badgeClass">
-      <lucide-icon *ngIf="isCheap" [img]="TrendingUpIcon" size="13"></lucide-icon>
-      <lucide-icon *ngIf="isExpensive" [img]="TrendingDownIcon" size="13"></lucide-icon>
-      <lucide-icon *ngIf="isUnavailable" [img]="MinusIcon" size="13"></lucide-icon>
-      <span *ngIf="isFair" class="neutral-line"></span>
-      {{ label }}
-    </span>
-  `
+  templateUrl: './comparison-badge.component.html',
 })
 export class ComparisonBadgeComponent {
   /**

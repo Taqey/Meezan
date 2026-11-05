@@ -11,19 +11,7 @@ export interface ChipOption {
   selector: 'app-filter-chips',
   standalone: true,
   imports: [CommonModule],
-  template: `
-    <div class="chip-row no-print" role="group" aria-label="فرز سريع">
-      <button
-        *ngFor="let c of chips"
-        type="button"
-        class="chip"
-        [class.active]="c.id === activeId"
-        [attr.aria-pressed]="c.id === activeId"
-        (click)="pick(c.id)">
-        {{ c.label }}
-      </button>
-    </div>
-  `
+  templateUrl: './filter-chips.component.html',
 })
 export class FilterChipsComponent {
   @Input() chips: ChipOption[] = [];

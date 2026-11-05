@@ -9,19 +9,7 @@ export type EntityView = 'grid' | 'table' | 'heatmap';
   selector: 'app-view-switcher',
   standalone: true,
   imports: [CommonModule, LucideAngularModule],
-  template: `
-    <div class="view-switch mz-view-switch" role="group" aria-label="طريقة العرض">
-      <button type="button" [class.active]="view === 'grid'" [attr.aria-pressed]="view === 'grid'" (click)="pick('grid')">
-        <lucide-icon [img]="GridIcon" size="15"></lucide-icon> شبكة
-      </button>
-      <button type="button" [class.active]="view === 'table'" [attr.aria-pressed]="view === 'table'" (click)="pick('table')">
-        <lucide-icon [img]="TableIcon" size="15"></lucide-icon> جدول
-      </button>
-      <button type="button" [class.active]="view === 'heatmap'" [attr.aria-pressed]="view === 'heatmap'" (click)="pick('heatmap')">
-        <lucide-icon [img]="HeatIcon" size="15"></lucide-icon> خريطة حرارية
-      </button>
-    </div>
-  `
+  templateUrl: './view-switcher.component.html',
 })
 export class ViewSwitcherComponent {
   readonly GridIcon = LayoutGrid;

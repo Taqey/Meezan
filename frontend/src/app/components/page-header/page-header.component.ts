@@ -15,26 +15,7 @@ export interface HeaderCrumb {
   selector: 'app-page-header',
   standalone: true,
   imports: [CommonModule, RouterLink],
-  template: `
-    <nav class="crumbs" aria-label="مسار التنقل">
-      <ng-container *ngFor="let c of crumbs; let last = last">
-        <a *ngIf="c.link && !last" [routerLink]="c.link">{{ c.label }}</a>
-        <span *ngIf="!c.link && !last">{{ c.label }}</span>
-        <span *ngIf="!last" aria-hidden="true">/</span>
-      </ng-container>
-      <span *ngIf="pill" class="crumb-pill">{{ pill }}</span>
-    </nav>
-
-    <div class="page-hero">
-      <div>
-        <h1>{{ title }}</h1>
-        <p *ngIf="description">{{ description }}</p>
-      </div>
-      <div class="page-toolbar">
-        <ng-content select="[toolbar]"></ng-content>
-      </div>
-    </div>
-  `
+  templateUrl: './page-header.component.html',
 })
 export class PageHeaderComponent {
   @Input() crumbs: HeaderCrumb[] = [];
