@@ -72,3 +72,4 @@ const endIdx = content.indexOf('public class ImportFaisalOsoulOpinionsCommandHan
 const updatedCommand = content.substring(0, startIdx).trimEnd() + '\n\n' + content.substring(endIdx);
 fs.writeFileSync('backend/src/Meezan.Application/Features/Shariah/Commands/ImportFaisalOsoulOpinions/ImportFaisalOsoulOpinionsCommand.cs', updatedCommand, 'utf8');
 console.log('Done');
+
