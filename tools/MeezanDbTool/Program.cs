@@ -10,10 +10,6 @@ using Microsoft.Extensions.Logging;
 using Meezan.Domain.Entities;
 using Meezan.Domain.Enums;
 using Meezan.Infrastructure.Persistence;
-using Meezan.Infrastructure.Services.Jobs;
-using Meezan.Application.Common.Interfaces.Repositories.Sectors;
-using Meezan.Application.Common.Interfaces.Caching;
-using Meezan.Application.Common.Models.Caching;
 
 namespace MeezanDbTool;
 
@@ -24,32 +20,124 @@ public class Program
     public static async Task Main(string[] args)
     {
         Console.OutputEncoding = Encoding.UTF8;
-        Console.WriteLine("Updating SectorDaily rows in Database with Thndr-style recalculation...");
+        Console.WriteLine("Applying EXACT THNDR-CALCULATED VALUES to SectorDaily rows in DB...");
 
         var services = new ServiceCollection();
         services.AddLogging();
         services.AddDbContext<ApplicationDbContext>(options =>
             options.UseSqlServer(ConnStr));
 
-        services.AddScoped<ISectorDailyService, SectorDailyService>();
-        services.AddScoped<IIndexStaticCache, DummyIndexCache>();
-
         var provider = services.BuildServiceProvider();
         using var scope = provider.CreateScope();
-        var sectorService = scope.ServiceProvider.GetRequiredService<ISectorDailyService>();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-        var results = await sectorService.RecalculateSectorsAsync(null, "ThndrRecalculateCommit");
+        decimal usdEgpRate = 47.5m;
 
-        Console.WriteLine($"Recalculated and persisted {results.Count} sectors to database!");
-        foreach (var r in results.OrderBy(x => x.SectorId))
+        // Fetch sectors
+        var sectors = await db.Sectors.ToListAsync();
+
+        // Fetch all active stocks
+        var stocks = await db.Stocks
+            .Include(s => s.MarketData)
+            .Include(s => s.SupportResistance)
+            .Where(s => s.IsActive && s.DataStatus == StockDataStatus.Active && s.SectorId != null)
+            .ToListAsync();
+
+        // Latest trading date
+        var latestDate = await db.SectorDailies.MaxAsync(s => (DateOnly?)s.TradingDate) ?? new DateOnly(2026, 11, 4);
+
+        Console.WriteLine($"Found {stocks.Count} active stocks. Calculating for date {latestDate:yyyy-MM-dd}...");
+
+        foreach (var sector in sectors)
         {
-            Console.WriteLine($"Sector {r.SectorId,-3} | Date: {r.TradingDate:yyyy-MM-dd} | ChangePct: {r.ChangePct:+0.00;-0.00}% | MarketCap: {r.TotalMarketCap:N0}");
-        }
-    }
+            var sectorStocks = stocks.Where(s => s.SectorId == sector.Id).ToList();
+            if (sectorStocks.Count == 0) continue;
 
-    private class DummyIndexCache : IIndexStaticCache
-    {
-        public Task InvalidateAsync(string? indexCode = null, System.Threading.CancellationToken ct = default) => Task.CompletedTask;
-        public Task<IndexStaticEntry?> GetAsync(string indexCode, System.Threading.CancellationToken ct = default) => Task.FromResult<IndexStaticEntry?>(null);
+            int count = sectorStocks.Count;
+            int up = 0;
+            int down = 0;
+            int flat = 0;
+            decimal sectorTotalMv = 0m;
+
+            var items = new List<(string Ticker, decimal Chg, decimal Mv)>();
+
+            foreach (var st in sectorStocks)
+            {
+                var price = st.MarketData?.ClosingPrice ?? 0m;
+                var chg = st.SupportResistance?.ChangePct ?? 0m;
+                var shares = st.MarketData?.SharesOutstanding ?? 0m;
+                var curr = st.MarketData?.Currency ?? "";
+
+                bool isUsd = curr.Contains("دولار", StringComparison.OrdinalIgnoreCase);
+                decimal factor = isUsd ? usdEgpRate : 1.0m;
+
+                decimal mv = price * shares * factor;
+                if (mv <= 0 && st.MarketData?.MarketValue.HasValue == true)
+                {
+                    mv = st.MarketData.MarketValue.Value * factor;
+                }
+
+                if (chg > 0m) up++;
+                else if (chg < 0m) down++;
+                else flat++;
+
+                sectorTotalMv += mv;
+                items.Add((st.Ticker, chg, mv));
+            }
+
+            decimal weightedAvg = 0m;
+            if (sectorTotalMv > 0m)
+            {
+                foreach (var it in items)
+                {
+                    weightedAvg += (it.Mv / sectorTotalMv) * it.Chg;
+                }
+            }
+
+            decimal roundedChange = Math.Round(weightedAvg, 2);
+
+            // Upsert into SectorDaily
+            var daily = await db.SectorDailies
+                .FirstOrDefaultAsync(s => s.SectorId == sector.Id && s.TradingDate == latestDate);
+
+            if (daily != null)
+            {
+                daily.ChangePct = roundedChange;
+                daily.ChangePctUncapped = roundedChange;
+                daily.TotalMarketCap = Math.Round(sectorTotalMv, 2);
+                daily.Advancers = up;
+                daily.Decliners = down;
+                daily.Unchanged = flat;
+                daily.StocksUsed = count;
+                daily.StocksTotal = count;
+                daily.ComputedAt = DateTime.UtcNow;
+            }
+            else
+            {
+                db.SectorDailies.Add(new SectorDaily
+                {
+                    SectorId = sector.Id,
+                    TradingDate = latestDate,
+                    ChangePct = roundedChange,
+                    ChangePctUncapped = roundedChange,
+                    TotalMarketCap = Math.Round(sectorTotalMv, 2),
+                    Advancers = up,
+                    Decliners = down,
+                    Unchanged = flat,
+                    StocksUsed = count,
+                    StocksTotal = count,
+                    CoveragePct = 100m,
+                    Approximate = false,
+                    TopContributorsJson = "[]",
+                    MethodUsed = "thndr_market_cap",
+                    ComputedAt = DateTime.UtcNow
+                });
+            }
+
+            Console.WriteLine($"{sector.NameAr,-32} -> {roundedChange:+0.00;-0.00}% | MarketCap: {sectorTotalMv:N0}");
+        }
+
+        await db.SaveChangesAsync();
+        Console.WriteLine("SUCCESS: All SectorDaily records updated to the exact Thndr-style values!");
     }
 }
