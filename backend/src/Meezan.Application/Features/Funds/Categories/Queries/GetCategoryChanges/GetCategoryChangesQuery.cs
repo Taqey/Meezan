@@ -12,10 +12,3 @@ public record GetCategoryChangesQuery(
     DateTime? ToDate,
     int Page,
     int PageSize) : IRequest<Result<CategoryChangesResultDto>>;
-
-public record CategoryChangesResultDto(
-    List<FundCategoryChangeLog> Items,
-    int TotalCount,
-    int Page,
-    int PageSize,
-    int TotalPages);

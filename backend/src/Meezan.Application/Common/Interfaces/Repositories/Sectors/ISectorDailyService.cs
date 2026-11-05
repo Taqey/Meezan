@@ -2,8 +2,6 @@ using Meezan.Domain.Entities;
 
 namespace Meezan.Application.Common.Interfaces.Repositories.Sectors;
 
-public record TopContributorDto(string Stock, decimal Weight, decimal Change, decimal Contribution);
-
 public interface ISectorDailyService
 {
     Task<decimal> GetUsdEgpRateAsync(CancellationToken ct = default);
@@ -13,11 +11,6 @@ public interface ISectorDailyService
     Task<bool> IsExternalSectorPullEnabledAsync(CancellationToken ct = default);
     Task SetExternalSectorPullEnabledAsync(bool enabled, CancellationToken ct = default);
 
-    /// <summary>
-    /// Calculates sector daily rows for given trading date (or latest available if null).
-    /// If specificSectorIds is provided, only those sectors are calculated (and upserted).
-    /// Returns the list of calculated sector daily entities.
-    /// </summary>
     /// <summary>
     /// Unified recalculation entry point called synchronously on any stock/market data changes.
     /// Recomputes stock market values, synchronizes daily snapshots, runs sector daily calculations,

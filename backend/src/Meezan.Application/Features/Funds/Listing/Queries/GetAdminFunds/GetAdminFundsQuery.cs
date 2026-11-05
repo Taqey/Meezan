@@ -9,10 +9,3 @@ public record GetAdminFundsQuery(
     string? Type,
     int Page,
     int PageSize) : IRequest<Result<AdminFundsResultDto>>;
-
-public record AdminFundsResultDto(
-    List<Fund> Items,
-    int TotalCount,
-    int Page,
-    int PageSize,
-    int TotalPages);

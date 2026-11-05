@@ -12,12 +12,3 @@ public interface IShariahComplianceRepository
     Task AddAsync(ShariahCompliance compliance, CancellationToken cancellationToken = default);
     void Update(ShariahCompliance compliance);
 }
-
-public record ShariahListFilter(
-    int Page,
-    int PageSize,
-    string? SortBy,
-    string? SortDir,
-    string? Search,
-    string? Status
-);
