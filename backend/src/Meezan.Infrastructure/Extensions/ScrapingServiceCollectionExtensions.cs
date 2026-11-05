@@ -35,8 +35,8 @@ public static class ScrapingServiceCollectionExtensions
         // Persisted job schedule settings service (singleton with in-memory caching)
         services.AddSingleton<IJobSettingsService, JobSettingsService>();
 
-        // Part 4 — Mubasher scraper client (named HttpClient)
-        services.AddHttpClient<IStockScraperClient, MubasherScraperClient>(client =>
+        // Part 4 — Stock scraper client (Starta Markets for prices and daily changes)
+        services.AddHttpClient<IStockScraperClient, StartaScraperClient>(client =>
         {
             client.Timeout = TimeSpan.FromSeconds(30);
         });

@@ -451,16 +451,16 @@ public class SectorDailyService : ISectorDailyService
                 decimal r_i;
                 decimal prevClose_i;
 
-                if (snap?.PrevClose.HasValue == true && snap.PrevClose.Value > 0)
-                {
-                    prevClose_i = snap.PrevClose.Value;
-                    r_i = (price.Value / prevClose_i) - 1.0m;
-                }
-                else if (chgPct.HasValue)
+                if (chgPct.HasValue)
                 {
                     r_i = chgPct.Value / 100m;
                     var denom = 1.0m + r_i;
                     prevClose_i = denom != 0m ? Math.Round(price.Value / denom, 4) : price.Value;
+                }
+                else if (snap?.PrevClose.HasValue == true && snap.PrevClose.Value > 0)
+                {
+                    prevClose_i = snap.PrevClose.Value;
+                    r_i = (price.Value / prevClose_i) - 1.0m;
                 }
                 else
                 {
@@ -480,8 +480,8 @@ public class SectorDailyService : ISectorDailyService
                 }
                 else
                 {
-                    // marketCap: w_i = prevClose_i * sharesOutstanding_i * currencyFactor
-                    rawWeight = prevClose_i * shares.Value * currencyFactor;
+                    // Thndr-style: Current Market Cap = current price * shares * currencyFactor
+                    rawWeight = price.Value * shares.Value * currencyFactor;
                 }
 
                 potentialWeightSum += rawWeight;
@@ -490,26 +490,10 @@ public class SectorDailyService : ISectorDailyService
                     stock.Ticker,
                     rawWeight,
                     r_i,
-                    r_i * 100m,
+                    chgPct ?? (r_i * 100m),
                     price.Value
                 ));
             }
-
-            // Compute capped weights using the existing SectorWeightCalculator
-            // Pass the active sector stocks' effective market values (with currency) and the configured usdEgpRate
-            var weightInputs = sectorStocks.Select(s =>
-            {
-                snapshotMap.TryGetValue(s.Id, out var snap);
-                var price = snap?.Price ?? s.MarketData?.ClosingPrice;
-                var shares = snap?.SharesUsed ?? s.MarketData?.SharesOutstanding;
-                var curr = snap?.Currency ?? s.MarketData?.Currency;
-                decimal? mv = (price.HasValue && shares.HasValue && price.Value > 0 && shares.Value > 0)
-                    ? price.Value * shares.Value
-                    : (s.MarketData?.MarketValue);
-                return new SectorStockWeightInput(s.Id, s.Ticker, mv, curr);
-            });
-            var cappedWeightResult = SectorWeightCalculator.Calculate(sector.Id, weightInputs, usdEgpRate);
-            var cappedWeightMap = cappedWeightResult.StockWeights.ToDictionary(w => w.Ticker, w => w.FinalWeight ?? 0m);
 
             int stocksUsed = validItems.Count;
             int advancers = validItems.Count(i => i.ChangePct > 0m);
@@ -541,58 +525,41 @@ public class SectorDailyService : ISectorDailyService
                 continue;
             }
 
-            // 1. Uncapped calculation (kept as sector_return_uncapped)
-            decimal sumUncappedWeightedReturn = 0m;
-            foreach (var item in validItems)
-            {
-                decimal normalizedWeight = item.RawWeight / potentialWeightSum; // sum = 1.0
-                decimal contribPct = normalizedWeight * item.ChangePct;
-                sumUncappedWeightedReturn += contribPct;
-            }
-
-            // 2. Capped calculation using existing capped weights:
-            // sector_return_capped = sum(stock_change_% * capped_weight) / sum(capped_weight)
-            decimal sumCappedWeights = 0m;
-            decimal sumCappedWeightedReturn = 0m;
+            // Thndr-style Market Value Weighted Calculation:
+            // Sector return is the market-value weighted average change of the stocks:
+            // sector_return = sum(stock_change_% * market_value) / sum(market_value)
+            decimal sumMarketValues = 0m;
+            decimal sumWeightedReturn = 0m;
             decimal weightRoseSum = 0m;
             var contributors = new List<TopContributorDto>();
 
             foreach (var item in validItems)
             {
-                cappedWeightMap.TryGetValue(item.Ticker, out var cappedW); // e.g. 35.0, 9.28
-                sumCappedWeights += cappedW;
-                decimal itemContrib = cappedW * item.ChangePct; // weighted contribution
-                sumCappedWeightedReturn += itemContrib;
+                decimal stockMv = item.RawWeight; // Market value in EGP (with USD conversion)
+                sumMarketValues += stockMv;
+                decimal itemContrib = stockMv * item.ChangePct; // weighted contribution
+                sumWeightedReturn += itemContrib;
 
                 if (item.ChangePct > 0m)
                 {
-                    weightRoseSum += cappedW;
+                    weightRoseSum += stockMv;
                 }
+
+                // Compute uncapped weight percentage (0 - 100%)
+                decimal weightPct = potentialWeightSum > 0 ? (stockMv / potentialWeightSum) * 100m : 0m;
 
                 contributors.Add(new TopContributorDto(
                     Stock: item.Ticker,
-                    Weight: Math.Round(cappedW, 2),
+                    Weight: Math.Round(weightPct, 2),
                     Change: Math.Round(item.ChangePct, 2),
-                    Contribution: sumCappedWeights > 0 ? Math.Round(itemContrib / 100m, 4) : 0m
+                    Contribution: potentialWeightSum > 0 ? Math.Round(itemContrib / potentialWeightSum, 4) : 0m
                 ));
             }
 
-            decimal? sectorChangeCapped = null;
-            if (sumCappedWeights > 0)
+            decimal? sectorChange = null;
+            if (sumMarketValues > 0)
             {
-                sectorChangeCapped = Math.Round(sumCappedWeightedReturn / sumCappedWeights, 2);
-            }
-            decimal sectorChangeUncapped = Math.Round(sumUncappedWeightedReturn, 2);
-
-            // Re-normalize contributors contribution to sum to sectorChangeCapped
-            if (sumCappedWeights > 0)
-            {
-                for (int ci = 0; ci < contributors.Count; ci++)
-                {
-                    var c = contributors[ci];
-                    var contribNorm = (c.Weight / sumCappedWeights) * c.Change;
-                    contributors[ci] = c with { Contribution = Math.Round(contribNorm, 4) };
-                }
+                sectorChange = Math.Round(sumWeightedReturn / sumMarketValues, 2);
             }
 
             // Top 3 contributors sorted descending by absolute contribution
@@ -606,14 +573,14 @@ public class SectorDailyService : ISectorDailyService
                 : 100m;
 
             bool approximate = coveragePct < 70m;
-            decimal shareOfWeightRose = sumCappedWeights > 0 ? Math.Round((weightRoseSum / sumCappedWeights) * 100m, 2) : 0m;
+            decimal shareOfWeightRose = sumMarketValues > 0 ? Math.Round((weightRoseSum / sumMarketValues) * 100m, 2) : 0m;
 
             results.Add(new SectorDaily
             {
                 SectorId = sector.Id,
                 TradingDate = tradingDate,
-                ChangePct = sectorChangeCapped,
-                ChangePctUncapped = sectorChangeUncapped,
+                ChangePct = sectorChange,
+                ChangePctUncapped = sectorChange,
                 TotalMarketCap = Math.Round(totalSectorMarketCap, 2),
                 Advancers = advancers,
                 Decliners = decliners,
