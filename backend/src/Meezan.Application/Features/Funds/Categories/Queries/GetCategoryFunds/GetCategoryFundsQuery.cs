@@ -10,17 +10,3 @@ public record GetCategoryFundsQuery(
     int Page,
     int PageSize) : IRequest<Result<CategoryFundsResultDto?>>;
 
-public record CategoryFundMemberItemDto(
-    int Id,
-    string Code,
-    string NameAr,
-    string NameEn,
-    string? Source,
-    string Reason);
-
-public record CategoryFundsResultDto(
-    List<CategoryFundMemberItemDto> Items,
-    int TotalCount,
-    int Page,
-    int PageSize,
-    int TotalPages);
