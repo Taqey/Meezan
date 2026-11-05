@@ -1,40 +1,6 @@
 namespace Meezan.Application.Common.Services.Market;
 
 /// <summary>
-/// Result of calculating a single stock's sector weight.
-/// </summary>
-public record SectorStockWeightResult(
-    int StockId,
-    string Ticker,
-    decimal? EffectiveMarketCapEgp,
-    decimal? RawWeight,
-    decimal? FinalWeight,
-    bool IsCapped,
-    decimal CappingFactor
-);
-
-/// <summary>
-/// Result of calculating all sector weights for a given sector.
-/// </summary>
-public record SectorWeightsCalculationResult(
-    int? SectorId,
-    List<SectorStockWeightResult> StockWeights,
-    decimal TotalWeightSum,
-    bool HasSumWarning,
-    string? WarningMessage
-);
-
-/// <summary>
-/// Input item for sector weight calculation.
-/// </summary>
-public record SectorStockWeightInput(
-    int StockId,
-    string Ticker,
-    decimal? MarketValue,
-    string? Currency
-);
-
-/// <summary>
 /// Computes capped market-cap weights for stocks within a sector.
 /// Capped at 35% with iterative redistribution.
 /// Foreign-currency stocks (USD) are converted to EGP.
