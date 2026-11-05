@@ -25,3 +25,4 @@
 
 5. **RTL-First Arabic UI**
    - Meezan is designed with primary Right-To-Left (RTL) Arabic typography and layout conventions, with clean LTR handling for stock tickers, currency codes, and English technical terms.
+

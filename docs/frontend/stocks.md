@@ -18,3 +18,4 @@ Path: `frontend/src/app/features/stocks/`
     4. **`mz-sharia-authorities-section`**: Multi-board Islamic compliance breakdown (Bourse Halal, Musaffa, Kashif, Halal Invest, Faisal Islamic Bank, Ostoul, Thndr).
     5. **`mz-market-indicators-section`**: P/E ratio, P/B ratio, dividend yield, market cap, and trading aggregates.
     6. **Quantitative Standards Modal**: Interactive modal displaying detailed debt, interest-bearing securities, and non-permissible income ratios according to AAOIFI and S&P standards.
+

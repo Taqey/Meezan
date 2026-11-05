@@ -58,3 +58,4 @@ frontend/src/app/
 6. [Portfolio & Favorites Features](./portfolio-and-favorites.md)
 7. [Admin Dashboard & Automation](./admin.md)
 8. [Shared Design System & Components](./shared-components.md)
+

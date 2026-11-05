@@ -20,3 +20,4 @@ Paths:
 - Instant watchlist for quick access to tracked stocks and funds.
 - Persisted locally with instant toggle via `FavoriteToggleComponent`.
 - Provides tabs for favorite stocks and favorite investment funds with live quotes.
+

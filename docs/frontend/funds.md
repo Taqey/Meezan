@@ -20,3 +20,4 @@ Path: `frontend/src/app/features/funds/`
 - **`fund-manager-detail.component`**:
   - Institutional profile for Egyptian asset managers (e.g., Beltone, CI Capital, Hermes, CIAM, Azimut).
   - Total AUM managed, aggregate fund count, and complete fund lineup breakdown.
+

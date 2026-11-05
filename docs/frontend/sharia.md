@@ -18,3 +18,4 @@ Path: `frontend/src/app/features/sharia/`
     1. **Profits/Dividends Received Approach**: Purifying a percentage of cash dividends received based on the company's impure income ratio.
     2. **Total Ownership Approach**: Purifying a proportional amount of the company's total impure earnings per share owned.
     3. **Capital Gains Approach**: Purifying short-term trading capital gains.
+

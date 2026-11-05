@@ -25,3 +25,4 @@ Paths:
 - **`index-detail.component`**:
   - Index daily return, trading value, and high/low ranges.
   - Complete list of index constituent equities with weightings and direct stock links.
+

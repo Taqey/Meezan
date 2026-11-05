@@ -35,3 +35,4 @@ A comprehensive suite of prefix-namespaced components (`mz-*`) providing the vis
 - **Data Display**: `mz-listing-card`, `mz-details-header-card`, `mz-stat-card`, `mz-fair-value-card`, `mz-support-resistance-card`, `mz-sharia-authorities-section`, `mz-market-indicators-section`, `mz-allocation-breakdown`
 - **Interactive Controls**: `mz-button`, `mz-select`, `mz-search-input`, `mz-filter-dropdown`, `mz-filters-bar`, `mz-quick-filter-tabs`, `mz-favorite-button`
 - **Badges & Tags**: `mz-badge`, `mz-chip`, `mz-status-tag`
+

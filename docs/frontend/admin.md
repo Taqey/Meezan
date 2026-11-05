@@ -29,3 +29,4 @@ The administration dashboard is split into focused domain services, routed tab p
 
 ### 3. Domain Services (`features/admin/services/`)
 - Total of 20 decoupled domain services ensuring zero monolithic component bloat and clean dependency injection.
+
