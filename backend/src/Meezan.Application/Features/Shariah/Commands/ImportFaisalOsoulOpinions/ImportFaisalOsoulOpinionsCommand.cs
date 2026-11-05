@@ -36,45 +36,6 @@ namespace Meezan.Application.Features.Shariah.Commands.ImportFaisalOsoulOpinions
 public record ImportFaisalOsoulOpinionsCommand(string? JsonPath = null)
     : IRequest<Result<ImportFaisalOsoulOpinionsResult>>;
 
-public record ImportSourceOpinionsResult(
-    string SourceKey,
-    string? ReportDate,
-    int InsertedCount,
-    int UpdatedCount,
-    int RemovedCount,
-    int BoardListedSkippedCount,
-    IReadOnlyList<string> UnknownTickers,
-    IReadOnlyList<string> Conflicts);
-
-public record ImportFaisalOsoulOpinionsResult(
-    bool Success,
-    string? Message,
-    string FilePath,
-    IReadOnlyList<ImportSourceOpinionsResult> Sources);
-
-/// <summary>Root of shariah_opinions_faisal_osoul.json (the "_notes" block is ignored).</summary>
-public class FaisalOsoulOpinionsFile
-{
-    public FaisalOsoulSourceBlock? FaisalBank { get; set; }
-    [JsonPropertyName("ostoul")]
-    public FaisalOsoulSourceBlock? Ostoul { get; set; }
-}
-
-public class FaisalOsoulSourceBlock
-{
-    [JsonPropertyName("report_date")]
-    public string? ReportDate { get; set; }
-
-    [JsonPropertyName("compliant")]
-    public List<string> Compliant { get; set; } = new();
-
-    [JsonPropertyName("non_compliant")]
-    public List<string> NonCompliant { get; set; } = new();
-
-    [JsonPropertyName("has_shariah_board")]
-    public List<string> HasShariahBoard { get; set; } = new();
-}
-
 public class ImportFaisalOsoulOpinionsCommandHandler
     : IRequestHandler<ImportFaisalOsoulOpinionsCommand, Result<ImportFaisalOsoulOpinionsResult>>
 {
