@@ -36,6 +36,10 @@ public static class ScrapingServiceCollectionExtensions
         services.AddSingleton<IJobSettingsService, JobSettingsService>();
 
         // Part 4 — Stock scraper client (Starta Markets for prices and daily changes)
+        services.AddHttpClient<MubasherScraperClient>(client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(30);
+        });
         services.AddHttpClient<IStockScraperClient, StartaScraperClient>(client =>
         {
             client.Timeout = TimeSpan.FromSeconds(30);

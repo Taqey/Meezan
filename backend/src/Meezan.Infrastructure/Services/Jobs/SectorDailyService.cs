@@ -206,7 +206,14 @@ public class SectorDailyService : ISectorDailyService
         var allActiveStockInfo = await _db.Stocks
             .AsNoTracking()
             .Where(s => s.IsActive && s.DataStatus == StockDataStatus.Active)
-            .Select(s => new { s.Id, s.SectorId, Shares = s.MarketData != null ? s.MarketData.SharesOutstanding : null })
+            .Select(s => new
+            {
+                s.Id,
+                s.SectorId,
+                Shares = s.MarketData != null ? s.MarketData.SharesOutstanding : null,
+                Price = s.MarketData != null ? s.MarketData.ClosingPrice : null,
+                ChangePct = s.SupportResistance != null ? s.SupportResistance.ChangePct : null
+            })
             .ToDictionaryAsync(s => s.Id, ct);
 
         var existingTodaySnaps = await _db.StockDailySnapshots
@@ -226,6 +233,16 @@ public class SectorDailyService : ISectorDailyService
                 if (snap.SectorId != activeInfo.SectorId)
                 {
                     snap.SectorId = activeInfo.SectorId;
+                    snapsChanged = true;
+                }
+                if (activeInfo.Price != null && snap.Price != activeInfo.Price)
+                {
+                    snap.Price = activeInfo.Price;
+                    snapsChanged = true;
+                }
+                if (activeInfo.ChangePct != null && snap.ChangePct != activeInfo.ChangePct)
+                {
+                    snap.ChangePct = activeInfo.ChangePct;
                     snapsChanged = true;
                 }
             }
@@ -412,10 +429,10 @@ public class SectorDailyService : ISectorDailyService
             {
                 snapshotMap.TryGetValue(stock.Id, out var snap);
 
-                var price = snap?.Price ?? stock.MarketData?.ClosingPrice;
-                var chgPct = snap?.ChangePct ?? stock.SupportResistance?.ChangePct;
-                var shares = snap?.SharesUsed ?? stock.MarketData?.SharesOutstanding;
-                var curr = snap?.Currency ?? stock.MarketData?.Currency;
+                var price = stock.MarketData?.ClosingPrice ?? snap?.Price;
+                var chgPct = stock.SupportResistance?.ChangePct ?? snap?.ChangePct;
+                var shares = stock.MarketData?.SharesOutstanding ?? snap?.SharesUsed;
+                var curr = stock.MarketData?.Currency ?? snap?.Currency;
 
                 // Check USD conversion
                 var isUsd = (curr != null && curr.Contains("دولار", StringComparison.OrdinalIgnoreCase)) ||

@@ -1,6 +1,7 @@
 using MediatR;
 using Meezan.Application.Common.Interfaces.Integrations;
 using Meezan.Application.Common.Interfaces.Repositories.Scraping;
+using Meezan.Application.Common.Interfaces.Repositories.Sectors;
 using Meezan.Application.Common.Interfaces.Repositories.Stocks;
 using Meezan.Application.Common.Results;
 using Meezan.Application.Common.Services.Market;
@@ -20,6 +21,7 @@ public class RefreshSelectedStocksCommandHandler
     private readonly IScrapeBatchCommitter _batchCommitter;
     private readonly IScrapeRunLogRepository _runLogRepo;
     private readonly IScrapeProgressTracker _progress;
+    private readonly ISectorDailyService _sectorDailyService;
     private readonly ILogger<RefreshSelectedStocksCommandHandler> _logger;
 
     public RefreshSelectedStocksCommandHandler(
@@ -28,6 +30,7 @@ public class RefreshSelectedStocksCommandHandler
         IScrapeBatchCommitter batchCommitter,
         IScrapeRunLogRepository runLogRepo,
         IScrapeProgressTracker progress,
+        ISectorDailyService sectorDailyService,
         ILogger<RefreshSelectedStocksCommandHandler> logger)
     {
         _stockRepository = stockRepository;
@@ -35,6 +38,7 @@ public class RefreshSelectedStocksCommandHandler
         _batchCommitter = batchCommitter;
         _runLogRepo = runLogRepo;
         _progress = progress;
+        _sectorDailyService = sectorDailyService;
         _logger = logger;
     }
 
@@ -159,11 +163,24 @@ public class RefreshSelectedStocksCommandHandler
                     var sr = await _scraperClient.ScrapeSupportResistanceAsync(stock.Ticker, cancellationToken);
                     if (sr is not null)
                     {
+                        var changePct = sr.ChangePct;
+
+                        // Rule: If price and changePct are unchanged from the stored last session,
+                        // or if the stock had no trade/change since last session, change is 0.
+                        if (stock.MarketData?.ClosingPrice != null &&
+                            mdEntity?.ClosingPrice != null &&
+                            stock.MarketData.ClosingPrice == mdEntity.ClosingPrice &&
+                            stock.SupportResistance?.ChangePct != null &&
+                            stock.SupportResistance.ChangePct == changePct)
+                        {
+                            changePct = 0m;
+                        }
+
                         srEntity = new StockSupportResistance
                         {
                             StockId = stock.Id,
                             LastPrice = sr.LastPrice,
-                            ChangePct = sr.ChangePct,
+                            ChangePct = changePct,
                             Pivot = sr.Pivot,
                             R1 = sr.R1,
                             R2 = sr.R2,
@@ -267,6 +284,33 @@ public class RefreshSelectedStocksCommandHandler
             {
                 await _stockRepository.SetActiveDataStatusAsync(
                     refreshedStocks.Select(s => s.Id), CancellationToken.None);
+
+                // If any of the refreshed stocks were deactivated (IsActive = false),
+                // restore IsActive = true as well
+                foreach (var s in refreshedStocks.Where(st => !st.IsActive))
+                {
+                    await _stockRepository.ReactivateAsync(s.Id, CancellationToken.None);
+                }
+
+                // Trigger sector daily recalculation for affected sectors
+                var affectedSectorIds = refreshedStocks
+                    .Where(s => s.SectorId.HasValue)
+                    .Select(s => s.SectorId!.Value)
+                    .Distinct()
+                    .ToList();
+
+                if (affectedSectorIds.Count > 0)
+                {
+                    try
+                    {
+                        await _sectorDailyService.RecalculateSectorsAsync(
+                            affectedSectorIds, "RefreshSelectedStocks", CancellationToken.None);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Failed to recalculate sectors after selective refresh.");
+                    }
+                }
             }
         }
         catch (Exception fatalEx)
@@ -288,6 +332,10 @@ public class RefreshSelectedStocksCommandHandler
         log.TotalStocks = tickers.Count;
         log.SucceededStocks = succeeded;
         log.FailedStocks = failed;
+        if (errorSummary is { Length: > 4000 })
+        {
+            errorSummary = errorSummary.Substring(0, 3997) + "...";
+        }
         log.ErrorSummary = errorSummary;
         await _runLogRepo.UpdateAsync(log, CancellationToken.None);
 

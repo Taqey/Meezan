@@ -656,6 +656,7 @@ public class StockRepository : IStockRepository
             .Where(s => s.Id == stockId)
             .ExecuteUpdateAsync(setters => setters
                 .SetProperty(s => s.IsActive, true)
+                .SetProperty(s => s.DataStatus, StockDataStatus.Active)
                 .SetProperty(s => s.DeactivatedAt, (DateTime?)null)
                 .SetProperty(s => s.DeactivationReason, (string?)null)
                 .SetProperty(s => s.UpdatedAt, DateTime.UtcNow),

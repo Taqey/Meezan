@@ -298,6 +298,10 @@ public class RunCombinedScrapeCommandHandler
             log.TotalStocks = total;
             log.SucceededStocks = succeeded;
             log.FailedStocks = failed;
+            if (errorSummary is { Length: > 4000 })
+            {
+                errorSummary = errorSummary.Substring(0, 3997) + "...";
+            }
             log.ErrorSummary = errorSummary;
             await _runLogRepo.UpdateAsync(log, CancellationToken.None); // use None so a cancel doesn't skip the log
 
@@ -421,11 +425,24 @@ public class RunCombinedScrapeCommandHandler
             var sr = await _scraperClient.ScrapeSupportResistanceAsync(stock.Ticker, ct);
             if (sr is not null)
             {
+                var changePct = sr.ChangePct;
+
+                // Rule: If price and changePct are unchanged from the stored last session,
+                // or if the stock had no trade/change since last session, change is 0.
+                if (stock.MarketData?.ClosingPrice != null &&
+                    mdEntity?.ClosingPrice != null &&
+                    stock.MarketData.ClosingPrice == mdEntity.ClosingPrice &&
+                    stock.SupportResistance?.ChangePct != null &&
+                    stock.SupportResistance.ChangePct == changePct)
+                {
+                    changePct = 0m;
+                }
+
                 srEntity = new StockSupportResistance
                 {
                     StockId = stock.Id,
                     LastPrice = sr.LastPrice,
-                    ChangePct = sr.ChangePct,
+                    ChangePct = changePct,
                     Pivot = sr.Pivot,
                     R1 = sr.R1,
                     R2 = sr.R2,

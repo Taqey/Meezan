@@ -16,6 +16,7 @@ public class StartaScraperClient : IStockScraperClient
 {
     private readonly HttpClient _httpClient;
     private readonly ILogger<StartaScraperClient> _logger;
+    private readonly MubasherScraperClient _mubasherClient;
 
     private const string CompaniesUrl = "https://startamarkets.com/companies";
     private const string UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36";
@@ -30,8 +31,6 @@ public class StartaScraperClient : IStockScraperClient
     private static readonly Dictionary<string, string> StartaToDbAliases = new(StringComparer.OrdinalIgnoreCase)
     {
         { "EGS385S1C012", "FERC" },
-        { "TYCN", "ANFI" },
-        { "EGS370O1C013", "NAPR" },
         { "AIH", "AIHC" },
         { "NDRL", "NDRL." },
         { "KORA", "KORA..." }
@@ -48,17 +47,28 @@ public class StartaScraperClient : IStockScraperClient
         bool IsStale
     );
 
-    public StartaScraperClient(HttpClient httpClient, ILogger<StartaScraperClient> logger)
+    public StartaScraperClient(
+        HttpClient httpClient,
+        ILogger<StartaScraperClient> logger,
+        MubasherScraperClient mubasherClient)
     {
         _httpClient = httpClient;
         _logger = logger;
+        _mubasherClient = mubasherClient;
     }
 
     /// <summary>
     /// Scrapes market data for one stock ticker from Starta Markets.
+    /// Note: NAPR is fetched specifically from Mubasher as instructed.
     /// </summary>
     public async Task<ScrapedMarketData?> ScrapeMarketDataAsync(string ticker, CancellationToken ct = default)
     {
+        if (ticker.Equals("NAPR", StringComparison.OrdinalIgnoreCase))
+        {
+            _logger.LogInformation("StartaScraperClient: Routing NAPR exclusively to MubasherScraperClient.");
+            return await _mubasherClient.ScrapeMarketDataAsync(ticker, ct);
+        }
+
         await EnsureQuotesLoadedAsync(ct);
 
         if (!TryGetQuote(ticker, out var quote))
@@ -90,9 +100,16 @@ public class StartaScraperClient : IStockScraperClient
     /// <summary>
     /// Scrapes support/resistance & daily change levels for one stock ticker.
     /// Starta provides the official daily change percentage.
+    /// Note: NAPR is fetched specifically from Mubasher as instructed.
     /// </summary>
     public async Task<ScrapedSupportResistance?> ScrapeSupportResistanceAsync(string ticker, CancellationToken ct = default)
     {
+        if (ticker.Equals("NAPR", StringComparison.OrdinalIgnoreCase))
+        {
+            _logger.LogInformation("StartaScraperClient: Routing NAPR support/resistance exclusively to MubasherScraperClient.");
+            return await _mubasherClient.ScrapeSupportResistanceAsync(ticker, ct);
+        }
+
         await EnsureQuotesLoadedAsync(ct);
 
         if (!TryGetQuote(ticker, out var quote))
@@ -200,10 +217,19 @@ public class StartaScraperClient : IStockScraperClient
         foreach (var row in rows)
         {
             var cols = row.QuerySelectorAll("td");
-            if (cols.Length < 5) continue;
+            if (cols.Length < 6) continue;
 
-            // Col 1: Names
-            var nameCol = cols[0];
+            // Starta table layout:
+            // cols[0]: Index / rank (e.g. "1")
+            // cols[1]: Names (English + Arabic)
+            // cols[2]: Symbol (e.g. "COMI")
+            // cols[3]: Sector (e.g. "Banks")
+            // cols[4]: Price & Currency (e.g. "127.31", "2.53 USD", "—")
+            // cols[5]: Change (e.g. "+1.18%", "-0.54%")
+            // cols[6]: Market Cap (e.g. "430.8B")
+
+            // Col 1 (index 1): Names
+            var nameCol = cols[1];
             var nameArElem = nameCol.QuerySelector("[dir='rtl']");
             var nameAr = nameArElem?.TextContent?.Trim() ?? string.Empty;
 
@@ -212,19 +238,19 @@ public class StartaScraperClient : IStockScraperClient
                 ? fullText.Replace(nameAr, "").Trim()
                 : fullText;
 
-            // Col 2: Symbol
-            var symLink = cols[1].QuerySelector("a");
-            var symbol = (symLink?.TextContent ?? cols[1].TextContent).Trim();
+            // Col 2 (index 2): Symbol
+            var symLink = cols[2].QuerySelector("a");
+            var symbol = (symLink?.TextContent ?? cols[2].TextContent).Trim();
 
-            // Col 3: Sector
-            var sector = cols[2].TextContent.Trim();
+            // Col 3 (index 3): Sector
+            var sector = cols[3].TextContent.Trim();
 
-            // Col 4: Price & Currency
-            var rawPrice = cols[3].TextContent.Trim();
+            // Col 4 (index 4): Price & Currency
+            var rawPrice = cols[4].TextContent.Trim();
             var (price, currency, isStalePrice) = ParsePriceAndCurrency(rawPrice);
 
-            // Col 5: Change
-            var rawChange = cols[4].TextContent.Trim();
+            // Col 5 (index 5): Change
+            var rawChange = cols[5].TextContent.Trim();
             var changePct = ParseChange(rawChange);
 
             results.Add(new StartaCompanyQuote(
