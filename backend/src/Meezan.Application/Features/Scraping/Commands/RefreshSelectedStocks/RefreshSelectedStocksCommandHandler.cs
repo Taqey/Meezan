@@ -165,9 +165,12 @@ public class RefreshSelectedStocksCommandHandler
                     {
                         var changePct = sr.ChangePct;
 
-                        // Rule: If price and changePct are unchanged from the stored last session,
-                        // or if the stock had no trade/change since last session, change is 0.
-                        if (stock.MarketData?.ClosingPrice != null &&
+                        // Rule: If price and changePct are unchanged from the previous session (prior day),
+                        // the stock did not trade in the current session; set its daily change to 0%.
+                        // (Note: Guarded by FetchedAt < today so multiple scrape runs on the same day don't overwrite valid daily changes with 0).
+                        var isPreviousDayData = stock.MarketData?.FetchedAt.Date < DateTime.UtcNow.Date;
+                        if (isPreviousDayData &&
+                            stock.MarketData?.ClosingPrice != null &&
                             mdEntity?.ClosingPrice != null &&
                             stock.MarketData.ClosingPrice == mdEntity.ClosingPrice &&
                             stock.SupportResistance?.ChangePct != null &&
