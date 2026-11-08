@@ -62,6 +62,9 @@ Valuation logic is encapsulated in the pure static service `FairValueCalculator`
 ## 3. Sector Weights & Daily Aggregations
 
 Sector metrics are calculated dynamically using `SectorWeightCalculator` and `SectorDailyService`:
+- **Thndr-Style Market Cap Weighting**: Daily sector index returns are calculated using constituent stocks' market capitalizations with the official EGX formula:
+  $$\text{Sector Return \%} = \frac{\sum (\text{MarketCap}_i \times \text{ChangePct}_i)}{\sum \text{MarketCap}_i}$$
+- **Automatic Post-Scrape Recalculation**: Immediately following any live daily scrape (`RunCombinedScrapeCommandHandler`), sector performance returns and top contributors are recalculated automatically (`RecalculateSectorsAsync`) to prevent desynchronization.
 - Aggregates market caps and volumes across all constituent equities in a sector.
 - Evaluates Top Contributors (stocks driving daily sector index movement based on weight and percentage change).
 - Supports dual weighting mechanisms: Free-Float Market Cap or Equal Weight.

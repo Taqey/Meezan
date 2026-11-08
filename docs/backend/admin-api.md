@@ -14,6 +14,15 @@ All admin endpoints reside under the `/api/admin/` route prefix and require JWT 
 
 ## 2. Admin Controller Endpoints
 
+### Stock & Removal Candidates Management (`RemovalCandidatesController`, `AdminStocksManagementController`)
+- `GET /api/scraping/removal-candidates`: Returns stale, deactivated, or flagged stocks for human review.
+- `POST /api/scraping/removal-candidates/refresh`: Targeted re-scraping and activation of explicitly selected stocks.
+- `POST /api/scraping/removal-candidates/confirm`: Soft-deactivates selected stocks (`IsActive = false`).
+- `POST /api/scraping/removal-candidates/reactivate`: Restores soft-deactivated stocks (`IsActive = true`) back to active tracking.
+- `POST /api/admin/stocks-management/stocks`: Creates a new stock entry in the system.
+- `POST /api/admin/stocks-management/stocks/{stockId}/sector`: Assigns a stock to a specific economic sector.
+- `POST /api/admin/stocks-management/indices/{indexId}/stocks`: Adds a stock to an index constituent list.
+
 ### Market Data Management (`AdminMarketDataController`)
 - `POST /api/admin/market-data/manual-update`: Allows manual correction of EPS, P/E, P/B, Book Value, or Support/Resistance levels for specific tickers.
 - `POST /api/admin/market-data/refresh-selected`: Triggers real-time re-scraping and fair value recomputation for specified stock symbols.
