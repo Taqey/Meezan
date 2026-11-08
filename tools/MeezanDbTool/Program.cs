@@ -7,7 +7,6 @@ public class Program
 {
     public static async Task Main(string[] args)
     {
-        await RenameAnfiToTycn.RunAsync();
-        await RecalcSectors.RunAsync();
+        await BuildExactUnchangedTable.RunAsync();
     }
 }
